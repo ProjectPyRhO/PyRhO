@@ -23,9 +23,107 @@ from .config import verbose, addTitles, saveFigFormat, fDir # For plotStates()
 ### Model Parameters ###
 
 ### Physical constants
-h = 6.62606957e-34   # Planck's constant (Js)
+h = 6.6260695729e-34   # Planck's constant (Js)
 c = 2.99792458e8     # Speed of light    (m*s^-1)
 #NA = 6.0221413e23    # Avogadro's Number (mol^-1)
+
+
+'''
+    == A few notes about colour ==
+
+    Color   Wavelength(nm) Frequency(THz)
+    Red     620-750        484-400
+    Orange  590-620        508-484
+    Yellow  570-590        526-508
+    Green   495-570        606-526
+    Blue    450-495        668-606
+    Violet  380-450        789-668
+
+    f is frequency (cycles per second)
+    l (lambda) is wavelength (meters per cycle)
+    e is energy (Joules)
+    h (Plank's constant) = 6.6260695729 x 10^-34 Joule*seconds
+                         = 6.6260695729 x 10^-34 m^2*kg/seconds
+    c = 299792458 meters per second
+    f = c/l
+    l = c/f
+    e = h*f
+    e = c*h/l
+
+    List of peak frequency responses for each type of 
+    photoreceptor cell in the human eye:
+        S cone: 437 nm
+        M cone: 533 nm
+        L cone: 564 nm
+        rod:    550 nm in bright daylight, 498 nm when dark adapted. 
+                Rods adapt to low light conditions by becoming more sensitive.
+                Peak frequency response shifts to 498 nm.
+
+'''
+
+#import sys
+#import os
+#import traceback
+#import optparse
+#import time
+#import logging
+
+
+def lam2rgb(wav, gamma=0.8, output='norm'):
+    """This converts a given wavelength of light to an 
+    approximate RGB colour value with edge attenuation. 
+    The wavelength must be given in nanometres in the 
+    range from 380 nm - 750 nm (789 THz - 400 THz).
+    
+    Adapted from: http://www.noah.org/wiki/Wavelength_to_RGB_in_Python
+    Based on code by Dan Bruton
+    http://www.physics.sfasu.edu/astro/color/spectra.html
+    """
+    
+    
+    wav = float(wav)
+    if wav >= 380 and wav < 440:
+        attenuation = 0.3 + 0.7 * (wav - 380) / (440 - 380)
+        R = ((-(wav - 440) / (440 - 380)) * attenuation) ** gamma
+        G = 0.0
+        B = (1.0 * attenuation) ** gamma
+    elif wav >= 440 and wav < 490:
+        R = 0.0
+        G = ((wav - 440) / (490 - 440)) ** gamma
+        B = 1.0
+    elif wav >= 490 and wav < 510:
+        R = 0.0
+        G = 1.0
+        B = (-(wav - 510) / (510 - 490)) ** gamma
+    elif wav >= 510 and wav < 580:
+        R = ((wav - 510) / (580 - 510)) ** gamma
+        G = 1.0
+        B = 0.0
+    elif wav >= 580 and wav < 645:
+        R = 1.0
+        G = (-(wav - 645) / (645 - 580)) ** gamma
+        B = 0.0
+    elif wav >= 645 and wav <= 750:
+        attenuation = 0.3 + 0.7 * (750 - wav) / (750 - 645)
+        R = (1.0 * attenuation) ** gamma
+        G = 0.0
+        B = 0.0
+    else: # Outside the visible spectrum
+        R = 0.0
+        G = 0.0
+        B = 0.0
+    
+    if output == 'norm':
+        return (R,G,B)
+    elif output == 'hex':
+        R *= 255
+        R = max(0, min(round(R), 255))
+        G *= 255
+        G = max(0, min(round(G), 255))
+        B *= 255
+        B = max(0, min(round(B), 255))
+        #return (int(R), int(G), int(B)) # int() truncates towards 0
+        return "#{0:02x}{1:02x}{2:02x}".format(R,G,B), (R,G,B)
 
 ### Default parameter dictionaries
 
@@ -105,19 +203,48 @@ def cycles2times(cycles,delD):
         lapsed += sum(cycles[p,:])
     return (times, lapsed)
 
-def plotLight(times, ax=None, shade=True): #=plt.gcf()
+def plotLight(times, ax=None, light='shade', lam=470, alpha=0.2): #=plt.gcf()
+    """Function to plot light pulse(s)
+    times   = [[t_on, t_off]...]
+    ax      = Axes to plot on (default: gca()
+    light   = Representation type: {'shade', 'borders', 'greyscale', 'hatch', 'spectral'}. Default: 'shade'
+    lam     = Wavelength [nm] (default: 470)
+    alpha   = Transparency (default: 0.2)"""
+    
     if ax==None:
         ax=plt.gca()
     else:
         plt.sca(ax)
     nPulses = times.shape[0]
-    if shade:
+    if light == 'shade':
         for p in range(nPulses):
-            plt.axvspan(times[p][0],times[p][1],facecolor='y',alpha=0.2)    
-    else: 
+            plt.axvspan(times[p][0],times[p][1],facecolor='y',alpha=alpha)    
+    elif light == 'borders': 
         for p in range(0, nPulses): ############################ Move to plotLight
             plt.axvline(x=times[p][0],linestyle='--',color='k')
             plt.axvline(x=times[p][1],linestyle='--',color='k')
+    elif light == 'greyscale':
+        # Set background to grey and illumination to white
+        ax.set_axis_bgcolor('0.3')
+        plt.axvspan(times[p][0],times[p][1],facecolor='w')#,alpha=alpha)  
+    elif light == 'hatch':
+        plt.axvspan(times[p][0],times[p][1],hatch='*')
+    elif light == 'spectral':
+        # Plot the colour corresponding to the wavelength
+        if 380 <= lam <= 750:
+            rgb = lam2rgb(lam)
+            for p in range(0, nPulses): 
+                plt.axvspan(times[p][0],times[p][1],facecolor=rgb,alpha=alpha)
+        else: # Light is not in the visible spectrum - plot borders instead
+            for p in range(0, nPulses): 
+                plt.axvline(x=times[p][0],linestyle='--',color='k')
+                plt.axvline(x=times[p][1],linestyle='--',color='k')
+                plt.axvspan(times[p][0],times[p][1],hatch='/') #'*'
+    elif light == 'None' or light == None:
+        pass
+    else:
+        print(light)
+        warnings.warn('Warning: Unrecognised light representation!')
     return
     
 def round_sig(x, sig=3):
@@ -530,7 +657,7 @@ class OGmodel(object):
         plt.stackplot(t,states.T)
         plt.ylim((0,1))
         plt.xlim((0,totT)) #plt.xlim((0,delD+(nPulses*(onD+offD))))
-        plotLight(pulses, axStack, False)
+        plotLight(pulses, axStack, 'borders')
         if addTitles:
             axStack.title.set_visible(False)
         plt.xlabel('$\mathrm{Time\ [ms]}$')

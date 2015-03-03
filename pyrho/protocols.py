@@ -97,6 +97,7 @@ class Protocol(object):
             #else:
             #    warnings.warn('Warning: "{p}" not found in {self}'.format(p,self))
         self.prepare()
+        self.lam = 470 # Default wavelength [nm]
 
     def exportParams(self, params):
         """Export parameters to lmfit dictionary"""
@@ -231,7 +232,7 @@ class Protocol(object):
                         start, end = 0.0, (delD+onD) #0.00, stimD
                         if protocol == 'sinusoid':
                             t = np.linspace(0.0,onD,(onD*self.sr/1000)+1, endpoint=True)
-                            phi_t = InterpolatedUnivariateSpline(delD + t, self.A0[0] + 0.5*phiOn*(1-np.cos(self.ws[run]*t)), ext=1) # Extrapolate=0
+                            phi_t = InterpolatedUnivariateSpline(delD + t, self.A0[0] + 0.5*phiOn*(1-np.cos(self.ws[run]*t)), ext=1) # Extrapolate=0 # A0[r]
                         elif protocol == 'chirp':
                             t = np.linspace(0.0,onD,(onD*self.sr/1000)+1, endpoint=True)
                             ft = self.f0*(self.fT/self.f0)**(t/end)
@@ -416,7 +417,7 @@ class Protocol(object):
     
     
 
-    def plotStimulus(self,phi_t,pulses,totT,ax=None,shade=True):
+    def plotStimulus(self,phi_t,pulses,totT,ax=None,light='shade'):
         t = np.linspace(0,totT,10*int(round(totT/self.dt))+1) #10001) # 
         
         # if self.protocol == 'chirp':
@@ -438,8 +439,11 @@ class Protocol(object):
             
         plt.plot(t,phi_t(t))
         ### Finish function to plot the shape of the light stimuli
-        if shade:
-            plotLight(pulses, ax=ax, shade=shade) #plt.gcf())
+
+        if light == 'spectral':
+            plotLight(pulses, ax=ax, light='spectral', lam=self.lam)
+        else:
+            plotLight(pulses, ax=ax, light=light)
         
         plt.xlabel('$\mathrm{Time\ [ms]}$') #(r'\textbf{Time} [ms]')
         plt.xlim((0,totT))
@@ -672,7 +676,7 @@ class Protocol(object):
                         #label = "$\mathrm{{IPI}}={}\mathrm{{ms}}$ ".format(IPIs[run])
                         figTitle += "for varying inter-pulse-interval "
                     elif protocol == "sinusoid":
-                        figTitle += "$\phi_0 = {:.3g}$ ".format(self.A0[0])
+                        figTitle += "$\phi_0 = {:.3g}$ ".format(self.A0[0]) # A0[r]
                     elif protocol == 'chirp':
                         figTitle += "$\phi_0 = {:.3g}; f_0={}, f_T={}$ ".format(self.A0[0],self.f0,self.fT)
                     else:
@@ -701,8 +705,8 @@ class Protocol(object):
                         ### Plot Stimulus
                         if 'pulses' in self.__dict__:
                             if not addStimulus: # Create a separate stimulus figure
-                                stimFig = self.plotStimulus(self.phiFuncs[run][phiInd],self.pulses,self.totT)
-                                if phis[-1]/phis[0] >= 100:
+                                stimFig = self.plotStimulus(self.phiFuncs[run][phiInd],self.pulses,self.totT,ax=None,light='spectral')
+                                if max(phis)/min(phis) >= 100:
                                     plt.yscale('log')
                             # else:
                                 # if protocol == 'saturate':
@@ -720,10 +724,10 @@ class Protocol(object):
                                 gsStim = plt.GridSpec(4,1)
                                 axS = Ifig.add_subplot(gsStim[0,:]) # Stimulus axes
                                 axI = Ifig.add_subplot(gsStim[1:,:],sharex=axS) # Photocurrent axes
-                                self.plotStimulus(self.phiFuncs[run][phiInd],self.pulses,self.totT,axS) ### Pass axes instead of figure...
+                                self.plotStimulus(self.phiFuncs[run][phiInd],self.pulses,self.totT,axS,light='spectral')
                                 plt.setp(axS.get_xticklabels(), visible=False)
                                 plt.xlabel('')
-                                if phis[-1]/phis[0] >= 100:
+                                if max(phis)/min(phis) >= 100:
                                     plt.yscale('log')
                             else:
                                 axI = Ifig.add_subplot(111)
@@ -735,7 +739,7 @@ class Protocol(object):
                                 gsStim = plt.GridSpec(4,1)
                                 axS = Ifig.add_subplot(gsStim[0,:]) # Stimulus axes
                                 axI = Ifig.add_subplot(gsStim[1:,:],sharex=axS) # Photocurrent axes
-                                self.plotStimulus(self.phiFuncs[run][phiInd],self.pulses,self.totT,axS) ### Pass axes instead of figure...
+                                self.plotStimulus(self.phiFuncs[run][phiInd],self.pulses,self.totT,axS,light='spectral')
                                 plt.setp(axS.get_xticklabels(), visible=False)
                                 plt.xlabel('')
                                 #if phis[-1]/phis[0] >= 100:
@@ -750,10 +754,11 @@ class Protocol(object):
                                 gsStim = plt.GridSpec(4,1)
                                 axS = Ifig.add_subplot(gsStim[0,:]) # Stimulus axes
                                 axI = Ifig.add_subplot(gsStim[1:,:],sharex=axS) # Photocurrent axes
-                                self.plotStimulus(self.phiFuncs[run][phiInd],self.pulses,self.totT,axS) ### Pass axes instead of figure...
+                                self.plotStimulus(self.phiFuncs[run][phiInd],self.pulses,self.totT,axS,light='spectral')
                                 plt.setp(axS.get_xticklabels(), visible=False)
                                 plt.xlabel('')
-                                if phis[-1]/phis[0] >= 100:
+                                axS.set_ylim(self.A0[0],phiOn) ### A0[r]
+                                if max(phis)/min(phis) >= 100:
                                     plt.yscale('log')
                                 ### Overlay instantaneous frequency
                                 tsmooth = np.linspace(0,onD,10001)
@@ -781,7 +786,7 @@ class Protocol(object):
                             gsIR = plt.GridSpec(1,3)
                             axfV = Ifig.add_subplot(gsIR[0,-1])
                             axI = Ifig.add_subplot(gsIR[0,0:2],sharey=axfV)
-                            plotLight(self.pulses)
+                            plotLight(self.pulses,axI)
                             
                         elif protocol =='varyIPI': ############# Tidy up!!!
                             axI = Ifig.add_subplot(111)
@@ -807,7 +812,7 @@ class Protocol(object):
                         ### Plot stimulus above photocurrent
                         if 'pulses' in self.__dict__: #verbose > 1 and 
                             if protocol == 'saturate': ### Generalise this!!!
-                                self.plotStimulus(self.phiFuncs[run][phiInd],self.pulses,self.totT,axS,False)
+                                self.plotStimulus(self.phiFuncs[run][phiInd],self.pulses,self.totT,axS,None)
                             
                         
                         plt.figure(Ifig.number)
@@ -819,7 +824,7 @@ class Protocol(object):
                         figTitle = "" # Could remove title from loops
                     
                         if protocol == 'ramp':
-                            self.plotStimulus(self.phiFuncs[run][phiInd],self.pulses,self.totT,axS,shade=False)
+                            self.plotStimulus(self.phiFuncs[run][phiInd],self.pulses,self.totT,axS,light=None)
                             axS.set_xlabel('')
                     
                     
@@ -1117,7 +1122,7 @@ class Protocol(object):
                 #for i, A0 in enumerate(self.A0):
                 fstarAfig = plt.figure()
                 for vInd, V in enumerate(self.Vs):
-                    if self.A0[0] > 0:
+                    if self.A0[0] > 0: # A0[r]
                         plt.plot(np.array(phis)/self.A0[0],fstars[:,vInd])
                         plt.xlabel('$\mathrm{Modulating}\ \phi_1(t)/\phi_0(t)$')
                     else:
