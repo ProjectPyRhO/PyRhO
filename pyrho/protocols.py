@@ -115,14 +115,6 @@ class Protocol(object):
         ### Setup containers and run variables
         label = ""
         
-        # #figTitle = "Photocurrent through time "
-        # #self.phis.sort(reverse=True)
-        # self.phis.sort()
-        # self.Vs.sort(reverse=True)
-        # if self.protocol == 'sinusoid':
-            # self.fs.sort()
-            # self.ws.sort()
-
 
         ### Temporary variables to avoid renaming everything...!!!
         protocol = self.protocol
@@ -161,8 +153,6 @@ class Protocol(object):
         self.PulseInds = [[[None for v in range(len(Vs))] for p in range(len(phis))] for r in range(nRuns)]
         self.labels = [[[None for v in range(len(Vs))] for p in range(len(phis))] for r in range(nRuns)]
         self.data = [[[None for v in range(len(Vs))] for p in range(len(phis))] for r in range(nRuns)]
-        #if protocol not in squarePulses:
-        #    self.phiFuncs = [None for r in range(nRuns)]
         self.phiFuncs = [[None for p in range(len(phis))] for r in range(nRuns)]
 
         if self.saveData:
@@ -174,8 +164,7 @@ class Protocol(object):
             if verbose > 0:
                 print('Saving data with tag: '+self.dataTag)
             dataTag = self.dataTag
-            #PD = ProtocolData(protocol,nRuns,len(phis),len(Vs))
-            PD = ProtocolData(protocol,nRuns,phis,Vs)
+            self.PD = ProtocolData(protocol,nRuns,phis,Vs)
             # Add empirical parameters here or to dataSet dictionary?
         
         if verbose > 1: 
@@ -241,12 +230,12 @@ class Protocol(object):
                     else:
                         start, end = 0.0, (delD+onD) #0.00, stimD
                         if protocol == 'sinusoid':
-                            t = np.linspace(0.0,onD,(onD/self.sr)+1, endpoint=True)
+                            t = np.linspace(0.0,onD,(onD*self.sr/1000)+1, endpoint=True)
                             phi_t = InterpolatedUnivariateSpline(delD + t, self.A0[0] + 0.5*phiOn*(1-np.cos(self.ws[run]*t)), ext=1) # Extrapolate=0
                         elif protocol == 'chirp':
-                            t = np.linspace(0.0,onD,(onD/self.sr)+1, endpoint=True)
+                            t = np.linspace(0.0,onD,(onD*self.sr/1000)+1, endpoint=True)
                             ft = self.f0*(self.fT/self.f0)**(t/end)
-                            phi_t = InterpolatedUnivariateSpline(delD + t, self.A0[0] + 0.5*phiOn*(1-np.cos(ft*t)), ext=1)
+                            phi_t = InterpolatedUnivariateSpline(delD + t, self.A0[0] + 0.5*phiOn*(1-np.cos((ft/1000)*t)), ext=1)
                         elif protocol == 'ramp':
                             phi_t = InterpolatedUnivariateSpline([delD,end], [self.phi_ton,phiOn], k=1, ext=1) #[start,delD,end,totT], [0,self.phi_ton,phiOn,0] 
                         elif protocol == 'custom':
@@ -262,7 +251,6 @@ class Protocol(object):
                     self.phiFuncs[run][phiInd] = phi_t 
                         
                     if verbose > 1:
-                        #print("Run={}, I_min={}, I_max={}, label={}".format(run,I_RhO.min(),I_RhO.max(),label))
                         print('Run=#{}/{}; phiInd=#{}/{}; vInd=#{}/{}; Irange=[{:.3g},{:.3g}]; label=<{}>'.format(run,nRuns,phiInd,len(phis),vInd,len(Vs),I_RhO.min(),I_RhO.max(),label))
                     #####################
                     
@@ -363,7 +351,7 @@ class Protocol(object):
                         PC=PhotoCurrent(I_RhO,t,phiOn,V,pulses,protocol)
                         self.data[run][phiInd][vInd] = PC
                         #PD.trials.append(PC)
-                        PD.trials[run][phiInd][vInd] = PC
+                        self.PD.trials[run][phiInd][vInd] = PC
 
                         
                     
@@ -424,11 +412,12 @@ class Protocol(object):
             pickle.dump(PC,fh)
             fh.close()
             
-            
-            
+        return self.PD
+    
+    
 
     def plotStimulus(self,phi_t,pulses,totT,ax=None,shade=True):
-        t = np.linspace(0,totT,1001) # int(round(totT/dt))+1
+        t = np.linspace(0,totT,10*int(round(totT/self.dt))+1) #10001) # 
         
         # if self.protocol == 'chirp':
             # fig, ax1 = plt.subplot()
@@ -449,11 +438,13 @@ class Protocol(object):
             
         plt.plot(t,phi_t(t))
         ### Finish function to plot the shape of the light stimuli
-        plotLight(pulses, ax=ax, shade=shade) #plt.gcf())
+        if shade:
+            plotLight(pulses, ax=ax, shade=shade) #plt.gcf())
         
         plt.xlabel('$\mathrm{Time\ [ms]}$') #(r'\textbf{Time} [ms]')
         plt.xlim((0,totT))
-        plt.ylabel('$\mathrm{\phi\ [photons \cdot s^{-1} \cdot mm^{-2}]}$')
+        #plt.ylabel('$\mathrm{\phi\ [photons \cdot s^{-1} \cdot mm^{-2}]}$')
+        plt.ylabel('$\mathrm{\phi\ [ph. / s / mm^{2}]}$')
         
         return ax
     
@@ -713,9 +704,9 @@ class Protocol(object):
                                 stimFig = self.plotStimulus(self.phiFuncs[run][phiInd],self.pulses,self.totT)
                                 if phis[-1]/phis[0] >= 100:
                                     plt.yscale('log')
-                            else:
-                                if protocol == 'saturate':
-                                    figHeight *= 1.5
+                            # else:
+                                # if protocol == 'saturate':
+                                    # figHeight *= 1.5
                         
                         Ifig = plt.figure(figsize=(figWidth, figHeight))
                         if protocol == 'varyPL':
@@ -726,9 +717,9 @@ class Protocol(object):
                             
                         elif  protocol == 'saturate':
                             if addStimulus: 
-                                gsSat = plt.GridSpec(4,1)
-                                axS = Ifig.add_subplot(gsSat[0,:]) # Stimulus axes
-                                axI = Ifig.add_subplot(gsSat[1:,:],sharex=axS) # Photocurrent axes
+                                gsStim = plt.GridSpec(4,1)
+                                axS = Ifig.add_subplot(gsStim[0,:]) # Stimulus axes
+                                axI = Ifig.add_subplot(gsStim[1:,:],sharex=axS) # Photocurrent axes
                                 self.plotStimulus(self.phiFuncs[run][phiInd],self.pulses,self.totT,axS) ### Pass axes instead of figure...
                                 plt.setp(axS.get_xticklabels(), visible=False)
                                 plt.xlabel('')
@@ -738,7 +729,44 @@ class Protocol(object):
                                 axI = Ifig.add_subplot(111)
                             
                             plotLight(self.pulses,axI)
+                        
+                        elif  protocol == 'ramp':
+                            if addStimulus: 
+                                gsStim = plt.GridSpec(4,1)
+                                axS = Ifig.add_subplot(gsStim[0,:]) # Stimulus axes
+                                axI = Ifig.add_subplot(gsStim[1:,:],sharex=axS) # Photocurrent axes
+                                self.plotStimulus(self.phiFuncs[run][phiInd],self.pulses,self.totT,axS) ### Pass axes instead of figure...
+                                plt.setp(axS.get_xticklabels(), visible=False)
+                                plt.xlabel('')
+                                #if phis[-1]/phis[0] >= 100:
+                                #    plt.yscale('log')
+                            else:
+                                axI = Ifig.add_subplot(111)
                                 
+                            plotLight(self.pulses,axI)
+                        
+                        elif  protocol == 'chirp':
+                            if addStimulus: 
+                                gsStim = plt.GridSpec(4,1)
+                                axS = Ifig.add_subplot(gsStim[0,:]) # Stimulus axes
+                                axI = Ifig.add_subplot(gsStim[1:,:],sharex=axS) # Photocurrent axes
+                                self.plotStimulus(self.phiFuncs[run][phiInd],self.pulses,self.totT,axS) ### Pass axes instead of figure...
+                                plt.setp(axS.get_xticklabels(), visible=False)
+                                plt.xlabel('')
+                                if phis[-1]/phis[0] >= 100:
+                                    plt.yscale('log')
+                                ### Overlay instantaneous frequency
+                                tsmooth = np.linspace(0,onD,10001)
+                                axf = axS.twinx()
+                                axf.set_yscale('log')
+                                ft = self.f0*(self.fT/self.f0)**(tsmooth/onD)
+                                axf.plot(tsmooth+delD,ft,'g')
+                                axf.set_ylabel('$f\ \mathrm{[Hz]}$')
+                            else:
+                                axI = Ifig.add_subplot(111)
+                                
+                            plotLight(self.pulses,axI)
+                        
                         elif protocol == 'sinusoid':
                             if nRuns >1: #len(phis) > 1: #nRuns???
                                 gsSin = plt.GridSpec(2,3)
@@ -771,8 +799,12 @@ class Protocol(object):
                         plt.ylabel('$\mathrm{Photocurrent\ [nA]}$')
                         if addTitles:
                             plt.title(figTitle) #'Photocurrent through time'
+                    
+                        
+                    
                     else:
                         
+                        ### Plot stimulus above photocurrent
                         if 'pulses' in self.__dict__: #verbose > 1 and 
                             if protocol == 'saturate': ### Generalise this!!!
                                 self.plotStimulus(self.phiFuncs[run][phiInd],self.pulses,self.totT,axS,False)
@@ -785,6 +817,11 @@ class Protocol(object):
                             for p in range(1, nPulses): # Plot all pulses but the first
                                 plt.axvspan(delD+(p*(onD+offD)),delD+(p*(onD+offD))+onD,facecolor='y',alpha=0.2)
                         figTitle = "" # Could remove title from loops
+                    
+                        if protocol == 'ramp':
+                            self.plotStimulus(self.phiFuncs[run][phiInd],self.pulses,self.totT,axS,shade=False)
+                            axS.set_xlabel('')
+                    
                     
                     plt.sca(axI)
                     baseline, = axI.plot(t, I_RhO, color=col, linestyle=style, label=label)
@@ -1299,7 +1336,9 @@ class protSinusoid(Protocol):
         #self.dt=dt
         self.fs = np.sort(np.array(self.fs)) # Frequencies [Hz] 
         self.ws = 2 * np.pi * self.fs / (1000) # Frequencies [rads/ms] (scaled from /s to /ms
-        self.sr = min([(1000)/(10*max(self.fs)), self.dt]) # Nyquist frequency - sampling rate (10*f) >= 2*f
+        #self.sr = min([(1000)/(10*max(self.fs)), self.dt]) # Nyquist frequency - sampling rate (10*f) >= 2*f
+        self.sr = max([(10)*max(self.fs), 1000/self.dt]) # Nyquist frequency - sampling rate (10*f) >= 2*f
+        self.dt = 1000/self.sr
         self.nRuns = len(self.ws)
         self.pulseCycles=np.column_stack((self.onDs,self.offDs))
         #self.pulseCycles=np.tile(np.column_stack((self.onDs,self.offDs)),(self.nRuns,1))
@@ -1354,7 +1393,9 @@ class protDualTone(Protocol):
         self.fBs = np.sort(np.array(self.fs)) # Frequencies [Hz] 
         self.wAs = 2 * np.pi * self.fAs / (1000) # Frequencies [rads/ms] (scaled from /s to /ms
         self.wBs = 2 * np.pi * self.fBs / (1000) # Frequencies [rads/ms] (scaled from /s to /ms
-        self.sr = min([(1000)/(10*max(self.fAs,self.fBs)), self.dt]) # Nyquist frequency - sampling rate (10*f) >= 2*f
+        #self.sr = min([(1000)/(10*max(self.fAs,self.fBs)), self.dt]) # Nyquist frequency - sampling rate (10*f) >= 2*f
+        self.sr = max([(10)*max(self.fAs,self.fBs), 1000/self.dt]) # Nyquist frequency - sampling rate (10*f) >= 2*f
+        self.dt = 1000/self.sr
         for fA,fB in itertools.product(self.fAs,self.fBs):
             print(fA+fB)
         self.nRuns = len(self.ws) # Modify...
@@ -1400,7 +1441,10 @@ class protChirp(Protocol):
         #self.fs = np.sort(np.array(self.fs)) # Frequencies [Hz] 
         #self.ws = 2 * np.pi * self.fs / (1000) # Frequencies [rads/ms] (scaled from /s to /ms
         #self.sr = min([1000/(10*max(self.fs)), self.dt]) # Nyquist frequency - sampling rate (10*f) >= 2*f
-        self.sr = min([(1000)/(100*self.fT), self.dt]) # Nyquist frequency - sampling rate (10*f) >= 2*f
+        #self.sr = min([(1000)/(100*self.fT), self.dt]) # Nyquist frequency - sampling rate (10*f) >= 2*f
+        self.sr = max([(10)*max(self.f0,self.fT), 1000/self.dt]) # Nyquist frequency - sampling rate (10*f) >= 2*f
+        self.dt = 1000/self.sr
+        #print(self.sr,self.dt)
         self.nRuns = 1 #len(self.ws)
         self.pulseCycles=np.column_stack((self.onDs,self.offDs))
         self.padDs = np.zeros(self.nRuns)

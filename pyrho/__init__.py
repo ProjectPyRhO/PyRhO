@@ -70,3 +70,12 @@ from .IPythonGUI import *
 #if latexInstalled:
 #    mp.rcParams['text.usetex'] = True
 #plt.rcParams.update(rcdef) # Set back to defaults
+
+if __name__ == '__main__': 
+    try:
+        __IPYTHON__
+    except NameError:
+        pass
+    else: # and IPython. See also get_ipython()
+        print('Loading IPython GUI!')
+        loadGUI()

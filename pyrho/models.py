@@ -505,6 +505,7 @@ class OGmodel(object):
         
         figWidth, figHeight = mp.rcParams['figure.figsize']
         fig = plt.figure(figsize=(figWidth, 1.5*figHeight))
+        #fig = plt.figure()
         gs = plt.GridSpec(3,3)
         
         totT = t[-1]

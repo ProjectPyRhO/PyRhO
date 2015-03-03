@@ -148,8 +148,8 @@ protParams['chirp'].add_many(('phis',[1e14],True,None,None,'photons/s/mm^2'),
                             ('Vs',[-70],True,None,None,'mV'),
                             ('f0',0.1,True,None,None,'Hz'),
                             ('fT',1000,True,None,None,'Hz'),
-                            ('pulses',[[25.,525.]],True,None,None,'ms'),
-                            ('totT', 550.,True,0,None,'ms'),
+                            ('pulses',[[100.,10100.]],True,None,None,'ms'),
+                            ('totT', 10200.,True,0,None,'ms'),
                             ('dt',0.1,True,1e-9,10,'ms'))
                             
 #ProtParamsRamp = Parameters()
