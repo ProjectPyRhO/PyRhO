@@ -33,7 +33,7 @@ def createDir(path):
     
 ##### Plot settings #####
 
-display = 'paper'
+display = 'paper' #'screen' #'paper'
 
 colours = ['b','g','r','c','m','y','k']
 styles = ['-', '--', '-.', ':']
