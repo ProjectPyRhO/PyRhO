@@ -236,7 +236,7 @@ class Protocol(object):
                         elif protocol == 'chirp':
                             t = np.linspace(0.0,onD,(onD*self.sr/1000)+1, endpoint=True)
                             ft = self.f0*(self.fT/self.f0)**(t/end)
-                            phi_t = InterpolatedUnivariateSpline(delD + t, self.A0[0] + 0.5*phiOn*(1-np.cos((ft/1000)*t)), ext=1)
+                            phi_t = InterpolatedUnivariateSpline(delD + t, self.A0[0] + 0.5*phiOn*(np.cos((ft/1000)*t)+1), ext=1) # 0.5*phiOn*(1-np.cos((ft/1000)*t))
                         elif protocol == 'ramp':
                             phi_t = InterpolatedUnivariateSpline([delD,end], [self.phi_ton,phiOn], k=1, ext=1) #[start,delD,end,totT], [0,self.phi_ton,phiOn,0] 
                         elif protocol == 'custom':
@@ -249,8 +249,8 @@ class Protocol(object):
                         #self.phiFuncs[run] = phi_t
                         I_RhO,t,soln = runTrialPhi_t(RhO,V,phi_t,delD,onD,totT,dt)
                         
-                    self.phiFuncs[run][phiInd] = phi_t 
-                        
+                    self.phiFuncs[run][phiInd] = phi_t
+                    
                     if verbose > 1:
                         print('Run=#{}/{}; phiInd=#{}/{}; vInd=#{}/{}; Irange=[{:.3g},{:.3g}]; label=<{}>'.format(run,nRuns,phiInd,len(phis),vInd,len(Vs),I_RhO.min(),I_RhO.max(),label))
                     #####################
