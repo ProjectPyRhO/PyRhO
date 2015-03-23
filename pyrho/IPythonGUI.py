@@ -746,9 +746,39 @@ def loadGUI():
                     #I_{\\phi} = \\bar{g} O \\cdot (v-E)
         elif int(statesArray[m]) == 4: # m==1
             figHTML[m].value = '<img src="4-state-model.png" alt="Four state model" width=180>' #width=200>'
+            eqBox[m].value = """
+                    $$\\dot{C_1} = G_rC_2 + G_{d1}(\\phi)O_1 - G_{a1}(\\phi)C_1$$
+                    $$\\dot{O_1} = G_{a1}(\\phi)C_1 - (G_{d1}+e_{12}(\\phi))O_1 + e_{21}(\\phi)O_2$$
+                    $$\\dot{O_2} = G_{a2}(\\phi)C_2 + e_{12}(\\phi)O_1 - (G_{d2}+e_{21}(\\phi))O_2$$
+                    $$\\dot{C_2} = G_{d2}O_2 - (G_{a2}(\\phi)+G_r)C_2$$
+                    $$C_1+O_1+O_2+C_2=1$$
+                    $$$$
+                    $$G_{a1}(\\phi) = \\phi\\frac{\\epsilon_1 \\sigma_{ret}}{w_{loss}} = k_1\\phi$$
+                    $$G_{a2}(\\phi) = \\phi\\frac{\\epsilon_2 \\sigma_{ret}}{w_{loss}} = k_2\\phi$$
+                    $$e_{12}(\\phi) = e_{12, d} + c_1 log(1+\\phi / \\phi_0)$$
+                    $$e_{21}(\\phi) = e_{21, d} + c_2 log(1+\\phi / \\phi_0)$$
+                    $$$$
+                    $$I_{\\phi} = g (O_1+\\gamma O_2) (v-E)$$
+                    """ #\\frac{\\phi}{\\phi_0}
         else: #int(statesArray[m]) == 6:
             figHTML[m].value = '<img src="http://link.springer.com/static-content/images/46/art%253A10.1007%252Fs10827-012-0431-7/MediaObjects/10827_2012_431_Fig1_HTML.gif" width=220>'
-        
+            eqBox[m].value = """
+                    $$\\dot{C_1} = -a_1(\\phi)C_1 + b_1O_1 + a_6C_2$$
+                    $$\dot{I_1} = a_1(\\phi)C_1 - a_2I_1$$
+                    $$\\dot{O_1} = a_2I_1 - (b_1 + a_3(\\phi))O_1 + b_2(\\phi)O_2$$
+                    $$\\dot{O_2} = a_3(\\phi)O_1 - (b_2(\\phi) + a_4)O_2 + b_3I_2$$
+                    $$\dot{I_2} = -b_3I_2 + b_4(\\phi)C_2$$
+                    $$\\dot{C_2} = a_4O_2 - (b_4(\\phi)+a_6)C_2$$
+                    $$C_1+I_1+O_1+O_2+I_2+C_2=1$$
+                    $$$$
+                    $$a_1(\\phi) = a_{10}(\\phi / \\phi_0)$$
+                    $$a_3(\\phi) = a_{30} + a_{31} \\ln(1 + \\phi / \\phi_0)$$
+                    $$b_2(\\phi) = b_{20} + b_{21} \\ln(1 + \\phi / \\phi_0)$$
+                    $$b_4(\\phi) = b_{40} (\\phi / \\phi_0)$$
+                    $$$$
+                    $$f(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1}$$
+                    $$I_{\\phi} = g (O_1+\\gamma O_2) f(v)(v-E)$$
+                    """
         modelParamBoxes[m] = widgets.Box(children=pBoxArr[m])
         modelNotesBoxes[m] = widgets.HBox(children=[figHTML[m],eqBox[m]])
         #modelNotesBoxes[m].add_class('box-flex1')

@@ -53,7 +53,7 @@ class PhotoCurrent():
         
         ### Load data
         self.I = I                  # Array of photocurrent values
-
+        
         if len(t) == len(I):
             self.t = t              # Corresponding array of time points [ms]
         elif len(t) == 1:           # Assume time step is passed rather than time array
@@ -80,13 +80,25 @@ class PhotoCurrent():
             # self.IPIs = [self.pulses[p,0]-self.pulses[p-1,0] for p in range(1,self.nPulses)]    # start <-> start
         
         ### Record Experimental constants
-        self.V = V                  # Clamp Voltage
+        self.V = V                  # Clamp Voltage [mV]: None if no clamp was used
         self.phi = phi              # Light intensity
         # Future inclusions
         # self.phiLambda            # Wavelength
         # self.pH                   # pH
         # self.Temp                 # Temperature
         self.label = label          # Optional trial label e.g. "saturate"
+        
+        ### Calibrate - correct any offset in experimental recordings
+        if pulses[0][0] > 0: # Check for an initial delay period
+            onInd = self.pulseInds[0,0]
+            trim = int(round(0.1*onInd)) # Discount the first and last 10% of the delay period to remove edge effects
+            zeroCurrent = np.mean(self.I[trim:onInd-trim+1]) # self.I[:onInd]
+            if 0.01*abs(zeroCurrent) > abs(max(self.I) - min(self.I)):
+                self.I -= zeroCurrent
+                if verbose > 1:
+                    print("Photocurrent recalibrated by {} [nA]".format(zeroCurrent))
+                
+        
         
         ### Extract properties from the data
         # Add this to findPeaks
@@ -95,7 +107,8 @@ class PhotoCurrent():
             self.Ipeak = self.Irange[0] # Min
         else:
             self.Ipeak = self.Irange[1] # Max
-        if label == 'saturate':
+        
+        if label == 'saturate':     ##### Remove...
             self.Ipmax = self.Ipeak
         
         self.Iss = findPlateauCurrent(self.I) # self.findPlateaus???
@@ -235,6 +248,7 @@ class ProtocolData():
         
         self.trials = [[[None for v in range(len(Vs))] for p in range(len(phis))] for r in range(nRuns)] # Array of PhotoCurrent objects
         
+        #PD = [{'PC':PC, 'run':run, 'phi':phi, 'V':V, ...},{},... ]
     
     #def __str__:
     #    pass
