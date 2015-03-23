@@ -33,7 +33,7 @@ def createDir(path):
     
 ##### Plot settings #####
 
-display = 'paper' #'screen' #'paper'
+display = 'screen' #'screen' #'paper'
 
 colours = ['b','g','r','c','m','y','k']
 styles = ['-', '--', '-.', ':']
@@ -43,7 +43,7 @@ latexInstalled = False # Change this!
 # http://www.tex.ac.uk/ctan/macros/latex/contrib/pythontex/pythontex_install.py
 if latexInstalled:
     mp.rcParams['text.usetex'] = True
-#plt.rcParams.update(rcdef) # Set back to defaults
+#mp.rcParams.update(rcdef) # Set back to defaults
 
 golden_ratio  = (1.0 + np.sqrt(5)) / 2.0
 
@@ -66,7 +66,7 @@ if display == 'screen':
 elif display == 'paper':
     #http://www.nature.com/nature/authors/gta/3c_Final_artwork.pdf
     #http://www.plosone.org/static/figureSpecifications
-    dpi = 300 # Set DPI 300 - 600
+    dpi = 600 # Set DPI 300 - 600
     saveFigFormat = 'png'#'eps'           # Supported formats: eps, pdf, pgf, png, ps, raw, rgba, svg, svgz.
     #figFormat = 'eps'
     figWidth = 5#7
@@ -85,7 +85,7 @@ else:
 
 mp.rcParams['figure.figsize'] = (figWidth, figHeight) #pylab.rcParams
 mp.rcParams['figure.dpi'] = dpi
-mp.rcParams['savefig.dpi'] = dpi
+#mp.rcParams['savefig.dpi'] = dpi           # http://nbviewer.ipython.org/gist/minrk/3301035
 mp.rcParams['axes.labelsize'] = labelSize
 mp.rcParams['ytick.labelsize'] = tickSize
 mp.rcParams['xtick.labelsize'] = tickSize

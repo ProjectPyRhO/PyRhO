@@ -46,6 +46,7 @@ import numpy as np
 from .parameters import *
 from .loadData import * #import loadData
 from .models import * #import models
+from .simulators import *
 from .protocols import * #import modProtocols
 from .fitStates import * #import fitStates
 from .IPythonGUI import *
@@ -79,3 +80,36 @@ if __name__ == '__main__':
     else: # and IPython. See also get_ipython()
         print('Loading IPython GUI!')
         loadGUI()
+
+def runAll():
+    """Run all protocols with all simulators on all models!"""
+    
+    for model in models: #nStates in [3,4,6]:
+        ### Select generative model
+        RhO = models[model]()
+        #nStates = int(model)
+        #RhO = selectModel(nStates)
+        
+        for sim in simulators:
+            
+            Sim = simulators[sim](RhO)
+            
+            for prot in protocols: #protocol, init in protParams.items():
+                ### Select simulation protocol
+                #protocols = ['custom', 'saturate', 'inwardRect', 'varyPL', 'varyIPI']
+                #protocol = protocols[2] #'varyIPI'#'varyPL' # Set this interactively with radio buttons?
+                
+                print("\nRunning Protocol '{}' on the {}-state model...".format(protocol,nStates))
+                print('--------------------------------------------------------------------------------\n')
+                #Prot = selectProtocol(protocol)
+                Prot = protocols[prot]()
+                Prot.runProtocol(Sim,RhO)
+                
+                # Plot settings
+                #plotPeakRecovery = False
+                #Prot.plotStateVars = False
+                #plotKinetics = False
+                Prot.plotProtocol(Sim,RhO)
+                print("\nFinished!")
+                print('================================================================================\n\n')
+                

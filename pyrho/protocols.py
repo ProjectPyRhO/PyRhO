@@ -109,9 +109,10 @@ class Protocol(object):
         for p in self.__dict__.keys():
             print(p,' = ',self.__dict__[p])
             
-    def runProtocol(self, RhO, verbose=verbose): ### rename to run()
+    def runProtocol(self, Sim, RhO, verbose=verbose): ### rename to run()
         
         self.prepare()
+        Sim.prepare(self.dt)
         
         ### Setup containers and run variables
         label = ""
@@ -222,32 +223,33 @@ class Protocol(object):
 
 
                     ### Run the trial ###
-                    if protocol in squarePulses:
-                        phi_t = InterpolatedUnivariateSpline([delD,delD+onD],[phiOn,phiOn], k=1, ext=1) 
-                        #self.phiFuncs[run][phiInd] = phi_t
+                    start, end = 0.0, totT #0.00, stimD
+                    pStart, pEnd = delD, (delD+onD)
+                    
+                    if self.squarePulse: #protocol in squarePulses: ##### Change after changing 'custom'
+                        phi_t = InterpolatedUnivariateSpline([pStart,pEnd],[phiOn,phiOn], k=1, ext=1) 
+                        I_RhO,t,soln = Sim.runTrial(RhO, nPulses, V,phiOn,delD,onD,offD,padD,dt)
                         
-                        I_RhO,t,soln = runTrial(RhO, nPulses, V,phiOn,delD,onD,offD,padD,dt)
+                    else: # Arbitrary functions of time: phi(t)
                         
-                    else:
-                        start, end = 0.0, (delD+onD) #0.00, stimD
                         if protocol == 'sinusoid':
                             t = np.linspace(0.0,onD,(onD*self.sr/1000)+1, endpoint=True)
-                            phi_t = InterpolatedUnivariateSpline(delD + t, self.A0[0] + 0.5*phiOn*(1-np.cos(self.ws[run]*t)), ext=1) # Extrapolate=0 # A0[r]
+                            phi_t = InterpolatedUnivariateSpline(pStart + t, self.A0[0] + 0.5*phiOn*(1-np.cos(self.ws[run]*t)), ext=1) # Extrapolate=0 # A0[r]
                         elif protocol == 'chirp':
                             t = np.linspace(0.0,onD,(onD*self.sr/1000)+1, endpoint=True)
-                            ft = self.f0*(self.fT/self.f0)**(t/end)
-                            phi_t = InterpolatedUnivariateSpline(delD + t, self.A0[0] + 0.5*phiOn*(np.cos((ft/1000)*t)+1), ext=1) # 0.5*phiOn*(1-np.cos((ft/1000)*t))
+                            ft = self.f0*(self.fT/self.f0)**(t/pEnd)
+                            phi_t = InterpolatedUnivariateSpline(pStart + t, self.A0[0] + 0.5*phiOn*(np.cos((ft/1000)*t)+1), ext=1) # 0.5*phiOn*(1-np.cos((ft/1000)*t))
                         elif protocol == 'ramp':
-                            phi_t = InterpolatedUnivariateSpline([delD,end], [self.phi_ton,phiOn], k=1, ext=1) #[start,delD,end,totT], [0,self.phi_ton,phiOn,0] 
+                            phi_t = InterpolatedUnivariateSpline([pStart,pEnd], [self.phi_ton,phiOn], k=1, ext=1) #[start,delD,end,totT], [0,self.phi_ton,phiOn,0] 
                         elif protocol == 'custom':
                             t = np.linspace(start,end,((end-start)/self.dt)+1, endpoint=True) # sr or dt... Check!!!
-                            phi_t = InterpolatedUnivariateSpline(t, phi_ft)
-                        elif protocol in squarePulses:
+                            #phi_t = InterpolatedUnivariateSpline(t, phi_ft)
+                            phi_t = InterpolatedUnivariateSpline([pStart,pEnd],[phiOn,phiOn], k=1, ext=1) ##### Hack!!!!! Remove when custom is generalised to arbitrary functions
+                        #elif protocol in squarePulses: #self.squarePulse: ##### Change after changing 'custom'
                             #pulses = np.array([[delD+(p*(onD+offD)),delD+(p*(onD+offD))+onD] for p in range(nPulses)])
-                            phi_t = InterpolatedUnivariateSpline([delD,end], [phiOn,phiOn], k=1, ext=1) ### Generalise for nPulses!!!
+                            #phi_t = InterpolatedUnivariateSpline([pStart,pEnd], [phiOn,phiOn], k=1, ext=1) ### Generalise for nPulses!!!
                         
-                        #self.phiFuncs[run] = phi_t
-                        I_RhO,t,soln = runTrialPhi_t(RhO,V,phi_t,delD,onD,totT,dt)
+                        I_RhO,t,soln = Sim.runTrialPhi_t(RhO,V,phi_t,delD,onD,totT,dt)
                         
                     self.phiFuncs[run][phiInd] = phi_t
                     
@@ -269,13 +271,32 @@ class Protocol(object):
                         # minmax = np.less
                     # else: 
                         # minmax = np.greater
-                    if protocol == "saturate":
+                    
+                    if protocol == 'custom': ### This should be within the loops...!!!
+                        #PC.findPeaks()
+                        #PC.peakInds = findPeaks(PC.I,minmax)
+                        #PC.peakInds = findPeaks(PC.I)
+                        #PC.t_peaks = PC.t[peakInds]
+                        #PC.I_peaks = PC.I[peakInds]
+                        peakInds = findPeaks(PC.I)
+                        t_peaks = t[peakInds]
+                        I_peaks = I[peakInds]
+                        
+                        ### Generalise for multiple pulses
+                        #PC.findPlateaus(0,1)
+                        onEndInd = np.searchsorted(t,onD+delD,side="left")
+                        #offInd = PC.pulseInds[0][1]
+                        tFromOffInd = np.searchsorted(t,t[onEndInd]-tFromOff,side="left") ### Move into loops # Generalise!!!
+                        Iss = np.mean(PC.I[tFromOffInd:onEndInd+1])
+                        #self.IssVals[run][phiInd][vInd] = Iss
+                
+                    elif protocol == "saturate":
         #                 startInd = PulseInds[run][phiInd][vInd][0,0]
         #                 print(startInd)
         #                 extOrder = int(onD/dt)
         #                 peakInds = findPeaks(I_RhO,startInd,extOrder)
         #                 Ipeak = I_RhO[peakInds]
-                        if abs(min(I_RhO)) > abs(max(I_RhO)): #(V < RhO.E): # Find Minima
+                        if (V < RhO.E): #abs(min(I_RhO)) > abs(max(I_RhO)): #(V < RhO.E): # Find Minima
                             #peakInds = argrelextrema(I_RhO, np.less, order=extOrder)
                             Ipmax = min(I_RhO)
                             peakInds = [np.argmin(I_RhO)]
@@ -299,20 +320,19 @@ class Protocol(object):
                         if verbose > 1:
                             print("I_peak = {}nA; t_peak={}ms; peakInds={}".format(Ipeak,t[peakInds],peakInds))
                         onEndInd = np.searchsorted(t,onD+delD,side="left")
-                        onEndIndm100 = np.searchsorted(t,t[onEndInd]-100,side="left") # Generalise!!!
-                        Iss = np.mean(I_RhO[onEndIndm100:onEndInd+1])
+                        tFromOffInd = np.searchsorted(t,t[onEndInd]-tFromOff,side="left") # Generalise!!!
+                        Iss = np.mean(I_RhO[tFromOffInd:onEndInd+1])
                         self.IssVals[run][phiInd][vInd] = Iss
                         
-                        
                     elif protocol == 'inwardRect':
-                        #### Calculate Steady-state as the mean of the last 50ms of the On phase
+                        #### Calculate Steady-state as the mean of the last tFromOff ms of the On phase
                         
                         ### Add test to check that steady state has been reached
                         #if abs(dIdt) < tol:
                         
                         onEndInd = np.searchsorted(t,onD+delD,side="left")
-                        onEndIndm50 = np.searchsorted(t,t[onEndInd]-50,side="left") # Generalise!!!
-                        Iss = np.mean(I_RhO[onEndIndm50:onEndInd+1])
+                        tFromOffInd = np.searchsorted(t,t[onEndInd]-tFromOff,side="left") # Generalise!!!
+                        Iss = np.mean(I_RhO[tFromOffInd:onEndInd+1])
                         self.IssVals[run][phiInd][vInd] = Iss
                         startInd = self.PulseInds[run][phiInd][vInd][0,0] # Start of first pulse
                         extOrder = int(round(onD/dt))
@@ -330,7 +350,6 @@ class Protocol(object):
                             self.IpIPI[run] = I_RhO[peakInds[0]] #-1 peaks
                             self.tpIPI[run] = t[peakInds[0]] # tPeaks
                     
-                    
                     else: ### Check what this should apply to...
                         startInd = self.PulseInds[run][phiInd][vInd][0,0] # Start of first pulse
                         extOrder = int(round(onD/dt))
@@ -341,6 +360,7 @@ class Protocol(object):
                         ###     plt.figure(Ifig.number)
                         ###     fitPeaks(t[peakInds], I_RhO[peakInds], expDecay, p0IPI, '$I_{{peaks}} = {:.3}e^{{-t/{:g}}} {:+.3}$') #(1,100,1)
                         ###     plt.legend(loc='best')
+                        
                     self.IpInds[run][phiInd][vInd] = peakInds
                     self.IpVals[run][phiInd][vInd] = I_RhO[peakInds]
                     
@@ -380,7 +400,7 @@ class Protocol(object):
         
 
         
-        if self.saveData:
+        if self.saveData:           ##### This should all be PD!!!
             if protocol == 'custom': ### This should be within the loops...!!!
                 #PC.findPeaks()
                 #PC.peakInds = findPeaks(PC.I,minmax)
@@ -388,11 +408,13 @@ class Protocol(object):
                 PC.t_peaks = PC.t[peakInds]
                 PC.I_peaks = PC.I[peakInds]
                 #PC.findPlateaus(0,1)
-                offInd = PC.pulseInds[0][1]
-                windowStart = np.searchsorted(t,t[offInd]-50,side="left") ### Move into loops # Generalise!!!
-                PC.Iss = np.mean(PC.I[windowStart:offInd+1])              ### Move into loops
+                #offInd = PC.pulseInds[0][1]
+                #tFromOffInd = np.searchsorted(t,t[offInd]-tFromOff,side="left") ### Move into loops # Generalise!!!
+                #PC.Iss = np.mean(PC.I[tFromOffInd:offInd+1])              ### Move into loops
         #         popt = fitPeaks(t[peakInds[0]:offInd+1], PC.I[peakInds[0]:offInd+1], expDecay, p0inact, '$I_{{inact}} = {:.3}e^{{-t/{:g}}} {:+.3}$','')
         #         PC.Iss = popt[2]
+                #PC.IssVals = self.IssVals
+                
             elif protocol == 'saturate':
                 #PC.Ipeak = Ipeak
                 PC.Ipmax = Ipmax
@@ -579,7 +601,7 @@ class Protocol(object):
     
     
     
-    def plotProtocol(self, RhO, verbose=verbose): # Remove RhO as an argument? # Rename to plot()
+    def plotProtocol(self, Sim, RhO, verbose=verbose): # Remove RhO as an argument? # Rename to plot()
         
         protocol = self.protocol
         phis=self.phis
@@ -897,8 +919,8 @@ class Protocol(object):
                         if protocol == 'inwardRect':
                             #### Calculate Steady-state as the mean of the last 50ms of the On phase
                             onEndInd = np.searchsorted(t,onD+delD,side="left")
-                            onEndIndm50 = np.searchsorted(t,t[onEndInd]-50,side="left") # Generalise!!!
-                            Iss = np.mean(I_RhO[onEndIndm50:onEndInd+1])
+                            tFromOffInd = np.searchsorted(t,t[onEndInd]-tFromOff,side="left") # Generalise!!!
+                            Iss = np.mean(I_RhO[tFromOffInd:onEndInd+1])
                             IssVals[run][phiInd][vInd] = Iss
                     
                     ### Plot additional elements for varying pulses or IPIs
@@ -924,14 +946,14 @@ class Protocol(object):
         #                 for p in range(0, nPulses):
                         #plt.hlines(y=(run+1)*1e-8,xmin=delD,xmax=delD+pulseCycles[run,0],linewidth=3,color='b')
                     
-                    if verbose > 2 or self.plotStateVars: #len(Vs) == 1: 
+                    if (verbose > 2 or self.plotStateVars): # and Sim.simulator != 'NEURON': ##### Hack!!!!! #len(Vs) == 1: 
                         if protocol == 'varyPL':
                             pulses = np.array([[0,self.pDs[run]]])+self.delDs[run]
                         else:
-                            pulses = self.pulses
+                            pulses = self.pulses                        
                         soln = multisoln[run][phiInd][vInd]
                         RhO.plotStates(t,soln,pulses,RhO.labels,phiOn,IpInds[run][phiInd][vInd],'states{}s-{}-{}-{}'.format(RhO.nStates,run,phiInd,vInd))
-                    
+                
 
 
                     #display(Ifig) # Show figure inline 
@@ -1213,6 +1235,7 @@ class Protocol(object):
             Ifig.savefig(fDir+protocol+dataTag+"."+saveFigFormat, bbox_extra_artists=(lgd,), bbox_inches='tight', format=saveFigFormat) # Use this to save figures when legend is beside the plot
         else:
             Ifig.savefig(fDir+protocol+dataTag+"."+saveFigFormat, format=saveFigFormat)
+        
         return Ifig.number
 
             
@@ -1254,7 +1277,7 @@ class protCustom(Protocol):
         self.nRuns = 1 #nRuns ### Reconsider this...
         self.phis.sort()
         self.Vs.sort(reverse=True)
-
+        
         
 class protStep(Protocol):
     # Heaviside Pulse
@@ -1696,6 +1719,8 @@ protocols = {'custom': protCustom, 'step': protStep, 'saturate': protSaturate, '
 # E.g. 
 # protocols['varyPL']([1e12], [-70], 25, [1,2,3,5,8,10,20], 100, 0.1)
 
+#squarePulses = [protocol for protocol in protocols if protocol.squarePulse]
+#arbitraryPulses = [protocol for protocol in protocols if not protocol.squarePulse]
 #squarePulses = {'custom': True, 'saturate': True, 'step': True, 'inwardRect': True, 'varyPL': True, 'varyIPI': True}
 #arbitraryPulses = {'custom': True, 'sinusoid': True, 'chirp': True, 'ramp':True} # Move custom here
 #smallSignalAnalysis = {'sinusoid': True, 'step': True, 'saturate': True} 

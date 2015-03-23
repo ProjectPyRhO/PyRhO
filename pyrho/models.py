@@ -249,7 +249,10 @@ def plotLight(times, ax=None, light='shade', lam=470, alpha=0.2): #=plt.gcf()
     
 def round_sig(x, sig=3):
     """Round a float to n significant digits (default is 3). """
-    return round(x, sig-int(np.floor(np.log10(abs(x))))-1)
+    if abs(x) == 0 or np.isinf(x) or np.isnan(x):
+        return x
+    else:
+        return round(x, sig-int(np.floor(np.log10(abs(x))))-1)
 
 
 def calcIssfromfV(V,v0,v1,E):#,G): # Added E as another parameter to fit
@@ -301,112 +304,112 @@ def calcIssfromfV(V,v0,v1,E):#,G): # Added E as another parameter to fit
     # return popt, pcov, peakEq
 
 
-def runTrial(RhO, nPulses, V,phiOn,delD,onD,offD,padD,dt): #dt; a1,a3,b2,b4,I_RhO
-    """Main routine for simulating a pulse train"""
+# def runTrial(RhO, nPulses, V,phiOn,delD,onD,offD,padD,dt): #dt; a1,a3,b2,b4,I_RhO
+    # """Main routine for simulating a pulse train"""
     
-    if verbose >= 0:
-        print("Simulating experiment at V = {:+}mV, phi = {:.3g}photons/s/mm^2, pulse: [delD={:.4g}ms; onD={:.4g}ms; offD={:.4g}ms]".format(V,phiOn,delD,onD,offD+padD))
+    # if verbose >= 0:
+        # print("Simulating experiment at V = {:+}mV, phi = {:.3g}photons/s/mm^2, pulse: [delD={:.4g}ms; onD={:.4g}ms; offD={:.4g}ms]".format(V,phiOn,delD,onD,offD+padD))
     
-    ### Delay phase (to allow the system to settle)
-    phi = 0
-    RhO.initStates(phi) # Reset state and time arrays from previous runs
-    start, end = 0.00, delD
-    t_del = np.linspace(start,end,((end-start)/dt)+1, endpoint=True) # Time vector
-    soln = odeint(RhO.solveStates, RhO.s_0, t_del, args=(None,), Dfun=RhO.jacobian) #delay
-    t = t_del
-    RhO.storeStates(soln,t)
+    # ### Delay phase (to allow the system to settle)
+    # phi = 0
+    # RhO.initStates(phi) # Reset state and time arrays from previous runs
+    # start, end = 0.00, delD
+    # t_del = np.linspace(start,end,((end-start)/dt)+1, endpoint=True) # Time vector
+    # soln = odeint(RhO.solveStates, RhO.s_0, t_del, args=(None,), Dfun=RhO.jacobian) #delay
+    # t = t_del
+    # RhO.storeStates(soln,t)
     
-    for p in range(0, nPulses):
+    # for p in range(0, nPulses):
         
-        ### Light on phase
-        RhO.s_on = soln[-1,:] # [soln[-1,0], soln[-1,1], soln[-1,2], soln[-1,3], soln[-1,4], soln[-1,5]]
-        start = end
-        end = start + onD
-        t = np.linspace(start,end,((end-start)/dt)+1, endpoint=True)
-        onInd = len(RhO.t) - 1  # Start of on-phase
-        offInd = onInd + len(t) - 1 # Start of off-phase
-        RhO.pulseInd = np.vstack((RhO.pulseInd,[onInd,offInd]))
-        # Turn on light and set transition rates
-        phi = phiOn  # Light flux
-        RhO.setLight(phi)
-        if verbose > 1:
-            print("On-phase initial conditions:{}".format(RhO.s_on))
-        soln = odeint(RhO.solveStates, RhO.s_on, t, args=(None,), Dfun=RhO.jacobian)
-        RhO.storeStates(soln[1:],t[1:]) # Skip first values to prevent duplicating initial conditions and times
+        # ### Light on phase
+        # RhO.s_on = soln[-1,:] # [soln[-1,0], soln[-1,1], soln[-1,2], soln[-1,3], soln[-1,4], soln[-1,5]]
+        # start = end
+        # end = start + onD
+        # t = np.linspace(start,end,((end-start)/dt)+1, endpoint=True)
+        # onInd = len(RhO.t) - 1  # Start of on-phase
+        # offInd = onInd + len(t) - 1 # Start of off-phase
+        # RhO.pulseInd = np.vstack((RhO.pulseInd,[onInd,offInd]))
+        # # Turn on light and set transition rates
+        # phi = phiOn  # Light flux
+        # RhO.setLight(phi)
+        # if verbose > 1:
+            # print("On-phase initial conditions:{}".format(RhO.s_on))
+        # soln = odeint(RhO.solveStates, RhO.s_on, t, args=(None,), Dfun=RhO.jacobian)
+        # RhO.storeStates(soln[1:],t[1:]) # Skip first values to prevent duplicating initial conditions and times
         
-        ### Light off phase
-        RhO.s_off = soln[-1,:] # [soln[-1,0], soln[-1,1], soln[-1,2], soln[-1,3], soln[-1,4], soln[-1,5]]
-        start = end
-        end = start + offD
-        if (p+1) == nPulses: # Add (or subtract) extra time after (during) the off phase
-            end += padD
-        t = np.linspace(start,end,((end-start)/dt)+1, endpoint=True) # endpoint=True
-        # Turn off light and set transition rates
-        phi = 0  # Light flux
-        RhO.setLight(phi)
-        if verbose > 1:
-            print("Off-phase initial conditions:{}".format(RhO.s_off))
-        soln = odeint(RhO.solveStates, RhO.s_off, t, args=(None,), Dfun=RhO.jacobian)
-        RhO.storeStates(soln[1:],t[1:]) # Skip first values to prevent duplicating initial conditions and times
+        # ### Light off phase
+        # RhO.s_off = soln[-1,:] # [soln[-1,0], soln[-1,1], soln[-1,2], soln[-1,3], soln[-1,4], soln[-1,5]]
+        # start = end
+        # end = start + offD
+        # if (p+1) == nPulses: # Add (or subtract) extra time after (during) the off phase
+            # end += padD
+        # t = np.linspace(start,end,((end-start)/dt)+1, endpoint=True) # endpoint=True
+        # # Turn off light and set transition rates
+        # phi = 0  # Light flux
+        # RhO.setLight(phi)
+        # if verbose > 1:
+            # print("Off-phase initial conditions:{}".format(RhO.s_off))
+        # soln = odeint(RhO.solveStates, RhO.s_off, t, args=(None,), Dfun=RhO.jacobian)
+        # RhO.storeStates(soln[1:],t[1:]) # Skip first values to prevent duplicating initial conditions and times
         
-    ### Calculate photocurrent
-    I_RhO = RhO.calcPhotocurrent(V, RhO.states)
-    states,t = RhO.getStates()
+    # ### Calculate photocurrent
+    # I_RhO = RhO.calcPhotocurrent(V, RhO.states)
+    # states,t = RhO.getStates()
     
     
     
-    return I_RhO, t, states
+    # return I_RhO, t, states
     
 
-def runTrialPhi_t(RhO,V,phi_t,delD,stimD,totT,dt): #dt; a1,a3,b2,b4,I_RhO
-    """Main routine for simulating a pulse train"""
-    # Add interpolation of values for phi(t) to initialisation phi_t = interp1d(t,sin(w*t),kind='cubic')
-    #print("Simulating experiment at V = {:+}mV, phi = {:.3g}photons/s/mm^2, pulse = {}ms".format(V,phiOn,onD))
+# def runTrialPhi_t(RhO,V,phi_t,delD,stimD,totT,dt): #dt; a1,a3,b2,b4,I_RhO
+    # """Main routine for simulating a pulse train"""
+    # # Add interpolation of values for phi(t) to initialisation phi_t = interp1d(t,sin(w*t),kind='cubic')
+    # #print("Simulating experiment at V = {:+}mV, phi = {:.3g}photons/s/mm^2, pulse = {}ms".format(V,phiOn,onD))
     
-    ### delD and stimD are only used for finding pulse indexes - could be removed along with separate delay phase?!!!
-    ### Combine this with the original runTrial
+    # ### delD and stimD are only used for finding pulse indexes - could be removed along with separate delay phase?!!!
+    # ### Combine this with the original runTrial
     
-    ### Delay phase (to allow the system to settle)
-    phi = 0
-    RhO.initStates(phi) # Reset state and time arrays from previous runs
-    start, end = 0.00, delD
-    t_del = np.linspace(start,end,((end-start)/dt)+1, endpoint=True) # Time vector
-    soln = odeint(RhO.solveStates, RhO.s_0, t_del, args=(None,), Dfun=RhO.jacobian) #delay # odeint(RhO.solveStates, RhO.s_0, t_del, Dfun=RhO.jacobian)
-    t = t_del
-    RhO.storeStates(soln,t)
+    # ### Delay phase (to allow the system to settle)
+    # phi = 0
+    # RhO.initStates(phi) # Reset state and time arrays from previous runs
+    # start, end = 0.00, delD
+    # t_del = np.linspace(start,end,((end-start)/dt)+1, endpoint=True) # Time vector
+    # soln = odeint(RhO.solveStates, RhO.s_0, t_del, args=(None,), Dfun=RhO.jacobian) #delay # odeint(RhO.solveStates, RhO.s_0, t_del, Dfun=RhO.jacobian)
+    # t = t_del
+    # RhO.storeStates(soln,t)
 
-    ### Stimulation phase
-    RhO.s_on = soln[-1,:] # [soln[-1,0], soln[-1,1], soln[-1,2], soln[-1,3], soln[-1,4], soln[-1,5]]
-    start = end
-    end = totT #start + stimD
-    t = np.linspace(start,end,((end-start)/dt)+1, endpoint=True)
-    onInd = len(RhO.t) - 1  # Start of on-phase
-    #offInd = onInd + len(t) - 1 # Start of off-phase
-    offInd = onInd + int(round(stimD/dt)) # Consider rounding issues...
-    RhO.pulseInd = np.vstack((RhO.pulseInd,[onInd,offInd]))
-    # Turn on light and set transition rates
-    #phi = phiOn  # Light flux
-    #RhO.setLight(phi)
-    if verbose > 1:
-        print("On-phase initial conditions:{}".format(RhO.s_on))
-        #print('Pulse = [{}, {}]'.format(onInd,offInd))
-    #print(RhO.pulseInd)
+    # ### Stimulation phase
+    # RhO.s_on = soln[-1,:] # [soln[-1,0], soln[-1,1], soln[-1,2], soln[-1,3], soln[-1,4], soln[-1,5]]
+    # start = end
+    # end = totT #start + stimD
+    # t = np.linspace(start,end,((end-start)/dt)+1, endpoint=True)
+    # onInd = len(RhO.t) - 1  # Start of on-phase
+    # #offInd = onInd + len(t) - 1 # Start of off-phase
+    # offInd = onInd + int(round(stimD/dt)) # Consider rounding issues...
+    # RhO.pulseInd = np.vstack((RhO.pulseInd,[onInd,offInd]))
+    # # Turn on light and set transition rates
+    # #phi = phiOn  # Light flux
+    # #RhO.setLight(phi)
+    # if verbose > 1:
+        # print("On-phase initial conditions:{}".format(RhO.s_on))
+        # #print('Pulse = [{}, {}]'.format(onInd,offInd))
+    # #print(RhO.pulseInd)
     
-    #soln, out = odeint(RhO.solveStates, RhO.s_on, t, args=(phi_t,), Dfun=RhO.jacobian, full_output=True)
-    #print(out)
-    soln = odeint(RhO.solveStates, RhO.s_on, t, args=(phi_t,), Dfun=RhO.jacobian)
-    RhO.storeStates(soln[1:],t[1:]) # Skip first values to prevent duplicating initial conditions and times
-    if verbose > 1:
-        print('Pulse = [{}, {}]'.format(RhO.t[onInd],RhO.t[offInd]))
+    # #soln, out = odeint(RhO.solveStates, RhO.s_on, t, args=(phi_t,), Dfun=RhO.jacobian, full_output=True)
+    # #print(out)
+    # soln = odeint(RhO.solveStates, RhO.s_on, t, args=(phi_t,), Dfun=RhO.jacobian)
+    # RhO.storeStates(soln[1:],t[1:]) # Skip first values to prevent duplicating initial conditions and times
+    # if verbose > 1:
+        # print('Pulse = [{}, {}]'.format(RhO.t[onInd],RhO.t[offInd]))
     
-    ### Calculate photocurrent
-    I_RhO = RhO.calcPhotocurrent(V, RhO.states)
-    states,t = RhO.getStates()
+    # ### Calculate photocurrent
+    # I_RhO = RhO.calcPhotocurrent(V, RhO.states)
+    # states,t = RhO.getStates()
     
-    # if verbose:
-        # print("Run={}, I_min={}, I_max={}, label={}".format(run,I_RhO.min(),I_RhO.max(),label))
+    # # if verbose:
+        # # print("Run={}, I_min={}, I_max={}, label={}".format(run,I_RhO.min(),I_RhO.max(),label))
     
-    return I_RhO, t, states
+    # return I_RhO, t, states
 
 def expDecay(t, a, b, c):
     return a * np.exp(-t/b) + c
@@ -667,6 +670,9 @@ class OGmodel(object):
             axS0 = fig.add_subplot(gs[2,0])
             initialStates = self.s_0 * 100
             #print(initialStates,labels)
+            if verbose > 1:
+                pct = {l:s for l,s in zip(labels,sizes)}
+                print('Initial state occupancies (%):',sorted(pct.items(),key=lambda x: labels.index(x[0])))
             patches, texts, autotexts = plt.pie(initialStates, labels=labels, autopct='%1.1f%%', startangle=90, shadow=False) #, explode=explode
             for lab in range(len(labels)):
                 texts[lab].set_fontsize(mp.rcParams['ytick.labelsize'])
@@ -685,6 +691,9 @@ class OGmodel(object):
                 sizes = states[pInd,:] * 100
                 #sizes = [s*100 for s in sizes]
                 #explode = (0,0,0.1,0.1,0,0)
+                if verbose > 1:
+                    pct = {l:s for l,s in zip(labels,sizes)}
+                    print('Peak state occupancies (%):',sorted(pct.items(),key=lambda x: labels.index(x[0])))
                 patches, texts, autotexts = plt.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90, shadow=False)#, explode=explode)
                 for lab in range(len(labels)):
                     texts[lab].set_fontsize(mp.rcParams['ytick.labelsize'])
@@ -700,6 +709,9 @@ class OGmodel(object):
                 steadyStates = self.calcSteadyState(phiOn) * 100 # Convert array of proportions to %
                 #steadyStates = [s*100 for s in steadyStates]
                 #explode = (0,0,0.1,0.1,0,0)
+                if verbose > 1:
+                    pct = {l:s for l,s in zip(labels,sizes)}
+                    print('Steady state occupancies (%):',sorted(pct.items(),key=lambda x: labels.index(x[0])))
                 patches, texts, autotexts = plt.pie(steadyStates, labels=labels, autopct='%1.1f%%', startangle=90, shadow=False) #, explode=explode
                 for lab in range(len(labels)):
                     texts[lab].set_fontsize(mp.rcParams['ytick.labelsize'])
@@ -724,6 +736,7 @@ class RhO_3states(OGmodel):
     nStates = 3
     hasAnalyticSoln = True
     labels = ['$C$','$O$','$D$']
+    stateVars = ['C','O','D']
     connect = [[0,1,0],
                [0,0,1],
                [1,0,0]]
@@ -956,6 +969,7 @@ class RhO_4states(OGmodel):
     nStates = 4
     hasAnalyticSoln = False
     labels = ['$C_1$','$O_1$','$O_2$','$C_2$']
+    stateVars = ['C1','O1','O2','C2']
     connect = [[0,1,0,0],
                [1,0,1,0],
                [0,1,0,1],
@@ -1116,7 +1130,10 @@ class RhO_6states(OGmodel):
     # Class attributes
     nStates = 6
     hasAnalyticSoln = False
-    labels = ['$s_1$','$s_2$','$s_3$','$s_4$','$s_5$','$s_6$']
+    #labels = ['$s_1$','$s_2$','$s_3$','$s_4$','$s_5$','$s_6$']
+    labels = ['$C_1$','$I_1$','$O_1$','$O_2$','$I_2$','$C_2$']
+    # stateVars = ['s1','s2','s3','s4','s5','s6'] # 
+    stateVars = ['C1','I1','O1','O2','I2','C2'] #['C1','I1','O1','O2','I2','C2']
     connect = [[0,1,0,0,0,0], # s_1 --> s_i=1...6
                [0,0,1,0,0,0], # s_2 -->
                [1,0,0,1,0,0],
@@ -1303,3 +1320,4 @@ class RhO_6states(OGmodel):
         return s3 + self.gam * s4
         
 
+models = {'3': RhO_3states, '4': RhO_4states, '6': RhO_6states}

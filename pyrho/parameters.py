@@ -2,6 +2,18 @@
 #verbose = 1
 
 
+### Fitting Hyper parameters
+
+# Time window for steady-state averaging
+# IPI curve initial parameters
+# fV initial parameters
+# Kinetics initial parameters
+# Optimisation routine initial parameters
+# ...
+
+
+
+
 ### Hyperparameters
 
 # Optimisation initialisation values
@@ -12,6 +24,9 @@ p0IPI = (0.5,4000,-1) # a*exp(-t/b)+c #(-1e-8,400,-1e-7)
 p0on = (-0.1,2,-1) # a*exp(-t/b)+c
 p0inact = (-0.5,25,-0.5) # a*exp(-t/b)+c
 p0off = (-0.1,7.5,-0.1,35,-0.1) # a1*exp(-t/tau1)+a2*exp(-t/tau2)+I_ss
+
+tFromOff = 50  # Time [ms] to start the sample window before the end of the pulse for Iss
+
 
 
 ### Default model parameters
@@ -27,52 +42,58 @@ modelList = list(modelParams) # List of keys: list(modelParams.keys()) #This cou
 
 #d3sp = Parameters()
 #                       (Name,    Value,  Vary, Min,  Max,  Expr=Units)
-modelParams['3'].add_many(('E',     0,      True, -1000,1000, 'mV'),
-                          ('k',     5.5e-15,True, 0.0,  1e15, None),
-                          ('Gd',    0.0909, True, 0.0,  None, '/ms'),
-                          ('Gr0',   1/5000, True, 0.0,  None, '/ms'),
-                          ('Gr1',   1/165,  True, 0.0,  None,  '/ms'),
-                          #('phi0',  1e15,   True, None, None, None),
-                          #('phiSat',1e20,   True, None, None, None),
-                          ('g',     1.67e4, True, 0.0,  None, 'pS'))
+modelParams['3'].add_many(
+                #('phi0',  1e15,   True, None, None, None),
+                #('phiSat',1e20,   True, None, None, None),
+                ('E',     0,      True, -1000,1000, 'mV'),
+                ('g',     1.67e4, True, 0.0,  1e15, 'pS'),
+                ('k',     5.5e-15,True, 0.0,  1e15, None),
+                ('Gd',    0.0909, True, 0.0,  None, '/ms'),
+                ('Gr0',   1/5000, True, 0.0,  None, '/ms'),
+                ('Gr1',   1/165,  True, 0.0,  None, '/ms'))
+                
+
 ### Alternatively add another field
 #d3sp['g'].units = 'pS'
 #print(d3sp['g'].units)
 #d4sp = Parameters()
-modelParams['4'].add_many(('E',     0,      True, -1000,1000, 'mV'),
-              ('gam',   0.05,   True, 0.0,  1e15, None),
-              ('phi0',  1e14,   True, None, None, 'photons/s/mm^2'),
-              ('k1',    0.05,    True, 0.0,  1e3, None), ### Add bounds checking?
-              ('k2',    0.015,   True, 0.0,  1e3, None),
-              ('Gr',    0.0004, True, 0.0,  None, '/ms'),
-              ('Gd1',   0.11,   True, 0.0,  None, '/ms'),
-              ('Gd2',   0.025,  True, 0.0,  None, '/ms'),
-              ('c1',    0.03,   True, 0.0,  None, None),
-              ('c2',    0.0115, True, 0.0,  None, None),
-              ('e12d',  0.01,   True, 0.0,  None, '/ms'),
-              ('e21d',  0.015,  True, 0.0,  None, '/ms'),
-              ('g',     1.67e4, True, 0.0,  None, 'pS'))
+modelParams['4'].add_many(
+                ('phi0',  1e14,   True, None, None, 'photons/s/mm^2'),
+                ('E',     0,      True, -1000,1000, 'mV'),
+                ('gam',   0.05,   True, 0.0,  1e9,  None),
+                ('g',     1.67e4, True, 0.0,  1e15, 'pS'),
+                ('k1',    0.05,   True, 0.0,  1e3,  None), ### Add bounds checking?
+                ('k2',    0.015,  True, 0.0,  1e3,  None),
+                ('c1',    0.03,   True, 0.0,  None, None),
+                ('c2',    0.0115, True, 0.0,  None, None),
+                ('e12d',  0.01,   True, 0.0,  None, '/ms'),
+                ('e21d',  0.015,  True, 0.0,  None, '/ms'),
+                ('Gd1',   0.11,   True, 0.0,  None, '/ms'),
+                ('Gd2',   0.025,  True, 0.0,  None, '/ms'),
+                ('Gr',    0.0004, True, 0.0,  None, '/ms'))
+              
 
 #d6sp = Parameters()
-modelParams['6'].add_many(('E',     0,      True, -1000,1000, 'mV'),
-              ('gam',   0.05,   True,  0.0, 1e15, None),
-              ('phi0',  1e14,   True, None, None, 'photons/s/mm^2'),
-              #('A',     31192,  True, 0.0,  1e15, 'um^2'),
-              #('gbar',  2.4,    True, 0.0,  1e15, 'pS/um^2'),
-              ('g',     75000,  True, 0.0,  1e15, 'pS'),
-              ('v0',    43,     True, None, None, 'mV'),
-              ('v1',    4.1,    True, None, None, 'mV'),
-              ('a10',   5,      True, 0.0,  None, '/ms'),
-              ('a2',    1,      True, 0.0,  None, '/ms'),
-              ('a30',   0.022,  True, 0.0,  None, '/ms'),
-              ('a31',   0.0135, True, 0.0,  None, '/ms'),
-              ('a4',    0.025,  True, 0.0,  None, '/ms'),
-              ('a6',    0.00033,True, 0.0,  None, '/ms'),
-              ('b1',    0.13,   True, 0.0,  None, '/ms'),
-              ('b20',   0.011,  True, 0.0,  None, '/ms'),
-              ('b21',   0.0048, True, 0.0,  None, '/ms'),
-              ('b3',    1,      True, 0.0,  None, '/ms'),
-              ('b40',   1.1,    True, 0.0,  None, '/ms'))
+modelParams['6'].add_many(
+                ('phi0',  1e14,   True, None, None, 'photons/s/mm^2'),
+                ('E',     0,      True, -1000,1000, 'mV'),
+                ('gam',   0.05,   True, 0.0,  1e9,  None),
+                ('g',     75000,  True, 0.0,  1e15, 'pS'),
+                #('A',     31192,  True, 0.0,  1e15, 'um^2'),
+                #('gbar',  2.4,    True, 0.0,  1e15, 'pS/um^2'),
+                ('v0',    43,     True, None, None, 'mV'),
+                ('v1',    4.1,    True, None, None, 'mV'),
+                ('a10',   5,      True, 0.0,  None, '/ms'),
+                ('a2',    1,      True, 0.0,  None, '/ms'),
+                ('a30',   0.022,  True, 0.0,  None, '/ms'),
+                ('a31',   0.0135, True, 0.0,  None, '/ms'),
+                ('a4',    0.025,  True, 0.0,  None, '/ms'),
+                ('a6',    0.00033,True, 0.0,  None, '/ms'),
+                ('b1',    0.13,   True, 0.0,  None, '/ms'),
+                ('b20',   0.011,  True, 0.0,  None, '/ms'),
+                ('b21',   0.0048, True, 0.0,  None, '/ms'),
+                ('b3',    1,      True, 0.0,  None, '/ms'),
+                ('b40',   1.1,    True, 0.0,  None, '/ms'))
 
 
 
@@ -84,6 +105,26 @@ unitPrefixes = {} ### Use a units library to convert between different prefixes
 
 ####|###10####|###20####|###30####|###40####|###50####|###60####|###70####|###80
 
+
+
+simParams = OrderedDict([('Python',Parameters()), ('NEURON',Parameters()), ('Brian',Parameters())])
+simList = list(simParams)
+
+simParams['Python'].add_many(('dt',0.1,True,None,None,'ms'))
+
+simParams['NEURON'].add_many(('v_init',-65,True,None,None,'mV'),
+                             ('CVODE',False,True,False,True,None),
+                             ('dt',0.1,True,None,None,'ms'),
+                             ('nseg',3,True,1,1e9,None),
+                             ('expProb',1.0,True,0.,1.,None),
+                             ('cell',['minimal.hoc'],True,None,None,None), #'morphology'
+                             ('Vclamp',True,True,False,True,None))#,
+                             #('Vhold',-70,True,-200,200,'mV')) # Set by runTrial
+# atol
+
+#simParams['Brian'].add_many()
+                             
+                             
 ### Select simulation protocol
 #protocols = ['custom', 'saturate', 'inwardRect', 'varyPL', 'varyIPI']
 #protocol = protocols[2] #'varyIPI'#'varyPL' # Set this interactively with radio buttons?
@@ -108,8 +149,8 @@ protParams = OrderedDict([('custom',Parameters()), ('step',Parameters()), ('sinu
 
 protList = list(protParams) # List of keys #This could be removed
 
-squarePulses = ['custom', 'saturate', 'step', 'inwardRect', 'varyPL', 'varyIPI'] #{'custom': True, 'saturate': True, 'step': True, 'inwardRect': True, 'varyPL': True, 'varyIPI': True}
-arbitraryPulses = ['custom', 'sinusoid', 'chirp', 'ramp'] #{'custom': True, 'sinusoid': True, 'chirp': True, 'ramp':True} # Move custom here
+#squarePulses = ['custom', 'saturate', 'step', 'inwardRect', 'varyPL', 'varyIPI'] #{'custom': True, 'saturate': True, 'step': True, 'inwardRect': True, 'varyPL': True, 'varyIPI': True}
+#arbitraryPulses = ['custom', 'sinusoid', 'chirp', 'ramp'] #{'custom': True, 'sinusoid': True, 'chirp': True, 'ramp':True} # Move custom here
 smallSignalAnalysis = ['sinusoid', 'step', 'saturate'] #{'sinusoid': True, 'step': True, 'saturate': True} 
 
 #ProtParamsCustom = Parameters()
@@ -208,3 +249,8 @@ protParams['varyIPI'].add_many(('phis',[1e14],True,None,None,'photons/s/mm^2'),
 #{key:i for key in protInDict, i++}
 
 #protList = ['custom', 'step', 'sinusoid', 'chirp', 'ramp', 'saturate', 'inwardRect', 'varyPL', 'varyIPI']
+
+
+
+
+

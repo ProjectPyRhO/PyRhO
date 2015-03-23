@@ -47,7 +47,7 @@ def loadMatFile(filename):
 
 
 class PhotoCurrent():
-    """Photocurrent data storage class"""
+    """Data storage class for an individual Photocurrent and its associated properties"""
     
     def __init__(self, I, t, phi, V, pulses, label=None):
         
@@ -106,20 +106,29 @@ class PhotoCurrent():
     def printSummary(self):
         """Print out summary details of the photocurrent"""
         pass
-        
+    
+    ### Move findPeaks from models.py to here?
     # def findPeaks(self): ### See findPeaks in models.py
         # self.peakInds = findPeaks(self.I) ### This needs some careful tweaking for real data...
         # self.t_peaks = self.t[self.peakInds]
         # self.I_peaks = self.I[self.peakInds]
         
-    def findPlateaus(self, pulse=0, method=0, window=10): ### c.f. findPlateauCurrent() in models.py
+    def findPlateaus(self, pulse=0, method=0, window=tFromOff): ### c.f. findPlateauCurrent() in models.py
         # Find plateau
+        
+        assert(0 <= pulse < self.nPulses)
+        
         offInd = self.pulseInds[pulse][1] #np.searchsorted(t,onD+delD,side="left")
-
+        
+        if self.onDs[pulse] < window:
+            raise ValueError('Error: The plateau buffer must be shorter than the on phase!')
+            #windowInd = int(round(p*len(I_phi))) #np.searchsorted(t,t[onEndInd]-100,side="left") # Generalise
+            #I_ss = np.mean(I_phi[-windowInd:])
+        
         if method == 0: # Empirical
             # Calculate Steady-state as the mean of the last 50ms of the On phase
-            windowStart = np.searchsorted(t,t[offInd]-50,side="left")
-            self.Iss = np.mean(self.I[windowStart:offInd+1])
+            tFromOffInd = np.searchsorted(t,t[offInd]-window,side="left")
+            self.Iss = np.mean(self.I[tFromOffInd:offInd+1])
             #windowInd = int(round(p*len(self.I))) #np.searchsorted(t,t[onEndInd]-100,side="left") # Generalise
             #self.Iss = np.mean(self.I[-windowInd:])
 
@@ -164,6 +173,8 @@ class PhotoCurrent():
         # http://www.nehalemlabs.net/prototype/blog/2013/04/05/an-introduction-to-smoothing-time-series-in-python-part-i-filtering-theory/
         pass
 
+
+        
 class Empirical():
     """Container for empirically derived parameters"""
     def __init__(self, E=0.0, phi0=None, gam=None, A=None):
@@ -224,7 +235,15 @@ class ProtocolData():
         
         self.trials = [[[None for v in range(len(Vs))] for p in range(len(phis))] for r in range(nRuns)] # Array of PhotoCurrent objects
         
+    
+    #def __str__:
+    #    pass
         
+    #def __info__:
+    #    """Report data set features"""
+    #    pass
+    
+    
         
     def getIpmax(self): 
         """Find the maximum peak current for the whole data set. This is useful when the 'saturate' protocol is absent"""

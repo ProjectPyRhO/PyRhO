@@ -7,6 +7,7 @@ from IPython.core.pylabtools import print_figure
 import base64
 
 from .models import *
+from .simulators import *
 from .protocols import *
 from .loadData import *
 import warnings
@@ -44,7 +45,8 @@ import ast
 statesDict = OrderedDict([(s,i) for i,s in enumerate(list(modelParams))]) #.keys()
 statesArray = list(statesDict) #.keys() #[' 3', ' 4', ' 6'] # [u' 3',u' 4',u' 6']
 
-paramsGroups = {'Models':0, 'Protocols':1}
+TabGroups = {'Fit':0, 'Models':1, 'Simulators':2, 'Protocols':3}
+#TabGroups = {'Models':0, 'Simulators':1, 'Protocols':2}
 
 #clearDelay = 1.5 # Pause [s] before clearing text entry fields
 
@@ -108,18 +110,18 @@ def loadGUI():
     ##### Run Bar Functions #####
 
     def protDropdownChange(name,value):
-        paramTabs.selected_index = paramsGroups['Protocols'] # Set to protocol parameters
+        paramTabs.selected_index = TabGroups['Protocols'] # Set to protocol parameters
         protParamsTabs.selected_index = protList.index(value) # Get the index of the selected protocol #protIndDict[value]
 
 
     def runButton_on_click(b): # on_button_clicked
         if clearOutput.value:
             clear_output()
-        runModel(stateButtons.value, protDropdown.value, outputDropdown.value, saveButton.value, verboseSlide.value) #int(stateButtons.value)
+        runModel(stateButtons.value, protDropdown.value, simDropdown.value, saveButton.value, verboseSlide.value) #int(stateButtons.value)
         return        
         
     def changeModel(name,value):
-        paramTabs.selected_index = paramsGroups['Models'] # Set to model parameters
+        paramTabs.selected_index = TabGroups['Models'] # Set to model parameters
         modelParamsTabs.selected_index = statesDict[value]    
 
     def paramsToggle(name, value):
@@ -134,16 +136,18 @@ def loadGUI():
             paramTabs.visible = False
         return
 
-    def outputDropdownChange(name,value):
-        if value == 'NEURON':
-            NEURONbox.visible=True
-            Brianbox.visible=False
-        elif value == 'Brian':
-            Brianbox.visible=True
-            NEURONbox.visible=False
-        else: # Set both to invisible
-            NEURONbox.visible=False
-            Brianbox.visible=False
+    def simDropdownChange(name,value):
+        # if value == 'NEURON':
+            # NEURONbox.visible=True
+            # Brianbox.visible=False
+        # elif value == 'Brian':
+            # Brianbox.visible=True
+            # NEURONbox.visible=False
+        # else: # Set both to invisible
+            # NEURONbox.visible=False
+            # Brianbox.visible=False
+        paramTabs.selected_index = TabGroups['Simulators'] # Set to simulator parameters
+        simParamsTabs.selected_index = simList.index(value) # Get the index of the selected protocol #protIndDict[value]
         return
         
         
@@ -179,105 +183,184 @@ def loadGUI():
     def paramSetOnLoad(name):
         global paramSet
         print('Loading: "',paramVar.value, '"...', end=' ')
+        
         if paramVar.value in vars():
             paramSet = vars()[paramVar.value]
-            
             print('Successfully loaded from vars!')
+            
         elif paramVar.value in globals():
             paramSet = globals()[paramVar.value]
-            
             print('Successfully loaded from globals!')
+            
         else:
             paramSet = None
             warnings.warn('Warning! Variable: {} not found!'.format(paramVar.value))
             
-        if paramTabs.selected_index == paramsGroups['Models']:
+        if paramTabs.selected_index == TabGroups['Models']:
             mInd = modelParamsTabs.selected_index
             model = statesArray[mInd]
             #mInd = statesDict[' '+str(nStates)]
             #pSet = modelParams[mInd] # Default model parameters
-            setGUImodelParams(paramSet,model)
-        else: # Protocols tab selected
+            setGUIparams(modelParams[model],pValArr[mInd][:]) # setGUImodelParams(paramSet,model)
+            
+        elif paramTabs.selected_index == TabGroups['Simulators']:
+            sInd = simParamsTabs.selected_index
+            simulator = simList[sInd]
+            setGUIparams(simParams[simulator],sim_pValArr[sInd][:])
+            
+        elif paramTabs.selected_index == TabGroups['Protocols']: # Protocols tab selected
             pInd = protParamsTabs.selected_index
             #pInd = protIndDict[protocol]
             protocol = protList[pInd]
             #pSet = protParams[protocol] # Default protocol parameters
-            setGUIprotParams(paramSet,protocol)
+            setGUIparams(protParams[protocol],prot_pValArr[pInd][:]) #setGUIprotParams(paramSet,protocol)
+            
+        else: 
+            raise ValueError('Unknown Tab Index!')
+            
         return paramSet
+
         
     def resetButton_on_click(b): # on_button_clicked
-        if paramTabs.selected_index == paramsGroups['Models']:
+        
+        if paramTabs.selected_index == TabGroups['Models']:
             mInd = modelParamsTabs.selected_index
             model = statesArray[mInd]
             #mInd = statesDict[' '+str(nStates)]
-            pSet = modelParams[mInd] # Default model parameters
-            setGUImodelParams(pSet,model)
-        else: # Protocols tab selected
+            #pSet = modelParams[model] # Default model parameters
+            #pSet = modelParams[statesArray[mInd]]
+            setGUIparams(modelParams[model],pValArr[mInd][:]) #setGUImodelParams(pSet,model)
+            
+        elif paramTabs.selected_index == TabGroups['Simulators']:
+            sInd = simParamsTabs.selected_index
+            simulator = simList[sInd]
+            setGUIparams(simParams[simulator],sim_pValArr[sInd][:])
+            
+        elif paramTabs.selected_index == TabGroups['Protocols']:
             pInd = protParamsTabs.selected_index
             #pInd = protIndDict[protocol]
             protocol = protList[pInd]
-            pSet = protParams[protocol] # Default protocol parameters
-            setGUIprotParams(pSet,protocol)
+            #pSet = protParams[protocol] # Default protocol parameters
+            setGUIparams(protParams[protocol],prot_pValArr[pInd][:]) #setGUIprotParams(pSet,protocol)
+            
+        else: # Protocols tab selected
+            raise ValueError('Unknown Tab Index!')
+            
         return
     
     def modelTabChange(name,value):
         stateButtons.value = statesArray[value] #' '+str(value)
-
+    
+    def simTabChange(name,value):
+        simDropdown.value = simList[value] #simList.index(value)# simDropdown.selected_label #simParamsTabs._titles[value] #[protParamsTabs.selected_index]
+        
     def protTabChange(name,value):
-        protDropdown.value_name = protParamsTabs._titles[value] #[protParamsTabs.selected_index]
+        protDropdown.value = protList[value] #protDropdown.value_name = protParamsTabs._titles[value] #[protParamsTabs.selected_index]
     
     
     ### Utility functions 
-    def getGUImodelParams(model):
-        userModelParams = Parameters()
-        mInd = statesDict[model] #statesDict[' '+str(nStates)]
-        pSet = modelParams[modelList[mInd]]           
-        i=0
-        for key in pSet:  # Set of n-state model pararmeters
-            userModelParams.add(key, value=pValArr[mInd][i].value)
-            i+=1
-        return userModelParams
+    # def getGUImodelParams(model):
+        # userParams = Parameters()
+        # mInd = statesDict[model] #statesDict[' '+str(nStates)]
+        # pSet = modelParams[modelList[mInd]]           
+        # i=0
+        # for key in pSet:  # Set of n-state model pararmeters
+            # userParams.add(key, value=pValArr[mInd][i].value)
+            # i+=1
+        # return userParams
 
-    def setGUImodelParams(pSet,model):
-        mInd = statesDict[model] #statesDict[' '+str(nStates)]
-        i=0
-        for key in pSet: #, value in pSet.items():
-            pValArr[mInd][i].value = pSet[key].value
-            i+=1
-        return
+    # def setGUImodelParams(pSet,model):
+        # mInd = statesDict[model] #statesDict[' '+str(nStates)]
+        # i=0
+        # for key in pSet: #, value in pSet.items():
+            # pValArr[mInd][i].value = pSet[key].value
+            # i+=1
+        # return
+    
+    
+    # def getGUIsimParams(simulator):
+        # userParams = Parameters()
+        # sInd = simList.index(simulator) #simIndDict[simulator]
+        # pSet = simParams[simulator]
+        # #pluginInd = paramGroup.keys().index(plugin)
+        # i=0
+        # for param in pSet: #.keys():
+            # if isinstance(pSet[param].value, list): ################################## Change to not number!!!
+                # userParams.add(param, value=ast.literal_eval(sim_pValArr[sInd][i].value)) # or http://stackoverflow.com/questions/5387208/convert-a-string-to-an-array
+            # else:
+                # userParams.add(param, value=sim_pValArr[sInd][i].value)
+            # i+=1
+        # return userParams
         
-    def getGUIprotParams(protocol):
-        userProtParams = Parameters()
-        pInd = protList.index(protocol) #protIndDict[protocol]
-        pSet = protParams[protocol]
-        i=0
-        for param in pSet: #.keys():
+    # def setGUIsimParams(pSet,simulator):
+        # sInd = simList.index(simulator) #simIndDict[simulator]
+        # i=0
+        # for param in pSet: #.keys(): #, value in pSet.items():
+            # if isinstance(pSet[param].value, list): ################################## Change to not number!!!
+                # sim_pValArr[sInd][i].value = str(pSet[param].value)
+            # else:
+                # sim_pValArr[sInd][i].value = pSet[param].value
+            # i+=1
+        # return
+        
+    
+    # def getGUIprotParams(protocol):
+        # userParams = Parameters()
+        # pInd = protList.index(protocol) #protIndDict[protocol]
+        # pSet = protParams[protocol]
+        # i=0
+        # for param in pSet: #.keys():
+            # if isinstance(pSet[param].value, list): ################################## Change to not number!!!
+                # userParams.add(param, value=ast.literal_eval(prot_pValArr[pInd][i].value)) # or http://stackoverflow.com/questions/5387208/convert-a-string-to-an-array
+            # else:
+                # userParams.add(param, value=prot_pValArr[pInd][i].value)
+            # i+=1
+        # return userParams
+        
+    # def setGUIprotParams(pSet,protocol):
+        # pInd = protList.index(protocol) #protIndDict[protocol]
+        # i=0
+        # for param in pSet: #.keys(): #, value in pSet.items():
+            # if isinstance(pSet[param].value, list): ################################## Change to not number!!!
+                # prot_pValArr[pInd][i].value = str(pSet[param].value)
+            # else:
+                # prot_pValArr[pInd][i].value = pSet[param].value
+            # i+=1
+        # return
+    
+    
+    
+    #getGUIparams(modelParams[model],pValArr[modelParams.keys().index(model)][:])
+    #getGUIparams(simParams[simulator],sim_pValArr[simParams.keys().index(simulator)][:])
+    #getGUIparams(protParams[protocol],prot_pValArr[protParams.keys().index(protocol)][:])
+    
+    # pSet = protParams[protocol]
+    # widgetList = prot_pValArr[pInd][:]
+    def getGUIparams(pSet, widgetList):
+        userParams = Parameters()
+        for i, param in enumerate(pSet):
             if isinstance(pSet[param].value, list): ################################## Change to not number!!!
-                userProtParams.add(param, value=ast.literal_eval(prot_pValArr[pInd][i].value)) # or http://stackoverflow.com/questions/5387208/convert-a-string-to-an-array
+                userParams.add(param, value=ast.literal_eval(widgetList[i].value)) # or http://stackoverflow.com/questions/5387208/convert-a-string-to-an-array
             else:
-                userProtParams.add(param, value=prot_pValArr[pInd][i].value)
-            i+=1
-        return userProtParams
-        
-    def setGUIprotParams(pSet,protocol):
-        pInd = protList.index(protocol) #protIndDict[protocol]
-        i=0
-        for param in pSet: #.keys(): #, value in pSet.items():
+                userParams.add(param, value=widgetList[i].value)
+        return userParams
+    
+    def setGUIparams(pSet, widgetList):
+        for i, param in enumerate(pSet):
             if isinstance(pSet[param].value, list): ################################## Change to not number!!!
-                prot_pValArr[pInd][i].value = str(pSet[param].value)
+                widgetList[i].value = str(pSet[param].value)
             else:
-                prot_pValArr[pInd][i].value = pSet[param].value
-            i+=1
-        return
-
-        
+                widgetList[i].value = pSet[param].value
+    
+    
+    
         
     ##### Main Run function #####
     
         #saveData = True
         #@interact(nStates={'Three-state':3,'Four-state':4,'Six-state':6}, protocol=('custom', 'step', 'sinusoid', 'ramp', 'saturate', 'inwardRect', 'varyPL', 'varyIPI'), saveData=True, verbose=1)
 
-    def runModel(model, protocol, output='Python', saveData=True, verbose=1): #verboseSlide.value
+    def runModel(model, protocol, simulator='Python', saveData=True, verbose=1): #verboseSlide.value
         
         verbose = verbose
         nStates = int(model)
@@ -285,7 +368,7 @@ def loadGUI():
         print('--------------------------------------------------------------------------------\n')
         
         ### Choose between 3, 4, & 6 state models
-        if fitButton.value and useFitCheck.value:
+        if useFitCheck.value: # fitButton.value and 
             RhO = fitRhO
             
             ### To set GUI parameters, widget arrays should be dictionaries so subsets of parameters can be set in arbitrary order!!!
@@ -293,39 +376,49 @@ def loadGUI():
             
         else:
             RhO = selectModel(int(model))
-            print(RhO)
+            if verbose > 0:
+                print(RhO)
             userModelParams = Parameters()
             mInd = statesDict[model] #statesDict[' '+str(nStates)]
-            pSet = modelParams[modelList[mInd]]           
-            nParams = len(pSet)#.keys())
-            i=0
-            for key in pSet:#.keys():  # Set of n-state model pararmeters
-                userModelParams.add(key,value=pValArr[mInd][i].value)
-                i+=1
+            pSet = modelParams[modelList[mInd]]
+            userModelParams = getGUIparams(pSet,pValArr[mInd][:])
+            # nParams = len(pSet)#.keys())
+            # i=0
+            # for key in pSet:#.keys():  # Set of n-state model pararmeters
+                # userModelParams.add(key,value=pValArr[mInd][i].value)
+                # i+=1
             RhO.setParams(userModelParams)
         
         
-        if output == 'Python':
-            pInd = protList.index(protocol) #protIndDict[protocol]
-            userProtParams = Parameters()
-            pSet = protParams[protocol]
-            i=0
-            for param in pSet:#.keys(): #, value in pSet.items():
-                if isinstance(pSet[param].value, list): ################################## Change to not number!!!
-                    userProtParams.add(param, value=ast.literal_eval(prot_pValArr[pInd][i].value)) # or http://stackoverflow.com/questions/5387208/convert-a-string-to-an-array
-                else:
-                    userProtParams.add(param, value=prot_pValArr[pInd][i].value)
-                i+=1
-            Prot = protocols[protocol](userProtParams)
-            Prot.runProtocol(RhO,verbose)
-            if verbose > 0: #saveData:
-                Prot.plotProtocol(RhO,verbose)
-        elif output == 'NEURON':
-            print('Simulating with NEURON...')
-        elif output == 'Brian':
-            print('Simulating with Brian...')
-        else:
-            print('Error! Unknown output selection!')
+        
+        ### Get Simulator Parameters
+        if verbose > 0:
+            print('Simulating with {}...'.format(simulator))
+        #if simulator != 'Python': ########################################### Hack!!!!!
+        userSimParams = Parameters()
+        sInd = simList.index(simulator)
+        userSimParams = getGUIparams(simParams[simulator],sim_pValArr[sInd][:])
+        Sim = simulators[simulator](RhO, userSimParams)
+        
+        
+        
+        ### Get Protocol Parameters
+        userProtParams = Parameters()
+        pInd = protList.index(protocol) #protIndDict[protocol]
+        userProtParams = getGUIparams(protParams[protocol],prot_pValArr[pInd][:])
+        # pSet = protParams[protocol]
+        # i=0
+        # for param in pSet:#.keys(): #, value in pSet.items():
+            # if isinstance(pSet[param].value, list): ################################## Change to not number!!!
+                # userProtParams.add(param, value=ast.literal_eval(prot_pValArr[pInd][i].value)) # or http://stackoverflow.com/questions/5387208/convert-a-string-to-an-array
+            # else:
+                # userProtParams.add(param, value=prot_pValArr[pInd][i].value)
+            # i+=1
+        Prot = protocols[protocol](userProtParams)
+        Prot.runProtocol(Sim,RhO,verbose)
+        if verbose > 0: #saveData:
+            Prot.plotProtocol(Sim,RhO,verbose)
+        
         print("\nFinished!")
         print('================================================================================\n\n')
         
@@ -338,41 +431,41 @@ def loadGUI():
     
     ##### Fit Bar #####
     
-    ### Create Fit Bar toggle
-    fitButton = widgets.ToggleButton(description='Fit data', value=False)
-    fitButton.on_trait_change(fitToggle,'value') #paramsButton.get_state()
+    # ### Create Fit Bar toggle
+    # fitButton = widgets.ToggleButton(description='Fit data', value=False)
+    # fitButton.on_trait_change(fitToggle,'value') #paramsButton.get_state()
 
-    ### Create Data set entry
-    dataVar = widgets.Text(description='Data Set: ',placeholder='<variable name>')
-    dataLoad = widgets.Button(description='Load')
-    dataLoad.on_click(onLoad)
+    # ### Create Data set entry
+    # dataVar = widgets.Text(description='Data Set: ',placeholder='<variable name>')
+    # dataLoad = widgets.Button(description='Load')
+    # dataLoad.on_click(onLoad)
     
-    ### Create Fit Model States buttons
-    statesToFitButtons = widgets.ToggleButtons(description='Highest model to fit: ',options=statesArray)#,value=u' 3') #https://github.com/ipython/ipython/issues/6469
-    #fit3sCheck = widgets.Checkbox(description='Fit 3 state model', value=True)
-    #fit4sCheck = widgets.Checkbox(description='Fit 4 state model', value=False)
-    #fit6sCheck = widgets.Checkbox(description='Fit 6 state model', value=False)
+    # ### Create Fit Model States buttons
+    # statesToFitButtons = widgets.ToggleButtons(description='Highest model to fit: ',options=statesArray)#,value=u' 3') #https://github.com/ipython/ipython/issues/6469
+    # #fit3sCheck = widgets.Checkbox(description='Fit 3 state model', value=True)
+    # #fit4sCheck = widgets.Checkbox(description='Fit 4 state model', value=False)
+    # #fit6sCheck = widgets.Checkbox(description='Fit 6 state model', value=False)
     
-    ### Create Checkboxes
-    runSSAcheck = widgets.Checkbox(description='Characterise', value=True)
-    useFitCheck = widgets.Checkbox(description='Use fit', value=False)
-    plotExpData = widgets.Checkbox(description='Plot data: ', value=True)
+    # ### Create Checkboxes
+    # runSSAcheck = widgets.Checkbox(description='Characterise', value=True)
+    # useFitCheck = widgets.Checkbox(description='Use fit', value=False)
+    # plotExpData = widgets.Checkbox(description='Plot data: ', value=True)
     
-    ### Create Run Button
-    runFitButton = widgets.Button(description="Fit!")
-    runFitButton.on_click(runFitButton_on_click)
+    # ### Create Run Button
+    # runFitButton = widgets.Button(description="Fit!")
+    # runFitButton.on_click(runFitButton_on_click)
     
-    ### Create Fit Bar
-    fitBar = widgets.HBox(children=[dataVar, dataLoad, statesToFitButtons, runSSAcheck, useFitCheck, plotExpData, runFitButton]) #fit3sCheck, fit4sCheck, fit6sCheck
-    display(fitBar)
-    fitBar.visible=False
+    # ### Create Fit Bar
+    # fitBar = widgets.HBox(children=[dataVar, dataLoad, statesToFitButtons, runSSAcheck, useFitCheck, plotExpData, runFitButton]) #fit3sCheck, fit4sCheck, fit6sCheck
+    # display(fitBar)
+    # fitBar.visible=False
     
-    ### Set formatting
-    dataVar.width = '150px' #set_css({'width': '150px'})
-    dataLoad.button_style = 'warning' #add_class('btn-warning')
-    runFitButton.button_style = 'danger' #add_class('btn-danger')
-    # Set Fit Bar formating after display
-    fitBar.align = 'center'
+    # ### Set formatting
+    # dataVar.width = '150px' #set_css({'width': '150px'})
+    # dataLoad.button_style = 'warning' #add_class('btn-warning')
+    # runFitButton.button_style = 'danger' #add_class('btn-danger')
+    # # Set Fit Bar formating after display
+    # fitBar.align = 'center'
     
     
     ##### Run bar #####
@@ -388,30 +481,30 @@ def loadGUI():
     
     ### Model states button
     
-    stateButtons = widgets.ToggleButtons(description='Model states: ',options=statesArray) #https://github.com/ipython/ipython/issues/6469
+    stateButtons = widgets.ToggleButtons(description='Model states: ',options=statesArray,) #https://github.com/ipython/ipython/issues/6469
     stateButtons.on_trait_change(changeModel,'value')#stateButtons.value_name  #'_view_name'
     
     ### Create states buttons link
-    modelParamsLink = link((stateButtons, 'value'), (statesToFitButtons, 'value'))
+    #modelParamsLink = link((stateButtons, 'value'), (statesToFitButtons, 'value'))
     #modelParamsLink = link((stateButtons, 'value'), (modelParamsTabs, 'value'))
     
     ### Parameters Toggle
     paramsButton = widgets.ToggleButton(description='Parameters', value=False)
     paramsButton.on_trait_change(paramsToggle,'value')
     
-    ### Load NEURON parameters
-    hocFile = widgets.Text(description='HOC file: ',placeholder='<file name>')
-    hocLoad = widgets.Button(description='Load')
-    hocLoad.on_click(onHocLoad)
+    # ### Load NEURON parameters
+    # hocFile = widgets.Text(description='HOC file: ',placeholder='<file name>')
+    # hocLoad = widgets.Button(description='Load')
+    # hocLoad.on_click(onHocLoad)
     
-    ### Load Brian parameters
-    brianFile = widgets.Text(description='Brian file: ',placeholder='<file name>')
-    brianLoad = widgets.Button(description='Load')
-    brianLoad.on_click(onBrianLoad)
+    # ### Load Brian parameters
+    # brianFile = widgets.Text(description='Brian file: ',placeholder='<file name>')
+    # brianLoad = widgets.Button(description='Load')
+    # brianLoad.on_click(onBrianLoad)
     
     ### Output format Dropdown
-    outputDropdown = widgets.Dropdown(options=['Python', 'NEURON', 'Brian'],value='Python')
-    outputDropdown.on_trait_change(outputDropdownChange,'value')
+    simDropdown = widgets.Dropdown(options=['Python', 'NEURON', 'Brian'],value='Python')
+    simDropdown.on_trait_change(simDropdownChange,'value')
     
     
     
@@ -426,23 +519,30 @@ def loadGUI():
     verboseSlide.visible=True #False
 
     ### Clear ouput checkbox
-    clearOutput = widgets.Checkbox(description='Clear Output', value=True)
+    clearOutput = widgets.Checkbox(description='Clear', value=True)
     
     
     #### Run Bar container
-    runBar = widgets.HBox(children=[fitButton,stateButtons,protDropdown,paramsButton,outputDropdown,saveButton,verboseSlide,clearOutput,runButton])
+    runBar = widgets.HBox(children=[stateButtons,simDropdown,protDropdown,paramsButton,saveButton,verboseSlide,clearOutput,runButton]) #fitButton,
     display(runBar)
 
     
     
     ### Set Button styles after displaying the runBar
     paramsButton.button_style = 'info'
-    fitButton.button_style = 'success'
+    stateButtons.button_style = 'success'
+    stateButtons.margin = '5px'
+    simDropdown.button_style = 'success'
+    simDropdown.margin = '5px'
+    protDropdown.button_style = 'success'
+    protDropdown.margin = '5px'
+    #fitButton.button_style = 'success'
     runButton.button_style = 'danger'
+    runButton.margin = '5px'
     
     #stateButtons.add_class('btn-primary')
     #protDropdown.add_class('btn-success')
-    #outputDropdown.add_class('btn-warning')
+    #simDropdown.add_class('btn-warning')
     
     ### button bootstrap styles: default, primary, success, info, warning, danger, link
     
@@ -481,7 +581,127 @@ def loadGUI():
     
     ### lmfit Parameters() are ordereddict objects (https://github.com/lmfit/lmfit-py/blob/master/lmfit/parameter.py) but it might be better to change pValArr and prot_pValArr etc. to ordereddicts too...
     
-
+    
+    boolDict = OrderedDict([('True',True), ('False',False)])
+    
+    
+    ##### Fit Data parameters #####
+    
+    ### Create Data set entry
+    dataVar = widgets.Text(description='Data Set: ',placeholder='<variable name>')
+    dataLoad = widgets.Button(description='Load')
+    dataLoad.on_click(onLoad)
+    
+    ### Create Fit Model States buttons
+    #statesToFitButtons = widgets.ToggleButtons(description='Highest model to fit: ',options=statesArray)#,value=u' 3') #https://github.com/ipython/ipython/issues/6469
+    fitLabel = widgets.HTML(value='Models to fit: ')
+    fit3sCheck = widgets.Checkbox(description='3 state', value=True)
+    fit4sCheck = widgets.Checkbox(description='4 state', value=False)
+    fit6sCheck = widgets.Checkbox(description='6 state', value=False)
+    
+    ### Hyperparameters
+    p0fVvar = widgets.Text(value=str(p0fV), description='p0fV: ')
+    p0IPIvar = widgets.Text(value=str(p0IPI), description='p0IPI: ')
+    
+    
+    ### Create Checkboxes
+    runSSAcheck = widgets.Checkbox(description='Characterise', value=True)
+    useFitCheck = widgets.Checkbox(description='Use fit', value=False)
+    plotExpData = widgets.Checkbox(description='Plot data: ', value=True)
+    
+    ### Create Run Button
+    runFitButton = widgets.Button(description="Fit!")
+    runFitButton.on_click(runFitButton_on_click)
+    
+    ### Create Fit Bar
+    #fitBar = widgets.HBox(children=[dataVar, dataLoad, statesToFitButtons, runSSAcheck, useFitCheck, plotExpData, runFitButton]) #fit3sCheck, fit4sCheck, fit6sCheck
+    #display(fitBar)
+    #fitBar.visible=False
+    
+    ### Set formatting
+    dataVar.width = '150px' #set_css({'width': '150px'})
+    #dataVar.margin = '0px'
+    dataLoad.button_style = 'warning' #add_class('btn-warning')
+    runFitButton.button_style = 'danger' #add_class('btn-danger')
+    runFitButton.margin = '5px'
+    # Set Fit Bar formating after display
+    dataLoad._dom_classes = ('margin-left','10px')
+    #fitBar.align = 'center'
+    
+    dataLoadBar = widgets.HBox(children=[dataVar, dataLoad, useFitCheck], align='center')
+    statesBar = widgets.HBox(children=[fitLabel, fit3sCheck, fit4sCheck, fit6sCheck], align='center') #.align = 'center'
+    hyperParams = widgets.VBox(children=[p0fVvar, p0IPIvar])
+    fitOutputBar = widgets.HBox(children=[runSSAcheck, plotExpData, runFitButton], align='center')
+    fitParamBoxes = widgets.VBox(children=[dataLoadBar, statesBar, hyperParams, fitOutputBar]) # Left side container
+    fitNotesBoxes = widgets.VBox(children=[]) # Right side container for figure and equations
+    fitBox = widgets.HBox(children=[fitParamBoxes])
+    fitBox.margin = '5px'
+    fitParamsTabs = widgets.HBox(children=[fitBox]) # fitNotesBoxes # Hack to have a parent tab with no children
+    
+    
+    
+    
+    def buildLayerTab(paramGroup):
+        
+        pluginBoxes = [None for plugin in paramGroup] #{plugin: None for plugin in paramGroup}
+        pluginParamsBox = [None for plugin in paramGroup] #{plugin: None for plugin in paramGroup} # Left side container
+        pluginNotesBox = [None for plugin in paramGroup] #{plugin: None for plugin in paramGroup} # Right side container for figure and equations
+        #pluginStimHTML = [None for plugin in paramGroup]
+        pluginFigHTML = [None for plugin in paramGroup] #{plugin: None for plugin in paramGroup}
+        #eqBox = [None for m in range(len(modelParams))]
+        pluginValues = [[None for param in paramGroup[plugin]] for plugin in paramGroup] #{plugin:{param: None for param in paramGroup[plugin]} for plugin in paramGroup} # Array of parameter values
+        pluginUnits = [[None for param in paramGroup[plugin]] for plugin in paramGroup] #{plugin:{param: None for param in paramGroup[plugin]} for plugin in paramGroup} # Array of units
+        pluginParams = [[None for param in paramGroup[plugin]] for plugin in paramGroup] #{plugin:{param: None for param in paramGroup[plugin]} for plugin in paramGroup} # Array of parameter boxes
+        
+        for pluginInd, plugin in enumerate(paramGroup):
+            #pluginInd = paramGroup.keys().index(plugin)
+            pSet = paramGroup[plugin]
+            for pInd, param in enumerate(pSet):
+                #paramInd = pSet.keys().index(param)
+                if isinstance(pSet[param].value, list): # list ==> Text
+                    pluginValues[pluginInd][pInd] = widgets.Text(value=str(pSet[param].value), description=param) # np.asarray
+                elif isinstance(pSet[param].value, str): # str ==> Text
+                    pluginValues[pluginInd][pInd] = widgets.Text(value=str(pSet[param].value), description=param)
+                elif isinstance(pSet[param].value, bool):
+                    pluginValues[pluginInd][pInd] = widgets.Dropdown(options=boolDict,value=pSet[param].value,description=param)
+                else: # Numeric
+                    if (pSet[param].min == None or pSet[param].min == -np.inf) or (pSet[param].max == None or pSet[param].max == np.inf): # No limits
+                        pluginValues[pluginInd][pInd] = widgets.FloatText(value=pSet[param].value, description=param)
+                    else: # Bounded # ==> widgets.FloatSlider() ?
+                        pluginValues[pluginInd][pInd] = widgets.BoundedFloatText(value=pSet[param].value, min=pSet[param].min, max=pSet[param].max, description=param)
+                    pluginValues[pluginInd][pInd].width = '150px'
+                if pSet[param].expr == None: # No units
+                    pluginParams[pluginInd][pInd] = widgets.HBox(children=[pluginValues[pluginInd][pInd]])
+                else:
+                    pluginUnits[pluginInd][pInd] = widgets.Dropdown(options=[pSet[param].expr],value=pSet[param].expr)
+                    pluginParams[pluginInd][pInd] = widgets.HBox(children=[pluginValues[pluginInd][pInd],pluginUnits[pluginInd][pInd]])
+                
+                    
+            
+            pluginFigHTML[pluginInd] = widgets.HTML()
+            #exampleProt = '{}{}6s.{}'.format(fDir,prot,'png')#saveFigFormat)
+            #if os.path.isfile(exampleProt):
+            #    protFigHTML[pInd].value='<img src="{}" alt=Example {} width=200px>'.format(exampleProt,prot)
+            #else:
+            #    protFigHTML[pInd].value='Example Figure'
+            pluginParamsBox[pluginInd] = widgets.Box(children=pluginParams[pluginInd])
+            pluginNotesBox[pluginInd] = widgets.HBox(children=[pluginFigHTML[pluginInd]])# simStimHTML[sInd]  , ])#[figHTML[prot],eqBox[prot]])
+            
+            pluginBoxes[pluginInd] = widgets.HBox(children=[pluginParamsBox[pluginInd],pluginNotesBox[pluginInd]])#modelBox
+            #display(protBoxes[pInd])
+            pluginBoxes[pluginInd].margin = '5px'
+        
+        
+        ##### Plugin parameters tab #####
+        pluginParamsTabs = widgets.Tab(description='Plugin Settings', children=pluginBoxes)# \
+        pluginParamsTabs.margin = '5px'
+        
+        return pluginParamsTabs
+        
+        #pluginParamsTabs.on_trait_change(simTabChange,'selected_index') # External
+    
+    
+    
     ##### Model parameters #####
     modelBoxes = [None for m in range(len(modelParams))]
     modelParamBoxes = [None for m in range(len(modelParams))] # Left side container
@@ -512,6 +732,7 @@ def loadGUI():
         figHTML[m] = widgets.HTML()
         eqBox[m] = widgets.Latex()
         if int(statesArray[m]) == 3: # m==0
+            figHTML[m].value = '<img src="3-state-model.png" alt="Three state model" width=150>'
             eqBox[m].value = """
                     $$\\dot{C} = G_rD - \\epsilon F C$$
                     $$\\dot{O} = \epsilon FC -G_{d}O$$
@@ -533,6 +754,7 @@ def loadGUI():
         #modelNotesBoxes[m].add_class('box-flex1')
         #modelBox = widgets.HBox(children=[modelParamBoxes,modelNotesBoxes])
         modelBoxes[m] = widgets.HBox(children=[modelParamBoxes[m],modelNotesBoxes[m]])#modelBox
+        modelBoxes[m].margin = '5px'
     
     ### Linked parameters
     #E_Link = link((stateButtons, 'value'), (statesToFitButtons, 'value'))
@@ -543,6 +765,73 @@ def loadGUI():
     #modelParamsTabs.on_displayed(setModelParamsTabs,'selected_index')
     #modelParamsTabs.on_displayed()
     #modelParamsLink = link((stateButtons, 'value'), (modelParamsTabs, 'value'))
+    
+    
+    
+        
+        
+        
+        
+    
+    ##### Simulator parameters #####
+    
+    simBoxes = [None for sim in simParams]
+    simParamBoxes = [None for sim in simParams] # Left side container
+    simNotesBoxes = [None for sim in simParams] # Right side container for figure and equations
+    #simStimHTML = [None for sim in simParams]
+    simFigHTML = [None for sim in simParams]
+    #eqBox = [None for m in range(len(modelParams))]
+    sim_pValArr = [[None for p in simParams[sim]] for sim in simParams] # Array of parameter values
+    sim_unitArr = [[None for p in simParams[sim]] for sim in simParams] # Array of units
+    sim_pBoxArr = [[None for p in simParams[sim]] for sim in simParams] # Array of parameter boxes
+    
+    
+    for sInd, sim in enumerate(simParams):
+        pSet = simParams[sim]
+        i=0
+        for param in pSet:#.keys(): #, value in pSet.items():
+            if isinstance(pSet[param].value, list):
+                sim_pValArr[sInd][i] = widgets.Text(value=str(pSet[param].value), description=param) # np.asarray
+            elif isinstance(pSet[param].value, str):
+                sim_pValArr[sInd][i] = widgets.Text(value=str(pSet[param].value), description=param)
+            elif isinstance(pSet[param].value, bool):
+                sim_pValArr[sInd][i] = widgets.Dropdown(options=boolDict,value=pSet[param].value,description=param)
+            else:
+                if (pSet[param].min == None or pSet[param].min == -np.inf) or (pSet[param].max == None or pSet[param].max == np.inf):
+                    sim_pValArr[sInd][i] = widgets.FloatText(value=pSet[param].value, description=param)
+                else:
+                    sim_pValArr[sInd][i] = widgets.BoundedFloatText(value=pSet[param].value, min=pSet[param].min, max=pSet[param].max, description=param)
+                sim_pValArr[sInd][i].width = '150px'
+            if not pSet[param].expr == None:
+                sim_unitArr[sInd][i] = widgets.Dropdown(options=[pSet[param].expr],value=pSet[param].expr)
+                sim_pBoxArr[sInd][i] = widgets.HBox(children=[sim_pValArr[sInd][i],sim_unitArr[sInd][i]])
+            else:
+                sim_pBoxArr[sInd][i] = widgets.HBox(children=[sim_pValArr[sInd][i]])
+            
+            i+=1
+        
+        simFigHTML[sInd] = widgets.HTML()
+        #exampleProt = '{}{}6s.{}'.format(fDir,prot,'png')#saveFigFormat)
+        #if os.path.isfile(exampleProt):
+        #    protFigHTML[pInd].value='<img src="{}" alt=Example {} width=200px>'.format(exampleProt,prot)
+        #else:
+        #    protFigHTML[pInd].value='Example Figure'
+        simParamBoxes[sInd] = widgets.Box(children=sim_pBoxArr[sInd])
+        simNotesBoxes[sInd] = widgets.HBox(children=[simFigHTML[sInd]])# simStimHTML[sInd]  , ])#[figHTML[prot],eqBox[prot]])
+        
+        
+        simBoxes[sInd] = widgets.HBox(children=[simParamBoxes[sInd],simNotesBoxes[sInd]])#modelBox
+        #display(protBoxes[pInd])
+        simBoxes[sInd].margin = '5px'
+    
+    
+    ##### Simulator parameters tab #####
+    simParamsTabs = widgets.Tab(description='Simulator Settings', children=simBoxes)# \
+    simParamsTabs.margin = '5px'
+    simParamsTabs.on_trait_change(simTabChange,'selected_index')
+    
+    
+    
     
     
     
@@ -605,6 +894,7 @@ def loadGUI():
         
         
         protBoxes[pInd] = widgets.HBox(children=[protParamBoxes[pInd],protNotesBoxes[pInd]])#modelBox
+        protBoxes[pInd].margin = '5px'
         #display(protBoxes[pInd])
 
 
@@ -615,15 +905,21 @@ def loadGUI():
     protParamsTabs.margin = '5px'
     protParamsTabs.on_trait_change(protTabChange,'selected_index')
     
-    paramTabs = widgets.Tab(description='Parameter Settings', children=[modelParamsTabs,protParamsTabs])#,values=['Model', 'Protocol']) #E_box,k_box
+    
+    ##### Configure tabs for abstraction layers #####
+    paramTabs = widgets.Tab(description='Parameter Settings', children=[fitParamsTabs,modelParamsTabs,simParamsTabs,protParamsTabs])#,values=['Model', 'Protocol']) #E_box,k_box
     display(paramTabs)
-    paramTabs.selected_index = paramsGroups['Models'] # Set to show model parameters initially
+    paramTabs.selected_index = TabGroups['Models'] # Set to show model parameters initially
     paramTabs.visible=False
+    paramTabs.margin = '5px'
+    
     
     
     ### Set Tab titles ### # Titles must be set after display of tabs
-    paramTabs.set_title(0, 'Model Parameters')
-    paramTabs.set_title(1, 'Protocol Parameters')
+    paramTabs.set_title(0, 'Fit Parameters')
+    paramTabs.set_title(1, 'Model Parameters')
+    paramTabs.set_title(2, 'Simulator Parameters')
+    paramTabs.set_title(3, 'Protocol Parameters')
 
     modelParamsTabs.set_title(0, 'Three-state model')
     modelParamsTabs.set_title(1, 'Four-state model')
@@ -638,7 +934,17 @@ def loadGUI():
         protFigHTML[pInd].margin = '20px'
         for i in range(len(protParams[prot])): # pSet.keys(): #for i in range(len(protParams[prot])):
             prot_pValArr[pInd][i].width = '150px' #set_css({'width': '150px'})
-        
+    
+    ### Set Simulator Tabs style
+    for sInd, sim in enumerate(simList):
+        simParamsTabs.set_title(sInd, sim)
+        simNotesBoxes[sInd].flex = True #protNotesBoxes[pInd].add_class('box-flex1')
+        simFigHTML[sInd].width = '200px' #set_css({'width': '200px', 'margin-left': '20px'})
+        simFigHTML[sInd].margin = '20px'
+        for i in range(len(simParams[sim])): # pSet.keys(): #for i in range(len(protParams[prot])):
+            sim_pValArr[sInd][i].width = '150px' #set_css({'width': '150px'})
+    
+    
     ### Hack to tile parameter fields horizontally - must come after displaying the parent
     for model in modelParams: #for m in range(len(modelParams)):
         m = modelList.index(model)
@@ -648,22 +954,24 @@ def loadGUI():
         modelNotesBoxes[m].margin = '20px'
     
     
-    ### Create NEURON Control Bar
-    NEURONbox = widgets.HBox(children=[hocFile, hocLoad])
-    display(NEURONbox)
-    NEURONbox.visible=False
-    NEURONbox.align = 'center'
+    # ### Create NEURON Control Bar
+    # NEURONbox = widgets.HBox(children=[hocFile, hocLoad])
+    # display(NEURONbox)
+    # NEURONbox.visible=False
+    # NEURONbox.align = 'center'
     
-    hocLoad.button_style = 'warning' #add_class('btn-warning')
+    # hocLoad.button_style = 'warning' #add_class('btn-warning')
     
     
-    ### Create Brian Control Bar
-    Brianbox = widgets.HBox(children=[brianFile, brianLoad])
-    display(Brianbox)
-    Brianbox.visible=False
-    Brianbox.align = 'center'
+    # ### Create Brian Control Bar
+    # Brianbox = widgets.HBox(children=[brianFile, brianLoad])
+    # display(Brianbox)
+    # Brianbox.visible=False
+    # Brianbox.align = 'center'
 
-    brianLoad.button_style = 'warning' #add_class('btn-warning')
+    # brianLoad.button_style = 'warning' #add_class('btn-warning')
+    
+    
     
     #GUI.children=[fitBar,runBar,paramsControlBar,paramTabs,NEURONbox,Brianbox]
     #display(GUI)
@@ -677,3 +985,6 @@ def loadGUI():
 
 GUI = widgets.Box()
 #interact(runModel, nStates={'Three-state':3,'Four-state':4,'Six-state':6}, protocol=('custom', 'step', 'sinusoid', 'ramp', 'saturate', 'inwardRect', 'varyPL', 'varyIPI'), saveData=True, verbose=1);
+
+if __name__ == '__main__':
+    loadGUI()
