@@ -278,16 +278,16 @@ class Protocol(object):
                         #PC.peakInds = findPeaks(PC.I)
                         #PC.t_peaks = PC.t[peakInds]
                         #PC.I_peaks = PC.I[peakInds]
-                        peakInds = findPeaks(PC.I)
+                        peakInds = findPeaks(I_RhO)
                         t_peaks = t[peakInds]
-                        I_peaks = I[peakInds]
+                        I_peaks = I_RhO[peakInds]
                         
                         ### Generalise for multiple pulses
                         #PC.findPlateaus(0,1)
                         onEndInd = np.searchsorted(t,onD+delD,side="left")
                         #offInd = PC.pulseInds[0][1]
                         tFromOffInd = np.searchsorted(t,t[onEndInd]-tFromOff,side="left") ### Move into loops # Generalise!!!
-                        Iss = np.mean(PC.I[tFromOffInd:onEndInd+1])
+                        Iss = np.mean(I_RhO[tFromOffInd:onEndInd+1])
                         #self.IssVals[run][phiInd][vInd] = Iss
                 
                     elif protocol == "saturate":
