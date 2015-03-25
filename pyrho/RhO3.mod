@@ -106,7 +106,6 @@ KINETIC kin {
 
 
 PROCEDURE rates(phi) {	: Define equations for calculating transition rates
-	
     if (phi>0) {
         P = phi * k 			: k = quantum efficiency
         Gr = Gr0 + Gr1

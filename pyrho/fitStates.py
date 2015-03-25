@@ -794,9 +794,19 @@ def fit6states(I,t,onInd,offInd,gbar,phi): # ,Ipeak
 #        P.runProtocol(RhO)
 #        P.plotProtocol()
 
+
         
-def fitModels(dataSet, highestState=3):
-    """Routine to fit as many models as possible and select between them according to some parsimony criterion"""
+def fitCurve(dataSet, highestState=3):
+    """Fit a single photocurrent to flux-dependent transition rates"""
+    # E.g.  P, Gr [Gd]
+    #       Ga1, Ga2, e12, e21, [Gd1, Gd2, Gr]
+    #       a1, a3, b2, b4, [a2, a4, a6, b1, b3]
+    # Metaparameters are then fit to the trends of these in fitModels()
+    # E.g.  k
+    
+    
+    ### Check contents of dataSet and produce report on model features which may be fit. 
+    # e.g. if not 'inwardRect': f(V)=1
     
     ### Trim data slightly to remove artefacts from light on/off transition ramps?
     
@@ -1000,3 +1010,53 @@ def fitModels(dataSet, highestState=3):
     #characterise(RhO)
     
     return RhO #Models # # [RhO3,RhO4,RhO6]
+
+
+def fitModels(dataSet, fit3s=True, fit4s=False, fit6s=False):
+    """Routine to fit as many models as possible and select between them according to some parsimony criterion"""
+    
+    phiFits = [None for phi in range(len(phis))]
+    for phiInd, phi in enumerate(phis):
+        if verbose > 1:
+            print('*** Fitting phi: {:.3g}'.format(phi))
+        phiFits[phiInd] = fitCurve(dataSet) #...
+    
+    if verbose > 1: # Report optimised parameters from each run
+        if fit3s:
+            print('phi     |P      |Gd     |Gr      \n=================================')
+            for trial in range(nTrials):
+                Models[trial].setLight(phis[trial])
+                print("{:.2g}\t|{:.3g}\t|{:.3g}\t|{:.3g}".format(phis[trial],Models[trial].eF,Models[trial].Gd,Models[trial].Gr))
+                Ps[trial] = Models[trial].eF
+                Gds[trial] = Models[trial].Gd
+                Grs[trial] = Models[trial].Gr
+        
+        if fit4s:
+            print('phi     |Ga1    |Ga2    |e12    |e21    |Gd1    |Gd2     ')
+            print('=========================================================')
+            for trial in range(nTrials):
+                #Models[trial].setLight(phis[trial])
+                print("{:.2g}\t|{:.3g}\t|{:.3g}\t|{:.3g}\t|{:.3g}\t|{:.3g}\t|{:.3g}".format(phis[trial],Models[trial].Ga1,Models[trial].Ga2,Models[trial].e12,Models[trial].e21,Models[trial].Gd1,Models[trial].Gd2))
+                Ga1s[trial] = Models[trial].Ga1
+                Ga2s[trial] = Models[trial].Ga2
+                e12s[trial] = Models[trial].e12
+                e21s[trial] = Models[trial].e21
+                Gd1s[trial] = Models[trial].Gd1
+                Gd2s[trial] = Models[trial].Gd2
+            
+            Gd1list = [m.Gd1 for m in Models]
+            Gd2list = [m.Gd2 for m in Models]
+            print('Means: \tGd1 = {:.3g}; Gd2 = {:.3g}'.format(np.mean(Gd1list),np.mean(Gd2list)))
+            print('Medians: \tGd1 = {:.3g}; Gd2 = {:.3g}'.format(np.median(Gd1list),np.median(Gd1list)))
+            
+        if fit6s:
+            pass
+    
+    
+    ### Fix light insensitive parameters and reoptimise
+    # 3: Gd
+    # 4: Gd1, Gd2, [Gr]
+    # 6: a2, a4, b1, b3 [a6]
+    
+    return fitCurve(dataSet, highestState)
+    

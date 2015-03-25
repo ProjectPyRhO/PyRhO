@@ -69,10 +69,10 @@ def characterise(RhO):
     """Run small signal analysis on Rhodopsin"""
     for protocol in smallSignalAnalysis: # .keys()
         RhO.setLight(0.0)
-        Prot = selectProtocol(protocol)
-        #Prot = protocols[protocol]()
-        Prot.runProtocol(RhO)
-        Prot.plotProtocol(RhO)
+        #Prot = selectProtocol(protocol)
+        Prot = protocols[protocol]()
+        Prot.runProtocol(Sim,RhO)
+        Prot.plotProtocol(Sim,RhO)
     return
 
 class Protocol(object):
@@ -113,6 +113,7 @@ class Protocol(object):
         
         self.prepare()
         Sim.prepare(self.dt)
+        #Sim.prepare(min(self.onDs)/10)
         
         ### Setup containers and run variables
         label = ""
@@ -1267,7 +1268,6 @@ class protCustom(Protocol):
     def prepare(self):
         'Function to set-up additional variables and make parameters consistent after any changes'
         self.pulses = np.asarray(self.pulses)
-        
         self.nPulses = self.pulses.shape[0]
         self.delDs = [row[0] for row in self.pulses] # pulses[:,0]    # Delay Durations
         self.onDs = [row[1]-row[0] for row in self.pulses] # pulses[:,1] - pulses[:,0]   # Pulse Durations
@@ -1654,6 +1654,7 @@ class protVaryPL(Protocol):
         self.padDs = np.zeros(self.nRuns)
         self.phis.sort()
         self.Vs.sort(reverse=True)
+
         
 class protVaryIPI(Protocol):
     # Vary Inter-Pulse-Interval

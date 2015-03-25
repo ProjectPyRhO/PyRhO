@@ -83,7 +83,7 @@ class PhotoCurrent():
         self.V = V                  # Clamp Voltage [mV]: None if no clamp was used
         self.phi = phi              # Light intensity
         # Future inclusions
-        # self.phiLambda            # Wavelength
+        # self.Lambda            # Wavelength
         # self.pH                   # pH
         # self.Temp                 # Temperature
         self.label = label          # Optional trial label e.g. "saturate"
@@ -92,11 +92,11 @@ class PhotoCurrent():
         if pulses[0][0] > 0: # Check for an initial delay period
             onInd = self.pulseInds[0,0]
             trim = int(round(0.1*onInd)) # Discount the first and last 10% of the delay period to remove edge effects
-            zeroCurrent = np.mean(self.I[trim:onInd-trim+1]) # self.I[:onInd]
-            if 0.01*abs(zeroCurrent) > abs(max(self.I) - min(self.I)):
-                self.I -= zeroCurrent
-                if verbose > 1:
-                    print("Photocurrent recalibrated by {} [nA]".format(zeroCurrent))
+            offset = np.mean(self.I[trim:onInd-trim+1]) # self.I[:onInd]
+            if 0.01*abs(offset) > abs(max(self.I) - min(self.I)):
+                self.I -= offset
+                if verbose > 0:
+                    print("Photocurrent recalibrated by {} [nA]".format(offset))
                 
         
         
@@ -249,9 +249,10 @@ class ProtocolData():
         self.trials = [[[None for v in range(len(Vs))] for p in range(len(phis))] for r in range(nRuns)] # Array of PhotoCurrent objects
         
         #PD = [{'PC':PC, 'run':run, 'phi':phi, 'V':V, ...},{},... ]
+        self.metaData = {'nRuns':self.nRuns, 'nPhis':self.nPhis, 'nVs':self.nVs}
     
-    #def __str__:
-    #    pass
+    def __str__(self):
+        return 'Protocol data set: [nRuns={}, nPhis={}, nVs={}]'.format(self.nRuns, self.nPhis, self.nVs)
         
     #def __info__:
     #    """Report data set features"""
@@ -273,15 +274,15 @@ class ProtocolData():
         return self.Ipmax, (rmax, pmax, vmax)
     
     
-    def getIRdata(self):
+    def getSteadyStates(self,run=0):
         
         assert(self.nVs > 1)
-        self.Iplats = np.zeros(self.nPhis,self.nVs)
-        self.Vplats = np.zeros(self.nPhis,self.nVs)
+        self.Iplats = np.zeros((self.nPhis,self.nVs))
+        self.Vplats = np.zeros((self.nPhis,self.nVs))
         for phiInd, phi in enumerate(self.phis): 
             for vInd, V in enumerate(self.Vs): 
-                self.Iplats[phiInd,vInd] = self.trials[0][phiInd][vInd].Iss # Variations along runs are not useful here
-                self.Vplats[phiInd,vInd] = self.trials[0][phiInd][vInd].V
+                self.Iplats[phiInd,vInd] = self.trials[run][phiInd][vInd].Iss # Variations along runs are not useful here
+                self.Vplats[phiInd,vInd] = self.trials[run][phiInd][vInd].V
         return self.Iplats, self.Vplats
         
         
@@ -311,13 +312,13 @@ class ProtocolData():
 
         
         
-# class DataSet():
-    # """Container for photocurrent data used to produce arrays for parameter extraction"""
+class DataSet():
+    """Container for photocurrent data used to produce arrays for parameter extraction"""
     
-    # def __init__(self,protocol):
-        # self.data = defaultdict(list)
+    def __init__(self,protocol):
+        self.data = defaultdict(list)
         
-        # self.protocol = protocol
+        self.protocol = protocol
         
         # # if protocol == varyPL:
             # # self.data = data
@@ -326,8 +327,9 @@ class ProtocolData():
             # # self.ts = ts
             # # pulseCycles=np.column_stack((onD*np.ones(len(IPIs)),[IPI-onD for IPI in IPIs])) # [:,0] = on phase duration; [:,1] = off phase duration
 
-    # def addData(self, photoData, protocol):
-        # self.data[protocol].append(photoData)
+    def addData(self, photoData, protocol):
+        self.data[protocol].append(photoData)
+        self.phis.append(photoData.phi)
 
 
 

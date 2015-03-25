@@ -158,7 +158,7 @@ smallSignalAnalysis = ['sinusoid', 'step', 'saturate'] #{'sinusoid': True, 'step
 protParams['custom'].add_many(('phis',[1e14,1e15,1e16,1e17],True,None,None,'photons/s/mm^2'),
                           ('Vs',[-70,-40,-10,10,40],True,None,None,'mV'),
                           ('pulses',[[10.,160.]],True,None,None,'ms'),
-                          ('totT', 200.,True,0,None,'ms'),
+                          ('totT', 200.,True,0,None,'ms'),#)#,
                           #('nRuns', 1,True,1,None,None),
                           ('dt',0.1,True,1e-9,10,'ms'))
 
@@ -168,7 +168,7 @@ protParams['custom'].add_many(('phis',[1e14,1e15,1e16,1e17],True,None,None,'phot
 protParams['step'].add_many(('phis',[1e15,1e16,1e17],True,None,None,'photons/s/mm^2'),
                         ('Vs',[-70,-40,-10,10,40],True,None,None,'mV'),
                         ('pulses',[[50.,200.]],True,None,None,'ms'),
-                        ('totT', 300.,True,0,None,'ms'),
+                        ('totT', 300.,True,0,None,'ms'),#)#,
                         #('nRuns', 1,True,1,None,None),
                         ('dt',0.1,True,1e-9,10,'ms'))
 
@@ -179,7 +179,7 @@ protParams['sinusoid'].add_many(('phis',[1e14],True,None,None,'photons/s/mm^2'),
                             ('Vs',[-70],True,None,None,'mV'),
                             ('fs',[0.1,0.5,1,5,10,50,100,500,1000],True,None,None,'Hz'),
                             ('pulses',[[50.,1050.]],True,None,None,'ms'),
-                            ('totT', 1100.,True,0,None,'ms'),
+                            ('totT', 1100.,True,0,None,'ms'),#)#,
                             #('nRuns', 1,True,1,None,None),
                             ('dt',0.1,True,1e-9,10,'ms'))
 
@@ -190,7 +190,7 @@ protParams['chirp'].add_many(('phis',[1e14],True,None,None,'photons/s/mm^2'),
                             ('pulses',[[100.,1100.]],True,None,None,'ms'),
                             ('totT', 1200.,True,0,None,'ms'),
                             ('f0',0.1,True,None,None,'Hz'),
-                            ('fT',1000,True,None,None,'Hz'),
+                            ('fT',1000,True,None,None,'Hz'),#)#,
                             ('dt',0.1,True,1e-9,10,'ms'))
                             
 #ProtParamsRamp = Parameters()
@@ -198,7 +198,7 @@ protParams['ramp'].add_many(('phis',[1e12,1e13,1e14,1e15,1e16,1e17,1e18],True,No
                             ('phi_ton',0,True,None,None,'photons/s/mm^2'),
                             ('Vs',[-70],True,None,None,'mV'),
                             ('pulses',[[25.,275.]],True,None,None,'ms'),
-                            ('totT', 300.,True,0,None,'ms'),
+                            ('totT', 300.,True,0,None,'ms'),#)#,
                             #('nRuns', 1,True,1,None,None),
                             ('dt',0.1,True,1e-9,10,'ms'))
 
@@ -207,7 +207,7 @@ protParams['ramp'].add_many(('phis',[1e12,1e13,1e14,1e15,1e16,1e17,1e18],True,No
 protParams['saturate'].add_many(('phis',[1e20],True,None,None,'photons/s/mm^2'),
                             ('Vs',[-70],True,None,None,'mV'),
                             ('pulses',[[5.,5.+1e-3]],True,None,None,'ms'),
-                            ('totT', 20.,True,0,None,'ms'),
+                            ('totT', 20.,True,0,None,'ms'),#)#,
                             #('nRuns', 1,True,1,None,None),
                             ('dt',1e-3,True,1e-9,10,'ms'))
 
@@ -216,7 +216,7 @@ protParams['saturate'].add_many(('phis',[1e20],True,None,None,'photons/s/mm^2'),
 protParams['inwardRect'].add_many(('phis',[2.366e15,2.366e16],True,None,None,'photons/s/mm^2'),
                             ('Vs',[-100,-80,-60,-40,-20,0,20,40,60,80],True,None,None,'mV'),
                             ('pulses',[[50.,300.]],True,None,None,'ms'),
-                            ('totT', 400.,True,0,None,'ms'),
+                            ('totT', 400.,True,0,None,'ms'),#)#,
                             #('nRuns', 1,True,1,None,None),
                             ('dt',0.1,True,1e-9,10,'ms'))
 
@@ -225,8 +225,8 @@ protParams['inwardRect'].add_many(('phis',[2.366e15,2.366e16],True,None,None,'ph
 protParams['varyPL'].add_many(('phis',[1e12],True,None,None,'photons/s/mm^2'),
                             ('Vs',[-70],True,None,None,'mV'),
                             ('delD',25,True,0,None,'ms'),
-                            ('pDs',[1,2,3,5,8,10,20],True,None,None,'ms'),
-                            ('totT', 100.,True,0,None,'ms'),
+                            ('pDs',[1,2,3,5,8,10,20],True,None,None,'ms'), # [0.1, 0.2, 0.5, 1, 2, 5, 10]
+                            ('totT', 100.,True,0,None,'ms'),#)#,
                             ('dt',0.1,True,1e-9,10,'ms'))
 
 #ProtParamsVaryIPI = Parameters()
@@ -235,7 +235,7 @@ protParams['varyIPI'].add_many(('phis',[1e14],True,None,None,'photons/s/mm^2'),
                             ('Vs',[-70],True,None,None,'mV'),
                             ('delD',100,True,0,None,'ms'),
                             ('onD',100,True,0,None,'ms'),
-                            ('IPIs',[500,1000,1500,2500,5000,7500,10000],True,None,None,'ms'),
+                            ('IPIs',[500,1000,1500,2500,5000,7500,10000],True,None,None,'ms'),#)#,
                             ('dt',0.1,True,1e-9,10,'ms'))
 
 # Automatically link fields?

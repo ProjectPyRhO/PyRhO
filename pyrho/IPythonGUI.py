@@ -747,7 +747,7 @@ def loadGUI():
         elif int(statesArray[m]) == 4: # m==1
             figHTML[m].value = '<img src="4-state-model.png" alt="Four state model" width=180>' #width=200>'
             eqBox[m].value = """
-                    $$\\dot{C_1} = G_rC_2 + G_{d1}(\\phi)O_1 - G_{a1}(\\phi)C_1$$
+                    $$\\dot{C_1} = G_rC_2 + G_{d1}O_1 - G_{a1}(\\phi)C_1$$
                     $$\\dot{O_1} = G_{a1}(\\phi)C_1 - (G_{d1}+e_{12}(\\phi))O_1 + e_{21}(\\phi)O_2$$
                     $$\\dot{O_2} = G_{a2}(\\phi)C_2 + e_{12}(\\phi)O_1 - (G_{d2}+e_{21}(\\phi))O_2$$
                     $$\\dot{C_2} = G_{d2}O_2 - (G_{a2}(\\phi)+G_r)C_2$$
