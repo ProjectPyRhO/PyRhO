@@ -1,3 +1,4 @@
+from __future__ import print_function       # Added for Python 2.x support
 from setuptools import setup, find_packages  # Always prefer setuptools over distutils
 from codecs import open  # To use a consistent encoding
 from os import path
@@ -32,7 +33,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='0.5.0',
+    version=pyrho.__version__, #'0.5.0',
 
     description='A Python module to fit and characterise rhodopsin photocurrents',
     long_description=long_description,
@@ -45,7 +46,7 @@ setup(
     author_email='ben.d.evans@gmail.com',
 
     # Choose your license
-    license='MIT',                                                                  ### Consider this
+    license='BSD', #'MIT',                                                                  ### Consider this
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
@@ -84,7 +85,7 @@ setup(
     ],
 
     # What does your project relate to?
-    keywords='optogenetics rhodopsins opsins neuron brian',
+    keywords='optogenetics rhodopsin opsin neuron brian',
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
