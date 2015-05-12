@@ -4,7 +4,9 @@ from scipy.interpolate import *
 from scipy.optimize import curve_fit
 from .parameters import *
 from .loadData import * #import loadData
+from .fitting import * #calcIssfromfV and fitPeaks...
 from .models import *
+from .simulators import * # For characterise()
 from .config import verbose, saveFigFormat, eqSize, addTitles, addStimulus, colours, styles, dDir, fDir
 import pickle
 import warnings
@@ -71,8 +73,9 @@ def characterise(RhO):
         RhO.setLight(0.0)
         #Prot = selectProtocol(protocol)
         Prot = protocols[protocol]()
-        Prot.runProtocol(Sim,RhO)
-        Prot.plotProtocol(Sim,RhO)
+        Sim = simulators['Python'](RhO) ########### Pass this as a variable instead...
+        Prot.run(Sim,RhO)
+        Prot.plot(Sim,RhO)
     return
 
 class Protocol(object):
@@ -109,7 +112,11 @@ class Protocol(object):
         for p in self.__dict__.keys():
             print(p,' = ',self.__dict__[p])
             
-    def runProtocol(self, Sim, RhO, verbose=verbose): ### rename to run()
+    def getRunCycles(self,run):
+        return times2cycles(self.pulses,self.totT)
+        
+    def run(self, Sim, RhO, verbose=verbose): 
+        """Main routine to run the simulation protocol"""
         
         self.prepare()
         Sim.prepare(self.dt)
@@ -139,13 +146,12 @@ class Protocol(object):
         dt=self.dt
         
         ### HACKS!!! - revise runTrial()
-        delD = delDs[0] 
+        #delD = delDs[0] 
         onD = onDs[0]
         offD = offDs[0]
-        padD = 0.0
+        #padD = 0.0
         
-
-
+        
         # Create container lists for storing all arrays of solution variables
         self.multisoln = [[[None for v in range(len(Vs))] for p in range(len(phis))] for r in range(nRuns)] # multisoln[runs][phis][Vs][t,s]
         self.ts = [[[None for v in range(len(Vs))] for p in range(len(phis))] for r in range(nRuns)]
@@ -179,15 +185,23 @@ class Protocol(object):
         for run in range(nRuns):
             
             if nRuns > 1:
-                if nPulses > 1 or protocol == 'varyPL':
-                    onD = pulseCycles[run,0]
-                    offD = pulseCycles[run,1]
-                    padD = padDs[run]
-                else: #if protocol == 'sinusoid':
-                    onD = pulseCycles[0,0]
-                    offD = pulseCycles[0,1]
-                    padD = padDs[0]
-                    
+                if protocol != 'sinusoid':
+                    delD = delDs[run]
+                    if nPulses > 1 or protocol == 'varyPL':
+                        onD = pulseCycles[run,0]
+                        offD = pulseCycles[run,1]
+                        padD = padDs[run]
+                    else: #if protocol == 'sinusoid':
+                        onD = pulseCycles[0,0]
+                        offD = pulseCycles[0,1]
+                        padD = padDs[0]
+                else:
+                    delD = delDs[0]
+                    padD = 0.0
+            else:
+                delD = delDs[0]
+                padD = 0.0
+                
             # runExperiment()
             
             # Loop over light intensity...
@@ -229,7 +243,10 @@ class Protocol(object):
                     
                     if self.squarePulse: #protocol in squarePulses: ##### Change after changing 'custom'
                         phi_t = InterpolatedUnivariateSpline([pStart,pEnd],[phiOn,phiOn], k=1, ext=1) 
-                        I_RhO,t,soln = Sim.runTrial(RhO, nPulses, V,phiOn,delD,onD,offD,padD,dt)
+                        #I_RhO,t,soln = Sim.runTrial(RhO, nPulses, V,phiOn,delD,onD,offD,padD,dt,verbose)
+                        cycles, delD = self.getRunCycles(run)
+                        #cycles, delD = times2cycles(self.pulses,totT)
+                        I_RhO,t,soln = Sim.runTrial(RhO, phiOn, V, delD, cycles, dt, verbose)
                         
                     else: # Arbitrary functions of time: phi(t)
                         
@@ -250,7 +267,7 @@ class Protocol(object):
                             #pulses = np.array([[delD+(p*(onD+offD)),delD+(p*(onD+offD))+onD] for p in range(nPulses)])
                             #phi_t = InterpolatedUnivariateSpline([pStart,pEnd], [phiOn,phiOn], k=1, ext=1) ### Generalise for nPulses!!!
                         
-                        I_RhO,t,soln = Sim.runTrialPhi_t(RhO,V,phi_t,delD,onD,totT,dt)
+                        I_RhO,t,soln = Sim.runTrialPhi_t(RhO,V,phi_t,delD,onD,totT,dt,verbose)
                         
                     self.phiFuncs[run][phiInd] = phi_t
                     
@@ -602,7 +619,7 @@ class Protocol(object):
     
     
     
-    def plotProtocol(self, Sim, RhO, verbose=verbose): # Remove RhO as an argument? # Rename to plot()
+    def plot(self, Sim, RhO, verbose=verbose): # Remove RhO as an argument? # Rename to plot()
         
         protocol = self.protocol
         phis=self.phis
@@ -813,6 +830,9 @@ class Protocol(object):
                             
                         elif protocol =='varyIPI': ############# Tidy up!!!
                             axI = Ifig.add_subplot(111)
+                            #cycles, delD = self.getRunCycles(run)
+                            #pulses, totT = cycles2times(cycles, delD)
+                            #plotLight(pulses,axI)
                             for p in range(0, nPulses):
                                 plt.axvspan(delD+(p*(onD+offD)),delD+(p*(onD+offD))+onD,facecolor='y',alpha=0.2)
                                     
@@ -1387,6 +1407,8 @@ class protSinusoid(Protocol):
         #self.ws.sort()
 
 class protDualTone(Protocol):
+# http://uk.mathworks.com/products/demos/signaltlbx/dtmf/dtmfdemo.html
+# http://dspguru.com/sites/dspguru/files/Sum_of_Two_Sinusoids.pdf
     protocol = 'dualTone'
     squarePulse = False
     # Change default parameter key to 'dualTone'!!!
@@ -1655,6 +1677,9 @@ class protVaryPL(Protocol):
         self.phis.sort()
         self.Vs.sort(reverse=True)
 
+    def getRunCycles(self,run):
+        return np.asarray([[self.onDs[run],self.offDs[run]]]), self.delDs[run]
+        
         
 class protVaryIPI(Protocol):
     # Vary Inter-Pulse-Interval
@@ -1710,8 +1735,9 @@ class protVaryIPI(Protocol):
         self.phis.sort()
         self.Vs.sort(reverse=True)
 
-
-
+    def getRunCycles(self,run):
+        return np.asarray([[self.onDs[run],self.offDs[run]],[self.onDs[run],self.offDs[run]-self.padDs[run]]]), self.delDs[run]
+    
     
 
 
