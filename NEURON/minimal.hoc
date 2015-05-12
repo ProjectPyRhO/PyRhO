@@ -1,0 +1,36 @@
+// minNEURON.hoc
+
+//cell = h.SectionList()
+create soma     //soma = h.Section(name='soma') 
+access soma     //soma.push()
+//h.topology()
+
+// Geometry
+soma{
+    nseg = 1
+    L = 20
+    diam = 20
+    
+    //Biophysics
+    Ra = 100
+    //cm = 1
+    insert hh
+}
+
+// Add an axon and some dendrites with passive channels
+//
+//
+
+
+// Biophysics
+//forall {    #for sec in h.allsec():
+//    Ra = 100 # sec.Ra = 100
+//    cm = 1
+//    insert('pas')
+//    #sec.insert('hh') #    
+//    #cell.append(sec)
+//}
+
+//h.pop_section()
+
+//return cell
