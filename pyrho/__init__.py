@@ -6,11 +6,15 @@ from __future__ import division # a/b -> float
 from __future__ import absolute_import, print_function, unicode_literals 
 
 
-#__all__ = ['parameters', 'loadData', 'models', 'protocols', 'fitStates', 'IPythonGUI'] # 'config'
+#__all__ = ['parameters', 'loadData', 'models', 'protocols', 'fitting', 'IPythonGUI'] # 'config'
 
-__doc__ = """A Python module to fit and characterise rhodopsin photocurrents"""
+__doc__ = """A Python module for fitting, characterising and simulating rhodopsin photocurrents"""
+__version__ = '0.5.0'
 
 from .config import *
+
+#deps = [numpy, scipy, matplotlib, lmfit, warnings, os, pickle, collections, platform]
+#depsGUI = [IPython, ast, base64]
 
 # global verbose
 # if 'verbose' not in vars() or 'verbose' not in globals() or verbose is None:
@@ -48,7 +52,7 @@ from .loadData import * #import loadData
 from .models import * #import models
 from .simulators import *
 from .protocols import * #import modProtocols
-from .fitStates import * #import fitStates
+from .fitting import * #import fitStates
 from .IPythonGUI import *
 
 
@@ -81,6 +85,7 @@ if __name__ == '__main__':
         print('Loading IPython GUI!')
         loadGUI()
 
+        
 def runAll():
     """Run all protocols with all simulators on all models!"""
     
@@ -103,13 +108,38 @@ def runAll():
                 print('--------------------------------------------------------------------------------\n')
                 #Prot = selectProtocol(protocol)
                 Prot = protocols[prot]()
-                Prot.runProtocol(Sim,RhO)
+                Prot.run(Sim,RhO)
                 
                 # Plot settings
                 #plotPeakRecovery = False
                 #Prot.plotStateVars = False
                 #plotKinetics = False
-                Prot.plotProtocol(Sim,RhO)
+                Prot.plot(Sim,RhO)
                 print("\nFinished!")
                 print('================================================================================\n\n')
+
                 
+def printVersions():
+    ### Display version information
+    
+    import platform
+    print("Python version: ", platform.python_version())
+    try:
+        #import IPython
+        #__IPYTHON__
+        print("IPython version: ", IPython.__version__)
+    except ImportError: # IPython not found
+        pass
+    #for mod in dependencies:
+    #    print("{} version: {}".format(mod, mod.__version__))
+    #import numpy
+    print("NumPy version: ", numpy.__version__)
+    import scipy
+    print("SciPy version: ", scipy.__version__)
+    #import matplotlib
+    print("Matplotlib version: ", matplotlib.__version__)
+    import lmfit
+    print("lmfit version: ", lmfit.__version__)
+    
+    print("PyRhO version: ", pyrho.__version__)
+
