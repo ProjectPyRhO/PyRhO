@@ -10,6 +10,8 @@ from .models import *
 from .simulators import *
 from .protocols import *
 from .loadData import *
+from .fitting import *
+from .config import dDir # For dataSet loading
 import warnings
 import time
 from collections import OrderedDict
@@ -43,15 +45,88 @@ import ast
 #statesDict = OrderedDict([(' '+s,i) for i,s in enumerate(list(modelParams.keys()))]) # enumerate(modelList)
 #statesDict = OrderedDict([(' 3',0), (' 4',1), (' 6',2)]) 
 statesDict = OrderedDict([(s,i) for i,s in enumerate(list(modelParams))]) #.keys()
-statesArray = list(statesDict) #.keys() #[' 3', ' 4', ' 6'] # [u' 3',u' 4',u' 6']
+statesArray = modelList #statesArray = list(statesDict) #.keys() #[' 3', ' 4', ' 6'] # [u' 3',u' 4',u' 6'] ### Redundant!
 
 TabGroups = {'Fit':0, 'Models':1, 'Simulators':2, 'Protocols':3}
 #TabGroups = {'Models':0, 'Simulators':1, 'Protocols':2}
 
 #clearDelay = 1.5 # Pause [s] before clearing text entry fields
 
+# Structures for cross-referencing arrays of widgets to their corresponding parameters
+# http://stackoverflow.com/questions/18809482/python-nesting-dictionary-ordereddict-from-collections
+#mParamsK2I = OrderedDict([ (model,OrderedDict([(p,i) for i,p in enumerate(list(modelParams[model]))])) for model in modelList ])
+#mParamsI2K = OrderedDict([ (model,list(modelParams[model])) for model in modelList ]) 
+modelParamsList = OrderedDict([ (model, list(modelParams[model])) for model in modelList ])
+
+#sParamsK2I = OrderedDict([ (sim,OrderedDict([(p,i) for i,p in enumerate(list(simParams[sim]))])) for sim in simList ])
+#sParamsI2K = OrderedDict([ (sim,list(simParams[sim])) for sim in simList ])
+simParamsList = OrderedDict([ (sim, list(simParams[sim])) for sim in simList ]) 
+
+#pParamsK2I = OrderedDict([ (prot,OrderedDict([(p,i) for i,p in enumerate(list(protParams[prot]))])) for prot in protList ])
+#pParamsI2K = OrderedDict([ (prot,list(protParams[prot])) for prot in protList ]) 
+protParamsList = OrderedDict([ (prot, list(protParams[prot])) for prot in protList ])
+
+### To Do: Replace GUI with object oriented code...
+class ParamWidgets(object):
+    """Common base class for all sets of parameter widgets"""
     
+    def __init__(self, pSet, type=None):
+        self.defaults = pSet
+        self.type = type
+        self.paramsK2I = OrderedDict([ (set, OrderedDict([(p,i) for i,p in enumerate(list(modelParams[set]))])) for set in statesArray ])
+        self.paramsI2K = OrderedDict([ (set, list(modelParams[s])) for set in statesArray ]) 
+        
+    def __str__(self):
+        return "Parameter set: "+self.type
     
+    def getParams(self): #, pSet, valueList, varyList=None, minList=None, maxList=None, exprList=None
+        userParams = Parameters()
+        for i, param in enumerate(pSet):
+            if isinstance(pSet[param].value, list): ################################## Change to not number!!!
+                userParams.add(param, value=ast.literal_eval(widgetList[i].value)) # or http://stackoverflow.com/questions/5387208/convert-a-string-to-an-array
+            else:
+                userParams.add(param, value=widgetList[i].value)
+            if varyList is not None:
+                userParams[param].set(vary=varyList[i].value) #userParams[param].vary = varyList[i].value
+            if minList is not None:
+                userParams[param].set(min=minList[i].value)
+            if maxList is not None:
+                userParams[param].set(max=maxList[i].value)
+            if exprList is not None:
+                userParams[param].set(expr=maxList[i].value)
+                
+        return userParams
+    
+    def setGUIparams(pSet, widgetList, varyList=None, minList=None, maxList=None, exprList=None):
+        for i, param in enumerate(pSet):
+            print(i,param)
+            if isinstance(pSet[param].value, list): ################################## Change to not number!!!
+                widgetList[i].value = str(pSet[param].value)
+            else:
+                widgetList[i].value = pSet[param].value
+            if varyList is not None:
+                varyList[i].value = pSet[param].vary
+            if minList is not None:
+                minList[i].value = pSet[param].min
+            if maxList is not None:
+                maxList[i].value = pSet[param].max
+            if exprList is not None and pSet[param].expr is not None:
+                exprList[i].value = pSet[param].expr
+    
+    def setParams(self, params):
+        for p in params.keys():
+            #if p in self.__dict__:
+            self.__dict__[p] = params[p].value
+            #else:
+            #    warnings.warn('Warning: "{p}" not found in {self}'.format(p,self))
+
+    def exportParams(self, params):
+        """Export parameters to lmfit dictionary"""
+        for p in self.__dict__.keys():
+            params[p].value = self.__dict__[p]
+        return params
+        
+
 
 
     
@@ -71,10 +146,13 @@ def loadGUI():
             fitBar.visible = False
             #dataVar.value='<variable name>'
         return
-        
+    
+    #dataSet = None
     def onLoad(name):
         global dataSet
         print('Loading: "',dataVar.value, '"...', end=' ')
+        #print(vars())
+        #print(globals())
         if dataVar.value in vars(): ### locals()? # http://stackoverflow.com/questions/7969949/whats-the-difference-between-globals-locals-and-vars
             dataSet = vars()[dataVar.value]
             useFitCheck.value = True
@@ -84,25 +162,59 @@ def loadGUI():
             useFitCheck.value = True
             print('Successfully loaded from globals!')
         else:
-            dataSet = None
-            useFitCheck.value = False
-            warnings.warn('Warning! Variable: {} not found!'.format(dataVar.value))
-        return dataSet
+            # Try treating it as a file name instead?
+            fh = open(dDir+dataVar.value,"rb") #dDir+'expData'+".pkl"
+            dataSet = pickle.load(fh)
+            #EDS['params']['g'].value *= (1.3/1.5)
+            fh.close()
+            print('Successfully loaded "{}"!'.format(dDir+dataVar.value))
+            #dataSet = None
+            #useFitCheck.value = False
+            #warnings.warn('Warning! Variable: {} not found!'.format(dataVar.value))
+        #return dataSet
         
     def runFitButton_on_click(b): # on_button_clicked
         #global fitParamsPopup
-        global clearOutput
+        #global clearOutput
         if clearOutput.value:
             clear_output()
             #if 'fitParamsPopup' in vars() or 'fitParamsPopup' in globals():
             #    fitParamsPopup.close()
-        global fitRhO
-        fitRhO = fitModels(dataSet, int(statesToFitButtons.value))
+        #global fitRhO
+        #fitRhO = fitModels(dataSet, int(statesToFitButtons.value))
+        
+        if plotExpData.value:
+            #plotData()
+            pass
+        
+        #global dataSet
+        model = str(statesToFitButtons.value)
+        mInd = statesDict[model] #statesDict[' '+str(nStates)]
+        pSet = modelParams[modelList[mInd]]
+        #global fittedParams                                         ########################################################################
+        #print(type(dataSet))
+        #print(dataSet)
+        initialParams = getGUIparams(pSet, pfValArr[mInd][:], varyList=fVaryArr[mInd][:], minList=pfMinArr[mInd][:], maxList=pfMaxArr[mInd][:], exprList=fExprArr[mInd][:])
+        fittedParams = fitModels(dataSet, nStates=int(statesToFitButtons.value), params=initialParams) #, method=methods[3])
+        
         #fitParamReport = widgets.TextareaWidget(description='Report:',value=fitRhO.reportParams())
         #fitParamsPopup = widgets.PopupWidget(children=[fitParamReport],button_text='Fitted Parameters',description='Fitted {} state model parameters from: {}'.format(int(statesToFitButtons.value),dataVar.value))
         #display(fitParamsPopup)
+        
+        
+        
+        #[:]???
+        setGUIparams(fittedParams, modelParamsList[model], pfValArr[mInd], varyList=fVaryArr[mInd], minList=pfMinArr[mInd], maxList=pfMaxArr[mInd], exprList=fExprArr[mInd])
+        
+        if useFitCheck.value: # Set the run parameters too
+            setGUIparams(fittedParams, modelParamsList[model], pValArr[mInd])
+        
         if runSSAcheck.value == True:
-            characterise(fitRhO)    
+            fitRhO = models[modelList[mInd]]()
+            fitRhO.updateParams(fittedParams)
+            characterise(fitRhO)
+        
+        
         return
     
     
@@ -122,7 +234,7 @@ def loadGUI():
         
     def changeModel(name,value):
         paramTabs.selected_index = TabGroups['Models'] # Set to model parameters
-        modelParamsTabs.selected_index = statesDict[value]    
+        modelParamsTabs.selected_index = statesDict[value]
 
     def paramsToggle(name, value):
         
@@ -135,7 +247,7 @@ def loadGUI():
             paramsControlBar.visible = False
             paramTabs.visible = False
         return
-
+    
     def simDropdownChange(name,value):
         # if value == 'NEURON':
             # NEURONbox.visible=True
@@ -152,18 +264,18 @@ def loadGUI():
         
         
     ##### NEURON bar functions #####
-    def onHocLoad(name):
-        print('Loading: "',hocFile.value, '"...', end=' ')
-        try: # Load mechanism and set some appropriate parameters
-            h = hoc.HocObject()
-            h.xopen(hocFile.value)
-            h.load_mechanisms() #h('nrn_load_dll("libnrnmech.so")')
+    # def onHocLoad(name):
+        # print('Loading: "',hocFile.value, '"...', end=' ')
+        # try: # Load mechanism and set some appropriate parameters
+            # h = hoc.HocObject()
+            # h.xopen(hocFile.value)
+            # h.load_mechanisms() #h('nrn_load_dll("libnrnmech.so")')
             
-            #from neuron import gui # Load NEURON GUI
+            # #from neuron import gui # Load NEURON GUI
             
-        except:
-            print('Error! File: {} not found!'.format(dataVar.value))
-        return
+        # except:
+            # print('Error! File: {} not found!'.format(dataVar.value))
+        # return
 
         
     ##### Brian bar functions #####
@@ -201,19 +313,19 @@ def loadGUI():
             model = statesArray[mInd]
             #mInd = statesDict[' '+str(nStates)]
             #pSet = modelParams[mInd] # Default model parameters
-            setGUIparams(modelParams[model],pValArr[mInd][:]) # setGUImodelParams(paramSet,model)
+            setGUIparams(modelParams[model],modelParamsList[model],pValArr[mInd][:]) # setGUImodelParams(paramSet,model)
             
         elif paramTabs.selected_index == TabGroups['Simulators']:
             sInd = simParamsTabs.selected_index
             simulator = simList[sInd]
-            setGUIparams(simParams[simulator],sim_pValArr[sInd][:])
+            setGUIparams(simParams[simulator],simParamsList[simulator],sim_pValArr[sInd][:])
             
         elif paramTabs.selected_index == TabGroups['Protocols']: # Protocols tab selected
             pInd = protParamsTabs.selected_index
             #pInd = protIndDict[protocol]
             protocol = protList[pInd]
             #pSet = protParams[protocol] # Default protocol parameters
-            setGUIparams(protParams[protocol],prot_pValArr[pInd][:]) #setGUIprotParams(paramSet,protocol)
+            setGUIparams(protParams[protocol],modelParamsList[protocol],prot_pValArr[pInd][:]) #setGUIprotParams(paramSet,protocol)
             
         else: 
             raise ValueError('Unknown Tab Index!')
@@ -229,24 +341,33 @@ def loadGUI():
             #mInd = statesDict[' '+str(nStates)]
             #pSet = modelParams[model] # Default model parameters
             #pSet = modelParams[statesArray[mInd]]
-            setGUIparams(modelParams[model],pValArr[mInd][:]) #setGUImodelParams(pSet,model)
+            setGUIparams(modelParams[model],modelParamsList[model],pValArr[mInd][:]) #setGUImodelParams(pSet,model)
             
         elif paramTabs.selected_index == TabGroups['Simulators']:
             sInd = simParamsTabs.selected_index
             simulator = simList[sInd]
-            setGUIparams(simParams[simulator],sim_pValArr[sInd][:])
+            setGUIparams(simParams[simulator],simParamsList[simulator],sim_pValArr[sInd][:])
             
         elif paramTabs.selected_index == TabGroups['Protocols']:
             pInd = protParamsTabs.selected_index
             #pInd = protIndDict[protocol]
             protocol = protList[pInd]
             #pSet = protParams[protocol] # Default protocol parameters
-            setGUIparams(protParams[protocol],prot_pValArr[pInd][:]) #setGUIprotParams(pSet,protocol)
+            setGUIparams(protParams[protocol],protParamsList[protocol],prot_pValArr[pInd][:]) #setGUIprotParams(pSet,protocol)
             
         else: # Protocols tab selected
             raise ValueError('Unknown Tab Index!')
             
         return
+    
+
+    def changeFit(name,value):
+        #paramTabs.selected_index = TabGroups['Models'] # Set to model parameters
+        fitParamsTabs.selected_index = statesDict[value]
+    
+    def fitTabChange(name,value):
+        statesToFitButtons.value = statesArray[value]
+    
     
     def modelTabChange(name,value):
         stateButtons.value = statesArray[value] #' '+str(value)
@@ -328,7 +449,7 @@ def loadGUI():
             # i+=1
         # return
     
-    
+
     
     #getGUIparams(modelParams[model],pValArr[modelParams.keys().index(model)][:])
     #getGUIparams(simParams[simulator],sim_pValArr[simParams.keys().index(simulator)][:])
@@ -336,22 +457,45 @@ def loadGUI():
     
     # pSet = protParams[protocol]
     # widgetList = prot_pValArr[pInd][:]
-    def getGUIparams(pSet, widgetList):
+    #getGUIparams(simParams[simulator],sim_pValArr[sInd][:])
+    
+    def getGUIparams(pSet, valueList, varyList=None, minList=None, maxList=None, exprList=None):
+        # pSet must be the default parameters used to build the GUI
         userParams = Parameters()
         for i, param in enumerate(pSet):
             if isinstance(pSet[param].value, list): ################################## Change to not number!!!
-                userParams.add(param, value=ast.literal_eval(widgetList[i].value)) # or http://stackoverflow.com/questions/5387208/convert-a-string-to-an-array
+                userParams.add(param, value=ast.literal_eval(valueList[i].value)) # or http://stackoverflow.com/questions/5387208/convert-a-string-to-an-array
             else:
-                userParams.add(param, value=widgetList[i].value)
+                userParams.add(param, value=valueList[i].value)
+            if varyList is not None:
+                userParams[param].set(vary=varyList[i].value) #userParams[param].vary = varyList[i].value
+            if minList is not None:
+                userParams[param].set(min=minList[i].value)
+            if maxList is not None:
+                userParams[param].set(max=maxList[i].value)
+            if exprList is not None:
+                userParams[param].set(expr=maxList[i].value)
+                
         return userParams
     
-    def setGUIparams(pSet, widgetList):
-        for i, param in enumerate(pSet):
-            if isinstance(pSet[param].value, list): ################################## Change to not number!!!
-                widgetList[i].value = str(pSet[param].value)
-            else:
-                widgetList[i].value = pSet[param].value
-    
+    def setGUIparams(pSet, paramList, valueList, varyList=None, minList=None, maxList=None, exprList=None):
+        #for i, param in enumerate(pSet): # Changed to allow for pSet with arbitrary orders 
+        for param in pSet:
+            if param in paramList:
+                i = paramList.index(param)
+                
+                if isinstance(pSet[param].value, list): ################################## Change to not number!!!
+                    valueList[i].value = str(pSet[param].value)
+                else:
+                    valueList[i].value = pSet[param].value
+                if varyList is not None:
+                    varyList[i].value = pSet[param].vary
+                if minList is not None:
+                    minList[i].value = pSet[param].min
+                if maxList is not None:
+                    maxList[i].value = pSet[param].max
+                if exprList is not None and pSet[param].expr is not None:
+                    exprList[i].value = pSet[param].expr
     
     
         
@@ -368,27 +512,25 @@ def loadGUI():
         print('--------------------------------------------------------------------------------\n')
         
         ### Choose between 3, 4, & 6 state models
-        if useFitCheck.value: # fitButton.value and 
-            RhO = fitRhO
-            
+        #if useFitCheck.value: # fitButton.value and 
+        #    RhO = fitRhO
             ### To set GUI parameters, widget arrays should be dictionaries so subsets of parameters can be set in arbitrary order!!!
-            #setGUIprotParams(expProtParams,'custom')
-            
-        else:
-            RhO = selectModel(int(model))
-            if verbose > 0:
-                print(RhO)
-            userModelParams = Parameters()
-            mInd = statesDict[model] #statesDict[' '+str(nStates)]
-            pSet = modelParams[modelList[mInd]]
-            userModelParams = getGUIparams(pSet,pValArr[mInd][:])
-            # nParams = len(pSet)#.keys())
-            # i=0
-            # for key in pSet:#.keys():  # Set of n-state model pararmeters
-                # userModelParams.add(key,value=pValArr[mInd][i].value)
-                # i+=1
-            RhO.setParams(userModelParams)
-        
+            #setGUIprotParams(expProtParams,'custom')            
+        #else:
+        RhO = selectModel(int(model))
+        if verbose > 0:
+            print(RhO)
+        userModelParams = Parameters()
+        mInd = statesDict[model] #statesDict[' '+str(nStates)]
+        pSet = modelParams[modelList[mInd]]
+        userModelParams = getGUIparams(pSet,pValArr[mInd][:])
+        # nParams = len(pSet)#.keys())
+        # i=0
+        # for key in pSet:#.keys():  # Set of n-state model pararmeters
+            # userModelParams.add(key,value=pValArr[mInd][i].value)
+            # i+=1
+        RhO.setParams(userModelParams)
+    
         
         
         ### Get Simulator Parameters
@@ -415,9 +557,9 @@ def loadGUI():
                 # userProtParams.add(param, value=prot_pValArr[pInd][i].value)
             # i+=1
         Prot = protocols[protocol](userProtParams)
-        Prot.runProtocol(Sim,RhO,verbose)
+        Prot.run(Sim,RhO,verbose)
         if verbose > 0: #saveData:
-            Prot.plotProtocol(Sim,RhO,verbose)
+            Prot.plot(Sim,RhO,verbose)
         
         print("\nFinished!")
         print('================================================================================\n\n')
@@ -540,6 +682,7 @@ def loadGUI():
     runButton.button_style = 'danger'
     runButton.margin = '5px'
     
+    
     #stateButtons.add_class('btn-primary')
     #protDropdown.add_class('btn-success')
     #simDropdown.add_class('btn-warning')
@@ -585,64 +728,11 @@ def loadGUI():
     boolDict = OrderedDict([('True',True), ('False',False)])
     
     
-    ##### Fit Data parameters #####
-    
-    ### Create Data set entry
-    dataVar = widgets.Text(description='Data Set: ',placeholder='<variable name>')
-    dataLoad = widgets.Button(description='Load')
-    dataLoad.on_click(onLoad)
-    
-    ### Create Fit Model States buttons
-    #statesToFitButtons = widgets.ToggleButtons(description='Highest model to fit: ',options=statesArray)#,value=u' 3') #https://github.com/ipython/ipython/issues/6469
-    fitLabel = widgets.HTML(value='Models to fit: ')
-    fit3sCheck = widgets.Checkbox(description='3 state', value=True)
-    fit4sCheck = widgets.Checkbox(description='4 state', value=False)
-    fit6sCheck = widgets.Checkbox(description='6 state', value=False)
-    
-    ### Hyperparameters
-    p0fVvar = widgets.Text(value=str(p0fV), description='p0fV: ')
-    p0IPIvar = widgets.Text(value=str(p0IPI), description='p0IPI: ')
-    
-    
-    ### Create Checkboxes
-    runSSAcheck = widgets.Checkbox(description='Characterise', value=True)
-    useFitCheck = widgets.Checkbox(description='Use fit', value=False)
-    plotExpData = widgets.Checkbox(description='Plot data: ', value=True)
-    
-    ### Create Run Button
-    runFitButton = widgets.Button(description="Fit!")
-    runFitButton.on_click(runFitButton_on_click)
-    
-    ### Create Fit Bar
-    #fitBar = widgets.HBox(children=[dataVar, dataLoad, statesToFitButtons, runSSAcheck, useFitCheck, plotExpData, runFitButton]) #fit3sCheck, fit4sCheck, fit6sCheck
-    #display(fitBar)
-    #fitBar.visible=False
-    
-    ### Set formatting
-    dataVar.width = '150px' #set_css({'width': '150px'})
-    #dataVar.margin = '0px'
-    dataLoad.button_style = 'warning' #add_class('btn-warning')
-    runFitButton.button_style = 'danger' #add_class('btn-danger')
-    runFitButton.margin = '5px'
-    # Set Fit Bar formating after display
-    dataLoad._dom_classes = ('margin-left','10px')
-    #fitBar.align = 'center'
-    
-    dataLoadBar = widgets.HBox(children=[dataVar, dataLoad, useFitCheck], align='center')
-    statesBar = widgets.HBox(children=[fitLabel, fit3sCheck, fit4sCheck, fit6sCheck], align='center') #.align = 'center'
-    hyperParams = widgets.VBox(children=[p0fVvar, p0IPIvar])
-    fitOutputBar = widgets.HBox(children=[runSSAcheck, plotExpData, runFitButton], align='center')
-    fitParamBoxes = widgets.VBox(children=[dataLoadBar, statesBar, hyperParams, fitOutputBar]) # Left side container
-    fitNotesBoxes = widgets.VBox(children=[]) # Right side container for figure and equations
-    fitBox = widgets.HBox(children=[fitParamBoxes])
-    fitBox.margin = '5px'
-    fitParamsTabs = widgets.HBox(children=[fitBox]) # fitNotesBoxes # Hack to have a parent tab with no children
-    
     
     
     
     def buildLayerTab(paramGroup):
-        
+    
         pluginBoxes = [None for plugin in paramGroup] #{plugin: None for plugin in paramGroup}
         pluginParamsBox = [None for plugin in paramGroup] #{plugin: None for plugin in paramGroup} # Left side container
         pluginNotesBox = [None for plugin in paramGroup] #{plugin: None for plugin in paramGroup} # Right side container for figure and equations
@@ -697,10 +787,237 @@ def loadGUI():
         pluginParamsTabs.margin = '5px'
         
         return pluginParamsTabs
+    
+    #pluginParamsTabs.on_trait_change(simTabChange,'selected_index') # External
+    
+    
+    
+    
+    
+    
+    ##### Fit Data parameters #####
+    
+    ### Create Data set entry
+    dataVar = widgets.Text(description='Data Set: ',placeholder='<variable name>')
+    dataLoad = widgets.Button(description='Load')
+    dataLoad.on_click(onLoad)
+    
+    rArrow = widgets.Latex(value='$\\Rightarrow$')
+    
+    ### Create Fit Model States buttons
+    statesToFitButtons = widgets.ToggleButtons(description='Model to fit: ',options=statesArray)#,value=u' 3') #https://github.com/ipython/ipython/issues/6469
+    statesToFitButtons.on_trait_change(changeFit,'value')
+    
+    #fitLabel = widgets.HTML(value='Models to fit: ')
+    #fit3sCheck = widgets.Checkbox(description='3 state', value=True)
+    #fit4sCheck = widgets.Checkbox(description='4 state', value=False)
+    #fit6sCheck = widgets.Checkbox(description='6 state', value=False)
+    
+    
+    ### Hyperparameters
+    p0fVvar = widgets.Text(value=str(p0fV), description='p0fV: ', width='150px')
+    p0IPIvar = widgets.Text(value=str(p0IPI), description='p0IPI: ', width='150px')
+    
+    
+    ### Create Checkboxes
+    runSSAcheck = widgets.Checkbox(description='Characterise', value=True)
+    useFitCheck = widgets.Checkbox(description='Use fit', value=False)
+    plotExpData = widgets.Checkbox(description='Plot data: ', value=True)
+    
+    ### Create Run Fit Button
+    runFitButton = widgets.Button(description="Fit!")
+    runFitButton.on_click(runFitButton_on_click)
+    
+    ### Create Fit Bar
+    #fitBar = widgets.HBox(children=[dataVar, dataLoad, statesToFitButtons, runSSAcheck, useFitCheck, plotExpData, runFitButton]) #fit3sCheck, fit4sCheck, fit6sCheck
+    #display(fitBar)
+    #fitBar.visible=False
+    
+    ### Set formatting
+    dataVar.width = '150px' #set_css({'width': '150px'})
+    #dataVar.margin = '0px'
+    dataLoad.button_style = 'warning' #add_class('btn-warning')
+    runFitButton.button_style = 'danger' #add_class('btn-danger')
+    #runFitButton.margin = '5px'
+    # Set Fit Bar formatting after display
+    dataLoad._dom_classes = ('margin-left','10px')
+    #fitBar.align = 'center'
+    
+
+    
+    #dataLoadBar = widgets.HBox(children=[dataVar, dataLoad, useFitCheck], align='center')
+    ##statesBar = widgets.HBox(children=[fitLabel, fit3sCheck, fit4sCheck, fit6sCheck], align='center') #.align = 'center'
+    #statesBar = widgets.HBox(children=[statesToFitButtons], align='center')
+    
+    hyperTitle = widgets.HTML(value='<h4>General Parameters</h4>')
+    hyperParams = widgets.VBox(children=[hyperTitle, p0fVvar, p0IPIvar])#, border_color='blue')
+    #fitOutputBar = widgets.HBox(children=[runSSAcheck, plotExpData, runFitButton], align='center')
+    
+    fitBar = widgets.HBox(children=[dataVar, dataLoad, useFitCheck, rArrow, statesToFitButtons, rArrow, runSSAcheck, plotExpData, runFitButton], align='center')
+    #fitParamsHead = widgets.VBox(children=[dataLoadBar, statesBar, hyperParams, fitOutputBar]) # Left side container
+    fitParamsHead = widgets.VBox(children=[fitBar, hyperParams])
+    fitNotesBoxes = widgets.VBox(children=[]) # Right side container for figure and equations
+    
+    #fitParamsTabs = widgets.HBox(children=[fitBox]) # fitNotesBoxes # Hack to have a parent tab with no children
+    #fitParamsBox = widgets.VBox(children=[fitBox,fitParamsTabs])
+    
+    
+    
+    modelFitBoxes = [None for m in range(len(modelParams))]
+    modelFitParamBoxes = [None for m in range(len(modelParams))] # Left side container
+    modelFitNotesBoxes = [None for m in range(len(modelParams))] # Right side container for figure and equations
+    #figHTML = [None for m in range(len(modelParams))] 
+    #eqBox = [None for m in range(len(modelParams))]
+    pfLabArr = [[None for p in modelParams[m]] for m in modelList]
+    pfMinArr = [[None for p in modelParams[m]] for m in modelList]
+    pfValArr = [[None for p in modelParams[m]] for m in modelList] # Array of parameter values #range(len(modelParams))
+    pfMaxArr = [[None for p in modelParams[m]] for m in modelList]
+    fUnitArr = [[None for p in modelParams[m]] for m in modelList] # Array of units #[[None for p in modelParamSet] for modelParamSet in modelParams]
+    fVaryArr = [[None for p in modelParams[m]] for m in modelList]
+    fExprArr = [[None for p in modelParams[m]] for m in modelList]
+    pfBoxArr = [[None for p in modelParams[m]] for m in modelList] # Array of parameter boxes ###[[None for p in modelParams[modelList[m]]] for m in range(len(modelParams))]
+    
+    spacer = widgets.HTML()
+    spacer.width = '150px' # Equal to the width of a drop-drown menu
+    
+    #widgets.HTML(value='<strong>Initial Value</strong>')
+    colHeadings = widgets.HTML(value='<table style="width:800px"><tr><th>Parameter</th><th>Vary</th><th width=150px>Minimum</th><th width=150px>Initial</th><th width=150px>Maximum</th><th width=150px>Units</th><th width=150px>Expression</th></tr></table>')
+    
+    for model, pSet in modelParams.items(): #range(len(modelParams)):
+        #pSet = modelParams[m]            # Set of n-state model parameters
+        m = modelList.index(model)
+        nParams = len(pSet)#.keys())
         
-        #pluginParamsTabs.on_trait_change(simTabChange,'selected_index') # External
+        i=0
+        for key in pSet:#.keys(): #, value in pSet.items():
+            # if isinstance(pSet[key].value, list): # list ==> Text
+                # pluginValues[pluginInd][pInd] = widgets.Text(value=str(pSet[key].value), description=key) # np.asarray
+            # if isinstance(pSet[key].value, bool): # Allow model features to be turned on or off
+                # pValArr[m][i] = widgets.Dropdown(options=boolDict,value=pSet[key].value,description=key)
+            # elif isinstance(pSet[key].value, numbers.Number): # Number: (int, long, float, complex)
+            #if pSet[key].min == None or pSet[key].max == None:
+            #    pValArr[m][i] = widgets.FloatText(value=pSet[key].value, description=key)#"{} [{}]:".format(key, pSet[key].expr))
+            #else:
+            
+            pfLabArr[m][i] = widgets.HTML(value=key)
+            pfLabArr[m][i].width = '20px'
+            minVal = pSet[key].min if pSet[key].min != None else -np.inf
+            pfMinArr[m][i] = widgets.FloatText(value=minVal,description='min') #str(minVal)
+            maxVal = pSet[key].max if pSet[key].max != None else np.inf
+            pfMaxArr[m][i] = widgets.FloatText(value=maxVal,description='max') #str(maxVal)
+            pfValArr[m][i] = widgets.BoundedFloatText(value=pSet[key].value, min=minVal, max=maxVal, description='initial')#"{} [{}]:".format(key, pSet[key].expr))
+            #pfValArr[m][i].width = '150px'
+            
+            fExprArr[m][i] = widgets.Text(value='', description='expr')
+            fExprArr[m][i].width = '150px'
+            fVaryArr[m][i] = widgets.Checkbox(description='vary', value=True)
+            
+            if not pSet[key].expr == None:
+                fUnitArr[m][i] = widgets.Dropdown(options=[pSet[key].expr],value=pSet[key].expr)
+                pfBoxArr[m][i] = widgets.HBox(children=[pfLabArr[m][i],fVaryArr[m][i],pfMinArr[m][i],pfValArr[m][i],pfMaxArr[m][i],fUnitArr[m][i],fExprArr[m][i]], align='center')
+            else:
+                
+                pfBoxArr[m][i] = widgets.HBox(children=[pfLabArr[m][i],fVaryArr[m][i],pfMinArr[m][i],pfValArr[m][i],pfMaxArr[m][i],spacer,fExprArr[m][i]], align='center')
+            i+=1
+        
+        # figHTML[m] = widgets.HTML()
+        # eqBox[m] = widgets.Latex()
+        # if int(statesArray[m]) == 3: # m==0
+            # figHTML[m].value = '<img src="3-state-model.png" alt="Three state model" width=150>'
+            # eqBox[m].value = """
+                    # $$\\dot{C} = G_rD - \\epsilon F C$$
+                    # $$\\dot{O} = \epsilon FC -G_{d}O$$
+                    # $$\\dot{D} = G_{d}O-G_{r}D$$
+                    # $$C+O+D=1$$
+                    # $$\\epsilon F = \\phi\\frac{\\epsilon \\sigma_{ret}}{w_{loss}} = k\\phi$$
+                    # $$G_r = G_{r0} + G_{r1}(\\phi)$$
+                    # $$I_{\\phi} = g O (v-E)$$
+                    # """ #$$ $$
+                    # #G_r = G_{r,d} + \\mathcal{H}(\\phi) \\cdot G_{r,l}
+                    # #I_{\\phi} = \\bar{g} O \\cdot (v-E)
+        # elif int(statesArray[m]) == 4: # m==1
+            # figHTML[m].value = '<img src="4-state-model.png" alt="Four state model" width=180>' #width=200>'
+            # eqBox[m].value = """
+                    # $$\\dot{C_1} = G_rC_2 + G_{d1}O_1 - G_{a1}(\\phi)C_1$$
+                    # $$\\dot{O_1} = G_{a1}(\\phi)C_1 - (G_{d1}+e_{12}(\\phi))O_1 + e_{21}(\\phi)O_2$$
+                    # $$\\dot{O_2} = G_{a2}(\\phi)C_2 + e_{12}(\\phi)O_1 - (G_{d2}+e_{21}(\\phi))O_2$$
+                    # $$\\dot{C_2} = G_{d2}O_2 - (G_{a2}(\\phi)+G_r)C_2$$
+                    # $$C_1+O_1+O_2+C_2=1$$
+                    # $$$$
+                    # $$G_{a1}(\\phi) = k_1\\frac{\\phi^p}{\\phi^p + \\phi_m^p}$$
+                    # $$G_{a2}(\\phi) = k_2\\frac{\\phi^p}{\\phi^p + \\phi_m^p}$$
+                    # $$e_{12}(\\phi) = e_{12, d} + c_1 log(1+\\phi / \\phi_0)$$
+                    # $$e_{21}(\\phi) = e_{21, d} + c_2 log(1+\\phi / \\phi_0)$$
+                    # $$$$
+                    # $$I_{\\phi} = g (O_1+\\gamma O_2) (v-E)$$
+                    # """ #\\frac{\\phi}{\\phi_0}
+                    # #$$G_{a1}(\\phi) = \\phi\\frac{\\epsilon_1 \\sigma_{ret}}{w_{loss}} = k_1\\phi$$
+                    # #$$G_{a2}(\\phi) = \\phi\\frac{\\epsilon_2 \\sigma_{ret}}{w_{loss}} = k_2\\phi$$
+        # else: #int(statesArray[m]) == 6:
+            # #figHTML[m].value = '<img src="http://link.springer.com/static-content/images/46/art%253A10.1007%252Fs10827-012-0431-7/MediaObjects/10827_2012_431_Fig1_HTML.gif" width=220>'
+            # figHTML[m].value = '<img src="6-state-model.gif" alt="Six state model" width=220>'
+            # eqBox[m].value = """
+                    # $$\\dot{C_1} = -a_1(\\phi)C_1 + b_1O_1 + a_6C_2$$
+                    # $$\dot{I_1} = a_1(\\phi)C_1 - a_2I_1$$
+                    # $$\\dot{O_1} = a_2I_1 - (b_1 + a_3(\\phi))O_1 + b_2(\\phi)O_2$$
+                    # $$\\dot{O_2} = a_3(\\phi)O_1 - (b_2(\\phi) + a_4)O_2 + b_3I_2$$
+                    # $$\dot{I_2} = -b_3I_2 + b_4(\\phi)C_2$$
+                    # $$\\dot{C_2} = a_4O_2 - (b_4(\\phi)+a_6)C_2$$
+                    # $$C_1+I_1+O_1+O_2+I_2+C_2=1$$
+                    # $$$$
+                    # $$a_1(\\phi) = a_{10}(\\phi / \\phi_0)$$
+                    # $$a_3(\\phi) = a_{30} + a_{31} \\ln(1 + \\phi / \\phi_0)$$
+                    # $$b_2(\\phi) = b_{20} + b_{21} \\ln(1 + \\phi / \\phi_0)$$
+                    # $$b_4(\\phi) = b_{40} (\\phi / \\phi_0)$$
+                    # $$$$
+                    # $$f(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1}$$
+                    # $$I_{\\phi} = g (O_1+\\gamma O_2) f(v)(v-E)$$
+                    # """
+        modelFitParamBoxes[m] = widgets.VBox(children=pfBoxArr[m]) #Box
+        #modelFitNotesBoxes[m] = widgets.HBox(children=[])#[figHTML[m],eqBox[m]])
+        
+        #modelNotesBoxes[m].add_class('box-flex1')
+        #modelBox = widgets.HBox(children=[modelParamBoxes,modelNotesBoxes])
+        modelFitBoxes[m] = widgets.VBox(children=[modelFitParamBoxes[m]]) #colHeadings, #,modelFitNotesBoxes[m]])#modelBox
+        modelFitBoxes[m].margin = '5px'
+        
+    ### Linked parameters
+    #E_Link = link((stateButtons, 'value'), (statesToFitButtons, 'value'))
+    
+    #modelParamsTabs = widgets.Tab(description='Parameter Settings', children=modelBoxes, values=statesArray)
+    #modelParamsTabs.margin = '5px'
+    #modelParamsTabs.on_trait_change(modelTabChange,'selected_index')
+    #modelParamsTabs.on_displayed(setModelParamsTabs,'selected_index')
+    #modelParamsTabs.on_displayed()
+    #modelParamsLink = link((stateButtons, 'value'), (modelParamsTabs, 'value'))
     
     
+    #fitParamsTabs = buildLayerTab(modelFitBoxes)
+    fitParamsTabs = widgets.Tab(description='Parameter Settings', children=modelFitBoxes, values=statesArray)
+    fitParamsTabs.set_title(0, 'Three-state model')
+    fitParamsTabs.set_title(1, 'Four-state model')
+    fitParamsTabs.set_title(2, 'Six-state model')
+    fitParamsTabs.width = '800px'
+    
+    modelFitTitle = widgets.HTML(value='<h4>Model Specific Parameters</h4>')
+    fitBox = widgets.VBox(children=[fitParamsHead,modelFitTitle,fitParamsTabs]) #HBox
+    fitBox.margin = '5px'
+    #modelParamsTabs = widgets.Tab(description='Parameter Settings', children=modelBoxes, values=statesArray)
+    #modelParamsTabs.margin = '5px'
+    fitParamsTabs.on_trait_change(fitTabChange,'selected_index')
+
+    
+    statesToFitButtons.button_style = 'info'
+    #statesToFitButtons.margin = '5px'
+    
+    
+    
+    
+    
+    
+    
+    
+    #import numbers
     
     ##### Model parameters #####
     modelBoxes = [None for m in range(len(modelParams))]
@@ -712,16 +1029,22 @@ def loadGUI():
     unitArr = [[None for p in modelParams[m]] for m in modelList] # Array of units #[[None for p in modelParamSet] for modelParamSet in modelParams]
     pBoxArr = [[None for p in modelParams[m]] for m in modelList] # Array of parameter boxes ###[[None for p in modelParams[modelList[m]]] for m in range(len(modelParams))]
     for model, pSet in modelParams.items(): #range(len(modelParams)):
-        #pSet = modelParams[m]            # Set of n-state model pararmeters
+        #pSet = modelParams[m]            # Set of n-state model parameters
         m = modelList.index(model)
         nParams = len(pSet)#.keys())
         
         i=0
         for key in pSet:#.keys(): #, value in pSet.items():
-            if pSet[key].min == None or pSet[key].max == None:
+            # if isinstance(pSet[key].value, list): # list ==> Text
+                # pluginValues[pluginInd][pInd] = widgets.Text(value=str(pSet[key].value), description=key) # np.asarray
+            # if isinstance(pSet[key].value, bool): # Allow model features to be turned on or off
+                # pValArr[m][i] = widgets.Dropdown(options=boolDict,value=pSet[key].value,description=key)
+            # elif isinstance(pSet[key].value, numbers.Number): # Number: (int, long, float, complex)
+            if pSet[key].min == (None or -np.inf) or pSet[key].max == (None or np.inf):
                 pValArr[m][i] = widgets.FloatText(value=pSet[key].value, description=key)#"{} [{}]:".format(key, pSet[key].expr))
             else:
                 pValArr[m][i] = widgets.BoundedFloatText(value=pSet[key].value, min=pSet[key].min, max=pSet[key].max, description=key)#"{} [{}]:".format(key, pSet[key].expr))
+            
             if not pSet[key].expr == None:
                 unitArr[m][i] = widgets.Dropdown(options=[pSet[key].expr],value=pSet[key].expr)
                 pBoxArr[m][i] = widgets.HBox(children=[pValArr[m][i],unitArr[m][i]])
@@ -733,52 +1056,68 @@ def loadGUI():
         eqBox[m] = widgets.Latex()
         if int(statesArray[m]) == 3: # m==0
             figHTML[m].value = '<img src="3-state-model.png" alt="Three state model" width=150>'
-            eqBox[m].value = """
-                    $$\\dot{C} = G_rD - \\epsilon F C$$
-                    $$\\dot{O} = \epsilon FC -G_{d}O$$
-                    $$\\dot{D} = G_{d}O-G_{r}D$$
-                    $$C+O+D=1$$
-                    $$\\epsilon F = \\phi\\frac{\\epsilon \\sigma_{ret}}{w_{loss}} = k\\phi$$
-                    $$G_r = G_{r0} + G_{r1}(\\phi)$$
-                    $$I_{\\phi} = g O (v-E)$$
-                    """ #$$ $$
+            eqBox[m].value = models[model].equations
+                    #"""
+                    #$$\\dot{C} = G_{r}(\\phi)D - P(\\phi)C$$
+                    #$$\\dot{O} = P(\\phi)C - G_{d}O$$
+                    #$$\\dot{D} = G_{d}O - G_{r}(\\phi)D$$
+                    #$$C+O+D=1$$
+                    #$$P(\\phi) = k\\frac{\\phi^p}{\\phi^p + \\phi_m^p}$$
+                    #$$G_r = G_{r0} + G_{r1}(\\phi)$$
+                    #$$f(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1}$$
+                    #$$I_{\\phi} = g O f(v) (v-E)$$
+                    #""" #$$ $$
                     #G_r = G_{r,d} + \\mathcal{H}(\\phi) \\cdot G_{r,l}
                     #I_{\\phi} = \\bar{g} O \\cdot (v-E)
+                    #\\epsilon F
+                    #$$P = \\phi\\frac{\\epsilon \\sigma_{ret}}{w_{loss}} = k\\phi$$
         elif int(statesArray[m]) == 4: # m==1
             figHTML[m].value = '<img src="4-state-model.png" alt="Four state model" width=180>' #width=200>'
-            eqBox[m].value = """
-                    $$\\dot{C_1} = G_rC_2 + G_{d1}O_1 - G_{a1}(\\phi)C_1$$
-                    $$\\dot{O_1} = G_{a1}(\\phi)C_1 - (G_{d1}+e_{12}(\\phi))O_1 + e_{21}(\\phi)O_2$$
-                    $$\\dot{O_2} = G_{a2}(\\phi)C_2 + e_{12}(\\phi)O_1 - (G_{d2}+e_{21}(\\phi))O_2$$
-                    $$\\dot{C_2} = G_{d2}O_2 - (G_{a2}(\\phi)+G_r)C_2$$
-                    $$C_1+O_1+O_2+C_2=1$$
-                    $$$$
-                    $$G_{a1}(\\phi) = \\phi\\frac{\\epsilon_1 \\sigma_{ret}}{w_{loss}} = k_1\\phi$$
-                    $$G_{a2}(\\phi) = \\phi\\frac{\\epsilon_2 \\sigma_{ret}}{w_{loss}} = k_2\\phi$$
-                    $$e_{12}(\\phi) = e_{12, d} + c_1 log(1+\\phi / \\phi_0)$$
-                    $$e_{21}(\\phi) = e_{21, d} + c_2 log(1+\\phi / \\phi_0)$$
-                    $$$$
-                    $$I_{\\phi} = g (O_1+\\gamma O_2) (v-E)$$
-                    """ #\\frac{\\phi}{\\phi_0}
+            eqBox[m].value = models[model].equations
+                    #"""
+                    #$$\\dot{C_1} = G_rC_2 + G_{d1}O_1 - G_{a1}(\\phi)C_1$$
+                    #$$\\dot{O_1} = G_{a1}(\\phi)C_1 - (G_{d1}+e_{12}(\\phi))O_1 + e_{21}(\\phi)O_2$$
+                    #$$\\dot{O_2} = G_{a2}(\\phi)C_2 + e_{12}(\\phi)O_1 - (G_{d2}+e_{21}(\\phi))O_2$$
+                    #$$\\dot{C_2} = G_{d2}O_2 - (G_{a2}(\\phi)+G_r)C_2$$
+                    #$$C_1+O_1+O_2+C_2=1$$
+                    #$$$$
+                    #$$G_{a1}(\\phi) = k_1\\frac{\\phi^p}{\\phi^p + \\phi_m^p}$$
+                    #$$G_{a2}(\\phi) = k_2\\frac{\\phi^p}{\\phi^p + \\phi_m^p}$$
+                    #$$e_{12}(\\phi) = e_{12, d} + c_1 \\frac{\\phi^q}{\\phi^q + \\phi_m^q}$$
+                    #$$e_{21}(\\phi) = e_{21, d} + c_2 \\frac{\\phi^q}{\\phi^q + \\phi_m^q}$$
+                    #$$$$
+                    #$$f(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1}$$
+                    #$$I_{\\phi} = g (O_1+\\gamma O_2) f(v) (v-E)$$
+                    #""" #\\frac{\\phi}{\\phi_0}
+                    #$$G_{a1}(\\phi) = \\phi\\frac{\\epsilon_1 \\sigma_{ret}}{w_{loss}} = k_1\\phi$$
+                    #$$G_{a2}(\\phi) = \\phi\\frac{\\epsilon_2 \\sigma_{ret}}{w_{loss}} = k_2\\phi$$
+                    #$$e_{12}(\\phi) = e_{12, d} + c_1 log(1+\\phi / \\phi_0)$$
+                    #$$e_{21}(\\phi) = e_{21, d} + c_2 log(1+\\phi / \\phi_0)$$
         else: #int(statesArray[m]) == 6:
-            figHTML[m].value = '<img src="http://link.springer.com/static-content/images/46/art%253A10.1007%252Fs10827-012-0431-7/MediaObjects/10827_2012_431_Fig1_HTML.gif" width=220>'
-            eqBox[m].value = """
-                    $$\\dot{C_1} = -a_1(\\phi)C_1 + b_1O_1 + a_6C_2$$
-                    $$\dot{I_1} = a_1(\\phi)C_1 - a_2I_1$$
-                    $$\\dot{O_1} = a_2I_1 - (b_1 + a_3(\\phi))O_1 + b_2(\\phi)O_2$$
-                    $$\\dot{O_2} = a_3(\\phi)O_1 - (b_2(\\phi) + a_4)O_2 + b_3I_2$$
-                    $$\dot{I_2} = -b_3I_2 + b_4(\\phi)C_2$$
-                    $$\\dot{C_2} = a_4O_2 - (b_4(\\phi)+a_6)C_2$$
-                    $$C_1+I_1+O_1+O_2+I_2+C_2=1$$
-                    $$$$
-                    $$a_1(\\phi) = a_{10}(\\phi / \\phi_0)$$
-                    $$a_3(\\phi) = a_{30} + a_{31} \\ln(1 + \\phi / \\phi_0)$$
-                    $$b_2(\\phi) = b_{20} + b_{21} \\ln(1 + \\phi / \\phi_0)$$
-                    $$b_4(\\phi) = b_{40} (\\phi / \\phi_0)$$
-                    $$$$
-                    $$f(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1}$$
-                    $$I_{\\phi} = g (O_1+\\gamma O_2) f(v)(v-E)$$
-                    """
+            #figHTML[m].value = '<img src="http://link.springer.com/static-content/images/46/art%253A10.1007%252Fs10827-012-0431-7/MediaObjects/10827_2012_431_Fig1_HTML.gif" width=220>'
+            figHTML[m].value = '<img src="6-state-model.gif" alt="Six state model" width=220>'
+            eqBox[m].value = models[model].equations
+                    #"""
+                    #$$\\dot{C_1} = -a_1(\\phi)C_1 + b_1O_1 + a_6C_2$$
+                    #$$\dot{I_1} = a_1(\\phi)C_1 - a_2I_1$$
+                    #$$\\dot{O_1} = a_2I_1 - (b_1 + a_3(\\phi))O_1 + b_2(\\phi)O_2$$
+                    #$$\\dot{O_2} = a_3(\\phi)O_1 - (b_2(\\phi) + a_4)O_2 + b_3I_2$$
+                    #$$\dot{I_2} = -b_3I_2 + b_4(\\phi)C_2$$
+                    #$$\\dot{C_2} = a_4O_2 - (b_4(\\phi)+a_6)C_2$$
+                    #$$C_1+I_1+O_1+O_2+I_2+C_2=1$$
+                    #$$$$
+                    #$$a_1(\\phi) = a_{10} \\frac{\\phi^p}{\\phi^p + \\phi_m^p}$$
+                    #$$a_3(\\phi) = a_{30} + a_{31} \\frac{\\phi^q}{\\phi^q + \\phi_m^q}$$
+                    #$$b_2(\\phi) = b_{20} + b_{21} \\frac{\\phi^q}{\\phi^q + \\phi_m^q}$$
+                    #$$b_4(\\phi) = b_{40} \\frac{\\phi^p}{\\phi^p + \\phi_m^p}$$
+                    #$$$$
+                    #$$f(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1}$$
+                    #$$I_{\\phi} = g (O_1+\\gamma O_2) f(v)(v-E)$$
+                    #"""
+                    #$$a_1(\\phi) = a_{10}(\\phi / \\phi_0)$$
+                    #$$a_3(\\phi) = a_{30} + a_{31} \\ln(1 + \\phi / \\phi_0)$$
+                    #$$b_2(\\phi) = b_{20} + b_{21} \\ln(1 + \\phi / \\phi_0)$$
+                    #$$b_4(\\phi) = b_{40} (\\phi / \\phi_0)$$
         modelParamBoxes[m] = widgets.Box(children=pBoxArr[m])
         modelNotesBoxes[m] = widgets.HBox(children=[figHTML[m],eqBox[m]])
         #modelNotesBoxes[m].add_class('box-flex1')
@@ -798,10 +1137,7 @@ def loadGUI():
     
     
     
-        
-        
-        
-        
+    
     
     ##### Simulator parameters #####
     
@@ -837,9 +1173,9 @@ def loadGUI():
                 sim_pBoxArr[sInd][i] = widgets.HBox(children=[sim_pValArr[sInd][i],sim_unitArr[sInd][i]])
             else:
                 sim_pBoxArr[sInd][i] = widgets.HBox(children=[sim_pValArr[sInd][i]])
-            
+                
             i+=1
-        
+            
         simFigHTML[sInd] = widgets.HTML()
         #exampleProt = '{}{}6s.{}'.format(fDir,prot,'png')#saveFigFormat)
         #if os.path.isfile(exampleProt):
@@ -853,16 +1189,15 @@ def loadGUI():
         simBoxes[sInd] = widgets.HBox(children=[simParamBoxes[sInd],simNotesBoxes[sInd]])#modelBox
         #display(protBoxes[pInd])
         simBoxes[sInd].margin = '5px'
-    
+        
     
     ##### Simulator parameters tab #####
     simParamsTabs = widgets.Tab(description='Simulator Settings', children=simBoxes)# \
     simParamsTabs.margin = '5px'
     simParamsTabs.on_trait_change(simTabChange,'selected_index')
-    
-    
-    
-    
+        
+        
+  
     
     
     ##### Protocol parameters #####
@@ -897,7 +1232,7 @@ def loadGUI():
                 prot_pBoxArr[pInd][i] = widgets.HBox(children=[prot_pValArr[pInd][i]])
             
             i+=1
-        
+            
         protStimHTML[pInd] = widgets.HTML()
         ### Add stimulus figures by printing to file
         # IPython.core.pylabtools.print_figure(fig, fmt='png', bbox_inches='tight', **kwargs)
@@ -926,10 +1261,10 @@ def loadGUI():
         protBoxes[pInd] = widgets.HBox(children=[protParamBoxes[pInd],protNotesBoxes[pInd]])#modelBox
         protBoxes[pInd].margin = '5px'
         #display(protBoxes[pInd])
-
-
-
-
+        
+        
+        
+        
     ##### Protocol parameters tab #####
     protParamsTabs = widgets.Tab(description='Parameter Settings', children=protBoxes)# \
     protParamsTabs.margin = '5px'
@@ -937,7 +1272,7 @@ def loadGUI():
     
     
     ##### Configure tabs for abstraction layers #####
-    paramTabs = widgets.Tab(description='Parameter Settings', children=[fitParamsTabs,modelParamsTabs,simParamsTabs,protParamsTabs])#,values=['Model', 'Protocol']) #E_box,k_box
+    paramTabs = widgets.Tab(description='Parameter Settings', children=[fitBox,modelParamsTabs,simParamsTabs,protParamsTabs])#fitParamsTabs #,values=['Model', 'Protocol']) #E_box,k_box
     display(paramTabs)
     paramTabs.selected_index = TabGroups['Models'] # Set to show model parameters initially
     paramTabs.visible=False
@@ -950,7 +1285,7 @@ def loadGUI():
     paramTabs.set_title(1, 'Model Parameters')
     paramTabs.set_title(2, 'Simulator Parameters')
     paramTabs.set_title(3, 'Protocol Parameters')
-
+    
     modelParamsTabs.set_title(0, 'Three-state model')
     modelParamsTabs.set_title(1, 'Four-state model')
     modelParamsTabs.set_title(2, 'Six-state model')
@@ -998,23 +1333,23 @@ def loadGUI():
     # display(Brianbox)
     # Brianbox.visible=False
     # Brianbox.align = 'center'
-
+    
     # brianLoad.button_style = 'warning' #add_class('btn-warning')
     
-    
+
     
     #GUI.children=[fitBar,runBar,paramsControlBar,paramTabs,NEURONbox,Brianbox]
     #display(GUI)
     #GUI.remove_class('vbox')
     #GUI.add_class('hbox')
-    
-
+   
     
     
     return
-
+    
 GUI = widgets.Box()
 #interact(runModel, nStates={'Three-state':3,'Four-state':4,'Six-state':6}, protocol=('custom', 'step', 'sinusoid', 'ramp', 'saturate', 'inwardRect', 'varyPL', 'varyIPI'), saveData=True, verbose=1);
 
 if __name__ == '__main__':
     loadGUI()
+    
