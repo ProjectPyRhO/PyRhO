@@ -66,6 +66,7 @@ if display == 'screen':
 elif display == 'paper':
     #http://www.nature.com/nature/authors/gta/3c_Final_artwork.pdf
     #http://www.plosone.org/static/figureSpecifications
+    #http://www.ploscompbiol.org/static/figureSpecifications
     dpi = 600 # Set DPI 300 - 600
     saveFigFormat = 'png'#'eps'           # Supported formats: eps, pdf, pgf, png, ps, raw, rgba, svg, svgz.
     #figFormat = 'eps'
