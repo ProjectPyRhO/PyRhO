@@ -42,48 +42,95 @@ modelList = list(modelParams) # List of keys: list(modelParams.keys()) #This cou
 
 #d3sp = Parameters()
 #                       (Name,    Value,  Vary, Min,  Max,  Expr=Units)
+# modelParams['3'].add_many(
+                # #('phi0',  1e15,   True, None, None, None),
+                # #('phiSat',1e20,   True, None, None, None),
+                # ('E',     0,      True, -1000,1000, 'mV'),
+                # ('g',     1.67e4, True, 0.0,  1e15, 'pS'),
+                # ('k',     5.5e-15,True, 0.0,  1e15, None),
+                # ('p',     0.7,    True, 0.1,  5,    None),
+                # ('phim',  1e17,   True, 1e15, 1e19, 'photons/s/mm^2'),
+                # ('Gd',    0.0909, True, 0.0,  None, '/ms'),
+                # ('Gr0',   1/5000, True, 0.0,  None, '/ms'),
+                # ('Gr1',   1/165,  True, 0.0,  None, '/ms'),
+                # ('useIR', False,  True, False,True, None),
+                # ('v0',    43,     True, None, None, 'mV'),
+                # ('v1',    4.1,    True, None, None, 'mV'))
+                
 modelParams['3'].add_many(
                 #('phi0',  1e15,   True, None, None, None),
                 #('phiSat',1e20,   True, None, None, None),
                 ('E',     0,      True, -1000,1000, 'mV'),
-                ('g',     1.67e4, True, 0.0,  1e15, 'pS'),
-                ('k',     5.5e-15,True, 0.0,  1e15, None),
-                ('Gd',    0.0909, True, 0.0,  None, '/ms'),
-                ('Gr0',   1/5000, True, 0.0,  None, '/ms'),
-                ('Gr1',   1/165,  True, 0.0,  None, '/ms'))
+                ('g',     1.67e4, True, 0.001,  1e6, 'pS'),
+                ('k',     25,     True, 0.001,  1000, None), #('k',     5.5e-15,True, 0.0,  1e15, None),
+                ('p',     0.7,    True, 0.1,  5,    None),
+                ('phim',  1e17,   True, 1e15, 1e19, 'photons/s/mm^2'),
+                ('Gd',    0.0909, True, 0.0001,  1, '/ms'),
+                ('Gr0',   1/5000, True, 0.0001,  0.1, '/ms'),
+                ('Gr1',   1/165,  True, 0.0001,  1, '/ms'),
+                ('useIR', False,  True, False,True, None),
+                ('v0',    43,     True, None, None, 'mV'),
+                ('v1',    4.1,    True, None, None, 'mV'))
                 
 
 ### Alternatively add another field
 #d3sp['g'].units = 'pS'
 #print(d3sp['g'].units)
 #d4sp = Parameters()
-modelParams['4'].add_many(
-                ('phi0',  1e14,   True, None, None, 'photons/s/mm^2'),
-                ('E',     0,      True, -1000,1000, 'mV'),
-                ('gam',   0.05,   True, 0.0,  1e9,  None),
-                ('g',     1.67e4, True, 0.0,  1e15, 'pS'),
-                ('k1',    0.05,   True, 0.0,  1e3,  None), ### Add bounds checking?
-                ('k2',    0.015,  True, 0.0,  1e3,  None),
-                ('c1',    0.03,   True, 0.0,  None, None),
-                ('c2',    0.0115, True, 0.0,  None, None),
-                ('e12d',  0.01,   True, 0.0,  None, '/ms'),
-                ('e21d',  0.015,  True, 0.0,  None, '/ms'),
-                ('Gd1',   0.11,   True, 0.0,  None, '/ms'),
-                ('Gd2',   0.025,  True, 0.0,  None, '/ms'),
-                ('Gr',    0.0004, True, 0.0,  None, '/ms'))
+# modelParams['4'].add_many(
+                # ('phi0',  1e14,   True, None, None, 'photons/s/mm^2'),
+                # ('E',     0,      True, -1000,1000, 'mV'),
+                # ('gam',   0.05,   True, 0.0,  1e9,  None),
+                # ('g',     1.67e4, True, 0.0,  1e15, 'pS'),
+                # ('k1',    0.05,   True, 0.0,  1e3,  None), ### Add bounds checking?
+                # ('k2',    0.015,  True, 0.0,  1e3,  None),
+                # ('c1',    0.03,   True, 0.0,  None, None),
+                # ('c2',    0.0115, True, 0.0,  None, None),
+                # ('p',     0.7,    True, None, None, None),
+                # ('phim',  5e17,   True, None, None, 'photons/s/mm^2'),
+                # ('e12d',  0.01,   True, 0.0,  None, '/ms'),
+                # ('e21d',  0.015,  True, 0.0,  None, '/ms'),
+                # ('Gd1',   0.11,   True, 0.0,  None, '/ms'),
+                # ('Gd2',   0.025,  True, 0.0,  None, '/ms'),
+                # ('Gr',    0.0004, True, 0.0,  None, '/ms'),
+                # ('useIR', False,  True, False,True, None),
+                # ('v0',    43,     True, None, None, 'mV'),
+                # ('v1',    4.1,    True, None, None, 'mV'))
               
-
+modelParams['4'].add_many(  #('phi0',    1e14,   True, 1e12, 1e21,   'photons/s/mm^2'),### Set this to be above the max flux??? 10**ceil(log10(max(phis)))
+                ('E',       0,      True, -1000,1000,   'mV'),
+                ('gam',     0.05,   True, 0.0,  1,      None),
+                ('g',       3.5e4,  True, 0.001,1e15,   'pS'),
+                ('k1',      1000,   True, 0.001,1e5,    None), #3
+                ('k2',      500,    True, 0.001,1e5,    None), #1.5
+                ('p',       0.7,    True, 0.1,  5,      None),
+                ('e12d',    0.01,   True, 0,    1e3,    '/ms'),
+                ('e21d',    0.01,   True, 0,    1e3,    '/ms'),
+                ('c1',      0.4,   True, 0.001, 1e3,    None),
+                ('c2',      0.2,   True, 0.001, 1e3,    None),
+                ('q',       0.47,    True, 0.1,  5,      None),
+                ('phim',    1e16,   True, 1e15, 1e19,   'photons/s/mm^2'),
+                ('Gd1',     0.15,   True, 0.01, 1,      '/ms'),
+                ('Gd2',     0.025,  True, 0.01, 1,      '/ms'),
+                ('Gr',      0.0004, True, 1e-6, 1,      '/ms'),
+                ('useIR',   False,  True, False,True,   None),
+                ('v0',      43,     True, None, None,   'mV'),
+                ('v1',      4.1,    True, None, None,   'mV'))
+    
+    
+    
+              
+              
 #d6sp = Parameters()
 modelParams['6'].add_many(
-                ('phi0',  1e14,   True, None, None, 'photons/s/mm^2'),
+                #('phi0',  1e14,   True, None, None, 'photons/s/mm^2'),
+                ('phim',    1e16,   True, 1e15, 1e19,   'photons/s/mm^2'),
                 ('E',     0,      True, -1000,1000, 'mV'),
                 ('gam',   0.05,   True, 0.0,  1e9,  None),
                 ('g',     75000,  True, 0.0,  1e15, 'pS'),
                 #('A',     31192,  True, 0.0,  1e15, 'um^2'),
                 #('gbar',  2.4,    True, 0.0,  1e15, 'pS/um^2'),
-                ('v0',    43,     True, None, None, 'mV'),
-                ('v1',    4.1,    True, None, None, 'mV'),
-                ('a10',   5,      True, 0.0,  None, '/ms'),
+                ('a10',   5e3,    True, 0.0,  None, '/ms'), #5
                 ('a2',    1,      True, 0.0,  None, '/ms'),
                 ('a30',   0.022,  True, 0.0,  None, '/ms'),
                 ('a31',   0.0135, True, 0.0,  None, '/ms'),
@@ -93,7 +140,12 @@ modelParams['6'].add_many(
                 ('b20',   0.011,  True, 0.0,  None, '/ms'),
                 ('b21',   0.0048, True, 0.0,  None, '/ms'),
                 ('b3',    1,      True, 0.0,  None, '/ms'),
-                ('b40',   1.1,    True, 0.0,  None, '/ms'))
+                ('b40',   1.1e3,  True, 0.0,  None, '/ms'), #1.1
+                ('p',     0.7,    True, 0.1,  5,    None),
+                ('q',     0.47,   True, 0.1,  5,    None),
+                ('useIR', True,   True, False,True, None),
+                ('v0',    43,     True, None, None, 'mV'),
+                ('v1',    4.1,    True, None, None, 'mV'))
 
 
 
@@ -112,13 +164,14 @@ simList = list(simParams)
 
 simParams['Python'].add_many(('dt',0.1,True,None,None,'ms'))
 
-simParams['NEURON'].add_many(('v_init',-65,True,None,None,'mV'),
-                             ('CVODE',False,True,False,True,None),
-                             ('dt',0.1,True,None,None,'ms'),
-                             ('nseg',3,True,1,1e9,None),
+simParams['NEURON'].add_many(('cell',['minimal.hoc'],True,None,None,None), #'morphology'
+                             ('Vclamp',True,True,False,True,None),
+                             ('Vcomp','soma',True,None,None,None),
                              ('expProb',1.0,True,0.,1.,None),
-                             ('cell',['minimal.hoc'],True,None,None,None), #'morphology'
-                             ('Vclamp',True,True,False,True,None))#,
+                             ('v_init',-65,True,None,None,'mV'),
+                             ('CVODE',False,True,False,True,None),
+                             ('dt',0.1,True,None,None,'ms'))#,
+                             #('nseg',3,True,1,1e9,None),
                              #('Vhold',-70,True,-200,200,'mV')) # Set by runTrial
 # atol
 
