@@ -322,8 +322,9 @@ class Protocol(object):
                             #peakInds = argrelextrema(I_RhO, np.greater, order=extOrder)
                             Ipmax = max(I_RhO)
                             peakInds = [np.argmax(I_RhO)]# + startInd
+                        tmaxlag = t[peakInds] - pulses[0,1]
                         if verbose > 1:
-                            print("I_peak = {}nA; t_peak={}ms; peakInds={}".format(Ipmax,t[peakInds],peakInds))
+                            print("I_peak = {}nA; t_peak={}ms; t_maxlag={}ms; peakInds={}".format(Ipmax,t[peakInds],tmaxlag,peakInds))
                     #     Ip = I_RhO[IpInds[run][phiInd][vInd]]
                     
                     elif protocol == 'sinusoid' or protocol == 'chirp':
@@ -1012,7 +1013,7 @@ class Protocol(object):
             plt.figure(Ifig.number)
             plt.axvline(x=t[peakInds[0]],linestyle=':',color='k')
             plt.axhline(y=I_RhO[peakInds[0]],linestyle=':',color='k')
-            plt.text(1.05*t[peakInds[0]],1.05*I_RhO[peakInds[0]],'$I_{{peak}} = {:.3g}$'.format(I_RhO[peakInds[0]]),ha='left',va='bottom',fontsize=eqSize)
+            plt.text(1.05*t[peakInds[0]],1.05*I_RhO[peakInds[0]],'$I_{{peak}} = {:.3g}nA;\ t_{{lag}} = {:.3g}ms$'.format(I_RhO[peakInds[0]], t[peakInds[0]]-self.pulses[0,1]),ha='left',va='bottom',fontsize=eqSize)
 
             
         if protocol == "inwardRect": # and RhO.useInwardRect: # Rewrite fitfV to handle other models
