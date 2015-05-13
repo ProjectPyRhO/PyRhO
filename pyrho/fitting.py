@@ -1925,7 +1925,7 @@ def fit4states(fluxSet,run,vInd,params,method=methods[3]): #fit4states(Is,ts,onI
 
 
 
-def fit6states(fluxSet,shortPulseSet,run,vInd,params,method=methods[3]): #fit4states(Is,ts,onInds,offInds,phis,V,Gr,gmax,params=None,method=methods[3]):#,Iss): # ,Ipeak
+def fit6states(fluxSet,dataSet,run,vInd,params,method=methods[3]): #shortPulseSet #fit4states(Is,ts,onInds,offInds,phis,V,Gr,gmax,params=None,method=methods[3]):#,Iss): # ,Ipeak
     
     
     # Specify initial values (and bounds) for dummy parameters for each phi
@@ -1979,16 +1979,15 @@ def fit6states(fluxSet,shortPulseSet,run,vInd,params,method=methods[3]): #fit4st
     ### OFF PHASE
     ### 3a. OFF CURVE: Fit biexponential to off curve to find lambdas
     ### Fit off curve - if initial conditions can be calculated, it might be better to use an analytic solution relating directly to model parameters c.f. analysis_4state_off_new.m
-
+    
+    
     pOffs = Parameters() # Create parameter dictionary
-    # pOffs.add_many(('Gd1',0.15,True,0.01,1,None), #('Gd1',0.11,False,0.01,1,None)
-                    # ('Gd2',0.025,True,0.01,1,None), #('Gd2',0.023,False,0.01,1,None)
-                    # ('e12d',0.01,True,0,1,None),
-                    # ('e21d',0.01,True,0,1,None))
-    copyParam('Gd1',params,pOffs)
-    copyParam('Gd2',params,pOffs)
-    copyParam('e12d',params,pOffs)
-    copyParam('e21d',params,pOffs)
+    copyParam('b1',params,pOffs) #Gd1
+    copyParam('a4',params,pOffs) #Gd2
+    copyParam('a30',params,pOffs) #Gf0
+    copyParam('b20',params,pOffs) #Gb0
+    
+    ### Trim the first 10% of the off curve to allow I1 and I2 to empty?
     
     # Create dummy parameters for each phi
     for phiInd in range(nPhis):
@@ -2000,34 +1999,34 @@ def fit6states(fluxSet,shortPulseSet,run,vInd,params,method=methods[3]): #fit4st
     # lam1 + lam2 == Gd1 + Gd2 + e12d + e21d
     # lam1 * lam2 == Gd1*Gd2 + Gd1*e21d + Gd2*e12d
         
-    calcB = lambda Gd1, Gd2, e12d, e21d: (Gd1 + Gd2 + e12d + e21d)/2
-    calcC = lambda b, Gd1, Gd2, e12d, e21d: np.sqrt(b**2 - (Gd1*Gd2 + Gd1*e21d + Gd2*e12d))
+    calcB = lambda b1, a4, a30, b20: (b1 + a4 + a30 + b20)/2 #Gd1, Gd2, e12d, e21d: (Gd1 + Gd2 + e12d + e21d)/2
+    calcC = lambda b, b1, a4, a30, b20: np.sqrt(b**2 - (b1*a4 + b1*b20 + a4*a30)) #b, Gd1, Gd2, e12d, e21d: np.sqrt(b**2 - (Gd1*Gd2 + Gd1*e21d + Gd2*e12d))
     
     def lams(p): #(Gd1, Gd2, e12d, e21d):
-        Gd1 = p['Gd1'].value
-        Gd2 = p['Gd2'].value
-        e12d = p['e12d'].value
-        e21d = p['e21d'].value
+        Gd1 = p['b1'].value
+        Gd2 = p['a4'].value
+        Gf0 = p['a30'].value
+        Gb0 = p['b20'].value
         #v = p.valuesdict()
-        b = calcB(Gd1, Gd2, e12d, e21d)
-        c = calcC(b, Gd1, Gd2, e12d, e21d)
+        b = calcB(Gd1, Gd2, Gf0, Gb0)
+        c = calcC(b, Gd1, Gd2, Gf0, Gb0)
         return (b-c, b+c)
     
-    def fit4off(p,t,trial):
+    def fit6off(p,t,trial):
         Islow = p['Islow_'+str(trial)].value
         Ifast = p['Ifast_'+str(trial)].value
         lam1, lam2 = lams(p)
         return -(Islow*np.exp(-lam1*t) + Ifast*np.exp(-lam2*t))
         
-    def err4off(p,Ioffs,toffs):
+    def err6off(p,Ioffs,toffs):
         """Normalise by the first element of the off-curve""" # [-1]
-        return np.r_[ [Ioffs[i]/Ioffs[i][0] - fit4off(p,toffs[i],i)/Ioffs[i][0] for i in range(len(Ioffs))] ]
+        return np.r_[ [Ioffs[i]/Ioffs[i][0] - fit6off(p,toffs[i],i)/Ioffs[i][0] for i in range(len(Ioffs))] ]
     
     #fitfunc = lambda p, t: -(p['a0'].value + p['a1'].value*np.exp(-lams(p)[0]*t) + p['a2'].value*np.exp(-lams(p)[1]*t))
     ##fitfunc = lambda p, t: -(p['a0'].value + p['a1'].value*np.exp(-p['lam1'].value*t) + p['a2'].value*np.exp(-p['lam2'].value*t))
     #errfunc = lambda p, Ioff, toff: Ioff - fitfunc(p,toff)
     
-    offPmin = minimize(err4off, pOffs, args=(Ioffs,toffs), method=method)#, fit_kws={'maxfun':100000})
+    offPmin = minimize(err6off, pOffs, args=(Ioffs,toffs), method=method)#, fit_kws={'maxfun':100000})
     
     print(">>> Off-phase fitting summary: <<<")
     if verbose > 1:
@@ -2057,23 +2056,91 @@ def fit6states(fluxSet,shortPulseSet,run,vInd,params,method=methods[3]): #fit4st
         eq = 'I(t)=-({Islow:.3g}*exp(-{lam1:.3g}*t) + {Ifast:.3g}*exp(-{lam2:.3g}*t))'.format(Islow=Islow, Ifast=Ifast, lam1=lam1, lam2=lam2)
         ax = fig.add_subplot(gs[trial,:])
         ax.plot(toffs[trial], Ioffs[trial], 'g', linewidth=mp.rcParams['lines.linewidth']*3, label='Data: phi={phi:.3g}'.format(phi=phis[trial])) # Experimental data
-        ax.plot(toffs[trial], fit4off(pOffs,toffs[trial],trial), 'b', label=eq) # Fits
+        ax.plot(toffs[trial], fit6off(pOffs,toffs[trial],trial), 'b', label=eq) # Fits
         plt.legend(loc=4) # Lower right
         if trial < nTrials-1:
             plt.setp(ax.get_xticklabels(), visible=False)
             plt.xlabel('')
         ax.set_ylim(-1,0.1)
         
-    print('Gd1 = {}; Gd2 = {}; e12d = {}; e21d = {}'.format(pOffs['Gd1'].value, pOffs['Gd2'].value, pOffs['e12d'].value, pOffs['e21d'].value))
+    print('Gd1 = {}; Gd2 = {}; Gf0 = {}; Gb0 = {}'.format(pOffs['b1'].value, pOffs['a4'].value, pOffs['a30'].value, pOffs['b20'].value))
     
-    pOffs['Gd1'].vary=False
-    pOffs['Gd2'].vary=False
-    pOffs['e12d'].vary=False
-    pOffs['e21d'].vary=False
-    
-    
+    pOffs['b1'].vary=False #Gd1
+    pOffs['a4'].vary=False #Gd2
+    pOffs['a30'].vary=False #Gf0
+    pOffs['b20'].vary=False #Gb0
     
     
+    ### Calculate Go (1/tau_opsin)
+    
+    # Assume that Gd1 > Gd2
+    # Assume that Gd = Gd1 for short pulses
+    
+    def solveGo(tlag, Gd, Go0=1000, tol=1e-9):
+        Go, Go_m1 = Go0, 0
+        print(tlag, Gd, Go, Go_m1)
+        while abs(Go_m1 - Go) > tol:
+            Go_m1 = Go
+            Go = ((tlag*Gd) - np.log(Gd/Go_m1))/tlag
+            #Go_m1, Go = Go, ((tlag*Gd) - np.log(Gd/Go_m1))/tlag
+            print(Go, Go_m1)
+        return Go
+            
+    if 'varyPL' in dataSet: # Fit Gret
+        from scipy.optimize import curve_fit
+        # Fit tpeak = tpulse + tmaxatp0 * np.exp(-k*tpulse)
+        #dataSet['varyPL'].getProtPeaks()
+        #tpeaks = dataSet['varyPL'].IrunPeaks
+        PD = dataSet['varyPL']
+        PCs = [PD.trials[p][0][0] for p in range(PD.nRuns)]
+        #[pc.alignToTime() for pc in PCs]
+        
+        #tpeaks = np.asarray([PD.trials[p][0][0].tpeak for p in range(PD.nRuns)]) # - PD.trials[p][0][0].t[0]
+        #tpulses = np.asarray([PD.trials[p][0][0].onDs[0] for p in range(PD.nRuns)])
+        tpeaks = np.asarray([pc.tpeak for pc in PCs])
+        tpulses = np.asarray([pc.onDs[0] for pc in PCs])
+        
+        devFunc = lambda tpulses, t0, k: tpulses + t0 * np.exp(-k*tpulses)
+        p0 = (0,1)
+        popt, pcov = curve_fit(devFunc, tpulses, tpeaks, p0=p0)
+        fig = plt.figure()
+        ax = fig.add_subplot(111, aspect='equal')
+        tsmooth = np.linspace(0,max(tpulses),101)
+        ax.plot(tpulses,tpeaks,'x')
+        ax.plot(tsmooth,devFunc(tsmooth,*popt))
+        ax.plot(tsmooth,tsmooth,'--')
+        ax.set_ylim([0,max(tpulses)+5])
+        ax.set_xlim([0,max(tpulses)+5])
+        
+        #plt.tight_layout()
+        #plt.axis('equal')
+        
+        print(tpulses)
+        print(tpeaks)
+        print(*popt)
+        print(devFunc(tpeaks,*popt))
+        
+        # Solve iteratively Go = ((tlag*Gd) - np.log(Gd/Go))/tlag
+        
+        Gd1 = pOffs['b1'].value
+        Go = solveGo(tlag=popt[0], Gd=Gd1, Go0=1000, tol=1e-9)
+        print('Go = ', Go)
+        # Gd2 = pOffs['a4'].value
+        # Go2 = solveGo(tlag=popt[0], Gd=Gd2, Go0=1000, tol=1e-9)
+        # print('Go2 = ', Go2)
+        
+    elif 'saturate' in dataSet:
+        PD = dataSet['saturate']
+        #PCs = [PD.trials[p][0][0] for p in range(PD.nRuns)]
+        PC = PD.trials[0][0][0]
+        tlag = PC.tlag ############################### Add to Photocurrent...
+        
+        Go = solveGo(tlag=tlag, Gd=Gd1, Go0=1000, tol=1e-9)
+        print('Go = ', Go)
+    
+    else:
+        Go = 1 # Default
+        print('No data found to estimate Go: defaulting to Go = {}'.format(Go))
     
     
     ### ON PHASE
@@ -2081,16 +2148,21 @@ def fit6states(fluxSet,shortPulseSet,run,vInd,params,method=methods[3]): #fit4st
     pOns = Parameters() # deepcopy(params)
     
     # Set parameters from Off-curve optimisation
-    copyParam('Gd1',pOffs,pOns)
-    copyParam('Gd2',pOffs,pOns)
-    copyParam('e12d',pOffs,pOns)
-    copyParam('e21d',pOffs,pOns)
+    copyParam('b1',pOffs,pOns) #Gd1
+    copyParam('a4',pOffs,pOns) #Gd2
+    copyParam('a30',pOffs,pOns) #Gf0
+    copyParam('b20',pOffs,pOns) #Gb0
+    
+    # Set parameters from short pulse calculations
+    pOns.add('a2', value=Go, vary=False, min=1e-9, max=1e9) #Go1
+    pOns.add('b3', value=Go, vary=False, min=1e-9, max=1e9) #Go2
+    #pOns.add('b3', value=Go2, vary=False, min=1e-9, max=1e9) #Go2
     
     # phiFits[phiInd] = fit4states(I,t,onInd,offInd,phi,V,Gr0,gmax,params=pOns,method=method)
-    copyParam('k1',params,pOns) #pOns.add('k1',value=3, min=0.01) #0.5 Ga1 = k1 * phi
-    copyParam('k2',params,pOns) #pOns.add('k2',value=1.5, min=0.01) #0.2 Ga2 = k2 * phi
-    copyParam('c1',params,pOns) #pOns.add('c1',value=0.05, min=0.01)
-    copyParam('c2',params,pOns) #pOns.add('c2',value=0.01, min=0.01)
+    copyParam('a10',params,pOns) #k1 #pOns.add('k1',value=3, min=0.01) #0.5 Ga1 = k1 * phi
+    copyParam('b40',params,pOns) #k2 #pOns.add('k2',value=1.5, min=0.01) #0.2 Ga2 = k2 * phi
+    copyParam('a31',params,pOns) #kf #pOns.add('c1',value=0.05, min=0.01)
+    copyParam('b21',params,pOns) #kb #pOns.add('c2',value=0.01, min=0.01)
     copyParam('gam',params,pOns) #pOns.add('gam',value=0.05, min=0, max=1)
     # Place RhO,V,phi in onPmin?
     copyParam('p',params,pOns) #pOns.add('p',value=0.7,min=0.1,max=5)
@@ -2100,25 +2172,42 @@ def fit6states(fluxSet,shortPulseSet,run,vInd,params,method=methods[3]): #fit4st
     # Set parameters from general rhodopsin analysis routines
     #Gr0,gmax
     copyParam('g',params,pOns) # pOns.add('g',value=gmax,vary=False)
-    copyParam('Gr',params,pOns) # pOns.add('Gr',value=Gr0,vary=False)
+    copyParam('a6',params,pOns) #Gr # pOns.add('Gr',value=Gr0,vary=False)
     #copyParam('phi0',params,pOns) # pOns.add('phi0',value=5e18,min=1e14,max=1e20,vary=False) ################# Set this to be above the max flux??? 10**ceil(log10(max(phis)))
     copyParam('E',params,pOns)
     if params['useIR'].value==True:
         copyParam('v0',params,pOns)
         copyParam('v1',params,pOns)
     
-    RhO = models['4']()
+    RhO = models['6']()
+    
+    def calc6on(p,t,RhO,V,phi):
+        """Simulate the on-phase from base parameters for the 6-state model"""
+        if verbose > 1:
+            print('.', end="") # sys.stdout.write('.')
+        RhO.initStates(0)
+        #RhO.setLight(phi) # Calculate transition rates for phi
+        RhO.updateParams(p)
+        RhO.setLight(phi) # Calculate transition rates for phi
+        
+        soln = odeint(RhO.solveStates, RhO.s_0, t, Dfun=RhO.jacobian)
+        # soln,out = odeint(RhO.solveStates, RhO.s_0, t, Dfun=RhO.jacobian, full_output=True)
+        # if out['message'] != 'Integration successful.':
+            # #print(out)
+            # print(RhO.reportParams())
+        I_RhO = RhO.calcI(V, soln)
+        return I_RhO
     
     # Normalise? e.g. /Ions[trial][-1] or /min(Ions[trial])
-    def err4On(p,Ions,tons,RhO,Vs,phis):
-        return np.r_[ [Ions[i]/Ions[i][-1] - calc4on(p,tons[i],RhO,Vs[i],phis[i])/Ions[i][-1] for i in range(len(Ions))]]
+    def err6on(p,Ions,tons,RhO,Vs,phis):
+        return np.r_[ [Ions[i]/Ions[i][-1] - calc6on(p,tons[i],RhO,Vs[i],phis[i])/Ions[i][-1] for i in range(len(Ions))]]
     
     ### Trim down ton? Take 10% of data or one point every ms? ==> [0::5]
     ### Instead try looping over a coarse grid of parameter values and saving RMSE for each combination c.f. analysis_4state_on_new.m
     
     if verbose > 1:
         print('Optimising',end='')
-    onPmin = minimize(err4On, pOns, args=(Ions,tons,RhO,Vs,phis), method=method)
+    onPmin = minimize(err6on, pOns, args=(Ions,tons,RhO,Vs,phis), method=method)
     
     print("\n>>> On-phase fitting summary: <<<")
     if verbose > 1:
@@ -2130,20 +2219,19 @@ def fit6states(fluxSet,shortPulseSet,run,vInd,params,method=methods[3]): #fit4st
         print(onPmin.lmdif_message)
     print("Chi^2: ",onPmin.chisqr)
     
-    print('k1 = {}; k2 = {}; c1 = {}; c2 = {}'.format(pOns['k1'].value, pOns['k2'].value, pOns['c1'].value, pOns['c2'].value))
+    #print('k1 = {}; k2 = {}; c1 = {}; c2 = {}'.format(pOns['k1'].value, pOns['k2'].value, pOns['c1'].value, pOns['c2'].value))
+    print('k1 = {}; k2 = {}; kf = {}; kb = {}'.format(pOns['a10'].value, pOns['b40'].value, pOns['a31'].value, pOns['b21'].value))
     print('gam = ',pOns['gam'].value)
     #print('phi0 = ',pOns['phi0'].value)
     print('phim = ',pOns['phim'].value)
     print('p = ',pOns['p'].value)
     print('q = ',pOns['q'].value)
-
-    nStates = 4
+    
+    nStates = 6
     for trial in range(nTrials):
         plotFit(Is[trial],ts[trial],onInd,offInd,phis[trial],Vs[trial],nStates,pOns,fitRates=False,index=trial)
-
-
     
-    print("Parameters have been fit for the four-state model")# at a flux of {} [photons * s^-1 * mm^-2]".format(phi))
+    print("Parameters have been fit for the six-state model")# at a flux of {} [photons * s^-1 * mm^-2]".format(phi))
     
     return pOns #p4s #RhO
 
@@ -2431,36 +2519,48 @@ def fitModels(dataSet, nStates=3, params=modelParams['3'], method=methods[3]): #
         # Iss = dataSet['custom'].Iss
     # else: 
 
+    ############################################################# FINISH ME!!! ##########################################################
     ### Optionally fit f(V) (inward rectification) parameters with inwardRect data: v0, v1
     # MUST MEASURE E AND FIT AFTER OTHER PARAMETERS
-    if 'v0' in params and 'v1' in params:
-        v0 = params['v0'].value
-        v1 = params['v1'].value
-    else:
-        if 'inwardRect' in dataSet:
-            if hasattr(dataSet['inwardRect'], 'Iss'): # Use extracted values
-                Iss = dataSet['inwardRect'].Iss
-                Vs = dataSet['inwardRect'].Vs
-            else: # Extract steady state values
-                print("Finish f(V) fitting!")
-                Iss = None
-        elif setPC.nVs > 1:
-            IssSet, VsSet = setPC.getIRdata()
-            for phiInd, phiOn in enumerate(phis): 
-                ### PLOT
-                RhO.calcSteadyState(phiOn)
-                popt, pcov, eqString = fitfV(Vs,self.IssVals[run][phiInd][:],calcIssfromfV,p0fV)#,eqString)
-                
-                # Add equations to legend
-                if len(phis) > 1: 
-                    legLabels[phiInd] = eqString + '$,\ \phi={:.3g}$'.format(phiOn)
-                else:
-                    legLabels[phiInd] = eqString
-                
-                ### Move this to fitting routines?
-                # v0 = popt[0], v1 = popt[1], E = popt[2]
-            # Fit Curve of V vs Iss
-        ###else: # Assume f(V) = (V-E)
+    # if 'v0' in params and 'v1' in params:
+        # v0 = params['v0'].value
+        # v1 = params['v1'].value
+    # else:
+    if 'inwardRect' in dataSet:
+        if hasattr(dataSet['inwardRect'], 'Iss'): # Use extracted values
+            Iss = dataSet['inwardRect'].Iss
+            Vs = dataSet['inwardRect'].Vs
+        else: # Extract steady state values
+            print("Finish f(V) fitting!")
+            Iss = None
+    elif setPC.nVs > 1:
+        IssSet, VsSet = setPC.getIRdata()
+        for phiInd, phiOn in enumerate(phis): 
+            ### PLOT
+            RhO.calcSteadyState(phiOn)
+            popt, pcov, eqString = fitfV(Vs,self.IssVals[run][phiInd][:],calcIssfromfV,p0fV)#,eqString)
+            
+            # Add equations to legend
+            if len(phis) > 1: 
+                legLabels[phiInd] = eqString + '$,\ \phi={:.3g}$'.format(phiOn)
+            else:
+                legLabels[phiInd] = eqString
+            
+            ### Move this to fitting routines?
+            # v0 = popt[0], v1 = popt[1], E = popt[2]
+            params['v0'].value = popt[0]
+            params['v1'].value = popt[1]
+            params['E'].value = popt[2]
+            
+        # Fit Curve of V vs Iss
+    else: # Assume f(V) = (V-E)
+        #pass
+        #params['v0'].value = 1e12
+        #params['v1'].value = 1e12
+        # Fix parameters
+        params['useIR'].vary = False
+        params['v0'].vary = False
+        params['v1'].vary = False
     
         
     ### Should f(V) be incorporated into gmax (1.) and Oss (3b.) calculations?
@@ -2519,57 +2619,58 @@ def fitModels(dataSet, nStates=3, params=modelParams['3'], method=methods[3]): #
             #phiFits[phiInd] = fit4states(I,t,onInd,offInd,phi,V,Gr0,gmax,params=pOns,method=method)
             fittedParams = fit4states(setPC,run,vInd,fitParams,method)
         elif nStates==6:
-            if 'varyPL' in dataSet: # Fit Gret
-                from scipy.optimize import curve_fit
-                # Fit tpeak = tpulse + tmaxatp0 * np.exp(-k*tpulse)
-                #dataSet['varyPL'].getProtPeaks()
-                #tpeaks = dataSet['varyPL'].IrunPeaks
-                PD = dataSet['varyPL']
-                PCs = [PD.trials[p][0][0] for p in range(PD.nRuns)]
-                #[pc.alignToTime() for pc in PCs]
+            fittedParams = fit6states(setPC,dataSet,run,vInd,fitParams,method)
+            # if 'varyPL' in dataSet: # Fit Gret
+                # from scipy.optimize import curve_fit
+                # # Fit tpeak = tpulse + tmaxatp0 * np.exp(-k*tpulse)
+                # #dataSet['varyPL'].getProtPeaks()
+                # #tpeaks = dataSet['varyPL'].IrunPeaks
+                # PD = dataSet['varyPL']
+                # PCs = [PD.trials[p][0][0] for p in range(PD.nRuns)]
+                # #[pc.alignToTime() for pc in PCs]
                 
-                #tpeaks = np.asarray([PD.trials[p][0][0].tpeak for p in range(PD.nRuns)]) # - PD.trials[p][0][0].t[0]
-                #tpulses = np.asarray([PD.trials[p][0][0].onDs[0] for p in range(PD.nRuns)])
-                tpeaks = np.asarray([pc.tpeak for pc in PCs])
-                tpulses = np.asarray([pc.onDs[0] for pc in PCs])
+                # #tpeaks = np.asarray([PD.trials[p][0][0].tpeak for p in range(PD.nRuns)]) # - PD.trials[p][0][0].t[0]
+                # #tpulses = np.asarray([PD.trials[p][0][0].onDs[0] for p in range(PD.nRuns)])
+                # tpeaks = np.asarray([pc.tpeak for pc in PCs])
+                # tpulses = np.asarray([pc.onDs[0] for pc in PCs])
                 
-                devFunc = lambda tpulses, t0, k: tpulses + t0 * np.exp(-k*tpulses)
-                p0 = (0,1)
-                popt, pcov = curve_fit(devFunc, tpulses, tpeaks, p0=p0)
-                fig = plt.figure()
-                ax = fig.add_subplot(111, aspect='equal')
-                tsmooth = np.linspace(0,max(tpulses),101)
-                ax.plot(tpulses,tpeaks,'x')
-                ax.plot(tsmooth,devFunc(tsmooth,*popt))
-                ax.plot(tsmooth,tsmooth,'--')
-                ax.set_ylim([0,max(tpulses)+5])
-                ax.set_xlim([0,max(tpulses)+5])
+                # devFunc = lambda tpulses, t0, k: tpulses + t0 * np.exp(-k*tpulses)
+                # p0 = (0,1)
+                # popt, pcov = curve_fit(devFunc, tpulses, tpeaks, p0=p0)
+                # fig = plt.figure()
+                # ax = fig.add_subplot(111, aspect='equal')
+                # tsmooth = np.linspace(0,max(tpulses),101)
+                # ax.plot(tpulses,tpeaks,'x')
+                # ax.plot(tsmooth,devFunc(tsmooth,*popt))
+                # ax.plot(tsmooth,tsmooth,'--')
+                # ax.set_ylim([0,max(tpulses)+5])
+                # ax.set_xlim([0,max(tpulses)+5])
                 
-                #plt.tight_layout()
-                #plt.axis('equal')
+                # #plt.tight_layout()
+                # #plt.axis('equal')
                 
-                print(tpulses)
-                print(tpeaks)
-                print(*popt)
-                print(devFunc(tpeaks,*popt))
+                # print(tpulses)
+                # print(tpeaks)
+                # print(*popt)
+                # print(devFunc(tpeaks,*popt))
                 
-                # Solve iteratively Gret = ((tmax*Gd) - np.log(Gd/Gret))/tmax
+                # # Solve iteratively Gret = ((tmax*Gd) - np.log(Gd/Gret))/tmax
                 
-                def solveGret(tmax, Gd, Gret0=1000, tol=1e-9):
-                    Gret, Gret_m1 = Gret0, 0
-                    print(tmax, Gd, Gret, Gret_m1)
-                    while abs(Gret_m1 - Gret) > tol:
-                        Gret_m1 = Gret
-                        Gret = ((tmax*Gd) - np.log(Gd/Gret_m1))/tmax
-                        #Gret_m1, Gret = Gret, ((tmax*Gd) - np.log(Gd/Gret_m1))/tmax
-                        print(Gret, Gret_m1)
-                    return Gret    
+                # def solveGret(tmax, Gd, Gret0=1000, tol=1e-9):
+                    # Gret, Gret_m1 = Gret0, 0
+                    # print(tmax, Gd, Gret, Gret_m1)
+                    # while abs(Gret_m1 - Gret) > tol:
+                        # Gret_m1 = Gret
+                        # Gret = ((tmax*Gd) - np.log(Gd/Gret_m1))/tmax
+                        # #Gret_m1, Gret = Gret, ((tmax*Gd) - np.log(Gd/Gret_m1))/tmax
+                        # print(Gret, Gret_m1)
+                    # return Gret    
                 
-                Gret = solveGret(tmax=popt[0], Gd=0.11, Gret0=500, tol=1e-9)
-                print('Gret = ', Gret)
+                # Gret = solveGret(tmax=popt[0], Gd=0.11, Gret0=500, tol=1e-9)
+                # print('Gret = ', Gret)
                 
-                fittedParams = {'blah':0.34213}
-                #fittedParams = fit4states(setPC,run,vInd,fitParams,method)
+                # fittedParams = {'blah':0.34213}
+            
             #Models['6'] = fit6states(I,t,onInd,offInd,phi,V,Gr0,gbar,Gret)#,Iss)#...
         else:
             raise Exception('Invalid choice for nStates: {}!'.format(nStates))
@@ -2892,6 +2993,9 @@ def fitModels(dataSet, nStates=3, params=modelParams['3'], method=methods[3]): #
     # RhO = selectModel(nStates)
     # Calculate chisqr for each model and select between them. 
     ###RhO = RhO3
+    
+    # for p,v in fittedParams.items():
+        # v.vary = False
     
     # Run small signal analysis
     #runSSA(RhO)
