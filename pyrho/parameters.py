@@ -200,8 +200,8 @@ simParams['NEURON'].add_many(('cell',['minimal.hoc'],True,None,None,None), #'mor
                              
                              
 ### Select simulation protocol
-#protocols = ['custom', 'saturate', 'inwardRect', 'varyPL', 'varyIPI']
-#protocol = protocols[2] #'varyIPI'#'varyPL' # Set this interactively with radio buttons?
+#protocols = ['custom', 'saturate', 'rectifier', 'shortPulse', 'recovery']
+#protocol = protocols[2] #'recovery'#'shortPulse' # Set this interactively with radio buttons?
 #Prot = selectProtocol(protocol)
 #Prot = protocols['custom']([1e13,1e14,1e15], [-70,-40,-10,10,40], [[10.,160.]], 200., 1, 0.1)
 #Prot = protocols['step']([1e14], [-70], [[25.,275.]], 300., 1, 0.1) # Unfinished
@@ -209,9 +209,9 @@ simParams['NEURON'].add_many(('cell',['minimal.hoc'],True,None,None,None), #'mor
 #Prot = protocols['sinusoid']([1e11,1e12,1e13,1e14,1e15], [1e13], [-70], np.logspace(0,2,num=50), [[25.,5000.]], 5050., 0.1)
 #Prot = protocols['ramp']() # Unfinished
 #Prot = protocols['saturate']([irrad2flux(1000,470)], [-70], [[5.,5+1e-3]], 20., 1, 1e-3)
-#Prot = protocols['inwardRect']([irrad2flux(1,470),irrad2flux(10,470)], [-100,-80,-60,-40,-20,0,20,40,60,80], [[50.,300.]], 400., 1, 0.1)
-#Prot = protocols['varyPL']([1e12], [-70], 25, [1,2,3,5,8,10,20], 100, 0.1)
-#Prot = protocols['varyIPI']([1e14], [-70], 100, 200, [500,1000,1500,2500,5000,7500,10000], 0.1)
+#Prot = protocols['rectifier']([irrad2flux(1,470),irrad2flux(10,470)], [-100,-80,-60,-40,-20,0,20,40,60,80], [[50.,300.]], 400., 1, 0.1)
+#Prot = protocols['shortPulse']([1e12], [-70], 25, [1,2,3,5,8,10,20], 100, 0.1)
+#Prot = protocols['recovery']([1e14], [-70], 100, 200, [500,1000,1500,2500,5000,7500,10000], 0.1)
 
 
 ### Protocols to be included in the next version:
@@ -219,11 +219,11 @@ simParams['NEURON'].add_many(('cell',['minimal.hoc'],True,None,None,None), #'mor
 ### - pH (intracellular and extracellular)
 ### - Wavelength (lambda)
 
-protParams = OrderedDict([('custom',Parameters()), ('step',Parameters()), ('sinusoid',Parameters()), ('chirp',Parameters()), ('ramp',Parameters()), ('saturate',Parameters()), ('inwardRect',Parameters()), ('varyPL',Parameters()), ('varyIPI',Parameters())])
+protParams = OrderedDict([('custom',Parameters()), ('step',Parameters()), ('sinusoid',Parameters()), ('chirp',Parameters()), ('ramp',Parameters()), ('saturate',Parameters()), ('rectifier',Parameters()), ('shortPulse',Parameters()), ('recovery',Parameters())])
 
 protList = list(protParams) # List of keys #This could be removed
 
-#squarePulses = ['custom', 'saturate', 'step', 'inwardRect', 'varyPL', 'varyIPI'] #{'custom': True, 'saturate': True, 'step': True, 'inwardRect': True, 'varyPL': True, 'varyIPI': True}
+#squarePulses = ['custom', 'saturate', 'step', 'rectifier', 'shortPulse', 'recovery'] #{'custom': True, 'saturate': True, 'step': True, 'rectifier': True, 'shortPulse': True, 'recovery': True}
 #arbitraryPulses = ['custom', 'sinusoid', 'chirp', 'ramp'] #{'custom': True, 'sinusoid': True, 'chirp': True, 'ramp':True} # Move custom here
 smallSignalAnalysis = ['saturate', 'step', 'sinusoid'] #{'sinusoid': True, 'step': True, 'saturate': True} 
 
@@ -287,7 +287,7 @@ protParams['saturate'].add_many(('phis',[1e20],True,None,None,'photons/s/mm^2'),
 
 #ProtParamsInwardRect = Parameters()
 #phis=[irrad2flux(1,470),irrad2flux(10,470)], Vs=[-100,-80,-60,-40,-20,0,20,40,60,80], pulses=[[50.,300.]], totT=400., nRuns=1, dt=0.1
-protParams['inwardRect'].add_many(('phis',[2.366e15,2.366e16],True,None,None,'photons/s/mm^2'),
+protParams['rectifier'].add_many(('phis',[2.366e15,2.366e16],True,None,None,'photons/s/mm^2'),
                             ('Vs',[-100,-80,-60,-40,-20,0,20,40,60,80],True,None,None,'mV'),
                             ('pulses',[[50.,300.]],True,None,None,'ms'),
                             ('totT', 400.,True,0,None,'ms'),#)#,
@@ -296,7 +296,7 @@ protParams['inwardRect'].add_many(('phis',[2.366e15,2.366e16],True,None,None,'ph
 
 #ProtParamsVaryPL = Parameters()
 #phis=[1e12], Vs=[-70], delD=25, pDs=[1,2,3,5,8,10,20], totT=100, dt=0.1
-protParams['varyPL'].add_many(('phis',[1.5e15],True,None,None,'photons/s/mm^2'), #1e12 # original
+protParams['shortPulse'].add_many(('phis',[1.5e15],True,None,None,'photons/s/mm^2'), #1e12 # original
                             ('Vs',[-70],True,None,None,'mV'),
                             ('delD',25,True,0,None,'ms'),
                             ('pDs',[1,2,3,5,8,10,20],True,None,None,'ms'), # [0.1, 0.2, 0.5, 1, 2, 5, 10]
@@ -305,7 +305,7 @@ protParams['varyPL'].add_many(('phis',[1.5e15],True,None,None,'photons/s/mm^2'),
 
 #ProtParamsVaryIPI = Parameters()
 #phis=[1e14], Vs=[-70], delD=100, onD=200, IPIs=[500,1000,1500,2500,5000,7500,10000], dt=0.1
-protParams['varyIPI'].add_many(('phis',[1e14],True,None,None,'photons/s/mm^2'),
+protParams['recovery'].add_many(('phis',[1e14],True,None,None,'photons/s/mm^2'),
                             ('Vs',[-70],True,None,None,'mV'),
                             ('delD',100,True,0,None,'ms'),
                             ('onD',100,True,0,None,'ms'),
@@ -313,16 +313,16 @@ protParams['varyIPI'].add_many(('phis',[1e14],True,None,None,'photons/s/mm^2'),
                             ('dt',0.1,True,1e-9,10,'ms'))
 
 # Automatically link fields?
-#protocolParams = OrderedDict([('custom',ProtParamsCustom), ('step',ProtParamsStep), ('sinusoid',ProtParamsSinusoid), ('chirp',ProtParamsChirp), ('ramp',ProtParamsRamp), ('saturate',ProtParamsSaturate), ('inwardRect',ProtParamsInwardRect), ('varyPL',ProtParamsVaryPL), ('varyIPI',ProtParamsVaryIPI)])
-#protocolParams = {'custom':ProtParamsCustom, 'step':ProtParamsStep, 'sinusoid':ProtParamsSinusoid, 'chirp':ProtParamsChirp, 'ramp':ProtParamsRamp, 'saturate':ProtParamsSaturate, 'inwardRect':ProtParamsInwardRect, 'varyPL':ProtParamsVaryPL, 'varyIPI':ProtParamsVaryIPI}
+#protocolParams = OrderedDict([('custom',ProtParamsCustom), ('step',ProtParamsStep), ('sinusoid',ProtParamsSinusoid), ('chirp',ProtParamsChirp), ('ramp',ProtParamsRamp), ('saturate',ProtParamsSaturate), ('rectifier',ProtParamsInwardRect), ('shortPulse',ProtParamsVaryPL), ('recovery',ProtParamsVaryIPI)])
+#protocolParams = {'custom':ProtParamsCustom, 'step':ProtParamsStep, 'sinusoid':ProtParamsSinusoid, 'chirp':ProtParamsChirp, 'ramp':ProtParamsRamp, 'saturate':ProtParamsSaturate, 'rectifier':ProtParamsInwardRect, 'shortPulse':ProtParamsVaryPL, 'recovery':ProtParamsVaryIPI}
 
 # Lists and Dicts
-#protDict={'custom':'custom', 'step':'step', 'sinusoid':'sinusoid', 'chirp':'chirp', 'ramp':'ramp', 'saturate':'saturate', 'inwardRect':'inwardRect', 'varyPL':'varyPL', 'varyIPI':'varyIPI'}
-#OrderedDict([('custom':'custom'), ('step':'step'), ('sinusoid':'sinusoid'), ('ramp':'ramp'), ('saturate':'saturate'), ('inwardRect':'inwardRect'), ('varyPL':'varyPL'), ('varyIPI':'varyIPI')])
-#protIndDict={'custom':0, 'step':1, 'sinusoid':2, 'chirp':3, 'ramp':4, 'saturate':5, 'inwardRect':6, 'varyPL':7, 'varyIPI':8} # This must match tabs ordering
+#protDict={'custom':'custom', 'step':'step', 'sinusoid':'sinusoid', 'chirp':'chirp', 'ramp':'ramp', 'saturate':'saturate', 'rectifier':'rectifier', 'shortPulse':'shortPulse', 'recovery':'recovery'}
+#OrderedDict([('custom':'custom'), ('step':'step'), ('sinusoid':'sinusoid'), ('ramp':'ramp'), ('saturate':'saturate'), ('rectifier':'rectifier'), ('shortPulse':'shortPulse'), ('recovery':'recovery')])
+#protIndDict={'custom':0, 'step':1, 'sinusoid':2, 'chirp':3, 'ramp':4, 'saturate':5, 'rectifier':6, 'shortPulse':7, 'recovery':8} # This must match tabs ordering
 #{key:i for key in protInDict, i++}
 
-#protList = ['custom', 'step', 'sinusoid', 'chirp', 'ramp', 'saturate', 'inwardRect', 'varyPL', 'varyIPI']
+#protList = ['custom', 'step', 'sinusoid', 'chirp', 'ramp', 'saturate', 'rectifier', 'shortPulse', 'recovery']
 
 
 

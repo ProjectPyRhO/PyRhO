@@ -313,7 +313,7 @@ class PhotoCurrent():
 
 
 
-# bundle['varyIPI'][IPI].I
+# bundle['recovery'][IPI].I
 
 
 # def loadDataSet(self):
@@ -457,9 +457,9 @@ class DataSet():
         
         self.protocol = protocol
         
-        # # if protocol == varyPL:
+        # # if protocol == shortPulse:
             # # self.data = data
-        # # elif protocol == varyIPI:
+        # # elif protocol == recovery:
             # # self.Is = Is
             # # self.ts = ts
             # # pulseCycles=np.column_stack((onD*np.ones(len(IPIs)),[IPI-onD for IPI in IPIs])) # [:,0] = on phase duration; [:,1] = off phase duration

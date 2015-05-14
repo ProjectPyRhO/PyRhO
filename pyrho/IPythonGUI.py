@@ -502,7 +502,7 @@ def loadGUI():
     ##### Main Run function #####
     
         #saveData = True
-        #@interact(nStates={'Three-state':3,'Four-state':4,'Six-state':6}, protocol=('custom', 'step', 'sinusoid', 'ramp', 'saturate', 'inwardRect', 'varyPL', 'varyIPI'), saveData=True, verbose=1)
+        #@interact(nStates={'Three-state':3,'Four-state':4,'Six-state':6}, protocol=('custom', 'step', 'sinusoid', 'ramp', 'saturate', 'rectifier', 'shortPulse', 'recovery'), saveData=True, verbose=1)
 
     def runModel(model, protocol, simulator='Python', saveData=True, verbose=1): #verboseSlide.value
         
@@ -1348,7 +1348,7 @@ def loadGUI():
     return
     
 GUI = widgets.Box()
-#interact(runModel, nStates={'Three-state':3,'Four-state':4,'Six-state':6}, protocol=('custom', 'step', 'sinusoid', 'ramp', 'saturate', 'inwardRect', 'varyPL', 'varyIPI'), saveData=True, verbose=1);
+#interact(runModel, nStates={'Three-state':3,'Four-state':4,'Six-state':6}, protocol=('custom', 'step', 'sinusoid', 'ramp', 'saturate', 'rectifier', 'shortPulse', 'recovery'), saveData=True, verbose=1);
 
 if __name__ == '__main__':
     loadGUI()

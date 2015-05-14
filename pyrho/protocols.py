@@ -16,8 +16,8 @@ import time
 #from config import verbose
 
 ### Select simulation protocol
-#protocols = ['custom', 'saturate', 'inwardRect', 'varyPL', 'varyIPI']
-#protocol = protocols[4] #'varyIPI'#'varyPL' # Set this interactively with radio buttons?
+#protocols = ['custom', 'saturate', 'rectifier', 'shortPulse', 'recovery']
+#protocol = protocols[4] #'recovery'#'shortPulse' # Set this interactively with radio buttons?
 
 # if 'eqSize' not in vars() or 'eqSize' not in globals() or eqSize is None:
     # eqSize = 18 # Move to config
@@ -52,15 +52,15 @@ def selectProtocol(protocol):
         return protRamp()
     elif protocol == 'saturate':
         return protSaturate()
-    elif protocol == 'inwardRect':
+    elif protocol == 'rectifier':
         return protInwardRect()
-    elif protocol == 'varyPL':
+    elif protocol == 'shortPulse':
         return protVaryPL()
-    elif protocol == 'varyIPI':
+    elif protocol == 'recovery':
         return protVaryIPI()
     else:
         raise NotImplementedError(protocol)
-        #print("Error in selecting protocol - please choose from 'custom', 'saturate', 'inwardRect', 'varyPL' or 'varyIPI'")
+        #print("Error in selecting protocol - please choose from 'custom', 'saturate', 'rectifier', 'shortPulse' or 'recovery'")
         
 ### Protocols to be included in the next version:
 ### - Temperature (Q10)
@@ -134,7 +134,7 @@ class Protocol(object):
         protocol = self.protocol
         phis=self.phis
         Vs=self.Vs
-        if self.protocol == 'varyPL' or self.protocol == 'varyIPI' or self.protocol == 'sinusoid':
+        if self.protocol == 'shortPulse' or self.protocol == 'recovery' or self.protocol == 'sinusoid':
             if self.protocol == 'sinusoid':
                 delDs=self.delDs
             pulseCycles = self.pulseCycles
@@ -191,7 +191,7 @@ class Protocol(object):
             if nRuns > 1:
                 if protocol != 'sinusoid':
                     delD = delDs[run]
-                    if nPulses > 1 or protocol == 'varyPL':
+                    if nPulses > 1 or protocol == 'shortPulse':
                         onD = pulseCycles[run,0]
                         offD = pulseCycles[run,1]
                         padD = padDs[run]
@@ -218,10 +218,10 @@ class Protocol(object):
                 # Loop over clamp voltage ### N.B. solution variables are not currently dependent on V
                 for vInd, V in enumerate(Vs): 
                     
-                    if protocol == "varyPL":
+                    if protocol == "shortPulse":
                         label = "$\mathrm{{Pulse}}={}\mathrm{{ms}}$ ".format(onD)
                         #figTitle += "for varying pulse length "
-                    elif protocol == "varyIPI":
+                    elif protocol == "recovery":
                         label = "$\mathrm{{IPI}}={}\mathrm{{ms}}$ ".format(self.IPIs[run])
                         #figTitle += "for varying inter-pulse-interval "
                     elif protocol == 'sinusoid':
@@ -347,7 +347,7 @@ class Protocol(object):
                         Iss = np.mean(I_RhO[tFromOffInd:onEndInd+1])
                         self.IssVals[run][phiInd][vInd] = Iss
                         
-                    elif protocol == 'inwardRect':
+                    elif protocol == 'rectifier':
                         #### Calculate Steady-state as the mean of the last tFromOff ms of the On phase
                         
                         ### Add test to check that steady state has been reached
@@ -362,7 +362,7 @@ class Protocol(object):
                         #peakInds = findPeaks(I_RhO,minmax,startInd,extOrder)
                         peakInds = findPeaks(I_RhO,startInd,extOrder)
 
-                    elif protocol == 'varyIPI':
+                    elif protocol == 'recovery':
                         ### Search only within the on phase of the second pulse
                         startInd = self.PulseInds[run][phiInd][vInd][1,0]
                         endInd = self.PulseInds[run][phiInd][vInd][1,1]
@@ -442,12 +442,12 @@ class Protocol(object):
                 #PC.Ipeak = Ipeak
                 PC.Ipmax = Ipmax
                 PC.gbar_est = gbar_est
-            elif protocol == 'inwardRect':
+            elif protocol == 'rectifier':
                 PC.IssVals = self.IssVals # Change name here to avoid confusion with scalar Iss?
                 PC.Vs = Vs
-            elif protocol == 'varyPL':
+            elif protocol == 'shortPulse':
                 pass
-            elif protocol == 'varyIPI':
+            elif protocol == 'recovery':
                 PC.Ip = self.IpIPI #peaks
                 PC.tp = self.tpIPI #tPeaks
                 #PC.tau_r = popt[1]
@@ -459,7 +459,7 @@ class Protocol(object):
             fh.close()
         
         if verbose > 0:
-            print("\n*** Protocol '{}' run with {} for the {}-state model finished in {:.3g}s ***\n".format(self.protocol, Sim.simulator, nStates, time.perf_counter() - t0))
+            print("\n*** Protocol '{}' run with {} for the {}-state model finished in {:.3g}s ***\n".format(self.protocol, Sim.simulator, RhO.nStates, time.perf_counter() - t0))
             
         return self.PD
     
@@ -539,7 +539,7 @@ class Protocol(object):
     def fitPeaks(self, t_peaks, I_peaks, curveFunc, p0, eqString, fig=None):
         #print(p0)
         shift = t_peaks[0] # ~ delD
-    #     if protocol == 'varyIPI':
+    #     if protocol == 'recovery':
     #         plt.ylim(ax.get_ylim()) # Prevent automatic rescaling of y-axis
         popt, pcov = curve_fit(curveFunc, t_peaks-shift, I_peaks, p0=p0) #Needs ball-park guesses (0.3, 125, 0.5)
         peakEq = eqString.format(*[round_sig(p,3) for p in popt]) # *popt rounded to 3s.f.
@@ -632,11 +632,11 @@ class Protocol(object):
         protocol = self.protocol
         phis=self.phis
         Vs=self.Vs
-        if self.protocol == 'varyPL':
+        if self.protocol == 'shortPulse':
             pulseCycles = self.pulseCycles
             padDs = self.padDs
             pDs = self.pDs
-        elif self.protocol == 'varyIPI' or self.protocol == 'sinusoid':
+        elif self.protocol == 'recovery' or self.protocol == 'sinusoid':
             pulseCycles = self.pulseCycles
             padDs = self.padDs
         else:
@@ -673,12 +673,12 @@ class Protocol(object):
         
         ### Additional plots
         # plt.figure(Ifig.number)
-        # if protocol == "varyPL":
+        # if protocol == "shortPulse":
             # ymin, ymax = plt.ylim()
             # pos = 0.02 * abs(ymax-ymin)
             # print("[{},{}] --> {}".format(ymin,ymax,pos))
             
-        # elif protocol == "varyIPI":
+        # elif protocol == "recovery":
             # ymin, ymax = plt.ylim()
             # pos = 0.02 * abs(ymax-ymin)
             # plt.ylim(ax.get_ylim())
@@ -690,7 +690,7 @@ class Protocol(object):
         # Loop over the number of runs ### Place within V & phi loops to test protocols at different V & phi?
         for run in range(nRuns): 
             if nRuns > 1:
-                if nPulses > 1 or protocol == 'varyPL':
+                if nPulses > 1 or protocol == 'shortPulse':
                     onD = pulseCycles[run,0]
                     offD = pulseCycles[run,1]
                     padD = padDs[run]
@@ -717,10 +717,10 @@ class Protocol(object):
                     
                     peakInds = IpInds[run][phiInd][vInd]
                     
-                    if protocol == "varyPL":
+                    if protocol == "shortPulse":
                         #label = "$\mathrm{{Pulse}}={}\mathrm{{ms}}$ ".format(onD)
                         figTitle += "for varying pulse length "
-                    elif protocol == "varyIPI":
+                    elif protocol == "recovery":
                         #label = "$\mathrm{{IPI}}={}\mathrm{{ms}}$ ".format(IPIs[run])
                         figTitle += "for varying inter-pulse-interval "
                     elif protocol == "sinusoid":
@@ -761,7 +761,7 @@ class Protocol(object):
                                     # figHeight *= 1.5
                         
                         Ifig = plt.figure(figsize=(figWidth, figHeight))
-                        if protocol == 'varyPL':
+                        if protocol == 'shortPulse':
                             gsPL = plt.GridSpec(2,3)
                             axLag = Ifig.add_subplot(gsPL[0,-1])
                             axPeak = Ifig.add_subplot(gsPL[1,-1],sharex=axLag)
@@ -830,13 +830,13 @@ class Protocol(object):
                                 axI = Ifig.add_subplot(111) # Combine with else condition below
                             plotLight(self.pulses, axI)
                             
-                        elif protocol == 'inwardRect':
+                        elif protocol == 'rectifier':
                             gsIR = plt.GridSpec(1,3)
                             axfV = Ifig.add_subplot(gsIR[0,-1])
                             axI = Ifig.add_subplot(gsIR[0,0:2],sharey=axfV)
                             plotLight(self.pulses,axI)
                             
-                        elif protocol =='varyIPI': ############# Tidy up!!!
+                        elif protocol =='recovery': ############# Tidy up!!!
                             axI = Ifig.add_subplot(111)
                             #cycles, delD = self.getRunCycles(run)
                             #pulses, totT = cycles2times(cycles, delD)
@@ -867,7 +867,7 @@ class Protocol(object):
                             
                         
                         plt.figure(Ifig.number)
-                        if protocol == "varyIPI" and (vInd == 0) and (phiInd == 0): ############# Tidy up!!!
+                        if protocol == "recovery" and (vInd == 0) and (phiInd == 0): ############# Tidy up!!!
                             #plotLight(self.pulses[1:,:]) # Plot all pulses but the first
                             
                             for p in range(1, nPulses): # Plot all pulses but the first
@@ -882,7 +882,7 @@ class Protocol(object):
                     plt.sca(axI)
                     baseline, = axI.plot(t, I_RhO, color=col, linestyle=style, label=label)
 
-                    if protocol == "varyPL":
+                    if protocol == "shortPulse":
                         axI.axvline(x=delD,linestyle=':',color='k')#plt.axvline(x=delD+(p*(onD+offD)),linestyle='--',color='k')
                         axI.axvline(x=delD+onD,linestyle=':',color=col)#baseline.get_color())   #plt.axvline(x=delD+(run*(onD+offD))+onD,linestyle='--',color='k')
         
@@ -945,7 +945,7 @@ class Protocol(object):
                         plt.legend(loc='best')
 
                     else:
-                        if protocol == 'inwardRect':
+                        if protocol == 'rectifier':
                             #### Calculate Steady-state as the mean of the last 50ms of the On phase
                             onEndInd = np.searchsorted(t,onD+delD,side="left")
                             tFromOffInd = np.searchsorted(t,t[onEndInd]-tFromOff,side="left") # Generalise!!!
@@ -954,7 +954,7 @@ class Protocol(object):
                     
                     ### Plot additional elements for varying pulses or IPIs
                     col, style = self.getLineProps(run, vInd, phiInd)
-                    if protocol == "varyPL":
+                    if protocol == "shortPulse":
         #                 plt.figure(Ifig.number)
                         # ymin, ymax = plt.ylim()
                         # pos = 0.02 * abs(ymax-ymin)
@@ -964,7 +964,7 @@ class Protocol(object):
                         axLag.plot(pDs[run],(t[IpInds[run][phiInd][vInd]] - delD),marker='*',markersize=10,color=col)
                         axPeak.plot(pDs[run],I_RhO[peakInds],marker='*',markersize=10,color=col)
                         
-                    #elif protocol == "varyIPI":
+                    #elif protocol == "recovery":
                         #plt.figure(Ifig.number)
                         ##plt.annotate('', (delD, (run+1)*pos), (delD+onD+offD, (run+1)*pos), arrowprops={'arrowstyle':'<->','color':col})
                         #plt.annotate('', (delD+onD, (run+1)*pos), (delD+onD+offD, (run+1)*pos), arrowprops={'arrowstyle':'<->','color':col})
@@ -976,7 +976,7 @@ class Protocol(object):
                         #plt.hlines(y=(run+1)*1e-8,xmin=delD,xmax=delD+pulseCycles[run,0],linewidth=3,color='b')
                     
                     if (verbose > 2 or self.plotStateVars): # and Sim.simulator != 'NEURON': ##### Hack!!!!! #len(Vs) == 1: 
-                        if protocol == 'varyPL':
+                        if protocol == 'shortPulse':
                             pulses = np.array([[0,self.pDs[run]]])+self.delDs[run]
                         else:
                             pulses = self.pulses                        
@@ -997,7 +997,7 @@ class Protocol(object):
         plt.sca(axI)
         plt.figure(Ifig.number)
         #plt.legend()
-        if verbose > 1 and protocol == "varyIPI":
+        if verbose > 1 and protocol == "recovery":
             print(self.tpIPI) # tPeaks
             print(self.IpIPI) # peaks
             #popt = fitPeaks(tPeaks, peaks, expDecay, p0IPI, '$I_{{peaks}} = {:.3}e^{{-t/{:g}}} {:+.3}$')
@@ -1005,7 +1005,7 @@ class Protocol(object):
 
             
         if label:
-            if protocol == 'custom' or protocol == 'step' or protocol == 'inwardRect':
+            if protocol == 'custom' or protocol == 'step' or protocol == 'rectifier':
                 if len(Vs) == 1:
                     ncol=1
                 else:
@@ -1023,7 +1023,7 @@ class Protocol(object):
             plt.text(1.05*t[peakInds[0]],1.05*I_RhO[peakInds[0]],'$I_{{peak}} = {:.3g}nA;\ t_{{lag}} = {:.3g}ms$'.format(I_RhO[peakInds[0]], t[peakInds[0]]-self.pulses[0,1]),ha='left',va='bottom',fontsize=eqSize)
 
             
-        if protocol == "inwardRect": # and RhO.useInwardRect: # Rewrite fitfV to handle other models
+        if protocol == "rectifier": # and RhO.useInwardRect: # Rewrite fitfV to handle other models
             plt.figure(Ifig.number) #IssVfig = plt.figure()
             ax = axfV #IssVfig.add_subplot(111)
             
@@ -1186,7 +1186,7 @@ class Protocol(object):
                 if addTitles:
                     plt.title('$f^*\ vs.\ \phi_1(t).\ \mathrm{{Background\ illumination:}}\ \phi_0(t)={:.3g}$'.format(self.A0[0]))
             
-        if protocol == "varyPL":
+        if protocol == "shortPulse":
             # Freeze axis limits
             ymin, ymax = plt.ylim()
             plt.ylim(ymin, ymax)
@@ -1232,7 +1232,7 @@ class Protocol(object):
             axPeak.set_ylabel('$\mathrm{Photocurrent\ peak\ [nA]}$')
             
             #plt.tight_layout()
-        elif protocol == "varyIPI":
+        elif protocol == "recovery":
             # Freeze axis limits
             ymin, ymax = plt.ylim()
             plt.ylim(ymin, ymax)
@@ -1601,10 +1601,10 @@ class protSaturate(Protocol):
 
 class protInwardRect(Protocol):
     # Iss vs Vclamp
-    protocol = 'inwardRect'
+    protocol = 'rectifier'
     squarePulse = True
     nRuns = 1
-    def __init__(self, params=protParams['inwardRect'], saveData=True): # ProtParamsInwardRect #phis=[irrad2flux(1,470),irrad2flux(10,470)], Vs=[-100,-80,-60,-40,-20,0,20,40,60,80], pulses=[[50.,300.]], totT=400., dt=0.1): # , nRuns=1
+    def __init__(self, params=protParams['rectifier'], saveData=True): # ProtParamsInwardRect #phis=[irrad2flux(1,470),irrad2flux(10,470)], Vs=[-100,-80,-60,-40,-20,0,20,40,60,80], pulses=[[50.,300.]], totT=400., dt=0.1): # , nRuns=1
         # Used to calculate v0 and v1
         
         if verbose > 0:
@@ -1640,10 +1640,10 @@ class protInwardRect(Protocol):
 class protVaryPL(Protocol):
     # Vary pulse length - See Nikolic+++++2009, Fig. 2 & 9
     #def __init__(self, phis=[1e12], Vs=[-70], delD=25, pulses=[[1,74],[2,73],[3,72],[5,70],[8,67],[10,65],[20,55]], nRuns=1, dt=0.1):
-    protocol = 'varyPL'
+    protocol = 'shortPulse'
     squarePulse = True
     nPulses = 1 #Fixed at 1
-    def __init__(self, params=protParams['varyPL'], saveData=True): # ProtParamsVaryPL # phis=[1e12], Vs=[-70], delD=25, pDs=[1,2,3,5,8,10,20], totT=100, dt=0.1): #nPulses=1,
+    def __init__(self, params=protParams['shortPulse'], saveData=True): # ProtParamsVaryPL # phis=[1e12], Vs=[-70], delD=25, pDs=[1,2,3,5,8,10,20], totT=100, dt=0.1): #nPulses=1,
         if verbose > 0:
             print("Running variable pulse length protocol")
         
@@ -1691,10 +1691,10 @@ class protVaryPL(Protocol):
         
 class protVaryIPI(Protocol):
     # Vary Inter-Pulse-Interval
-    protocol = 'varyIPI'
+    protocol = 'recovery'
     squarePulse = True
     nPulses = 2 # Fixed at 2 for this protocol
-    def __init__(self, params=protParams['varyIPI'], saveData=True): # ProtParamsVaryIPI #phis=[1e14], Vs=[-70], delD=100, onD=200, IPIs=[500,1000,1500,2500,5000,7500,10000], dt=0.1): #nPulses=2, 
+    def __init__(self, params=protParams['recovery'], saveData=True): # ProtParamsVaryIPI #phis=[1e14], Vs=[-70], delD=100, onD=200, IPIs=[500,1000,1500,2500,5000,7500,10000], dt=0.1): #nPulses=2, 
         if verbose > 0:
             print("Running S1-S2 protocol to solve for tau_R")
         
@@ -1750,13 +1750,13 @@ class protVaryIPI(Protocol):
 
 
 
-protocols = {'custom': protCustom, 'step': protStep, 'saturate': protSaturate, 'inwardRect': protInwardRect, 'varyPL': protVaryPL, 'varyIPI': protVaryIPI, 'sinusoid': protSinusoid, 'chirp': protChirp, 'ramp': protRamp}
+protocols = {'custom': protCustom, 'step': protStep, 'saturate': protSaturate, 'rectifier': protInwardRect, 'shortPulse': protVaryPL, 'recovery': protVaryIPI, 'sinusoid': protSinusoid, 'chirp': protChirp, 'ramp': protRamp}
 # E.g. 
-# protocols['varyPL']([1e12], [-70], 25, [1,2,3,5,8,10,20], 100, 0.1)
+# protocols['shortPulse']([1e12], [-70], 25, [1,2,3,5,8,10,20], 100, 0.1)
 
 #squarePulses = [protocol for protocol in protocols if protocol.squarePulse]
 #arbitraryPulses = [protocol for protocol in protocols if not protocol.squarePulse]
-#squarePulses = {'custom': True, 'saturate': True, 'step': True, 'inwardRect': True, 'varyPL': True, 'varyIPI': True}
+#squarePulses = {'custom': True, 'saturate': True, 'step': True, 'rectifier': True, 'shortPulse': True, 'recovery': True}
 #arbitraryPulses = {'custom': True, 'sinusoid': True, 'chirp': True, 'ramp':True} # Move custom here
 #smallSignalAnalysis = {'sinusoid': True, 'step': True, 'saturate': True} 
     

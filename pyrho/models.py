@@ -188,7 +188,7 @@ def cycles2times(cycles,delD):
         Input    cycles:= [onD,offD], delD
         Output   times:= [t_on,t_off], totT"""
     
-    ### Generalise to delDs c.f. varyIPI
+    ### Generalise to delDs c.f. recovery
         
     cycles = np.array(cycles)
     #print("Cycles: ",cycles)
@@ -317,7 +317,7 @@ def biExpDecay(t, a1, tau1, a2, tau2, I_ss):
 # def fitPeaks(t_peaks, I_peaks, curveFunc, p0, eqString, fig=None):
     
     # shift = t_peaks[0] # ~ delD
-# #     if protocol == 'varyIPI':
+# #     if protocol == 'recovery':
 # #         plt.ylim(ax.get_ylim()) # Prevent automatic rescaling of y-axis
     # popt, pcov = curve_fit(curveFunc, t_peaks-shift, I_peaks, p0=p0) #Needs ball-park guesses (0.3, 125, 0.5)
     # peakEq = eqString.format(*[round_sig(p,3) for p in popt]) # *popt rounded to 3s.f.
@@ -718,7 +718,7 @@ class RhO_3states(OGmodel):
         
         #self.g = 100e-3 * 1.67e5 *2   # [pS] g1 (100fS): Conductance of an individual ion channel * N (100000)
         
-        #self.useIR = False # Implement inwardRect!!!
+        #self.useIR = False # Implement rectifier!!!
         # Initial conditions: Instantaneous photon flux density = 0.0
         #self.s_0 = np.array([1,0,0])          # Initialise in dark 
         self.initStates(phi=self.phi_0, s0=self.s_0)        # Initialise in dark
@@ -991,7 +991,7 @@ class RhO_4states(OGmodel):
         #self.e21d = 0.015 # [ms^-1]
         #self.g = 100e-3 * 1.67e5   # [pS] g1 (100fS): Conductance of an individual ion channel * N (~150000)
         
-        #self.useInwardRect = False # Implement inwardRect!!!
+        #self.useInwardRect = False # Implement rectifier!!!
         # Initial conditions
         #self.s_0 = np.array([1,0,0,0])
         self.initStates(phi=self.phi_0, s0=self.s_0) # phi
@@ -1290,7 +1290,7 @@ class RhO_6states(OGmodel):
         return I_RhO * (1e-6) # 10^-12 * 10^-3 * 10^-6 (nA)
     
 ##############################################################    
-    def inwardRectifier(V): ##### Redundant
+    def rectifierifier(V): ##### Redundant
         if self.v0 == 0:
             #print("f(V) undefined for v0 = 0")
             warnings.warn("f(V) undefined for v0 = 0")

@@ -52,7 +52,7 @@ methods=('leastsq','nelder','lbfgsb','powell','cg','newton','cobyla','tnc','trus
 
 
 # gmax = dataset['saturate'].gmax
-# Gr0 = 1/dataset['varyIPI'].tau_r # Gr,dark
+# Gr0 = 1/dataset['recovery'].tau_r # Gr,dark
 # I
 # RhO = fit3states(I,t,onInd,offInd,dataset,gmax,Ipeak)
 
@@ -124,8 +124,8 @@ def calcG(photocurrent, E):
     return gmax * (1e6) # nA / mV = pS * (1e6)
 
 def calcGr0(dataset):
-    if hasattr(dataset['varyIPI'], 'tau_r'):
-        Gr0 = 1/dataset['varyIPI'].tau_r # Gr,dark
+    if hasattr(dataset['recovery'], 'tau_r'):
+        Gr0 = 1/dataset['recovery'].tau_r # Gr,dark
     else:
         print("Extract the peaks and fit an exponential...")
         
@@ -183,8 +183,8 @@ def fit3statesIndiv(I,t,onInd,offInd,phi,V,Gr0,gmax,Ipmax,params=None,method=met
     
     
     ### 2. Fit exponential to peak recovery plots
-    # if hasattr(dataset['varyIPI'], 'tau_r'):
-        # Gr0 = 1/dataset['varyIPI'].tau_r # Gr,dark
+    # if hasattr(dataset['recovery'], 'tau_r'):
+        # Gr0 = 1/dataset['recovery'].tau_r # Gr,dark
     # else:
         # print("Extract the peaks and fit an exponential...")
     
@@ -304,9 +304,9 @@ def fit3statesIndiv(I,t,onInd,offInd,phi,V,Gr0,gmax,Ipmax,params=None,method=met
 #     lmfit.printfuncs.report_ci(ci)
     
 
-    ### 4. Optionally fit f(V) parameters with inwardRect data
-    # if 'inwardRect' in dataset:
-        # if hasattr(dataset['inwardRect'], 'Iss'): # Use extracted values
+    ### 4. Optionally fit f(V) parameters with rectifier data
+    # if 'rectifier' in dataset:
+        # if hasattr(dataset['rectifier'], 'Iss'): # Use extracted values
             # print("Finish me!")
         # else: # Extract steady state values
             # print("Finish me!")
@@ -582,7 +582,7 @@ def fit4statesIndiv(I,t,onInd,offInd,phi,V,Gr,gmax,params=None,method=methods[3]
     #    return self.e21d + self.c2*np.log(1+(phi/phi0))
     
     p4s = Parameters()    
-    ### 0. Optionally fit f(V) parameters with inwardRect data
+    ### 0. Optionally fit f(V) parameters with rectifier data
     ### Should f(V) be incorporated into gmax (1.) and Oss (3b.) calculations?
 
     ### phi0, gamma and E...
@@ -856,7 +856,7 @@ def fitCurve(dataSet, nStates=3, params=None):
     
     
     ### Check contents of dataSet and produce report on model features which may be fit. 
-    # e.g. if not 'inwardRect': f(V)=1
+    # e.g. if not 'rectifier': f(V)=1
     
     ### Trim data slightly to remove artefacts from light on/off transition ramps?
     
@@ -882,7 +882,7 @@ def fitCurve(dataSet, nStates=3, params=None):
         raise TypeError("dataSet['custom']")
     
     
-    ### Extract the parameters relevant to all models - move inside loop for varyIPI protocol?
+    ### Extract the parameters relevant to all models - move inside loop for recovery protocol?
     if params is not None: # Allow you to pass paramaters outside of dataSet
         params = params
     elif 'params' in dataSet:
@@ -910,27 +910,27 @@ def fitCurve(dataSet, nStates=3, params=None):
     elif 'a6' in params:
         Gr0 = params['a6'].value
     else: ### 2. Fit exponential to peak recovery plots
-        if hasattr(dataSet['varyIPI'], 'tau_r'):
-            Gr0 = 1/dataSet['varyIPI'].tau_r # Gr,dark
+        if hasattr(dataSet['recovery'], 'tau_r'):
+            Gr0 = 1/dataSet['recovery'].tau_r # Gr,dark
         else:
             print("Extract the peaks and fit an exponential...")
-            if not (hasattr(dataSet['varyIPI'], 'tpIPI') and hasattr(dataSet['varyIPI'], 'IpIPI')):
+            if not (hasattr(dataSet['recovery'], 'tpIPI') and hasattr(dataSet['recovery'], 'IpIPI')):
                 # Extract peaks
-                dataSet['varyIPI'].IpIPI = np.zeros(dataSet['varyIPI'].nRuns)
-                dataSet['varyIPI'].tpIPI = np.zeros(dataSet['varyIPI'].nRuns)
-                for r in range(dataSet['varyIPI'].nRuns):
+                dataSet['recovery'].IpIPI = np.zeros(dataSet['recovery'].nRuns)
+                dataSet['recovery'].tpIPI = np.zeros(dataSet['recovery'].nRuns)
+                for r in range(dataSet['recovery'].nRuns):
                     ### Search only within the on phase of the second pulse
-                    I_RhO = dataSet['varyIPI'].Is[run][0][0] # phiInd=0 and vInd=0 Run for each phi and V?
-                    startInd = dataSet['varyIPI'].PulseInds[run][0][0][1,0]
-                    endInd = dataSet['varyIPI'].PulseInds[run][0][0][1,1]
+                    I_RhO = dataSet['recovery'].Is[run][0][0] # phiInd=0 and vInd=0 Run for each phi and V?
+                    startInd = dataSet['recovery'].PulseInds[run][0][0][1,0]
+                    endInd = dataSet['recovery'].PulseInds[run][0][0][1,1]
                     extOrder = int(1+endInd-startInd) #100#int(round(len(I_RhO)/5))
                     #peakInds = findPeaks(I_RhO[:endInd+extOrder+1],minmax,startInd,extOrder)
                     peakInds = findPeaks(I_RhO[:endInd+extOrder+1],startInd,extOrder)
                     if len(peakInds) > 0: # Collect data at the (second) peak
-                        dataSet['varyIPI'].IpIPI[run] = I_RhO[peakInds[0]] #-1 peaks
-                        dataSet['varyIPI'].tpIPI[run] = t[peakInds[0]] # tPeaks
+                        dataSet['recovery'].IpIPI[run] = I_RhO[peakInds[0]] #-1 peaks
+                        dataSet['recovery'].tpIPI[run] = t[peakInds[0]] # tPeaks
             # Fit exponential
-            popt, _, _ = fitPeaks(dataSet['varyIPI'].tpIPI, dataSet['varyIPI'].IpIPI, expDecay, p0IPI, '$I_{{peaks}} = {:.3}e^{{-t/{:g}}} {:+.3}$')
+            popt, _, _ = fitPeaks(dataSet['recovery'].tpIPI, dataSet['recovery'].IpIPI, expDecay, p0IPI, '$I_{{peaks}} = {:.3}e^{{-t/{:g}}} {:+.3}$')
             Gr0 = 1/popt[1]
             ### calcGr0()
         params.add('Gr0', value=Gr0, vary=False)
@@ -978,15 +978,15 @@ def fitCurve(dataSet, nStates=3, params=None):
         # Iss = dataSet['custom'].Iss
     # else: 
 
-    ### Optionally fit f(V) parameters with inwardRect data - MUST MEASURE E AND FIT AFTER OTHER PARAMETERS
+    ### Optionally fit f(V) parameters with rectifier data - MUST MEASURE E AND FIT AFTER OTHER PARAMETERS
     if 'v0' in params and 'v1' in params:
         v0 = params['v0'].value
         v1 = params['v1'].value
     else:
-        if 'inwardRect' in dataSet:
-            if hasattr(dataSet['inwardRect'], 'Iss'): # Use extracted values
-                Iss = dataSet['inwardRect'].Iss
-                Vs = dataSet['inwardRect'].Vs
+        if 'rectifier' in dataSet:
+            if hasattr(dataSet['rectifier'], 'Iss'): # Use extracted values
+                Iss = dataSet['rectifier'].Iss
+                Vs = dataSet['rectifier'].Vs
             else: # Extract steady state values
                 print("Finish f(V) fitting!")
                 Iss = None
@@ -1026,7 +1026,7 @@ def fitCurve(dataSet, nStates=3, params=None):
     offInd = targetPC.pulseInds[0,1]
     V = targetPC.V
     phi = targetPC.phi
-    Iss = targetPC.Iss # Iplat ############################# Change name to avoid clash with inwardRect!    
+    Iss = targetPC.Iss # Iplat ############################# Change name to avoid clash with rectifier!    
     ###Iplat is only required for the 3-state fitting procedure
             
     if nStates == 3:
@@ -1587,9 +1587,9 @@ def fit3states(fluxSet,run,vInd,params,method=methods[3]): #,Ipmax #Iss=None, ##
 #     lmfit.printfuncs.report_ci(ci)
     
 
-    ### 4. Optionally fit f(V) parameters with inwardRect data
-    # if 'inwardRect' in dataset:
-        # if hasattr(dataset['inwardRect'], 'Iss'): # Use extracted values
+    ### 4. Optionally fit f(V) parameters with rectifier data
+    # if 'rectifier' in dataset:
+        # if hasattr(dataset['rectifier'], 'Iss'): # Use extracted values
             # print("Finish me!")
         # else: # Extract steady state values
             # print("Finish me!")
@@ -2093,12 +2093,12 @@ def fit6states(fluxSet,dataSet,run,vInd,params,method=methods[3]): #shortPulseSe
             #print(Go, Go_m1)
         return Go
             
-    if 'varyPL' in dataSet: # Fit Gret
+    if 'shortPulse' in dataSet: # Fit Gret
         from scipy.optimize import curve_fit
         # Fit tpeak = tpulse + tmaxatp0 * np.exp(-k*tpulse)
-        #dataSet['varyPL'].getProtPeaks()
-        #tpeaks = dataSet['varyPL'].IrunPeaks
-        PD = dataSet['varyPL']
+        #dataSet['shortPulse'].getProtPeaks()
+        #tpeaks = dataSet['shortPulse'].IrunPeaks
+        PD = dataSet['shortPulse']
         PCs = [PD.trials[p][0][0] for p in range(PD.nRuns)]
         #[pc.alignToTime() for pc in PCs]
         
@@ -2348,7 +2348,7 @@ def fitRecovery(t_peaks, I_peaks, curveFunc, p0, eqString, fig=None):
 
     #print(p0)
     shift = t_peaks[0] # ~ delD
-#     if protocol == 'varyIPI':
+#     if protocol == 'recovery':
 #         plt.ylim(ax.get_ylim()) # Prevent automatic rescaling of y-axis
     popt, pcov = curve_fit(curveFunc, t_peaks-shift, I_peaks, p0=p0) #Needs ball-park guesses (0.3, 125, 0.5)
     peakEq = eqString.format(*[round_sig(p,3) for p in popt]) # *popt rounded to 3s.f.
@@ -2443,7 +2443,7 @@ def fitModels(dataSet, nStates=3, params=modelParams['3'], method=methods[3]): #
         t0 = time.perf_counter()
         print('Fitting parameters for the {}-state model'.format(nStates))
     ### Check contents of dataSet and produce report on model features which may be fit. 
-    # e.g. if not 'inwardRect': f(V)=1
+    # e.g. if not 'rectifier': f(V)=1
     
     ### Trim data slightly to remove artefacts from light on/off transition ramps?
     
@@ -2496,7 +2496,7 @@ def fitModels(dataSet, nStates=3, params=modelParams['3'], method=methods[3]): #
         if nStates == 4 or nStates == 6:
             params['q'].vary = False
     
-    ### Extract the parameters relevant to all models - move inside loop for varyIPI protocol?
+    ### Extract the parameters relevant to all models - move inside loop for recovery protocol?
     # if params is not None: # Allow you to pass parameters outside of dataSet
         # params = params
     # elif 'params' in dataSet:
@@ -2533,27 +2533,27 @@ def fitModels(dataSet, nStates=3, params=modelParams['3'], method=methods[3]): #
     elif 'a6' in params:
         Gr0 = params['a6'].value
     else: ### 2. Fit exponential to peak recovery plots
-        if hasattr(dataSet['varyIPI'], 'tau_r'):
-            Gr0 = 1/dataSet['varyIPI'].tau_r # Gr,dark
+        if hasattr(dataSet['recovery'], 'tau_r'):
+            Gr0 = 1/dataSet['recovery'].tau_r # Gr,dark
         else:
             print("Extract the peaks and fit an exponential...")
-            if not (hasattr(dataSet['varyIPI'], 'tpIPI') and hasattr(dataSet['varyIPI'], 'IpIPI')):
+            if not (hasattr(dataSet['recovery'], 'tpIPI') and hasattr(dataSet['recovery'], 'IpIPI')):
                 # Extract peaks
-                dataSet['varyIPI'].IpIPI = np.zeros(dataSet['varyIPI'].nRuns)
-                dataSet['varyIPI'].tpIPI = np.zeros(dataSet['varyIPI'].nRuns)
-                for r in range(dataSet['varyIPI'].nRuns):
+                dataSet['recovery'].IpIPI = np.zeros(dataSet['recovery'].nRuns)
+                dataSet['recovery'].tpIPI = np.zeros(dataSet['recovery'].nRuns)
+                for r in range(dataSet['recovery'].nRuns):
                     ### Search only within the on phase of the second pulse
-                    I_RhO = dataSet['varyIPI'].Is[r][0][vInd] # phiInd=0 and vInd=0 Run for each phi and V?
-                    startInd = dataSet['varyIPI'].PulseInds[r][0][vInd][1,0]
-                    endInd = dataSet['varyIPI'].PulseInds[r][0][vInd][1,1]
+                    I_RhO = dataSet['recovery'].Is[r][0][vInd] # phiInd=0 and vInd=0 Run for each phi and V?
+                    startInd = dataSet['recovery'].PulseInds[r][0][vInd][1,0]
+                    endInd = dataSet['recovery'].PulseInds[r][0][vInd][1,1]
                     extOrder = int(1+endInd-startInd) #100#int(round(len(I_RhO)/5))
                     #peakInds = findPeaks(I_RhO[:endInd+extOrder+1],minmax,startInd,extOrder)
                     peakInds = findPeaks(I_RhO[:endInd+extOrder+1],startInd,extOrder)
                     if len(peakInds) > 0: # Collect data at the (second) peak
-                        dataSet['varyIPI'].IpIPI[r] = I_RhO[peakInds[0]] #-1 peaks
-                        dataSet['varyIPI'].tpIPI[r] = t[peakInds[0]] # tPeaks
+                        dataSet['recovery'].IpIPI[r] = I_RhO[peakInds[0]] #-1 peaks
+                        dataSet['recovery'].tpIPI[r] = t[peakInds[0]] # tPeaks
             # Fit exponential
-            popt, _, _ = fitPeaks(dataSet['varyIPI'].tpIPI, dataSet['varyIPI'].IpIPI, expDecay, p0IPI, '$I_{{peaks}} = {:.3}e^{{-t/{:g}}} {:+.3}$')
+            popt, _, _ = fitPeaks(dataSet['recovery'].tpIPI, dataSet['recovery'].IpIPI, expDecay, p0IPI, '$I_{{peaks}} = {:.3}e^{{-t/{:g}}} {:+.3}$')
             Gr0 = 1/popt[1]
             ### calcGr0()
         params.add('Gr0', value=Gr0, vary=False)
@@ -2602,16 +2602,16 @@ def fitModels(dataSet, nStates=3, params=modelParams['3'], method=methods[3]): #
     # else: 
 
     ############################################################# FINISH ME!!! ##########################################################
-    ### Optionally fit f(V) (inward rectification) parameters with inwardRect data: v0, v1
+    ### Optionally fit f(V) (inward rectification) parameters with rectifier data: v0, v1
     # MUST MEASURE E AND FIT AFTER OTHER PARAMETERS
     # if 'v0' in params and 'v1' in params:
         # v0 = params['v0'].value
         # v1 = params['v1'].value
     # else:
-    if 'inwardRect' in dataSet:
-        if hasattr(dataSet['inwardRect'], 'Iss'): # Use extracted values
-            Iss = dataSet['inwardRect'].Iss
-            Vs = dataSet['inwardRect'].Vs
+    if 'rectifier' in dataSet:
+        if hasattr(dataSet['rectifier'], 'Iss'): # Use extracted values
+            Iss = dataSet['rectifier'].Iss
+            Vs = dataSet['rectifier'].Vs
         else: # Extract steady state values
             print("Finish f(V) fitting!")
             Iss = None
@@ -2662,7 +2662,7 @@ def fitModels(dataSet, nStates=3, params=modelParams['3'], method=methods[3]): #
     # offInd = targetPC.pulseInds[0,1]
     # V = targetPC.V
     # phi = targetPC.phi
-    # Iss = targetPC.Iss # Iplat ############################# Change name to avoid clash with inwardRect!    
+    # Iss = targetPC.Iss # Iplat ############################# Change name to avoid clash with rectifier!    
     ###Iplat is only required for the 3-state fitting procedure
 
     useNew = True
@@ -2702,12 +2702,12 @@ def fitModels(dataSet, nStates=3, params=modelParams['3'], method=methods[3]): #
             fittedParams = fit4states(setPC,run,vInd,fitParams,method)
         elif nStates==6:
             fittedParams = fit6states(setPC,dataSet,run,vInd,fitParams,method)
-            # if 'varyPL' in dataSet: # Fit Gret
+            # if 'shortPulse' in dataSet: # Fit Gret
                 # from scipy.optimize import curve_fit
                 # # Fit tpeak = tpulse + tmaxatp0 * np.exp(-k*tpulse)
-                # #dataSet['varyPL'].getProtPeaks()
-                # #tpeaks = dataSet['varyPL'].IrunPeaks
-                # PD = dataSet['varyPL']
+                # #dataSet['shortPulse'].getProtPeaks()
+                # #tpeaks = dataSet['shortPulse'].IrunPeaks
+                # PD = dataSet['shortPulse']
                 # PCs = [PD.trials[p][0][0] for p in range(PD.nRuns)]
                 # #[pc.alignToTime() for pc in PCs]
                 
