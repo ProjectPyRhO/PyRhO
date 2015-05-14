@@ -11,6 +11,7 @@ from .config import verbose, saveFigFormat, eqSize, addTitles, addStimulus, colo
 import pickle
 import warnings
 import os
+import time
 
 #from config import verbose
 
@@ -118,6 +119,9 @@ class Protocol(object):
     def run(self, Sim, RhO, verbose=verbose): 
         """Main routine to run the simulation protocol"""
         
+        if verbose > 0:
+            t0 = time.perf_counter()
+            
         self.prepare()
         Sim.prepare(self.dt)
         #Sim.prepare(min(self.onDs)/10)
@@ -453,6 +457,9 @@ class Protocol(object):
             fh = open(dDir+protocol+dataTag+".pkl","wb")
             pickle.dump(PC,fh)
             fh.close()
+        
+        if verbose > 0:
+            print("\n*** Protocol '{}' run with {} for the {}-state model finished in {:.3g}s ***\n".format(self.protocol, Sim.simulator, nStates, time.perf_counter() - t0))
             
         return self.PD
     
