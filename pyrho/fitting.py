@@ -19,6 +19,7 @@ from .config import verbose, saveFigFormat, addTitles, fDir, dDir
 #from .config import verbose, saveFigFormat, eqSize, addTitles, addStimulus, colours, styles, dDir, fDir
 import os
 import pickle
+import time
 
 #import protocols
 
@@ -1693,8 +1694,9 @@ def fit3states(fluxSet,run,vInd,params,method=methods[3]): #,Ipmax #Iss=None, ##
         plotFit(Is[trial],ts[trial],onInd,offInd,phis[trial],Vs[trial],nStates,pOns,fitRates=False,index=trial)
         RhO.setLight(phis[trial])
         print('phi = {:.3g}: P = {:.3g}, Gd = {:.3g}, Gr = {:.3g}'.format(phis[trial], RhO.P, RhO.Gd, RhO.Gr))
-
-    print("Parameters have been fit for the three-state model over a flux range of [{:.3g}, {:.3g}] [photons * s^-1 * mm^-2]".format(min(phis), max(phis)))
+    
+    if verbose > 0:
+        print("Parameters have been fit for the three-state model over a flux range of [{:.3g}, {:.3g}] [photons * s^-1 * mm^-2]".format(min(phis), max(phis)))
     
     return pOns #p3s # RhO
 
@@ -1916,8 +1918,8 @@ def fit4states(fluxSet,run,vInd,params,method=methods[3]): #fit4states(Is,ts,onI
         plotFit(Is[trial],ts[trial],onInd,offInd,phis[trial],Vs[trial],nStates,pOns,fitRates=False,index=trial)
 
 
-    
-    print("Parameters have been fit for the four-state model")# at a flux of {} [photons * s^-1 * mm^-2]".format(phi))
+    if verbose > 0:
+        print("Parameters have been fit for the four-state model")# at a flux of {} [photons * s^-1 * mm^-2]".format(phi))
     
     return pOns #p4s #RhO
 
@@ -1951,6 +1953,9 @@ def fit6states(fluxSet,dataSet,run,vInd,params,method=methods[3]): #shortPulseSe
     ts = []
     Vs = []
     
+    Icycles = []
+    nfs = [] # Normalisation factors: e.g. /Ions[trial][-1] or /min(Ions[trial])
+    
     # Trim off phase data
     #frac = 1
     #chop = int(round(len(Ioffs[0])*frac))
@@ -1973,7 +1978,9 @@ def fit6states(fluxSet,dataSet,run,vInd,params,method=methods[3]): #shortPulseSe
         ts.append(t)
         V = targetPC.V
         Vs.append(V)
-    
+        
+        Icycles.append(I[onInd:])
+        nfs.append(I[offInd])
     
     
     ### OFF PHASE
@@ -2072,7 +2079,7 @@ def fit6states(fluxSet,dataSet,run,vInd,params,method=methods[3]): #shortPulseSe
     
     
     ### Calculate Go (1/tau_opsin)
-    
+    print('Calculating opsin activation rate')
     # Assume that Gd1 > Gd2
     # Assume that Gd = Gd1 for short pulses
     
@@ -2083,7 +2090,7 @@ def fit6states(fluxSet,dataSet,run,vInd,params,method=methods[3]): #shortPulseSe
             Go_m1 = Go
             Go = ((tlag*Gd) - np.log(Gd/Go_m1))/tlag
             #Go_m1, Go = Go, ((tlag*Gd) - np.log(Gd/Go_m1))/tlag
-            print(Go, Go_m1)
+            #print(Go, Go_m1)
         return Go
             
     if 'varyPL' in dataSet: # Fit Gret
@@ -2115,16 +2122,16 @@ def fit6states(fluxSet,dataSet,run,vInd,params,method=methods[3]): #shortPulseSe
         #plt.tight_layout()
         #plt.axis('equal')
         
-        print(tpulses)
-        print(tpeaks)
-        print(*popt)
-        print(devFunc(tpeaks,*popt))
+        #print(tpulses)
+        #print(tpeaks)
+        #print(*popt)
+        #print(devFunc(tpeaks,*popt))
         
         # Solve iteratively Go = ((tlag*Gd) - np.log(Gd/Go))/tlag
         
         Gd1 = pOffs['b1'].value
         Go = solveGo(tlag=popt[0], Gd=Gd1, Go0=1000, tol=1e-9)
-        print('Go = ', Go)
+        print('t_lag = {}; Gd = {} --> Go = {}'.format(popt[0], Gd1, Go))
         # Gd2 = pOffs['a4'].value
         # Go2 = solveGo(tlag=popt[0], Gd=Gd2, Go0=1000, tol=1e-9)
         # print('Go2 = ', Go2)
@@ -2136,7 +2143,8 @@ def fit6states(fluxSet,dataSet,run,vInd,params,method=methods[3]): #shortPulseSe
         tlag = PC.tlag ############################### Add to Photocurrent...
         
         Go = solveGo(tlag=tlag, Gd=Gd1, Go0=1000, tol=1e-9)
-        print('Go = ', Go)
+        #print('Go = ', Go)
+        print('t_lag = {}; Gd = {} --> Go = {}'.format(tlag, Gd1, Go))
     
     else:
         Go = 1 # Default
@@ -2157,6 +2165,8 @@ def fit6states(fluxSet,dataSet,run,vInd,params,method=methods[3]): #shortPulseSe
     pOns.add('a2', value=Go, vary=False, min=1e-9, max=1e9) #Go1
     pOns.add('b3', value=Go, vary=False, min=1e-9, max=1e9) #Go2
     #pOns.add('b3', value=Go2, vary=False, min=1e-9, max=1e9) #Go2
+    #pOns.add('a2', value=Go, vary=True, min=Go/2, max=Go*2) #Go1
+    #pOns.add('b3', value=Go, vary=True, min=Go/2, max=Go*2) #Go2
     
     # phiFits[phiInd] = fit4states(I,t,onInd,offInd,phi,V,Gr0,gmax,params=pOns,method=method)
     copyParam('a10',params,pOns) #k1 #pOns.add('k1',value=3, min=0.01) #0.5 Ga1 = k1 * phi
@@ -2219,6 +2229,8 @@ def fit6states(fluxSet,dataSet,run,vInd,params,method=methods[3]): #shortPulseSe
         print(onPmin.lmdif_message)
     print("Chi^2: ",onPmin.chisqr)
     
+    fitParams = pOns
+    
     #print('k1 = {}; k2 = {}; c1 = {}; c2 = {}'.format(pOns['k1'].value, pOns['k2'].value, pOns['c1'].value, pOns['c2'].value))
     print('k1 = {}; k2 = {}; kf = {}; kb = {}'.format(pOns['a10'].value, pOns['b40'].value, pOns['a31'].value, pOns['b21'].value))
     print('gam = ',pOns['gam'].value)
@@ -2226,14 +2238,82 @@ def fit6states(fluxSet,dataSet,run,vInd,params,method=methods[3]): #shortPulseSe
     print('phim = ',pOns['phim'].value)
     print('p = ',pOns['p'].value)
     print('q = ',pOns['q'].value)
+
+
+    def calcCycle(p,ton,toff,RhO,V,phi,fitRates=False):
+        """Simulate the on-phase from base parameters for the 6-state model"""
+        if verbose > 1:
+            print('.', end="") # sys.stdout.write('.')
+        
+        #Idel, Ion, Ioff = I[:onInd+1], I[onInd:offInd+1], I[offInd:]
+        #tdel, ton, toff = t[:onInd+1], t[onInd:offInd+1]-t[onInd], t[offInd:]-t[offInd]
+        
+        RhO.initStates(0)
+        #RhO.setLight(phi) # Calculate transition rates for phi
+        RhO.updateParams(p)
+                
+        # # Delay phase
+        # RhO.setLight(RhO.phi_0)
+        # if RhO.useAnalyticSoln:
+            # soln = RhO.calcSoln(tdel, RhO.s_0)
+        # else:
+            # soln = odeint(RhO.solveStates, RhO.s_0, tdel, Dfun=RhO.jacobian)
+        # RhO.storeStates(soln[1:], tdel[1:])
+        
+        # On phase
+        RhO.setLight(phi) # Calculate transition rates for phi
+        if fitRates: # Override light-sensitive transition rates
+            RhO.updateParams(params)
+        RhO.s_on = RhO.states[-1,:] #soln[-1,:]
+        if RhO.useAnalyticSoln:
+            soln = RhO.calcSoln(ton, RhO.s_on)
+        else:
+            soln = odeint(RhO.solveStates, RhO.s_on, ton, Dfun=RhO.jacobian)
+        RhO.storeStates(soln[1:], ton[1:])
+        
+        # Off phase
+        RhO.setLight(0)
+        RhO.s_off = soln[-1,:]
+        if RhO.useAnalyticSoln:
+            soln = RhO.calcSoln(toff, RhO.s_off)
+        else:
+            soln = odeint(RhO.solveStates, RhO.s_off, toff, Dfun=RhO.jacobian)
+        RhO.storeStates(soln[1:], toff[1:])
+        
+        return RhO.calcI(V, RhO.states)
+    
+    
+    def errCycle(p,Is,tons,toffs,nfs,RhO,Vs,phis):
+        return np.r_[ [Is[i]/nfs[i] - calcCycle(p,tons[i],toffs[i],RhO,Vs[i],phis[i])/nfs[i] for i in range(len(Is))]]
     
     nStates = 6
+    
+    postOpt = True
+    if postOpt: # Relax all parameters and reoptimise
+        if verbose > 0:
+            print('Performing post-fit optimisation!')
+        postParams = Parameters()
+        # for p,v in pOffs.items():
+            # if p in params:
+                # copyParam(p, pOffs, postParams)
+                # v.vary = True
+        for p in pOns:
+            if p in params:
+                copyParam(p, pOns, postParams)
+                postParams[p].vary = True
+        
+        RhO = models[str(nStates)]()
+        postPmin = minimize(errCycle, postParams, args=(Icycles,tons,toffs,nfs,RhO,Vs,phis), method=method)
+        fitParams = postParams
+    
+    
     for trial in range(nTrials):
-        plotFit(Is[trial],ts[trial],onInd,offInd,phis[trial],Vs[trial],nStates,pOns,fitRates=False,index=trial)
+        plotFit(Is[trial],ts[trial],onInd,offInd,phis[trial],Vs[trial],nStates,fitParams,fitRates=False,index=trial)
     
-    print("Parameters have been fit for the six-state model")# at a flux of {} [photons * s^-1 * mm^-2]".format(phi))
+    if verbose > 0:
+        print("Parameters have been fit for the six-state model")# at a flux of {} [photons * s^-1 * mm^-2]".format(phi))
     
-    return pOns #p4s #RhO
+    return fitParams #pOns #p4s #RhO
 
 
 
@@ -2359,7 +2439,9 @@ def fitFV(Vs, Iss, curveFunc, p0, RhO, fig=None):#, eqString): =plt.gcf()
 def fitModels(dataSet, nStates=3, params=modelParams['3'], method=methods[3]): #, params, #fit3s=True, fit4s=False, fit6s=False):
     """Routine to fit as many models as possible and select between them according to some parsimony criterion"""
     
-    
+    if verbose > 0:
+        t0 = time.perf_counter()
+        print('Fitting parameters for the {}-state model'.format(nStates))
     ### Check contents of dataSet and produce report on model features which may be fit. 
     # e.g. if not 'inwardRect': f(V)=1
     
@@ -2429,7 +2511,7 @@ def fitModels(dataSet, nStates=3, params=modelParams['3'], method=methods[3]): #
         # for p in dataSet['params']:
             # copyParam(p,dataSet['params'],params)
         
-    
+    nonOptParams = ['E', 'Gr0', 'v0', 'v1']
         
     # Now check for the following: E,[phi0,gam,A]; Gr0,gmax,Ipeak,Iss
     
@@ -3006,6 +3088,9 @@ def fitModels(dataSet, nStates=3, params=modelParams['3'], method=methods[3]): #
     fh = open(os.path.join(dDir, exportName), "wb")
     pickle.dump(fittedParams, fh)
     fh.close()
+    
+    if verbose > 0:
+        print('\n*** Parameters fit for the {}-state model in {:.3g}s ***\n'.format(nStates, time.perf_counter() - t0))
     
     return fittedParams #aggregates #fitCurve(dataSet, highestState)
     
