@@ -1,6 +1,7 @@
 # simulators.py
 
 from .parameters import *
+from .utilities import * # cycles2times, plotLight
 from .models import *
 from .config import verbose
 import numpy as np
@@ -29,6 +30,27 @@ class simPython(Simulator):
         if dt < self.dt:
             self.dt = dt #min(self.h.dt, dt)
             print('Time step set to {}ms by protocol!'.format(self.dt))
+    
+    # Add this into runTrial and fitting routines...
+    def run(RhO, t):
+        # P = RhO.P; Gd = RhO.Gd; Gr = RhO.Gr
+        # if not RhO.useAnalyticSoln or 2*(P*Gd + P*Gr + Gd*Gr) > (P**2 + Gd**2 + Gr**2):
+            # soln = odeint(RhO.solveStates, RhO.states[-1,:], t, Dfun=RhO.jacobian)
+        # else:
+            # soln = RhO.calcSoln(t, RhO.states[-1,:])
+            
+        try:
+            soln = RhO.calcSoln(t, RhO.states[-1,:])
+        except: # Any exception e.g. NotImplementedError or ValueError
+            soln = odeint(RhO.solveStates, RhO.states[-1,:], t, Dfun=RhO.jacobian)
+        
+        # if RhO.useAnalyticSoln:
+            # soln = RhO.calcSoln(t, RhO.states[-1,:])
+            # if np.any(np.isnan(soln)):
+                # soln = odeint(RhO.solveStates, RhO.states[-1,:], t, Dfun=RhO.jacobian)
+        # else:
+            # soln = odeint(RhO.solveStates, RhO.states[-1,:], t, Dfun=RhO.jacobian)
+        return soln
     
     # runTrial(self, RhO, nPulses, V,phiOn,delD,onD,offD,padD,dt,verbose=verbose): #dt; a1,a3,b2,b4,I_RhO
     def runTrial(self, RhO, phiOn, V, delD, cycles, dt, verbose=verbose): 
@@ -179,7 +201,7 @@ class simNEURON(Simulator):
     simulator = 'NEURON'
     mechanisms = {3:'RhO3', 4:'RhO4', 6:'RhO6'}
     #mods = {3:'RhO3.mod', 4:'RhO4.mod', 6:'RhO6.mod'}
-    paramExceptions = ['useIR']
+    #paramExceptions = ['useIR']
     
     def __init__(self, RhO, params=simParams['NEURON'], recInd=0): #v_init=-70, integrator='fixed'):
         
@@ -404,8 +426,8 @@ class simNEURON(Simulator):
             
         for rho in rhoList: #range(int(rhoList.count())): # not self.rhoList so that subsets can be passed
             for p in pSet: #modelParams[str(RhO.nStates)]:
-                if p not in self.paramExceptions:
-                    setattr(rho, p, pSet[p].value)
+                #if p not in self.paramExceptions:
+                setattr(rho, p, pSet[p].value)
             
             ### Should this be set in transduce?
             #compList.o(i).gbar = RhO.g/150000000 # ChRexp

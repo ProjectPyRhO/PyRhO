@@ -48,6 +48,7 @@ import numpy as np
 
 # Place all submodule functions and variables into namespace
 from .parameters import *
+from .utilities import *
 from .loadData import * #import loadData
 from .models import * #import models
 from .simulators import *
@@ -95,7 +96,7 @@ def runAll():
         #nStates = int(model)
         #RhO = selectModel(nStates)
         
-        for sim in simulators:
+        for sim in ['Python']:#simulators:
             
             Sim = simulators[sim](RhO)
             
@@ -104,7 +105,7 @@ def runAll():
                 #protocols = ['custom', 'saturate', 'rectifier', 'shortPulse', 'recovery']
                 #protocol = protocols[2] #'recovery'#'shortPulse' # Set this interactively with radio buttons?
                 
-                print("\nRunning Protocol '{}' on the {}-state model...".format(protocol,nStates))
+                print("\nRunning Protocol '{}' on the {}-state model...".format(prot, model))
                 print('--------------------------------------------------------------------------------\n')
                 #Prot = selectProtocol(protocol)
                 Prot = protocols[prot]()

@@ -1,7 +1,9 @@
 import numpy as np
 import scipy.io as sio # Use for Matlab files < v7.3
 from lmfit import Parameters
-from .models import * # For times2cycles and cycles2times
+#from .models import * # For times2cycles and cycles2times
+from .utilities import * # For times2cycles and cycles2times, expDecay, findPlateauCurrent
+from .parameters import tFromOff
 #from config import verbose
 import warnings
 

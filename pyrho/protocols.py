@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import *
 from scipy.optimize import curve_fit
 from .parameters import *
+from .utilities import * # times2cycles, cycles2times, plotLight, round_sig, expDecay, biExpDecay, findPeaks
 from .loadData import * #import loadData
 from .fitting import * #calcIssfromfV and fitPeaks...
 from .models import *
@@ -288,6 +289,8 @@ class Protocol(object):
                     self.labels[run][phiInd][vInd] = label
                     label = ""
                     
+                    
+                    
                     ### Find peaks in photocurrent - just take min() or max() within each pulse?
                     # if (V < RhO.E): #if abs(min(I_RhO)) > abs(max(I_RhO)):
                         # minmax = np.less
@@ -391,8 +394,9 @@ class Protocol(object):
                     
                     if self.saveData:
                         ### Save data to pickle files
+                        # Change: Prot.pulses[run] := [[t_on1, t_off1],...]
                         pulses = np.array([[delD+(p*(onD+offD)),delD+(p*(onD+offD))+onD] for p in range(nPulses)]) #np.array([[delD,onD]])
-                        PC=PhotoCurrent(I_RhO,t,phiOn,V,pulses,protocol)
+                        PC = PhotoCurrent(I_RhO, t, phiOn, V, pulses, protocol)
                         self.data[run][phiInd][vInd] = PC
                         #PD.trials.append(PC)
                         self.PD.trials[run][phiInd][vInd] = PC
@@ -455,7 +459,7 @@ class Protocol(object):
             if verbose > 0:
                 print("Saving data to disk")
             fh = open(dDir+protocol+dataTag+".pkl","wb")
-            pickle.dump(PC,fh)
+            pickle.dump(self.PD, fh)
             fh.close()
         
         if verbose > 0:
@@ -510,24 +514,24 @@ class Protocol(object):
             warnings.warn("Warning: Too many changing variables for one plot!")
         if verbose > 2:
             print("Run=#{}/{}; phiInd=#{}/{}; vInd=#{}/{}".format(run,self.nRuns,phiInd,len(self.phis),vInd,len(self.Vs)))
-        if self.nRuns>1:
-            col = colours[run%len(colours)]
-            if len(self.phis)>1:
-                style=styles[phiInd%len(styles)]
-            elif len(self.Vs)>1:
-                style=styles[vInd%len(styles)]
+        if self.nRuns > 1:
+            col = colours[run % len(colours)]
+            if len(self.phis) > 1:
+                style = styles[phiInd % len(styles)]
+            elif len(self.Vs) > 1:
+                style = styles[vInd % len(styles)]
             else:
                 style = '-'
         else:
-            if len(self.Vs)>1:
-                col = colours[vInd%len(colours)]
-                if len(self.phis)>1:
-                    style = styles[phiInd%len(styles)]
+            if len(self.Vs) > 1:
+                col = colours[vInd % len(colours)]
+                if len(self.phis) > 1:
+                    style = styles[phiInd % len(styles)]
                 else:
                     style = '-'
             else:
-                if len(self.phis)>1:
-                    col = colours[phiInd%len(colours)]
+                if len(self.phis) > 1:
+                    col = colours[phiInd % len(colours)]
                     style = '-'
                 else:
                     col = 'b'   ### colours[0]
@@ -1303,7 +1307,7 @@ class protCustom(Protocol):
         #self.pulseInds = np.array([[np.searchsorted(self.t, pulses[p,time]) for time in range(2)] for p in range(self.nPulses)])
         #pulses = np.array([[delD+(p*(onD+offD)),delD+(p*(onD+offD))+onD] for p in range(nPulses)]) #np.array([[delD,onD]])
         self.nRuns = 1 #nRuns ### Reconsider this...
-        self.phis.sort()
+        self.phis.sort(reverse=True)
         self.Vs.sort(reverse=True)
         
         
@@ -1349,7 +1353,7 @@ class protStep(Protocol):
         self.offDs = np.append(self.pulses[1:,0],self.totT) - self.pulses[:,1]
         self.nRuns = 1 #nRuns
         #phi_t = InterpolatedUnivariateSpline([start,delD-dt,delD,end], [0,0,A,A],k=1) # Heaviside
-        self.phis.sort()
+        self.phis.sort(reverse=True)
         self.Vs.sort(reverse=True)
    
    
@@ -1408,7 +1412,7 @@ class protSinusoid(Protocol):
         
         #figTitle = "Photocurrent through time "
         #self.phis.sort(reverse=True)
-        self.phis.sort()
+        self.phis.sort(reverse=True)
         self.Vs.sort(reverse=True)
 
         #self.fs.sort()
@@ -1465,7 +1469,7 @@ class protDualTone(Protocol):
             warnings.warn('Warning: The period of the lowest frequency is longer than the stimulation time!')
             #print('Warning: The period of the lowest frequency is longer than the total simulation time!')
 
-        self.phis.sort()
+        self.phis.sort(reverse=True)
         self.Vs.sort(reverse=True)
 
 
@@ -1512,7 +1516,7 @@ class protChirp(Protocol):
         if (1000)/self.f0 > min(self.onDs): #1/10**self.fs[0] > self.totT:
             warnings.warn('Warning: The period of the lowest frequency is longer than the stimulation time!')
             #print('Warning: The period of the lowest frequency is longer than the total simulation time!')
-        self.phis.sort()
+        self.phis.sort(reverse=True)
         self.Vs.sort(reverse=True)
         
 
@@ -1552,7 +1556,7 @@ class protRamp(Protocol):
         self.pulseCycles=np.column_stack((self.onDs,self.offDs))
         #self.pulseCycles=np.tile(np.column_stack((self.onDs,self.offDs)),(self.nRuns,1))
         self.padDs = np.zeros(self.nRuns)
-        self.phis.sort()
+        self.phis.sort(reverse=True)
         self.Vs.sort(reverse=True)
 
 class protSaturate(Protocol): 
@@ -1596,10 +1600,10 @@ class protSaturate(Protocol):
         #for p, t in enumerate(self.onDs):
         #    if self.onDs[p] < self.dt:
         #        warnings.warn('Warning: Time step is too large for the pulse width [pulse:{}; t={}]!'.format(p,t))
-        self.phis.sort()
+        self.phis.sort(reverse=True)
         self.Vs.sort(reverse=True)
 
-class protInwardRect(Protocol):
+class protRectifier(Protocol):
     # Iss vs Vclamp
     protocol = 'rectifier'
     squarePulse = True
@@ -1633,11 +1637,11 @@ class protInwardRect(Protocol):
         self.onDs = [row[1]-row[0] for row in self.pulses] # pulses[:,1] - pulses[:,0]   # Pulse Durations
         self.offDs = np.append(self.pulses[1:,0],self.totT) - self.pulses[:,1]
         self.nRuns = 1 #nRuns
-        self.phis.sort()
+        self.phis.sort(reverse=True)
         self.Vs.sort(reverse=True)
         
 
-class protVaryPL(Protocol):
+class protShortPulse(Protocol):
     # Vary pulse length - See Nikolic+++++2009, Fig. 2 & 9
     #def __init__(self, phis=[1e12], Vs=[-70], delD=25, pulses=[[1,74],[2,73],[3,72],[5,70],[8,67],[10,65],[20,55]], nRuns=1, dt=0.1):
     protocol = 'shortPulse'
@@ -1682,14 +1686,14 @@ class protVaryPL(Protocol):
         self.offDs = (np.ones(self.nRuns)*self.totT) - self.delDs - self.onDs
         self.pulseCycles = np.column_stack((self.onDs,self.offDs))
         self.padDs = np.zeros(self.nRuns)
-        self.phis.sort()
+        self.phis.sort(reverse=True)
         self.Vs.sort(reverse=True)
 
     def getRunCycles(self,run):
         return np.asarray([[self.onDs[run],self.offDs[run]]]), self.delDs[run]
         
         
-class protVaryIPI(Protocol):
+class protRecovery(Protocol):
     # Vary Inter-Pulse-Interval
     protocol = 'recovery'
     squarePulse = True
@@ -1740,7 +1744,7 @@ class protVaryIPI(Protocol):
         self.totT = self.delD+self.nPulses*max(self.IPIs) -0.8*max(self.pulseCycles[:,1]) # Total simulation time per run [ms] ### Should IPI be one pulse cycle or time between end/start of two pulses?
         self.IpIPI = np.zeros(self.nRuns) #peaks
         self.tpIPI = np.zeros(self.nRuns) #tPeaks
-        self.phis.sort()
+        self.phis.sort(reverse=True)
         self.Vs.sort(reverse=True)
 
     def getRunCycles(self,run):
@@ -1750,7 +1754,7 @@ class protVaryIPI(Protocol):
 
 
 
-protocols = {'custom': protCustom, 'step': protStep, 'saturate': protSaturate, 'rectifier': protInwardRect, 'shortPulse': protVaryPL, 'recovery': protVaryIPI, 'sinusoid': protSinusoid, 'chirp': protChirp, 'ramp': protRamp}
+protocols = {'custom': protCustom, 'step': protStep, 'saturate': protSaturate, 'rectifier': protRectifier, 'shortPulse': protShortPulse, 'recovery': protRecovery, 'sinusoid': protSinusoid, 'chirp': protChirp, 'ramp': protRamp}
 # E.g. 
 # protocols['shortPulse']([1e12], [-70], 25, [1,2,3,5,8,10,20], 100, 0.1)
 

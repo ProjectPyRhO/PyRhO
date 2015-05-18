@@ -14,6 +14,7 @@ from .loadData import * #import loadData
 from .protocols import * # for SSA and numerical solution
 #import models # for calculating analytic solution
 #global phi0
+from .utilities import * # plotLight, round_sig, findPeaks, findPlateauCurrent
 from .models import * # for fitPeaks
 from .config import verbose, saveFigFormat, addTitles, fDir, dDir
 #from .config import verbose, saveFigFormat, eqSize, addTitles, addStimulus, colours, styles, dDir, fDir
@@ -131,6 +132,7 @@ def calcGr0(dataset):
         
     return Gr0
     
+
 def fit3statesIndiv(I,t,onInd,offInd,phi,V,Gr0,gmax,Ipmax,params=None,method=methods[3]): #Iss=None, ### Modify to pass in p3s
     """
     I       := Photocurrent to fit [nA]
@@ -1304,8 +1306,22 @@ def plotFit(I,t,onInd,offInd,phi,V,nStates,params,fitRates,index):
 
     
     print("Fit has been plotted for the {}-state model".format(nStates))# at a flux of {} [photons * s^-1 * mm^-2]".format(phi))
+    
+    
+def run(RhO, t):
+    # P = RhO.P; Gd = RhO.Gd; Gr = RhO.Gr
+    # if not RhO.useAnalyticSoln or 2*(P*Gd + P*Gr + Gd*Gr) > (P**2 + Gd**2 + Gr**2):
+        # soln = odeint(RhO.solveStates, RhO.states[-1,:], t, Dfun=RhO.jacobian)
+    # else:
+        # soln = RhO.calcSoln(t, RhO.states[-1,:])
         
-
+    try:
+        soln = RhO.calcSoln(t, RhO.states[-1,:])
+    except: # Any exception e.g. NotImplementedError or ValueError
+        soln = odeint(RhO.solveStates, RhO.states[-1,:], t, Dfun=RhO.jacobian)
+    return soln
+    
+        
 #fit3states(I,t,onInd,offInd,phi,V,Gr0,gmax,Ipmax,params=None,method=methods[3])
 def fit3states(fluxSet,run,vInd,params,method=methods[3]): #,Ipmax #Iss=None, ### Modify to pass in p3s
     """
@@ -1406,7 +1422,7 @@ def fit3states(fluxSet,run,vInd,params,method=methods[3]): #,Ipmax #Iss=None, ##
     
     #err3off = lambda p,I,t: I - fit3off(p,t)
     def err3off(p,Ioffs,toffs):
-        return np.r_[ [Ioffs[i]/Ioffs[i][0] - fit3off(p,toffs[i],i)/Ioffs[i][0] for i in range(len(Ioffs))] ]
+        return np.r_[ [(Ioffs[i] - fit3off(p,toffs[i],i))/Ioffs[i][0] for i in range(len(Ioffs))] ]
     
     offPmin = minimize(err3off, pOffs, args=(Ioffs,toffs), method=method)
     #pOffs.add('Gd', value=max(pOffs['Gd1'].value,pOffs['Gd2'].value), min=0)
@@ -1432,7 +1448,7 @@ def fit3states(fluxSet,run,vInd,params,method=methods[3]): #,Ipmax #Iss=None, ##
         ax = fig.add_subplot(gs[trial,:])
         ax.plot(toffs[trial], Ioffs[trial], 'g', linewidth=mp.rcParams['lines.linewidth']*3, label='Data: phi={phi:.3g}'.format(phi=phis[trial])) # Experimental data
         ax.plot(toffs[trial], fit3off(pOffs,toffs[trial],trial), 'b', label=eq) # Fits
-        ax.plot(toffs[trial], -(Islow+Ifast)*np.exp(-Gd*toffs[trial]), 'r', label='-{I0:.3g}*exp(-{Gd:.3g}*t)'.format(I0=Islow+Ifast, Gd=Gd))
+        ax.plot(toffs[trial], -(Islow+Ifast)*np.exp(-Gd*toffs[trial]), 'r', label='I(t)=-{I0:.3g}*exp(-{Gd:.3g}*t)'.format(I0=Islow+Ifast, Gd=Gd))
         plt.legend(loc=4) # Lower right
         if trial < nTrials-1:
             plt.setp(ax.get_xticklabels(), visible=False)
@@ -1474,9 +1490,9 @@ def fit3states(fluxSet,run,vInd,params,method=methods[3]): #,Ipmax #Iss=None, ##
     #pOns['Gr0'].set(vary=False) # Dark recovery rate
     copyParam('Gr1',params,pOns) # pOns.add('Gr',value=Gr0,vary=False)
     copyParam('E',params,pOns)
-    if params['useIR'].value==True: # Redundant?
-        copyParam('v0',params,pOns)
-        copyParam('v1',params,pOns)
+    #if params['useIR'].value==True: # Redundant?
+    copyParam('v0',params,pOns)
+    copyParam('v1',params,pOns)
     
     
     
@@ -1490,7 +1506,7 @@ def fit3states(fluxSet,run,vInd,params,method=methods[3]): #,Ipmax #Iss=None, ##
         return RhO.calcI(V, states)
         
     def err3on(p,Ions,tons,RhO,phis,Vs):
-        return np.r_[ [Ions[i]/Ions[i][-1] - fit3on(p,tons[i],RhO,phis[i],Vs[i])/Ions[i][-1] for i in range(len(Ions))] ]
+        return np.r_[ [(Ions[i] - fit3on(p,tons[i],RhO,phis[i],Vs[i]))/Ions[i][-1] for i in range(len(Ions))] ]
     
     onPmin = minimize(err3on, pOns, args=(Ions,tons,RhO,phis,Vs), method=method)
     
@@ -1687,6 +1703,9 @@ def fit3states(fluxSet,run,vInd,params,method=methods[3]): #,Ipmax #Iss=None, ##
     #print(phis)
     #print(Vs)
     #print(pOns)
+    
+
+    
     RhO.setParams(pOns)
     
     nStates = 3
@@ -1698,7 +1717,7 @@ def fit3states(fluxSet,run,vInd,params,method=methods[3]): #,Ipmax #Iss=None, ##
     if verbose > 0:
         print("Parameters have been fit for the three-state model over a flux range of [{:.3g}, {:.3g}] [photons * s^-1 * mm^-2]".format(min(phis), max(phis)))
     
-    return pOns #p3s # RhO
+    return pOns #pOns #p3s # RhO
 
 
 def fit4states(fluxSet,run,vInd,params,method=methods[3]): #fit4states(Is,ts,onInds,offInds,phis,V,Gr,gmax,params=None,method=methods[3]):#,Iss): # ,Ipeak
@@ -1797,7 +1816,7 @@ def fit4states(fluxSet,run,vInd,params,method=methods[3]): #fit4states(Is,ts,onI
         
     def err4off(p,Ioffs,toffs):
         """Normalise by the first element of the off-curve""" # [-1]
-        return np.r_[ [Ioffs[i]/Ioffs[i][0] - fit4off(p,toffs[i],i)/Ioffs[i][0] for i in range(len(Ioffs))] ]
+        return np.r_[ [(Ioffs[i] - fit4off(p,toffs[i],i))/Ioffs[i][0] for i in range(len(Ioffs))] ]
     
     #fitfunc = lambda p, t: -(p['a0'].value + p['a1'].value*np.exp(-lams(p)[0]*t) + p['a2'].value*np.exp(-lams(p)[1]*t))
     ##fitfunc = lambda p, t: -(p['a0'].value + p['a1'].value*np.exp(-p['lam1'].value*t) + p['a2'].value*np.exp(-p['lam2'].value*t))
@@ -1879,9 +1898,9 @@ def fit4states(fluxSet,run,vInd,params,method=methods[3]): #fit4states(Is,ts,onI
     copyParam('Gr',params,pOns) # pOns.add('Gr',value=Gr0,vary=False)
     #copyParam('phi0',params,pOns) # pOns.add('phi0',value=5e18,min=1e14,max=1e20,vary=False) ################# Set this to be above the max flux??? 10**ceil(log10(max(phis)))
     copyParam('E',params,pOns)
-    if params['useIR'].value==True:
-        copyParam('v0',params,pOns)
-        copyParam('v1',params,pOns)
+    #if params['useIR'].value==True:
+    copyParam('v0',params,pOns)
+    copyParam('v1',params,pOns)
     
     RhO = models['4']()
     
@@ -2027,7 +2046,7 @@ def fit6states(fluxSet,dataSet,run,vInd,params,method=methods[3]): #shortPulseSe
         
     def err6off(p,Ioffs,toffs):
         """Normalise by the first element of the off-curve""" # [-1]
-        return np.r_[ [Ioffs[i]/Ioffs[i][0] - fit6off(p,toffs[i],i)/Ioffs[i][0] for i in range(len(Ioffs))] ]
+        return np.r_[ [(Ioffs[i] - fit6off(p,toffs[i],i))/Ioffs[i][0] for i in range(len(Ioffs))] ]
     
     #fitfunc = lambda p, t: -(p['a0'].value + p['a1'].value*np.exp(-lams(p)[0]*t) + p['a2'].value*np.exp(-lams(p)[1]*t))
     ##fitfunc = lambda p, t: -(p['a0'].value + p['a1'].value*np.exp(-p['lam1'].value*t) + p['a2'].value*np.exp(-p['lam2'].value*t))
@@ -2185,9 +2204,9 @@ def fit6states(fluxSet,dataSet,run,vInd,params,method=methods[3]): #shortPulseSe
     copyParam('a6',params,pOns) #Gr # pOns.add('Gr',value=Gr0,vary=False)
     #copyParam('phi0',params,pOns) # pOns.add('phi0',value=5e18,min=1e14,max=1e20,vary=False) ################# Set this to be above the max flux??? 10**ceil(log10(max(phis)))
     copyParam('E',params,pOns)
-    if params['useIR'].value==True:
-        copyParam('v0',params,pOns)
-        copyParam('v1',params,pOns)
+    #if params['useIR'].value==True:
+    copyParam('v0',params,pOns)
+    copyParam('v1',params,pOns)
     
     RhO = models['6']()
     
@@ -2196,7 +2215,6 @@ def fit6states(fluxSet,dataSet,run,vInd,params,method=methods[3]): #shortPulseSe
         if verbose > 1:
             print('.', end="") # sys.stdout.write('.')
         RhO.initStates(0)
-        #RhO.setLight(phi) # Calculate transition rates for phi
         RhO.updateParams(p)
         RhO.setLight(phi) # Calculate transition rates for phi
         
@@ -2210,7 +2228,7 @@ def fit6states(fluxSet,dataSet,run,vInd,params,method=methods[3]): #shortPulseSe
     
     # Normalise? e.g. /Ions[trial][-1] or /min(Ions[trial])
     def err6on(p,Ions,tons,RhO,Vs,phis):
-        return np.r_[ [Ions[i]/Ions[i][-1] - calc6on(p,tons[i],RhO,Vs[i],phis[i])/Ions[i][-1] for i in range(len(Ions))]]
+        return np.r_[ [(Ions[i] - calc6on(p,tons[i],RhO,Vs[i],phis[i]))/Ions[i][-1] for i in range(len(Ions))]]
     
     ### Trim down ton? Take 10% of data or one point every ms? ==> [0::5]
     ### Instead try looping over a coarse grid of parameter values and saving RMSE for each combination c.f. analysis_4state_on_new.m
@@ -2240,7 +2258,7 @@ def fit6states(fluxSet,dataSet,run,vInd,params,method=methods[3]): #shortPulseSe
     print('q = ',pOns['q'].value)
 
 
-    def calcCycle(p,ton,toff,RhO,V,phi,fitRates=False):
+    def calcCycle(p,ton,toff,RhO,V,phi,fitRates=False): #,fitDelay=False
         """Simulate the on-phase from base parameters for the 6-state model"""
         if verbose > 1:
             print('.', end="") # sys.stdout.write('.')
@@ -2252,13 +2270,14 @@ def fit6states(fluxSet,dataSet,run,vInd,params,method=methods[3]): #shortPulseSe
         #RhO.setLight(phi) # Calculate transition rates for phi
         RhO.updateParams(p)
                 
-        # # Delay phase
-        # RhO.setLight(RhO.phi_0)
-        # if RhO.useAnalyticSoln:
-            # soln = RhO.calcSoln(tdel, RhO.s_0)
-        # else:
-            # soln = odeint(RhO.solveStates, RhO.s_0, tdel, Dfun=RhO.jacobian)
-        # RhO.storeStates(soln[1:], tdel[1:])
+        if 0: # fitDelay: # Change to pass t array and pulse indices
+            # Delay phase
+            RhO.setLight(RhO.phi_0)
+            if RhO.useAnalyticSoln:
+                soln = RhO.calcSoln(tdel, RhO.s_0)
+            else:
+                soln = odeint(RhO.solveStates, RhO.s_0, tdel, Dfun=RhO.jacobian)
+            RhO.storeStates(soln[1:], tdel[1:])
         
         # On phase
         RhO.setLight(phi) # Calculate transition rates for phi
@@ -2284,7 +2303,7 @@ def fit6states(fluxSet,dataSet,run,vInd,params,method=methods[3]): #shortPulseSe
     
     
     def errCycle(p,Is,tons,toffs,nfs,RhO,Vs,phis):
-        return np.r_[ [Is[i]/nfs[i] - calcCycle(p,tons[i],toffs[i],RhO,Vs[i],phis[i])/nfs[i] for i in range(len(Is))]]
+        return np.r_[ [(Is[i] - calcCycle(p,tons[i],toffs[i],RhO,Vs[i],phis[i]))/nfs[i] for i in range(len(Is))]]
     
     nStates = 6
     
@@ -2441,7 +2460,7 @@ def fitModels(dataSet, nStates=3, params=modelParams['3'], method=methods[3]): #
     
     if verbose > 0:
         t0 = time.perf_counter()
-        print('Fitting parameters for the {}-state model'.format(nStates))
+        print('*** Fitting parameters for the {}-state model ***'.format(nStates))
     ### Check contents of dataSet and produce report on model features which may be fit. 
     # e.g. if not 'rectifier': f(V)=1
     
@@ -2640,7 +2659,7 @@ def fitModels(dataSet, nStates=3, params=modelParams['3'], method=methods[3]): #
         #params['v0'].value = 1e12
         #params['v1'].value = 1e12
         # Fix parameters
-        params['useIR'].vary = False
+        #params['useIR'].vary = False
         params['v0'].vary = False
         params['v1'].vary = False
     
@@ -2683,10 +2702,10 @@ def fitModels(dataSet, nStates=3, params=modelParams['3'], method=methods[3]): #
             fitParams['Gr'].value = Gr0; fitParams['Gr'].vary=False
         elif nStates == 6:
             fitParams['a6'].value = Gr0; fitParams['a6'].vary = False # Dark recovery rate
-        if params['useIR'].value == False:
-            fitParams['useIR'].vary = False
-            fitParams['v0'].vary = False
-            fitParams['v1'].vary = False
+        #if params['useIR'].value == False:
+            #fitParams['useIR'].vary = False
+            #fitParams['v0'].vary = False
+            #fitParams['v1'].vary = False
         #fitParams['g'].value = gmax; fitParams['g'].vary=False
         #fitParams['g'].value = gmax; fitParams['g'].min = gmax*1/3; fitParams['g'].max = gmax*5/3 
         #fitParams['g'].value = gmax*1.25; fitParams['g'].min = gmax*2/3; fitParams['g'].max = gmax*5/3 
@@ -3071,10 +3090,17 @@ def fitModels(dataSet, nStates=3, params=modelParams['3'], method=methods[3]): #
     #RhO = models[nStates]()
     #RhO.setParams(fitParams)
     
-    # Compare fit vs computational complexity...
+    
+    ### Pass 'auto' to fit the highest model possible
+    
+    ### Pass 'all' then compare fit vs computational complexity...
+    # Plot all model fits on the same data plots
     # RhO = selectModel(nStates)
     # Calculate chisqr for each model and select between them. 
     ###RhO = RhO3
+    
+    
+    
     
     # for p,v in fittedParams.items():
         # v.vary = False
@@ -3089,10 +3115,17 @@ def fitModels(dataSet, nStates=3, params=modelParams['3'], method=methods[3]): #
     pickle.dump(fittedParams, fh)
     fh.close()
     
+    # Create new Parameters object to ensure the default ordering
+    orderedParams = Parameters()
+    for p in params:
+        copyParam(p, fittedParams, orderedParams)
+    
     if verbose > 0:
+        printParams(orderedParams)
         print('\n*** Parameters fit for the {}-state model in {:.3g}s ***\n'.format(nStates, time.perf_counter() - t0))
     
-    return fittedParams #aggregates #fitCurve(dataSet, highestState)
+    
+    return orderedParams #aggregates #fitCurve(dataSet, highestState)
     
     
 

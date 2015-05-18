@@ -34,6 +34,7 @@ tFromOff = 50  # Time [ms] to start the sample window before the end of the puls
 ### Move this to models.py and add .setParams() method
 from lmfit import Parameters, Parameter
 from collections import OrderedDict #, defaultdict
+#from .utilities import irrad2flux, flux2irrad
 
 modelParams = OrderedDict([('3',Parameters()),('4',Parameters()),('6',Parameters())])
 modelList = list(modelParams) # List of keys: list(modelParams.keys()) #This could be removed
@@ -68,7 +69,7 @@ modelParams['3'].add_many(
                 ('Gd',    0.0909, True, 0.0001,  1, '/ms'),
                 ('Gr0',   1/5000, True, 0.0001,  0.1, '/ms'),
                 ('Gr1',   1/165,  True, 0.0001,  1, '/ms'),
-                ('useIR', False,  True, False,True, None),
+                #('useIR', False,  True, False,True, None),
                 ('v0',    43,     True, -1e15, 1e15, 'mV'),
                 ('v1',    4.1,    True, -1e15, 1e15, 'mV'))
                 
@@ -113,7 +114,7 @@ modelParams['4'].add_many(  #('phi0',    1e14,   True, 1e12, 1e21,   'photons/s/
                 ('Gd1',     0.15,   True, 0.01, 1,      '/ms'),
                 ('Gd2',     0.025,  True, 0.01, 1,      '/ms'),
                 ('Gr',      0.0004, True, 1e-6, 1,      '/ms'),
-                ('useIR',   False,  True, False,True,   None),
+                #('useIR',   False,  True, False,True,   None),
                 ('v0',      43,     True, -1e15, 1e15,   'mV'),
                 ('v1',      4.1,    True, -1e15, 1e15,   'mV'))
     
@@ -143,7 +144,7 @@ modelParams['6'].add_many(
                 ('b40',   1.1e3,  True, 0.0,  None, '/ms'), #1.1
                 ('p',     0.7,    True, 0.1,  5,    None),
                 ('q',     0.47,   True, 0.1,  5,    None),
-                ('useIR', True,   True, False,True, None),
+                #('useIR', True,   True, False,True, None),
                 ('v0',    43,     True, -1e15, 1e15, 'mV'),
                 ('v1',    4.1,    True, -1e15, 1e15, 'mV'))
 
@@ -165,7 +166,7 @@ modelParams['6'].add_many(
                 # ('k2',   1.1e3,  True, 0.0,  None, '/ms'), #1.1
                 # ('p',     0.7,    True, 0.1,  5,    None),
                 # ('q',     0.47,   True, 0.1,  5,    None),
-                # ('useIR', True,   True, False,True, None),
+                ## ('useIR', True,   True, False,True, None),
                 # ('v0',    43,     True, -1e15, 1e15, 'mV'),
                 # ('v1',    4.1,    True, -1e15, 1e15, 'mV'))
 
