@@ -16,6 +16,9 @@
 
 ### Hyperparameters
 
+#fittingParams = Parameters()
+#methods=('leastsq','nelder','lbfgsb','powell','cg','newton','cobyla','tnc','trust-ncg','dogleg','slsqp')
+
 # Optimisation initialisation values
 p0fV = (40,4,1)#25000)#,1)      # v0,v1,E,G
 p0IPI = (0.5,4000,-1) # a*exp(-t/b)+c #(-1e-8,400,-1e-7)
@@ -72,6 +75,9 @@ modelParams['3'].add_many(
                 #('useIR', False,  True, False,True, None),
                 ('v0',    43,     True, -1e15, 1e15, 'mV'),
                 ('v1',    4.1,    True, -1e15, 1e15, 'mV'))
+modelLabels = OrderedDict([('3',OrderedDict()),('4',OrderedDict()),('6',OrderedDict())])
+#modelLabels['3'] = {'E':'E', 'g':'g', 'k':'k', 'p':'p', 'phim':'\phi_m', 'Gd':'G_d', 'Gr0':'G_{r0}', 'Gr1':'G_{r1}', 'v0':'v_0', 'v1':'v_1'}
+modelLabels['3'] = [('E','E'), ('g','g'), ('k','k'), ('p','p'), ('phim','\phi_m'), ('Gd','G_d'), ('Gr0','G_{r0}'), ('Gr1','G_{r1}'), ('v0','v_0'), ('v1','v_1')]
                 
 
 ### Alternatively add another field
