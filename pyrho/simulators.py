@@ -704,5 +704,6 @@ class simBrian(Simulator):
             group = all
         
         return
-        
-simulators = {'Python': simPython, 'NEURON': simNEURON, 'Brian': simBrian}
+    
+from collections import OrderedDict
+simulators = OrderedDict([('Python', simPython), ('NEURON', simNEURON), ('Brian', simBrian)])#{'Python': simPython, 'NEURON': simNEURON, 'Brian': simBrian}

@@ -456,7 +456,7 @@ class Protocol(object):
                 PC.tp = self.tpIPI #tPeaks
                 #PC.tau_r = popt[1]
             
-            if verbose > 0:
+            if verbose > 1:
                 print("Saving data to disk")
             fh = open(dDir+protocol+dataTag+".pkl","wb")
             pickle.dump(self.PD, fh)
@@ -1753,8 +1753,9 @@ class protRecovery(Protocol):
     
 
 
-
-protocols = {'custom': protCustom, 'step': protStep, 'saturate': protSaturate, 'rectifier': protRectifier, 'shortPulse': protShortPulse, 'recovery': protRecovery, 'sinusoid': protSinusoid, 'chirp': protChirp, 'ramp': protRamp}
+from collections import OrderedDict
+protocols = OrderedDict([('step', protStep), ('saturate', protSaturate), ('sinusoid', protSinusoid), ('chirp', protChirp), ('ramp', protRamp), ('recovery', protRecovery), ('rectifier', protRectifier), ('shortPulse', protShortPulse), ('custom', protCustom)])
+#protocols = {'custom': protCustom, 'step': protStep, 'saturate': protSaturate, 'rectifier': protRectifier, 'shortPulse': protShortPulse, 'recovery': protRecovery, 'sinusoid': protSinusoid, 'chirp': protChirp, 'ramp': protRamp}
 # E.g. 
 # protocols['shortPulse']([1e12], [-70], 25, [1,2,3,5,8,10,20], 100, 0.1)
 
@@ -1763,35 +1764,5 @@ protocols = {'custom': protCustom, 'step': protStep, 'saturate': protSaturate, '
 #squarePulses = {'custom': True, 'saturate': True, 'step': True, 'rectifier': True, 'shortPulse': True, 'recovery': True}
 #arbitraryPulses = {'custom': True, 'sinusoid': True, 'chirp': True, 'ramp':True} # Move custom here
 #smallSignalAnalysis = {'sinusoid': True, 'step': True, 'saturate': True} 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-### Previous code ###    
-    
-#saveData = True
-#dataTag = str(nStates)+"s"
 
-# Solver parameters
-#dt = 0.1 #0.01 #0.001
-#StepsPerMS = 1
-#extOrder = 5 #int(round(totT/(2*dt)))
-
-# Plot settings
-#plotPeakRecovery = False
-#plotStateVars = False
-#plotKinetics = False
-
-# Initial guesses for kinetics curve fitting (tuples to be immutable)
-#p0on = (-0.1,2,-1)
-#p0inact = (-0.5,25,-0.5)
-#p0off = (-0.1,7.5,-0.1,35,-0.1)
-#p0fV = (40,4,RhO.E)
-#p0IPI = (-1e-8,400,-1e-7)
 
