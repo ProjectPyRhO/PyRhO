@@ -122,6 +122,10 @@ def runAll():
                 
 def printVersions():
     ### Display version information
+    import numpy
+    import scipy
+    import matplotlib
+    import lmfit
     
     import platform
     print("Python version: ", platform.python_version())
@@ -135,12 +139,12 @@ def printVersions():
     #    print("{} version: {}".format(mod, mod.__version__))
     #import numpy
     print("NumPy version: ", numpy.__version__)
-    import scipy
+    #import scipy
     print("SciPy version: ", scipy.__version__)
     #import matplotlib
     print("Matplotlib version: ", matplotlib.__version__)
-    import lmfit
+    #import lmfit
     print("lmfit version: ", lmfit.__version__)
     
-    print("PyRhO version: ", pyrho.__version__)
+    #print("PyRhO version: ", pyrho.__version__)
 
