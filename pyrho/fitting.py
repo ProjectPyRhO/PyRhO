@@ -1304,8 +1304,8 @@ def plotFit(I,t,onInd,offInd,phi,V,nStates,params,fitRates,index):
     
     Ifig.savefig(fDir+'fit'+str(nStates)+'states'+str(index)+"."+saveFigFormat, format=saveFigFormat)
 
-    
-    print("Fit has been plotted for the {}-state model".format(nStates))# at a flux of {} [photons * s^-1 * mm^-2]".format(phi))
+    if verbose > 1:
+        print("Fit has been plotted for the {}-state model".format(nStates))# at a flux of {} [photons * s^-1 * mm^-2]".format(phi))
     
     
 def run(RhO, t):
@@ -1436,7 +1436,7 @@ def fit3states(fluxSet,run,vInd,params,method=methods[3]): #,Ipmax #Iss=None, ##
         Ifast = v['Ifast_'+str(phiInd)]
         Gds[phiInd] = (Islow*v['Gd1'] + Ifast*v['Gd2'])/(Islow + Ifast)
     
-    print(Gds)
+    #print(Gds)
     Gd = np.mean(Gds)
     
     fig = plt.figure()
@@ -1712,7 +1712,8 @@ def fit3states(fluxSet,run,vInd,params,method=methods[3]): #,Ipmax #Iss=None, ##
     for trial in range(nTrials):
         plotFit(Is[trial],ts[trial],onInd,offInd,phis[trial],Vs[trial],nStates,pOns,fitRates=False,index=trial)
         RhO.setLight(phis[trial])
-        print('phi = {:.3g}: P = {:.3g}, Gd = {:.3g}, Gr = {:.3g}'.format(phis[trial], RhO.P, RhO.Gd, RhO.Gr))
+        if verbose > 1:
+            print('phi = {:.3g}: P = {:.3g}, Gd = {:.3g}, Gr = {:.3g}'.format(phis[trial], RhO.P, RhO.Gd, RhO.Gr))
     
     if verbose > 0:
         print("Parameters have been fit for the three-state model over a flux range of [{:.3g}, {:.3g}] [photons * s^-1 * mm^-2]".format(min(phis), max(phis)))
@@ -1830,7 +1831,7 @@ def fit4states(fluxSet,run,vInd,params,method=methods[3]): #fit4states(Is,ts,onI
         print("Error bars: ",offPmin.errorbars)
     #print('lambda1 = {:.5g}; lambda2 = {:.5g}'.format(pOff['lam1'].value, pOff['lam2'].value))
     print(offPmin.message)
-    print("Chi^2: ",offPmin.chisqr)
+    print("Chi^2 (Off-phase): ",offPmin.chisqr)
     
     if verbose > 1:
         for phiInd in range(nPhis):
@@ -1858,8 +1859,9 @@ def fit4states(fluxSet,run,vInd,params,method=methods[3]): #fit4states(Is,ts,onI
             plt.setp(ax.get_xticklabels(), visible=False)
             plt.xlabel('')
         ax.set_ylim(-1,0.1)
-        
-    print('Gd1 = {}; Gd2 = {}; e12d = {}; e21d = {}'.format(pOffs['Gd1'].value, pOffs['Gd2'].value, pOffs['e12d'].value, pOffs['e21d'].value))
+    
+    if verbose > 1:
+        print('Gd1 = {}; Gd2 = {}; e12d = {}; e21d = {}'.format(pOffs['Gd1'].value, pOffs['Gd2'].value, pOffs['e12d'].value, pOffs['e21d'].value))
     
     pOffs['Gd1'].vary=False
     pOffs['Gd2'].vary=False
@@ -1923,16 +1925,38 @@ def fit4states(fluxSet,run,vInd,params,method=methods[3]): #fit4states(Is,ts,onI
         print(onPmin.success)
         print(onPmin.message)
         print(onPmin.lmdif_message)
-    print("Chi^2: ",onPmin.chisqr)
+    print("Chi^2 (On-phase): ",onPmin.chisqr)
     
-    print('k1 = {}; k2 = {}; c1 = {}; c2 = {}'.format(pOns['k1'].value, pOns['k2'].value, pOns['c1'].value, pOns['c2'].value))
-    print('gam = ',pOns['gam'].value)
-    #print('phi0 = ',pOns['phi0'].value)
-    print('phim = ',pOns['phim'].value)
-    print('p = ',pOns['p'].value)
-    print('q = ',pOns['q'].value)
-
+    if verbose > 1:
+        print('k1 = {}; k2 = {}; c1 = {}; c2 = {}'.format(pOns['k1'].value, pOns['k2'].value, pOns['c1'].value, pOns['c2'].value))
+        print('gam = ',pOns['gam'].value)
+        #print('phi0 = ',pOns['phi0'].value)
+        print('phim = ',pOns['phim'].value)
+        print('p = ',pOns['p'].value)
+        print('q = ',pOns['q'].value)
+    
+    
+    
+    
     nStates = 4
+    
+    postOpt = False
+    if postOpt: # Relax all parameters and reoptimise
+        if verbose > 0:
+            print('Performing post-fit optimisation!')
+        postParams = Parameters()
+
+        for p in pOns:
+            if p in params:
+                copyParam(p, pOns, postParams)
+                postParams[p].vary = True
+        
+        RhO = models[str(nStates)]()
+        postPmin = minimize(errCycle, postParams, args=(Icycles,tons,toffs,nfs,RhO,Vs,phis), method=method)
+        fitParams = postParams
+    else:
+        fitParams = pOns
+        
     for trial in range(nTrials):
         plotFit(Is[trial],ts[trial],onInd,offInd,phis[trial],Vs[trial],nStates,pOns,fitRates=False,index=trial)
 
@@ -1940,7 +1964,7 @@ def fit4states(fluxSet,run,vInd,params,method=methods[3]): #fit4states(Is,ts,onI
     if verbose > 0:
         print("Parameters have been fit for the four-state model")# at a flux of {} [photons * s^-1 * mm^-2]".format(phi))
     
-    return pOns #p4s #RhO
+    return fitParams #pOns #p4s #RhO
 
 
 
@@ -2060,7 +2084,7 @@ def fit6states(fluxSet,dataSet,run,vInd,params,method=methods[3]): #shortPulseSe
         print("Error bars: ",offPmin.errorbars)
     #print('lambda1 = {:.5g}; lambda2 = {:.5g}'.format(pOff['lam1'].value, pOff['lam2'].value))
     print(offPmin.message)
-    print("Chi^2: ",offPmin.chisqr)
+    print("Chi^2 (Off-phase): ",offPmin.chisqr)
     
     if verbose > 1:
         for phiInd in range(nPhis):
@@ -2245,17 +2269,18 @@ def fit6states(fluxSet,dataSet,run,vInd,params,method=methods[3]): #shortPulseSe
         print(onPmin.success)
         print(onPmin.message)
         print(onPmin.lmdif_message)
-    print("Chi^2: ",onPmin.chisqr)
+    print("Chi^2 (On-phase): ",onPmin.chisqr)
     
     fitParams = pOns
     
-    #print('k1 = {}; k2 = {}; c1 = {}; c2 = {}'.format(pOns['k1'].value, pOns['k2'].value, pOns['c1'].value, pOns['c2'].value))
-    print('k1 = {}; k2 = {}; kf = {}; kb = {}'.format(pOns['a10'].value, pOns['b40'].value, pOns['a31'].value, pOns['b21'].value))
-    print('gam = ',pOns['gam'].value)
-    #print('phi0 = ',pOns['phi0'].value)
-    print('phim = ',pOns['phim'].value)
-    print('p = ',pOns['p'].value)
-    print('q = ',pOns['q'].value)
+    if verbose > 1:
+        #print('k1 = {}; k2 = {}; c1 = {}; c2 = {}'.format(pOns['k1'].value, pOns['k2'].value, pOns['c1'].value, pOns['c2'].value))
+        print('k1 = {}; k2 = {}; kf = {}; kb = {}'.format(pOns['a10'].value, pOns['b40'].value, pOns['a31'].value, pOns['b21'].value))
+        print('gam = ',pOns['gam'].value)
+        #print('phi0 = ',pOns['phi0'].value)
+        print('phim = ',pOns['phim'].value)
+        print('p = ',pOns['p'].value)
+        print('q = ',pOns['q'].value)
 
 
     def calcCycle(p,ton,toff,RhO,V,phi,fitRates=False): #,fitDelay=False
