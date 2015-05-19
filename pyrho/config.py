@@ -101,3 +101,22 @@ plotKinetics = False
 
 
 
+try:
+    __IPYTHON__
+    import IPython
+except NameError:
+    pass
+else: # and IPython. See also get_ipython()
+    figFormat = 'retina' # 'svg'
+    IPython.display.set_matplotlib_formats(figFormat)
+    print("Default display figure format set: "+figFormat)
+
+
+#IPython.core.magic.Magics.basic.pprint()
+#%pprint
+#%precision %.6g
+#np.set_printoptions(precision=6) # Number of decimal places for floats
+# Long    Scientific
+# 1e-4    1e-5
+# 1e15    1e16
+
