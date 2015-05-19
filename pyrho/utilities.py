@@ -23,11 +23,22 @@ def printParams(params):
     report += '       Parameters\n'
     report += '------------------------\n'
     for k,v in vd.items():
-        report += '{:>7} = {:8.3g}\n'.format(k,v)
+        if isinstance(v, (int, float, complex)):
+            report += '{:>7} = {:8.3g}\n'.format(k,v)
+        else: # Check for bool?
+            report += '{:>7} = {:8}\n'.format(k,str(v))
     report += '========================\n'
     print(report)
     
-
+def loadData(pkl):
+    if pkl in dir: ### Finish!!!
+        fh = open(pkl, "rb")
+    else:
+        import os
+        fh = open(os.path.join(dDir, pkl), "rb") #dDir+'expData'+".pkl"
+    dataSet = pickle.load(fh)
+    fh.close()
+    return dataSet
     
     # verbose = 0
 #global verbose # global statement is so that subfunctions can assign to the global var
