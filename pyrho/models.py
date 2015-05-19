@@ -460,7 +460,7 @@ class RhO_3states(OGmodel):
             print('Imaginary solution! SP = {}; SQ = {} --> (SQ-2*SP)**(1/2) = NaN'.format(SP, SQ))
             #raise ValueError() # Uncomment this when error catching is implemented
         #else:
-        RSD = (SQ-2*SP)**(1/2)
+        RSD = (SQ-2*SP)**(1/2) # xi
         lambda_1 = (P + Gd + Gr + RSD)/2
         lambda_2 = (P + Gd + Gr - RSD)/2
         Z_1 = C_0*Gd*P + O_0*(Gd*(P - lambda_1)) + D_0*Gr*(Gr-lambda_2)
@@ -928,4 +928,5 @@ class RhO_6states(OGmodel):
     def calcSoln(self, t, s0=[1,0,0,0,0,0]):
         raise NotImplementedError(self.nStates)
         
-models = {'3': RhO_3states, '4': RhO_4states, '6': RhO_6states}
+from collections import OrderedDict
+models = OrderedDict([('3', RhO_3states), ('4', RhO_4states), ('6', RhO_6states)])#{'3': RhO_3states, '4': RhO_4states, '6': RhO_6states} # OrderedDict...
