@@ -1,42 +1,31 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib as mp # For plotStates
+import matplotlib as mpl # For plotStates
 from .utilities import plotLight
 from scipy.signal import * #for argrelextrema
 from scipy.integrate import odeint
 import warnings
+import itertools
 
 from .parameters import *
 #print(vars()['verbose'])
 from .config import verbose, addTitles, saveFigFormat, fDir # For plotStates()
 #from __init__ import verbose
-
+from collections import OrderedDict
 
 
 ###### Model class definitions ######
 
-def selectModel(nStates):
-    """Model selection function"""
-    if nStates == 3:
-        return RhO_3states() #(E)
-    elif nStates == 4:
-        return RhO_4states() #(E,gam,phi0)
-    elif nStates == 6:
-        return RhO_6states() #(E,gam,phi0,A)
-    else:
-        print("Error in selecting model - please choose from 3, 4 or 6 states")
-        raise NotImplementedError(nStates)
-        
 
-class OGmodel(object):
-    "Common base class for all models"
+class RhodopsinModel(object):
+    """Common base class for all models"""
     
     phi = 0.0  # Instantaneous Light flux
-#     phi0 = 1e14 # Normalising light intensity parameter [photons * s^-1 * mm^-2] ~ 1/10 of threshold
+    # phi0 = 1e14 # Normalising light intensity parameter [photons * s^-1 * mm^-2] ~ 1/10 of threshold
     
     # Solver parameters
-#     dt = 0.1 #0.01 #0.1 #0.001
+    # dt = 0.1 #0.01 #0.1 #0.001
     
     def __init__(self, nStates): #, rhoType='Rhodopsin'
         self.nStates = nStates
@@ -86,6 +75,11 @@ class OGmodel(object):
     def getStates(self):
         """Returns states, t"""
         return self.states, self.t
+        
+    def getRates(self):
+        """Returns a dictionary of all transition rates"""
+        #return {r: getattr(self, r) for r in itertools.chain(self.photoRates, self.constRates)}
+        return OrderedDict([(r, getattr(self, r)) for r in itertools.chain(self.photoRates, self.constRates)])
     
     def reportState(self):
         self.dispRates()
@@ -113,47 +107,127 @@ class OGmodel(object):
             fV = (self.v1/(V-self.E))*(1-np.exp(-(V-self.E)/self.v0)) # Dimensionless
         except ZeroDivisionError:
             if np.isscalar(V):
-                if (V == self.E):
+                if np.isclose(V, self.E): #(V == self.E):
                     fV = self.v1/self.v0
             else: #type(fV) in (tuple, list, array)
-                fV[np.isnan(fV)] = self.v1/self.v0 # Fix the error when dividing by zero
+                #fV[np.isnan(fV)] = self.v1/self.v0 # Fix the error when dividing by zero
+                fV[np.isclose(V-self.E, np.zeros_like(V))] = self.v1/self.v0 
         #else: 
         #    fV=1 ### Extend to vector
         return fV# * (V-self.E)
-                
-    def plotStates(self,t,states,pulses,labels,phiOn=0,peaks=[],name=None): ### Check how to check for optional arguments
-        if len(peaks) > 0:
+    
+    def calcfT(self, T):
+        raise NotImplementedError
+    
+    def calcfpH(self, T):
+        raise NotImplementedError
+    
+    def calcSoln(self, t, s0=None):
+        if s0 is None:
+            s0 = self.s_0
+        return odeint(self.solveStates, s0, t, args=(None,), Dfun=self.jacobian)
+    
+    def plotActivation(self, actFunc, label=None, phis=np.logspace(12, 21, 1001), ax=None):
+        if ax == None:
+            ax = plt.gca()
+        else:
+            plt.sca(ax)
+        
+        if label is not None:
+            ax.plot(phis, actFunc(phis), label=label)
+            ax.legend()
+        else:
+            ax.plot(phis, actFunc(phis))
+        ax.set_xscale('log')
+        ax.set_xlabel('$\phi \ \mathrm{[photons \cdot s^{-1} \cdot mm^{-2}]}$')
+        ax.set_ylabel('$\mathrm{Transition\ rate \ [ms^{-1}]}$')
+
+        return
+        
+    def plotRates(self, phis=np.logspace(12, 21, 1001), logscale='both'):
+        """Plot all activation rates""" #photo-sensitive
+        #rfig = plt.figure()
+        rFig, axR = plt.subplots()
+
+        for r, l in zip(self.photoFuncs, self.photoLabels):
+            #self.plotActivation(getattr(self, r), label=l, phis=phis, ax=axR)
+            axR.plot(phis, getattr(self, r)(phis), label=l)
+            #for phi in phis:
+            #    self.setLight(phi)
+            #    axR.plot()
+        
+        for r, l in zip(self.constRates, self.constLabels):
+            #axR.axhline(y=r, label=l)
+            axR.plot(phis, np.ones(len(phis)) * self.__dict__[r], label=l, ls='--')
+        
+        if logscale == 'both' or logscale == 'x':
+            axR.set_xscale('log')
+        if logscale == 'both' or logscale == 'y':
+            axR.set_yscale('log')
+        
+        axR.set_xlabel('$\phi \ \mathrm{[photons \cdot s^{-1} \cdot mm^{-2}]}$')
+        axR.set_ylabel('$\mathrm{Transition\ rate \ [ms^{-1}]}$')
+        axR.legend(loc='best')
+        
+        # Tick locators take too long with log scales
+        #axR.get_xaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
+        #axR.get_yaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
+        axR.grid(b=True, which='minor', axis='both', linewidth=.2)
+        axR.grid(b=True, which='major', axis='both', linewidth=1)
+        
+        plt.tight_layout()
+        
+        return
+        
+    def plotStates(self, t, states, pulses, labels, phiOn=0, peaks=None, name=None): ### Check how to check for optional arguments
+        # Consider removing arguments t,states,pulses,labels...
+        
+        if peaks is not None and len(peaks) > 0:
             plotPieCharts = True
         else:
             plotPieCharts = False
         
-        figWidth, figHeight = mp.rcParams['figure.figsize']
+        figWidth, figHeight = mpl.rcParams['figure.figsize']
         fig = plt.figure(figsize=(figWidth, 1.5*figHeight))
-        #fig = plt.figure()
         gs = plt.GridSpec(3,3)
         
-        totT = t[-1]
+        begT, endT = t[0], t[-1]
         
         # Plot line graph of states
         axLine = fig.add_subplot(gs[0,:])
         plt.plot(t,states)
-        sig, = plt.plot(t, np.sum(states,axis=1), color='k', linestyle='--')
         plt.setp(axLine.get_xticklabels(), visible=False)
+        plotSum = False
+        if plotSum:
+            sig, = plt.plot(t, np.sum(states,axis=1), color='k', linestyle='--')
+            labelsIncSum = np.append(labels,'$\Sigma s_i$')
+            plt.legend(labelsIncSum, loc=6)
+        else:
+            plt.legend(labels, loc=6)
         plt.ylabel('$\mathrm{State\ occupancy}$')# proportion')
-        labelsIncSum = np.append(labels,'$\Sigma s_i$')
-        plt.legend(labelsIncSum,loc=6)
-        plt.xlim((0,totT)) #plt.xlim((0,delD+(nPulses*(onD+offD)))) # t_run
-        plt.ylim((-0.1,1.1))
+        plt.xlim((begT, endT)) #plt.xlim((0,delD+(nPulses*(onD+offD)))) # t_run
+        #plt.ylim((-0.1,1.1))
+        plt.ylim((0,1))
         if addTitles:
             plt.title('$\mathrm{State\ variables\ through\ time}$') #plt.title('State variables through time: $v={} \mathrm{{mV}},\ \phi={:.3g} \mathrm{{photons}} \cdot \mathrm{{s}}^{{-1}} \cdot \mathrm{{cm}}^{{-2}}$'.format(V,phiOn))
         plotLight(pulses, axLine)
-
+        ### New plot format (plus change in ylims)
+        #axLine.spines['left'].set_position('zero') # y-axis
+        #axLine.spines['right'].set_color('none')
+        #axLine.spines['bottom'].set_position('zero') # x-axis
+        axLine.spines['bottom'].set_color('none')
+        axLine.spines['top'].set_color('none')
+        axLine.spines['left'].set_smart_bounds(True)
+        axLine.spines['bottom'].set_smart_bounds(True)
+        #axLine.xaxis.set_ticks_position('bottom')
+        #axLine.yaxis.set_ticks_position('left')
+        ##########################################
         
         ### Plot stack plot of state variables
         axStack = fig.add_subplot(gs[1,:], sharex=axLine)
         plt.stackplot(t,states.T)
         plt.ylim((0,1))
-        plt.xlim((0,totT)) #plt.xlim((0,delD+(nPulses*(onD+offD))))
+        plt.xlim((begT, endT)) #plt.xlim((0,delD+(nPulses*(onD+offD))))
         plotLight(pulses, axStack, 'borders')
         if addTitles:
             axStack.title.set_visible(False)
@@ -163,21 +237,20 @@ class OGmodel(object):
         if plotPieCharts:
             axS0 = fig.add_subplot(gs[2,0])
             initialStates = self.s0 * 100
-            #print(initialStates,labels)
             if verbose > 1:
                 pct = {l:s for l,s in zip(labels,sizes)}
                 print('Initial state occupancies (%):',sorted(pct.items(),key=lambda x: labels.index(x[0])))
             patches, texts, autotexts = plt.pie(initialStates, labels=labels, autopct='%1.1f%%', startangle=90, shadow=False) #, explode=explode
             for lab in range(len(labels)):
-                texts[lab].set_fontsize(mp.rcParams['ytick.labelsize'])
-                autotexts[lab].set_fontsize(mp.rcParams['axes.labelsize'])
+                texts[lab].set_fontsize(mpl.rcParams['ytick.labelsize'])
+                autotexts[lab].set_fontsize(mpl.rcParams['axes.labelsize'])
             plt.axis('equal')
             if addTitles:
                 plt.title('$\mathrm{Initial\ state\ occupancies}$')
             #else:
             #    plt.title('$t_{0}$')
             
-            if peaks: ### Plot peak state proportions
+            if peaks is not None: ### Plot peak state proportions
                 pInd = peaks[0] # Plot the first peak
                 axLine.axvline(x=t[pInd],linestyle=':',color='k')
                 axStack.axvline(x=t[pInd],linestyle=':',color='k')
@@ -190,8 +263,8 @@ class OGmodel(object):
                     print('Peak state occupancies (%):',sorted(pct.items(),key=lambda x: labels.index(x[0])))
                 patches, texts, autotexts = plt.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90, shadow=False)#, explode=explode)
                 for lab in range(len(labels)):
-                    texts[lab].set_fontsize(mp.rcParams['ytick.labelsize'])
-                    autotexts[lab].set_fontsize(mp.rcParams['axes.labelsize'])
+                    texts[lab].set_fontsize(mpl.rcParams['ytick.labelsize'])
+                    autotexts[lab].set_fontsize(mpl.rcParams['axes.labelsize'])
                 plt.axis('equal')
                 if addTitles:
                     plt.title('$\mathrm{Simulated\ peak\ state\ occupancies}$')
@@ -208,8 +281,8 @@ class OGmodel(object):
                     print('Steady state occupancies (%):',sorted(pct.items(),key=lambda x: labels.index(x[0])))
                 patches, texts, autotexts = plt.pie(steadyStates, labels=labels, autopct='%1.1f%%', startangle=90, shadow=False) #, explode=explode
                 for lab in range(len(labels)):
-                    texts[lab].set_fontsize(mp.rcParams['ytick.labelsize'])
-                    autotexts[lab].set_fontsize(mp.rcParams['axes.labelsize'])
+                    texts[lab].set_fontsize(mpl.rcParams['ytick.labelsize'])
+                    autotexts[lab].set_fontsize(mpl.rcParams['axes.labelsize'])
                 plt.axis('equal')
                 if addTitles:
                     plt.title('$\mathrm{Analytic\ steady\ state\ occupancies}$')
@@ -221,18 +294,28 @@ class OGmodel(object):
         plt.tight_layout()
         
         if name is not None:
-            plt.savefig(fDir+name+'.'+saveFigFormat, format=saveFigFormat)
+            from os import path
+            figName = path.join(fDir, name+'.'+saveFigFormat)
+            plt.savefig(figName, format=saveFigFormat)
 
 
-class RhO_3states(OGmodel):
-    
+class RhO_3states(RhodopsinModel):
+    """Class definition for the 3-state model"""
     # Class attributes
     nStates = 3
     useAnalyticSoln = True
-    labels = ['$C$','$O$','$D$']
+    stateLabels = ['$C$','$O$','$D$']
     stateVars = ['C','O','D']
+    
+    photoFuncs = ['_calcGa', '_calcGr'] # {'Ga':'_calcGa', 'Gr':'_calcGr'}
+    photoRates = ['Ga', 'Gr']
+    photoLabels = ['$G_a$', '$G_r$'] # {'Ga':'$G_a$', 'Gr':'$G_r$'}
+    constRates = ['Gd']
+    constLabels = ['$G_d$']
+    
     s_0 = np.array([1,0,0])          # Default: Initialise in dark 
     phi_0 = 0.0
+
     #useIR = False
     connect = [[0,1,0],
                [0,0,1],
@@ -246,10 +329,11 @@ class RhO_3states(OGmodel):
                 $$ \dot{D} = G_{d}O - G_{r}(\phi)D $$
                 $$ C + O + D = 1 $$
                 $$ G_a(\phi) = k\\frac{\phi^p}{\phi^p + \phi_m^p} $$
-                $$ G_r = G_{r0} + G_{r1}(\phi) $$
+                $$ G_r(\phi) = G_{r0} + \mathcal{H}(\phi) \cdot G_{r1} $$
                 $$ f(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1} $$
-                $$ I_{\phi} = g O f(v) (v-E) $$
+                $$ I_{\phi} = g \cdot O \cdot f(v) \cdot (v-E) $$
                 """
+    # $$ G_r = G_{r0} + G_{r1}(\phi) $$
     #"""
     #\begin{align*}
     #\frac{dC}{dt} &= G_{r}D - P C
@@ -262,15 +346,27 @@ class RhO_3states(OGmodel):
     #\end{align}
     #"""                
                 
-    eqIss = """$I_{SS} = \bar{g} \cdot \frac{P \cdot G_r}{G_d \cdot (G_r + P) + P \cdot G_r} \cdot (v-E) 
+    eqIss = """$I_{SS} = \bar{g} \cdot \frac{G_a \cdot G_r}{G_d \cdot (G_r + G_a) + G_a \cdot G_r} \cdot (v-E) 
     = \bar{g} \cdot \frac{\tau_d}{\tau_d + \tau_r + \tau_\phi} \cdot (v-E)$"""
     
-#     phi0 = 1e14 # Normalising light intensity parameter [photons * s^-1 * mm^-2] ~ 1/10 of threshold
+    # phi0 = 1e14 # Normalising light intensity parameter [photons * s^-1 * mm^-2] ~ 1/10 of threshold
     
     # Solver parameters
-#     dt = 0.1 #0.01 #0.1 #0.001    
+    # dt = 0.1 #0.01 #0.1 #0.001 
     
+    brian = '''
+            dS_C/dt = Gr*S_D - Ga*S_C : 1
+            dS_O/dt = Ga*S_C - Gd*S_O : 1
+            dS_D/dt = Gd*S_O - Gr*S_D : 1
+            Ga = int(phi>0)*k*((phi**p)/(phi**p+phim**p)) : second**-1
+            Gr = Gr0 + int(phi>0)*Gr1 : second**-1
+            fv = (1-exp(-(v-E)/v0))/((v-E)/v1) : 1
+            I = g*S_O*fv*(v-E) : amp
+            stimulus : 1
+            '''
+
     def __init__(self, params=modelParams['3'], rhoType='Rhodopsin'): # E=0.0, #phi=0.0 RhO.setParams(d3sp)  # (self, E=0.0, rhoType='Rhodopsin')
+        
         #self.equations = RhO_3states.equations
         self.rhoType = rhoType # E.g. 'ChR2' or 'ArchT'
         
@@ -292,11 +388,16 @@ class RhO_3states(OGmodel):
         # Initial conditions: Instantaneous photon flux density = 0.0
         #self.s_0 = np.array([1,0,0])          # Initialise in dark 
         self.initStates(phi=self.phi_0, s0=self.s_0)        # Initialise in dark
+        #self.transRates = {'Ga':self.Ga, 'Gd':self.Gd, 'Gr':self.Gr}
+        #self.transRates = {r: getattr(self, r) for r in itertools.chain(self.photoRates, self.constRates)}
+        
         if verbose > 1:
             print("Nikolic et al. {}-state {} model initialised!".format(self.nStates,self.rhoType))
         
         if verbose > 1: 
             self.printParams()
+            
+
     
     def reportParams(self): # Replace with local def __str__(self):
         report =  'Three-state model parameters\n'
@@ -323,13 +424,13 @@ class RhO_3states(OGmodel):
         
 
     
-    def set_P(self, phi):
+    def _calcGa(self, phi):
         #return self.k * phi
         #return 0.5 * phi * (1.2e-8 * 1e-6) / 1.1  # eps * phi * sigma_ret (mm^-2) / wloss
         #return self.k * phi #(1 - np.exp(-phi/self.phiSat))
         return self.k * phi**self.p/(phi**self.p + self.phim**self.p)
     
-    def set_Gr(self, phi):
+    def _calcGr(self, phi):
         return self.Gr0 + (phi>0)*self.Gr1
         #return self.Gr0 + self.Gr1 * np.log(1 + phi/self.phi0) # self.Gr0 + self.Gr1
         #return self.Gr_dark + self.Gr_light * np.log(1 + phi/self.phi0) # self.Gr0 + self.Gr1
@@ -349,8 +450,8 @@ class RhO_3states(OGmodel):
         if phi < 0:
             phi = 0
         self.phi = phi
-        self.P = self.set_P(phi)
-        self.Gr = self.set_Gr(phi)
+        self.Ga = self._calcGa(phi)
+        self.Gr = self._calcGr(phi)
         if verbose > 1:
             self.dispRates()
     
@@ -360,7 +461,7 @@ class RhO_3states(OGmodel):
         #print(self.P); print(type(self.P))
         #print(self.Gd); print(type(self.Gd))
         #print(self.Gr); print(type(self.Gr))
-        print("Transition rates (phi={:.3g}): C --[P={:.3g}]--> O --[Gd={:.3g}]--> D --[Gr={:.3g}]--> C".format(self.phi,self.P,self.Gd,self.Gr))
+        print("Transition rates (phi={:.3g}): C --[Ga={:.3g}]--> O --[Gd={:.3g}]--> D --[Gr={:.3g}]--> C".format(self.phi,self.Ga,self.Gd,self.Gr))
     
     # def solveStates(self, s_0, t): # , phi e.g. f_phi(t) # http://stackoverflow.com/questions/5649313/a-possible-bug-in-odeint-interp1d-interplay
         # """Function describing the differential equations of the 3-state model to be solved by odeint"""
@@ -374,6 +475,7 @@ class RhO_3states(OGmodel):
         # #f2 = -(f0+f1)
         # return np.array([ f0, f1, f2 ])
     
+    
     def solveStates(self, s_0, t, phi_t=None): # , phi e.g. f_phi(t) # solveStatesPhi_t http://stackoverflow.com/questions/5649313/a-possible-bug-in-odeint-interp1d-interplay
         """Function describing the differential equations of the 3-state model to be solved by odeint"""
         # Add interpolation of values for phi(t) to initialisation f_phi = interp1d(t,sin(w*t),kind='cubic')
@@ -383,11 +485,11 @@ class RhO_3states(OGmodel):
             self.setLight(float(phi_t(t)))
             #print("dydt: phi_t({})={}".format(t,phi_t(t)))
         C,O,D = s_0 # Split state vector into individual variables s1=s[0], s2=s[1], etc
-        f0 = -self.P*C +             self.Gr*D   # C'
-        f1 =  self.P*C - self.Gd*O               # O'
-        f2 =             self.Gd*O - self.Gr*D   # D'
+        dCdt = -self.Ga*C +             self.Gr*D   # C'
+        dOdt =  self.Ga*C - self.Gd*O               # O'
+        dDdt =              self.Gd*O - self.Gr*D   # D'
         #f2 = -(f0+f1)
-        return np.array([ f0, f1, f2 ])
+        return np.array([ dCdt, dOdt, dDdt ])
     
     # def jacobian(self, s_0, t):
         # # Jacobian matrix used to improve precision / speed up ODE solver
@@ -401,8 +503,8 @@ class RhO_3states(OGmodel):
         #self.setLight(phi_t(t))
         # Jacobian matrix used to improve precision / speed up ODE solver
         # jac[i,j] = df[i]/dy[j]; where y'(t) = f(t,y)
-        return np.array([[-self.P, 0, self.Gr],
-                         [self.P, -self.Gd, 0],
+        return np.array([[-self.Ga, 0, self.Gr],
+                         [self.Ga, -self.Gd, 0],
                          [0, self.Gd, -self.Gr]])
     
     # def hessian(self, s_0, t):
@@ -424,47 +526,49 @@ class RhO_3states(OGmodel):
     def calcPsi(self, states):
         return 1
     
-    def calcOn(self,t):
-        """Calculate the on phase current for square light pulses from the analytic solution"""
-        r = np.array([lam1, lam2])
-        k = np.array([a1, a2])
-        I = k * np.exp(-r*t)
-        -(a0 + a1*(1-np.exp(-t/tau_act)) + a2*np.exp(-t/tau_deact))
-        pass
+    # def calcOn(self,t):
+        # """Calculate the on phase current for square light pulses from the analytic solution"""
+        # r = np.array([lam1, lam2])
+        # k = np.array([a1, a2])
+        # I = k * np.exp(-r*t)
+        # -(a0 + a1*(1-np.exp(-t/tau_act)) + a2*np.exp(-t/tau_deact))
+        # pass
     
-    def calOff():
-        """Calculate the off phase current for square light pulses from the analytic solution"""
-        -(A*np.exp(-Gd*t))
-        pass
+    # def calcOff():
+        # """Calculate the off phase current for square light pulses from the analytic solution"""
+        # -(A*np.exp(-Gd*t))
+        # pass
     
     def calcSteadyState(self, phi):
         self.setLight(phi)
-        denom3 = self.Gd * (self.Gr + self.P) + self.P * self.Gr
+        denom3 = self.Gd * (self.Gr + self.Ga) + self.Ga * self.Gr
         Cs = self.Gd*self.Gr/denom3
-        Os = self.P*self.Gr/denom3
-        Ds = self.P*self.Gd/denom3
+        Os = self.Ga*self.Gr/denom3
+        Ds = self.Ga*self.Gd/denom3
         self.steadyStates = np.array([Cs, Os, Ds])
         return np.array([Cs, Os, Ds])
     
     def calcSoln(self, t, s0=[1,0,0]): #RhO_3states.s_0
         [C_0, O_0, D_0] = s0
-        P = self.P
+        Ga = self.Ga
         Gd = self.Gd
         Gr = self.Gr
         #if t[0] > 0: # Shift time array to start at 0
         t = t - t[0] # Shift time array forwards or backwards to start at 0
         
-        SP = P*Gd + P*Gr + Gd*Gr
-        SQ = P**2 + Gd**2 + Gr**2
+        SP = Ga*Gd + Ga*Gr + Gd*Gr
+        SQ = Ga**2 + Gd**2 + Gr**2
         if 2*SP > SQ:
-            print('Imaginary solution! SP = {}; SQ = {} --> (SQ-2*SP)**(1/2) = NaN'.format(SP, SQ))
+            if verbose > 1:
+                print('Imaginary solution! SP = {}; SQ = {} --> (SQ-2*SP)**(1/2) = NaN'.format(SP, SQ))
+            return odeint(self.solveStates, s0, t, Dfun=self.jacobian)
             #raise ValueError() # Uncomment this when error catching is implemented
         #else:
         RSD = (SQ-2*SP)**(1/2) # xi
-        lambda_1 = (P + Gd + Gr + RSD)/2
-        lambda_2 = (P + Gd + Gr - RSD)/2
-        Z_1 = C_0*Gd*P + O_0*(Gd*(P - lambda_1)) + D_0*Gr*(Gr-lambda_2)
-        Z_2 = C_0*Gd*P + O_0*(Gd*(P - lambda_2)) + D_0*Gr*(Gr-lambda_1)
+        lambda_1 = (Ga + Gd + Gr + RSD)/2
+        lambda_2 = (Ga + Gd + Gr - RSD)/2
+        Z_1 = C_0*Gd*Ga + O_0*(Gd*(Ga - lambda_1)) + D_0*Gr*(Gr-lambda_2)
+        Z_2 = C_0*Gd*Ga + O_0*(Gd*(Ga - lambda_2)) + D_0*Gr*(Gr-lambda_1)
         Exp_1 = np.exp(-t*lambda_1)
         Exp_2 = np.exp(-t*lambda_2)
         
@@ -479,8 +583,8 @@ class RhO_3states(OGmodel):
         # print(Exp_2)
         
         C = (Z_1*lambda_2*(lambda_1-Gd-Gr)*Exp_1 - Z_2*lambda_1*(lambda_2-Gd-Gr)*Exp_2 + (RSD*Gd**2*Gr*(C_0+D_0+O_0)))/(Gd*SP*RSD)
-        O = (-Z_1*lambda_2*(lambda_1-Gr)*Exp_1 + Z_2*lambda_1*(lambda_2-Gr)*Exp_2 + (RSD*P*Gd*Gr*(C_0+D_0+O_0)))/(Gd*SP*RSD)
-        D = (Z_1*lambda_2*Exp_1 - Z_2*lambda_1*Exp_2 + (RSD*Gd*P*(C_0+D_0+O_0)))/(SP*RSD)
+        O = (-Z_1*lambda_2*(lambda_1-Gr)*Exp_1 + Z_2*lambda_1*(lambda_2-Gr)*Exp_2 + (RSD*Ga*Gd*Gr*(C_0+D_0+O_0)))/(Gd*SP*RSD)
+        D = (Z_1*lambda_2*Exp_1 - Z_2*lambda_1*Exp_2 + (RSD*Gd*Ga*(C_0+D_0+O_0)))/(SP*RSD)
         
         return np.column_stack((C,O,D)) #np.row_stack((C,O,D)).T #np.column_stack((C.T,O.T,D.T))
         
@@ -508,17 +612,26 @@ class RhO_3states(OGmodel):
         # D = np.exp(-t*lambda_1)*np.exp(-t*lambda_2)*((np.exp(t*lambda_2)*Fac_1)/(2*(SP)*(SQ-2*SP)**(1/2)) - (np.exp(t*lambda_1)*Fac_2)/(2*(SP)*(SQ-2*SP)**(1/2)) + (Gd*P*np.exp(t*lambda_1)*np.exp(t*lambda_2)*(C_0 + D_0 + O_0))/(SP))
         
         # return np.row_stack((C,O,D)).T #np.column_stack((C.T,O.T,D.T))
-
-
-class RhO_4states(OGmodel):
     
+    
+
+class RhO_4states(RhodopsinModel):
+    """Class definition for the 4-state model"""
     # Class attributes
     nStates = 4
     useAnalyticSoln = False
-    labels = ['$C_1$','$O_1$','$O_2$','$C_2$']
+    stateLabels = ['$C_1$','$O_1$','$O_2$','$C_2$']
     stateVars = ['C1','O1','O2','C2']
+    
+    photoFuncs = ['_calcGa1', '_calcGa2', '_calcGf', '_calcGb']
+    photoRates = ['Ga1', 'Ga2', 'Gf', 'Gb']
+    photoLabels = ['$G_{a1}$', '$G_{a2}$', '$G_{f}$', '$G_{b}$', '$G_{d1}$', '$G_{d2}$']
+    constRates = ['Gd1', 'Gd2', 'Gr0']
+    constLabels = ['$G_{d1}$', '$G_{d2}$', '$G_{r0}$']
+    
     s_0 = np.array([1,0,0,0])       # Default: Initialise in the dark
     phi_0 = 0.0  # Instantaneous Light flux
+    
     #useIR = False
     connect = [[0,1,0,0],
                [1,0,1,0],
@@ -526,31 +639,63 @@ class RhO_4states(OGmodel):
                [1,0,1,0]]
     
     equations = """
-                $$ \dot{C_{\\alpha}} = G_{r}C_{\\beta} + G_{d{\\alpha}}O_{\\alpha} - G_{a{\\alpha}}(\phi)C_{\\alpha} $$
-                $$ \dot{O_{\\alpha}} = G_{a{\\alpha}}(\phi)C_{\\alpha} - (G_{d{\\alpha}}+G_{f}(\phi))O_{\\alpha} + G_{b}(\phi)O_{\\beta} $$
-                $$ \dot{O_{\\beta}} = G_{a{\\beta}}(\phi)C_{\\beta} + G_{f}(\phi)O_{\\alpha} - (G_{d{\\beta}}+G_{b}(\phi))O_{\\beta} $$
-                $$ \dot{C_{\\beta}} = G_{d{\\beta}}O_{\\beta} - (G_{a{\\beta}}(\phi)+G_{r0})C_{\\beta} $$
-                $$ C_{\\alpha} + O_{\\alpha} + O_{\\beta} + C_{\\beta} = 1 $$
+                $$ \dot{C_1} = G_{r}C_2 + G_{d1}O_1 - G_{a1}(\phi)C_1 $$
+                $$ \dot{O_1} = G_{a1}(\phi)C_1 - (G_{d1}+G_{f}(\phi))O_1 + G_{b}(\phi)O_2 $$
+                $$ \dot{O_2} = G_{a2}(\phi)C_2 + G_{f}(\phi)O_1 - (G_{d2}+G_{b}(\phi))O_2 $$
+                $$ \dot{C_2} = G_{d2}O_2 - (G_{a2}(\phi)+G_{r0})C_2 $$
+                $$ C_1 + O_1 + O_2 + C_2 = 1 $$
                 $$$$
-                $$ G_{a{\\alpha}}(\phi) = k_{\\alpha}\\frac{\phi^p}{\phi^p + \phi_m^p} $$
-                $$ G_{a{\\beta}}(\phi) = k_{\\beta}\\frac{\phi^p}{\phi^p + \phi_m^p} $$
+                $$ G_{a1}(\phi) = k_1\\frac{\phi^p}{\phi^p + \phi_m^p} $$
                 $$ G_{f}(\phi) = G_{f0} + k_{f} \\frac{\phi^q}{\phi^q + \phi_m^q} $$
                 $$ G_{b}(\phi) = G_{b0} + k_{b} \\frac{\phi^q}{\phi^q + \phi_m^q} $$
+                $$ G_{a2}(\phi) = k_2\\frac{\phi^p}{\phi^p + \phi_m^p} $$
                 $$$$
                 $$ f(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1} $$
-                $$ I_{\phi} = g (O_{\\alpha}+\gamma O_{\\beta}) f(v) (v-E) $$
+                $$ I_{\phi} = g (O_1+\gamma O_2) f(v) (v-E) $$
                 """     
     
+                # """
+                # $$ \dot{C_{\\alpha}} = G_{r}C_{\\beta} + G_{d{\\alpha}}O_{\\alpha} - G_{a{\\alpha}}(\phi)C_{\\alpha} $$
+                # $$ \dot{O_{\\alpha}} = G_{a{\\alpha}}(\phi)C_{\\alpha} - (G_{d{\\alpha}}+G_{f}(\phi))O_{\\alpha} + G_{b}(\phi)O_{\\beta} $$
+                # $$ \dot{O_{\\beta}} = G_{a{\\beta}}(\phi)C_{\\beta} + G_{f}(\phi)O_{\\alpha} - (G_{d{\\beta}}+G_{b}(\phi))O_{\\beta} $$
+                # $$ \dot{C_{\\beta}} = G_{d{\\beta}}O_{\\beta} - (G_{a{\\beta}}(\phi)+G_{r0})C_{\\beta} $$
+                # $$ C_{\\alpha} + O_{\\alpha} + O_{\\beta} + C_{\\beta} = 1 $$
+                # $$$$
+                # $$ G_{a{\\alpha}}(\phi) = k_{\\alpha}\\frac{\phi^p}{\phi^p + \phi_m^p} $$
+                # $$ G_{a{\\beta}}(\phi) = k_{\\beta}\\frac{\phi^p}{\phi^p + \phi_m^p} $$
+                # $$ G_{f}(\phi) = G_{f0} + k_{f} \\frac{\phi^q}{\phi^q + \phi_m^q} $$
+                # $$ G_{b}(\phi) = G_{b0} + k_{b} \\frac{\phi^q}{\phi^q + \phi_m^q} $$
+                # $$$$
+                # $$ f(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1} $$
+                # $$ I_{\phi} = g (O_{\\alpha}+\gamma O_{\\beta}) f(v) (v-E) $$
+                # """     
     #phi = 0.0  # Instantaneous Light flux
-#     phi0 = 1e14 # Normalising light intensity parameter [photons * s^-1 * mm^-2] ~ 1/10 of threshold
+    # phi0 = 1e14 # Normalising light intensity parameter [photons * s^-1 * mm^-2] ~ 1/10 of threshold
     
     ###### gam = 0.1
     
     # Solver parameters
-#     dt = 0.1 #0.01 #0.1 #0.001
+    # dt = 0.1 #0.01 #0.1 #0.001
+    
+    brian = '''
+            dS_C1/dt = Gr0*S_C2 + Gd1*S_O1 - Ga1*S_C1 : 1
+            dS_O1/dt = Ga1*S_C1 - (Gd1+Gf)*S_O1 + Gb*S_O2 : 1
+            dS_O2/dt = Ga2*S_C2 + Gf*S_O1 - (Gd2+Gb)*S_O2 : 1
+            S_C2 = 1 - S_C1 - S_O1 - S_O2 : 1
+            H_p = int(phi>0)*((phi**p)/(phi**p+phim**p)) : 1
+            H_q = int(phi>0)*((phi**q)/(phi**q+phim**q)) : 1
+            Ga1 = k1*H_p : second**-1
+            Ga2 = k2*H_p : second**-1
+            Gf = Gf0 + kf*H_q : second**-1
+            Gb = Gb0 + kb*H_q : second**-1
+            fv = (1-exp(-(v-E)/v0))/((v-E)/v1) : 1
+            phi : meter**-2*second**-1
+            stimulus : 1
+            I = g*(S_O1+gam*S_O2)*fv*(v-E) : amp
+            '''
     
     def __init__(self, params=modelParams['4'], rhoType='Rhodopsin'): #E=0.0, gam=0.05, phi0=1e14, #, A=31192)
-        
+    
         self.rhoType = rhoType # E.g. 'ChR2' or 'ArchT'
     
         self.setParams(params)
@@ -576,6 +721,8 @@ class RhO_4states(OGmodel):
         # Initial conditions
         #self.s_0 = np.array([1,0,0,0])
         self.initStates(phi=self.phi_0, s0=self.s_0) # phi
+        #self.transRates = {r: getattr(self, r) for r in itertools.chain(self.photoRates, self.constRates)}
+        
         if verbose > 1:
             print("Nikolic et al. {}-state {} model initialised!".format(self.nStates,self.rhoType))
         
@@ -592,18 +739,18 @@ class RhO_4states(OGmodel):
         report += 'k2   = {:12.3g}\n'.format(self.k2)
         report += 'phim = {:12.3g}\n'.format(self.phim)
         report += 'p    = {:12.3g}\n'.format(self.p)
-        report += 'Gr   = {:12.3g}\n'.format(self.Gr)
+        report += 'Gr0  = {:12.3g}\n'.format(self.Gr0)
         report += 'Gd1  = {:12.3g}\n'.format(self.Gd1)
         report += 'Gd2  = {:12.3g}\n'.format(self.Gd2)
-        report += 'c1   = {:12.3g}\n'.format(self.c1)
-        report += 'c2   = {:12.3g}\n'.format(self.c2)
-        report += 'e12d = {:12.3g}\n'.format(self.e12d)
-        report += 'e21d = {:12.3g}\n'.format(self.e21d)
+        report += 'kf   = {:12.3g}\n'.format(self.kf)
+        report += 'kb   = {:12.3g}\n'.format(self.kb)
+        report += 'Gf0  = {:12.3g}\n'.format(self.Gf0)
+        report += 'Gb0  = {:12.3g}\n'.format(self.Gb0)
         report += 'g    = {:12.3g}\n'.format(self.g)
         report += '---------------------------'
         return report
     
-    def set_Ga1(self, phi):
+    def _calcGa1(self, phi):
         # N.B. making Ga a function of time (as in Appendix 1) results in the Six-state model
         # Gai = ei * F * f(t,tChR) See App 1
         # Ga = 1/tauChR
@@ -614,7 +761,7 @@ class RhO_4states(OGmodel):
         #return self.k1 * (1-np.exp(-phi/self.phi0)) #e*phi*sigma_ret / w_loss
         return self.k1 * phi**self.p/(phi**self.p + self.phim**self.p)
     
-    def set_Ga2(self, phi):
+    def _calcGa2(self, phi):
         #e = 0.15
         #sigma_ret = 1.2e-8  * 1e-6 # Convert from m^2 to mm^2
         #w_loss = 1.1
@@ -622,13 +769,13 @@ class RhO_4states(OGmodel):
         #return self.k2 * (1-np.exp(-phi/self.phi0))
         return self.k2 * phi**self.p/(phi**self.p + self.phim**self.p)
     
-    def set_e12(self, phi):
+    def _calcGf(self, phi):
         #return self.e12d + self.c1*np.log(1+(phi/self.phi0)) # e12(phi=0) = e12d
-        return self.e12d + self.c1 * phi**self.q/(phi**self.q + self.phim**self.q)
+        return self.Gf0 + self.kf * phi**self.q/(phi**self.q + self.phim**self.q)
 
-    def set_e21(self, phi):
+    def _calcGb(self, phi):
         #return self.e21d + self.c2*np.log(1+(phi/self.phi0)) # e21(phi=0) = e21d
-        return self.e21d + self.c2 * phi**self.q/(phi**self.q + self.phim**self.q)
+        return self.Gb0 + self.kb * phi**self.q/(phi**self.q + self.phim**self.q)
 
     def setLight(self, phi):
         """Set transition rates according to the instantaneous photon flux density"""
@@ -636,36 +783,36 @@ class RhO_4states(OGmodel):
         if phi < 0:
             phi = 0
         self.phi = phi
-        self.Ga1 = self.set_Ga1(phi)
-        self.Ga2 = self.set_Ga2(phi)
-        self.e12 = self.set_e12(phi)
-        self.e21 = self.set_e21(phi)
+        self.Ga1 = self._calcGa1(phi)
+        self.Ga2 = self._calcGa2(phi)
+        self.Gf = self._calcGf(phi)
+        self.Gb = self._calcGb(phi)
         if verbose > 1:
             self.dispRates()
             
     def dispRates(self):
-        print("Transition rates (phi={:.3g}): C1 --[Ga1={:.3g}]--> O1 --[e12={:.3g}]--> O2".format(self.phi,self.Ga1,self.e12))
-        print("Transition rates (phi={:.3g}): O1 <--[e21={:.3g}]-- O2 <--[Ga2={:.3g}]-- C2".format(self.phi,self.e21,self.Ga2))
+        print("Transition rates (phi={:.3g}): C1 --[Ga1={:.3g}]--> O1 --[Gf={:.3g}]--> O2".format(self.phi,self.Ga1,self.Gf))
+        print("Transition rates (phi={:.3g}): O1 <--[Gb={:.3g}]-- O2 <--[Ga2={:.3g}]-- C2".format(self.phi,self.Gb,self.Ga2))
     
     def solveStates(self, s_0, t, phi_t=None):
         """Function describing the differential equations of the 4-state model to be solved by odeint"""
         if phi_t is not None:
             self.setLight(float(phi_t(t)))
         C1,O1,O2,C2 = s_0 # Split state vector into individual variables s1=s[0], s2=s[1], etc
-        f0 = -self.Ga1*C1   +       self.Gd1*O1     +                       self.Gr *C2 # C1'
-        f1 =  self.Ga1*C1 - (self.Gd1+self.e12)*O1  +   self.e21*O2                     # O1'
-        f2 =                        self.e12*O1 - (self.Gd2+self.e21)*O2 +  self.Ga2*C2 # O2'
-        f3 =                                        self.Gd2*O2 - (self.Ga2+self.Gr)*C2 # C2'
+        dC1dt = -self.Ga1*C1 +           self.Gd1*O1       +                  self.Gr0 *C2 # C1'
+        dO1dt =  self.Ga1*C1 - (self.Gd1+self.Gf)*O1       +   self.Gb*O2                  # O1'
+        dO2dt =                           self.Gf*O1 - (self.Gd2+self.Gb)*O2 + self.Ga2*C2 # O2'
+        dC2dt =                                       self.Gd2*O2 - (self.Ga2+self.Gr0)*C2 # C2'
         #f3 = -(f0+f1+f2)
-        return np.array([ f0, f1, f2, f3 ])
+        return np.array([ dC1dt, dO1dt, dO2dt, dC2dt ])
     
     def jacobian(self, s_0, t, phi_t=None):
         # Jacobian matrix used to improve precision / speed up ODE solver
         # jac[i,j] = df[i]/dy[j]; where y'(t) = f(t,y)
-        return np.array([[-self.Ga1, self.Gd1, 0, self.Gr],
-                         [self.Ga1, -(self.Gd1+self.e12), self.e21, 0],
-                         [0, self.e12, -(self.Gd2+self.e21), self.Ga2],
-                         [0, 0, self.Gd2, -(self.Ga2+self.Gr)]])
+        return np.array([[-self.Ga1, self.Gd1, 0, self.Gr0],
+                         [self.Ga1, -(self.Gd1+self.Gf), self.Gb, 0],
+                         [0, self.Gf, -(self.Gd2+self.Gb), self.Ga2],
+                         [0, 0, self.Gd2, -(self.Ga2+self.Gr0)]])
     
     def calcI(self, V, states=None):
         if states is None:
@@ -686,16 +833,16 @@ class RhO_4states(OGmodel):
         self.setLight(phi)
         Ga1 = self.Ga1
         Ga2 = self.Ga2
-        Gr = self.Gr
+        Gr0 = self.Gr0
         Gd1 = self.Gd1
         Gd2 = self.Gd2
-        e12 = self.e12
-        e21 = self.e21
-        denom4 = Ga1 * (e12 * (Gr + Gd2 + Ga2) + e21 * (Gr + Ga2) + Gd2 * Gr) + Gd1 * (e21 * (Gr + Ga2) + Gd2 * Gr) + e12 * Gd2 * Gr
-        C1s = (Gd1 * (e21 * (Gr + Ga2) + Gd2 * Gr) + e12 * Gd2 * Gr) / denom4
-        O1s = (Ga1 * (e21 * (Gr + Ga2) + Gd2 * Gr)) / denom4
-        O2s = (e12 * Ga1 * (Gr + Ga2)) / denom4
-        C2s = (e12 * Ga1 * Gd2) / denom4
+        Gf = self.Gf
+        Gb = self.Gb
+        denom4 = Ga1 * (Gf * (Gr0 + Gd2 + Ga2) + Gb * (Gr0 + Ga2) + Gd2 * Gr0) + Gd1 * (Gb * (Gr0 + Ga2) + Gd2 * Gr0) + Gf * Gd2 * Gr0
+        C1s = (Gd1 * (Gb * (Gr0 + Ga2) + Gd2 * Gr0) + Gf * Gd2 * Gr0) / denom4
+        O1s = (Ga1 * (Gb * (Gr0 + Ga2) + Gd2 * Gr0)) / denom4
+        O2s = (Gf * Ga1 * (Gr0 + Ga2)) / denom4
+        C2s = (Gf * Ga1 * Gd2) / denom4
         self.steadyStates = np.array([C1s, O1s, O2s, C2s])
         return np.array([C1s, O1s, O2s, C2s])
 
@@ -703,15 +850,22 @@ class RhO_4states(OGmodel):
         raise NotImplementedError(self.nStates)
 
     
-class RhO_6states(OGmodel):
-    
+class RhO_6states(RhodopsinModel):
+    """Class definition for the 6-state model"""
     # Class attributes
     nStates = 6
     useAnalyticSoln = False
     #labels = ['$s_1$','$s_2$','$s_3$','$s_4$','$s_5$','$s_6$']
-    labels = ['$C_1$','$I_1$','$O_1$','$O_2$','$I_2$','$C_2$']
+    stateLabels = ['$C_1$','$I_1$','$O_1$','$O_2$','$I_2$','$C_2$']
     # stateVars = ['s1','s2','s3','s4','s5','s6'] # 
     stateVars = ['C1','I1','O1','O2','I2','C2'] #['C1','I1','O1','O2','I2','C2']
+    
+    photoFuncs = ['_calcGa1', '_calcGa2', '_calcGf', '_calcGb']
+    photoRates = ['Ga1', 'Ga2', 'Gf', 'Gb']
+    photoLabels = ['$G_{a1}$', '$G_{a2}$', '$G_{f}$', '$G_{b}$', '$G_{d1}$', '$G_{d2}$']
+    constRates = ['Go1', 'Go2', 'Gd1', 'Gd2', 'Gr0']
+    constLabels = ['$G_{o1}$', '$G_{o2}$', '$G_{d1}$', '$G_{d2}$', '$G_{r0}$']
+    
     s_0 = np.array([1,0,0,0,0,0])  # [s1_0=1, s2_0=0, s3_0=0, s4_0=0, s5_0=0, s6_0=0] # array not necessary
     phi_0 = 0.0     # Default initial flux
     #useIR = True
@@ -741,11 +895,51 @@ class RhO_6states(OGmodel):
                 $$ I_{\phi} = g (O_1+\gamma O_2) f(v)(v-E) $$
                 """    
     
-#     phi = 0.0  # Instantaneous Light flux
-#     phi0 = 1e14 # Normalising light intensity parameter [photons * s^-1 * mm^-2] ~ 1/10 of threshold
+    # phi = 0.0  # Instantaneous Light flux
+    # phi0 = 1e14 # Normalising light intensity parameter [photons * s^-1 * mm^-2] ~ 1/10 of threshold
     
     # Solver parameters
-#     dt = 0.1 #0.01 #0.1 #0.001
+    # dt = 0.1 #0.01 #0.1 #0.001
+    
+    brian = '''
+            dS_C1/dt = Gr0*S_C2 + Gd1*S_O1 - Ga1*S_C1 : 1
+            dS_I1/dt = Ga1*S_C1 - Go1*S_I1 : 1
+            dS_O1/dt = Go1*S_I1 - (Gd1+Gf)*S_O1 + Gb*S_O2 : 1
+            dS_O2/dt = Go2*S_I2 + Gf*S_O1 - (Gd2+Gb)*S_O2 : 1
+            dS_I2/dt = Ga2*S_C2 - Go2*S_I2 : 1
+            S_C2 = 1 - S_C1 - S_I1 - S_O1 - S_O2 - S_I2 : 1
+            H_p = int(stimulus)*((phi**p)/(phi**p+phim**p)) : 1
+            H_q = int(stimulus)*((phi**q)/(phi**q+phim**q)) : 1
+            Ga1 = k1*H_p : second**-1
+            Ga2 = k2*H_p : second**-1
+            Gf = Gf0 + kf*H_q : second**-1
+            Gb = Gb0 + kb*H_q : second**-1
+            fv = (1-exp(-(V-E)/v0))/((V-E)/v1) : 1
+            phi : meter**-2*second**-1 (shared)
+            stimulus : boolean (shared) #1
+            I = g*(S_O1+gam*S_O2)*fv*(V-E) : amp
+            '''
+    #stimulus = (phi>0) : 1
+    
+            #'''
+            #dS_C1/dt = Gr0*S_C2 + Gd1*S_O1 - Ga1*S_C1 : 1
+            #dS_I1/dt = Ga1*S_C1 - Go1*S_I1 : 1
+            #dS_O1/dt = Go1*S_I1 - (Gd1+Gf)*S_O1 + Gb*S_O2 : 1
+            #dS_O2/dt = Go2*S_I2 + Gf*S_O1 - (Gd2+Gb)*S_O2 : 1
+            #dS_I2/dt = Ga2*S_C2 - Go2*S_I2 : 1
+            #S_C2 = 1 - S_C1 - S_I1 - S_O1 - S_O2 - S_I2 : 1
+            #H_p = int(stimulus)*((phi**p)/(phi**p+phim**p)) : 1
+            #H_q = int(stimulus)*((phi**q)/(phi**q+phim**q)) : 1
+            #Ga1 = k1*H_p : second**-1
+            #Ga2 = k2*H_p : second**-1
+            #Gf = Gf0 + kf*H_q : second**-1
+            #Gb = Gb0 + kb*H_q : second**-1
+            #fv = (1-exp(-(v-E)/v0))/((v-E)/v1) : 1
+            #phi : meter**-2*second**-1
+            #stimulus : 1
+            #I = g*(S_O1+gam*S_O2)*fv*(v-E) : amp
+            #'''
+            
     
     def __init__(self, params=modelParams['6'], rhoType='Rhodopsin'): # E=0.0, gam=0.05, phi0=1e14, A=3.12e4# phi=0.0
         
@@ -784,71 +978,73 @@ class RhO_6states(OGmodel):
         # Initial conditions
         #self.s_0 = np.array([1,0,0,0,0,0])  # [s1_0=1, s2_0=0, s3_0=0, s4_0=0, s5_0=0, s6_0=0] # array not necessary
         self.initStates(phi=self.phi_0, s0=self.s_0) # phi
+        #self.transRates = {r: getattr(self, r) for r in itertools.chain(self.photoRates, self.constRates)}
+        
         if verbose > 1:
             print("Grossman et al. {}-state {} model initialised!".format(self.nStates,self.rhoType))
         
         if verbose > 1: 
             self.printParams()
     
-    def set_a1(self,phi):
+    def _calcGa1(self,phi):
         #return self.a10*(phi/self.phi0)
-        return self.a10 * phi**self.p/(phi**self.p + self.phim**self.p)
+        return self.k1 * phi**self.p/(phi**self.p + self.phim**self.p)
 
-    def set_a3(self,phi):
+    def _calcGf(self,phi):
         #return self.a30 + self.a31*np.log(1+(phi/self.phi0))
-        return self.a30 + self.a31 * phi**self.q/(phi**self.q + self.phim**self.q)
+        return self.Gf0 + self.kf * phi**self.q/(phi**self.q + self.phim**self.q)
 
-    def set_b2(self,phi):
+    def _calcGb(self,phi):
         #return self.b20 + self.b21*np.log(1+(phi/self.phi0))
-        return self.b20 + self.b21 * phi**self.q/(phi**self.q + self.phim**self.q)
+        return self.Gb0 + self.kb * phi**self.q/(phi**self.q + self.phim**self.q)
 
-    def set_b4(self,phi):
+    def _calcGa2(self,phi):
         #return self.b40*(phi/self.phi0)
-        return self.b40 * phi**self.p/(phi**self.p + self.phim**self.p)
+        return self.k2 * phi**self.p/(phi**self.p + self.phim**self.p)
 
     def setLight(self,phi):
         #assert(phi >= 0)
         if phi < 0:
             phi = 0
         self.phi = phi
-        self.a1 = self.set_a1(phi)
-        self.a3 = self.set_a3(phi)
-        self.b2 = self.set_b2(phi)
-        self.b4 = self.set_b4(phi)
+        self.Ga1 = self._calcGa1(phi)
+        self.Gf = self._calcGf(phi)
+        self.Gb = self._calcGb(phi)
+        self.Ga2 = self._calcGa2(phi)
         if verbose > 1:
             self.dispRates()
         
     def dispRates(self):
-        print("Transition rates (phi={:.3g}): s3 --[a3]--> s4 = {}; s3 <--[b2]-- s4 = {}".format(self.phi,self.a3,self.b2))
-        print("                  ^s2      s5^")
+        print("Transition rates (phi={:.3g}): O1 --[Gf]--> O2 = {}; O1 <--[Gb]-- O2 = {}".format(self.phi,self.Gf,self.Gb))
+        print("                  ^O1      O2^")
         print("                   \        /")
-        print("                   [a1]   [b4]")
+        print("                  [Ga1]  [Ga2]")
         print("                     \    /")
-        print("                     s1  s6")
-        print("Transition rates [a1] = {}; [b4] = {}".format(self.a1,self.b4))
+        print("                     C1  C2")
+        print("Transition rates [Ga1] = {}; [Ga2] = {}".format(self.Ga1,self.Ga2))
     
     def solveStates(self, s_0, t, phi_t=None):
         """Function describing the differential equations of the 6-state model to be solved by odeint"""
         if phi_t is not None:
             self.setLight(float(phi_t(t)))
         s1,s2,s3,s4,s5,s6 = s_0 # Split state vector into individual variables s1=s[0], s2=s[1], etc
-        d0 = -self.a1*s1 + self.b1*s3 + self.a6*s6           # s1'
-        d1 =  self.a1*s1 - self.a2*s2                        # s2'
-        d2 =  self.a2*s2 - (self.b1+self.a3)*s3 + self.b2*s4 # s3'
-        d3 =  self.a3*s3 - (self.b2+self.a4)*s4 + self.b3*s5 # s4'
-        d4 = -self.b3*s5 + self.b4*s6                        # s5'
-        d5 =  self.a4*s4 - (self.b4+self.a6)*s6              # s6'
+        dC1dt = -self.Ga1*s1 + self.Gd1*s3 + self.Gr0*s6           # s1'
+        dI1dt =  self.Ga1*s1 - self.Go1*s2                        # s2'
+        dO1dt =  self.Go1*s2 - (self.Gd1+self.Gf)*s3 + self.Gb*s4 # s3'
+        dO2dt =  self.Gf*s3 - (self.Gb+self.Gd2)*s4 + self.Go2*s5 # s4'
+        dI2dt = -self.Go2*s5 + self.Ga2*s6                        # s5'
+        dC2dt =  self.Gd2*s4 - (self.Ga2+self.Gr0)*s6              # s6'
         #d5 = - (f0+f1+f2+f3+f4)
         #dr0 = -2*pi*f*sin(2*pi*f*t)*C(1+cos(2*pi*f*t))      # d/dt (A(1+cos(2*pi*f*t)))
-        return np.array([ d0, d1, d2, d3, d4, d5 ])
+        return np.array([ dC1dt, dI1dt, dO1dt, dO2dt, dI2dt, dC2dt ])
 
     def jacobian(self, s_0, t, phi_t=None):
-        return np.array([[-self.a1, 0, self.b1, 0, 0, self.a6],
-                         [self.a1, -self.a2, 0, 0, 0, 0],
-                         [0, self.a2, -(self.b1+self.a3), self.b2, 0, 0],
-                         [0, 0, self.a3, -(self.b2+self.a4), self.b3, 0],
-                         [0, 0, 0, 0, -self.b3, self.b4],
-                         [0, 0, 0, self.a4, 0, -(self.b4+self.a6)]])
+        return np.array([[-self.Ga1, 0, self.Gd1, 0, 0, self.Gr0],
+                         [self.Ga1, -self.Go1, 0, 0, 0, 0],
+                         [0, self.Go1, -(self.Gd1+self.Gf), self.Gb, 0, 0],
+                         [0, 0, self.Gf, -(self.Gb+self.Gd2), self.Go2, 0],
+                         [0, 0, 0, 0, -self.Go2, self.Ga2],
+                         [0, 0, 0, self.Gd2, 0, -(self.Ga2+self.Gr0)]])
         
     def calcI(self, V, states=None): # Change to (V, psi)?
         """Takes Voltage [mV] and state variables s_3 and s_4 to calculate current [nA]
@@ -868,11 +1064,11 @@ class RhO_6states(OGmodel):
                     # fV = self.v1/self.v0
             # else: #type(fV) in (tuple, list, array)
                 # fV[np.isnan(fV)] = self.v1/self.v0 # Fix the error when dividing by zero
-        g_RhO = self.g * psi #* fV # self.gbar * self.A # Conductance (pS * um^-2)
-        I_RhO =  g_RhO * self.calcfV(V) * (V - self.E) # Photocurrent: (pS * mV)
+        g_RhO = self.g * psi * self.calcfV(V) #* fV # self.gbar * self.A # Conductance (pS * um^-2)
+        I_RhO =  g_RhO * (V - self.E) # Photocurrent: (pS * mV)
         return I_RhO * (1e-6) # 10^-12 * 10^-3 * 10^-6 (nA)
     
-##############################################################    
+    ##############################################################    
     def rectifierifier(V): ##### Redundant
         if self.v0 == 0:
             #print("f(V) undefined for v0 = 0")
@@ -890,7 +1086,7 @@ class RhO_6states(OGmodel):
 
         return fV
     
-    def equalFloats(x,y,eps=1e-6):
+    def equalFloats(x,y,eps=1e-6): # Use numpy.allclose(a, b, rtol=1e-05, atol=1e-08)
         diff = np.abs(x-y)
         if (x == y): # Catch infinities
             return True
@@ -898,26 +1094,26 @@ class RhO_6states(OGmodel):
             return diff < (eps * floatmin)
         else: # Use relative error
             return diff / (np.abs(x) + np.abs(y)) < eps
-#############################################################
+    #############################################################
         
     def calcSteadyState(self,phi): # implicitly depends on phi0
         self.setLight(phi)
-        a1 = self.a1
-        a2 = self.a2
-        a3 = self.a3
-        a4 = self.a4
-        a6 = self.a6
-        b1 = self.b1
-        b2 = self.b2
-        b3 = self.b3
-        b4 = self.b4
-        denom6 = (a1*a2*(a3*(b3*(b4+a4)+a4*b4)+b2*b3*b4)+b1*(a2*b2*b3*b4+a1*b2*b3*b4+a6*(a2*(b2*b3+a4*b3)+a1*(b2*b3+a4*b3)))+a6*(a1*(a2*(b2*b3+a4*b3+a3*b3)+a3*a4*b3)+a2*a3*a4*b3))
-        s1s = (b1*(a2*b2*b3*b4 + a2*a6*(b2*b3 + a4*b3)) + a2*a3*a4*a6*b3)/denom6
-        s2s = (b1*(a1*b2*b3*b4 + a1*a6*(b2*b3 + a4*b3)) + a1*a3*a4*a6*b3)/denom6
-        s3s = (a1*a2*b2*b3*b4 + a1*a2*a6*(b2*b3 + a4*b3))/denom6
-        s4s = (a1*a2*a3*b3*b4 + a1*a2*a3*a6*b3)/denom6
-        s5s = (a1*a2*a3*a4*b4)/denom6
-        s6s = (a1*a2*a3*a4*b3)/denom6
+        Ga1 = self.Ga1
+        Go1 = self.Go1
+        Gf = self.Gf
+        Gd2 = self.Gd2
+        Gr0 = self.Gr0
+        Gd1 = self.Gd1
+        Gb = self.Gb
+        Go2 = self.Go2
+        Ga2 = self.Ga2
+        denom6 = (Ga1*Go1*(Gf*(Go2*(Ga2+Gd2)+Gd2*Ga2)+Gb*Go2*Ga2)+Gd1*(Go1*Gb*Go2*Ga2+Ga1*Gb*Go2*Ga2+Gr0*(Go1*(Gb*Go2+Gd2*Go2)+Ga1*(Gb*Go2+Gd2*Go2)))+Gr0*(Ga1*(Go1*(Gb*Go2+Gd2*Go2+Gf*Go2)+Gf*Gd2*Go2)+Go1*Gf*Gd2*Go2))
+        s1s = (Gd1*(Go1*Gb*Go2*Ga2 + Go1*Gr0*(Gb*Go2 + Gd2*Go2)) + Go1*Gf*Gd2*Gr0*Go2)/denom6
+        s2s = (Gd1*(Ga1*Gb*Go2*Ga2 + Ga1*Gr0*(Gb*Go2 + Gd2*Go2)) + Ga1*Gf*Gd2*Gr0*Go2)/denom6
+        s3s = (Ga1*Go1*Gb*Go2*Ga2 + Ga1*Go1*Gr0*(Gb*Go2 + Gd2*Go2))/denom6
+        s4s = (Ga1*Go1*Gf*Go2*Ga2 + Ga1*Go1*Gf*Gr0*Go2)/denom6
+        s5s = (Ga1*Go1*Gf*Gd2*Ga2)/denom6
+        s6s = (Ga1*Go1*Gf*Gd2*Go2)/denom6
         self.steadyStates = np.array([s1s, s2s, s3s, s4s, s5s, s6s])
         return np.array([s1s, s2s, s3s, s4s, s5s, s6s])
     
@@ -928,5 +1124,18 @@ class RhO_6states(OGmodel):
     def calcSoln(self, t, s0=[1,0,0,0,0,0]):
         raise NotImplementedError(self.nStates)
         
-from collections import OrderedDict
+
 models = OrderedDict([('3', RhO_3states), ('4', RhO_4states), ('6', RhO_6states)])#{'3': RhO_3states, '4': RhO_4states, '6': RhO_6states} # OrderedDict...
+
+def selectModel(nStates):
+    """Model selection function"""
+    if nStates == 3 or nStates == 'three':
+        return RhO_3states() #(E)
+    elif nStates == 4 or nStates == 'four':
+        return RhO_4states() #(E,gam,phi0)
+    elif nStates == 6 or nStates == 'six':
+        return RhO_6states() #(E,gam,phi0,A)
+    else:
+        print("Error in selecting model - please choose from 3, 4 or 6 states")
+        raise NotImplementedError(nStates)
+        
