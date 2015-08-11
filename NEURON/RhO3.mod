@@ -50,7 +50,7 @@ PARAMETER {	: Initialise parameters to defaults. These may be changed through ho
 
 
 ASSIGNED {
-    P   (/ms)
+    Ga   (/ms)
     Gr  (/ms)
 
     gph    
@@ -93,14 +93,14 @@ INITIAL { 	: Initialise variables to fully dark-adapted state
 
 :DERIVATIVE deriv {
 :	rates(flux)
-:	C' = (Gr * D) - (P * C)
-:	O' = (P * C) - (Gd * D)
+:	C' = (Gr * D) - (Ga * C)
+:	O' = (Ga * C) - (Gd * D)
 :	D' = (Gd * O) - (Gr * D)
 :}
 
 KINETIC kin {
 	rates(phi)
-    ~ C <-> O (P, 0)
+    ~ C <-> O (Ga, 0)
     ~ O <-> D (Gd, 0)
     ~ D <-> C (Gr, 0)
     CONSERVE C + O + D = 1
@@ -109,11 +109,11 @@ KINETIC kin {
 
 PROCEDURE rates(phi) {	: Define equations for calculating transition rates
     if (phi>0) {
-        :P = phi * k 			: k = quantum efficiency
-        P = k * 1/(1+pow(phim,p)/pow(phi,p))    : pow(phi,p)/(pow(phi,p) + pow(phim,p))
+        :Ga = phi * k 			: k = quantum efficiency
+        Ga = k * 1/(1+pow(phim,p)/pow(phi,p))    : pow(phi,p)/(pow(phi,p) + pow(phim,p))
         Gr = Gr0 + Gr1
     } else {
-        P = 0
+        Ga = 0
         Gr = Gr0
     }
 }  

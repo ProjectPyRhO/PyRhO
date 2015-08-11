@@ -9,7 +9,7 @@ NEURON {
     NONSPECIFIC_CURRENT i :IRhO
     RANGE E, gam, v0, v1, g, gph, gv, i :IRhO :iChR   : , gbar
     :RANGE e1, e3, b10, a2dark, a2light, b2dark, b2light, a30, a40
-    RANGE a10, a2, a30, a31, a4, a6, b1, b20, b21, b3, b40, p, q
+    RANGE k1, Go1, Gf0, kf, Gd2, Gr0, Gd1, Gb0, kb, Go2, k2, p, q
     :RANGE Er, flux, delay, ton, toff, num
     RANGE phiOn, phi, phim, delD, onD, offD, nPulses :phi0,
 }
@@ -49,17 +49,17 @@ PARAMETER { : Initialise parameters to defaults. These may be changed through ho
     v1      = 4.1   (mV)    
 
 : State transition rate parameters (/ms)
-    a10     = 5         (/ms)
-    a2      = 1         (/ms)
-    a30     = 0.022     (/ms)
-    a31     = 0.0135    (/ms)
-    a4      = 0.025     (/ms)
-    a6      = 0.00033   (/ms)
-    b1      = 0.13      (/ms)
-    b20     = 0.011     (/ms)
-    b21     = 0.0048    (/ms)
-    b3      = 1         (/ms)
-    b40     = 1.1       (/ms)
+    k1     = 5         (/ms)
+    Go1      = 1         (/ms)
+    Gf0     = 0.022     (/ms)
+    kf     = 0.0135    (/ms)
+    Gd2      = 0.025     (/ms)
+    Gr0      = 0.00033   (/ms)
+    Gd1      = 0.13      (/ms)
+    Gb0     = 0.011     (/ms)
+    kb     = 0.0048    (/ms)
+    Go2      = 1         (/ms)
+    k2     = 1.1       (/ms)
     p       = 0.7       (1)
     q       = 0.47      (1)
     
@@ -82,19 +82,19 @@ ASSIGNED {
     phi     :(photons/s mm2)
 :    flux        : "flux" should now be "intensity". Er is normalised to be dimensionless
 
-    a1      (/ms)
+    Ga1      (/ms)
     :a2      (/ms)
-    a3      (/ms)
+    Gf      (/ms)
     :a4      (/ms)
     :a6      (/ms)
     :b1      (/ms)
-    b2      (/ms)
+    Gb      (/ms)
     :b3      (/ms)
-    b4      (/ms)
+    Ga2      (/ms)
     h1      (1)
     h2      (1)
     
-:    a11     (/ms) : ==a1 = a10*(phi/phi0)
+:    a11     (/ms) : ==a1 = k1*(phi/phi0)
 :    a12     (/ms) : ==a2 (const)
 :    b1      (/ms) : ==b1 (const)
 :    a2      (/ms)      : ==a3 = a30 + a31*ln(1+phi/phi0)
@@ -155,14 +155,14 @@ INITIAL {   : Initialise variables
 
 KINETIC kin {
     rates(phi)
-    ~ C1 <-> I1 (a1, 0) :(a11, 0)
-    ~ I1 <-> O1 (a2, 0) :(a12, 0)
-    ~ O1 <-> C1 (b1, 0)      
-    ~ O1 <-> O2 (a3, b2) :(a2, b2)    
-    ~ O2 <-> I2 (0, b3) :(0, b31)
-    ~ I2 <-> C2 (0, b4) :(0, b32)
-    ~ O2 <-> C2 (a4, 0) :(a3, 0)    
-    ~ C2 <-> C1 (a6, 0) :(a4, 0)
+    ~ C1 <-> I1 (Ga1, 0) :(a11, 0)
+    ~ I1 <-> O1 (Go1, 0) :(a12, 0)
+    ~ O1 <-> C1 (Gd1, 0)      
+    ~ O1 <-> O2 (Gf, Gb) :(a2, b2)    
+    ~ O2 <-> I2 (0, Go2) :(0, b31)
+    ~ I2 <-> C2 (0, Ga2) :(0, b32)
+    ~ O2 <-> C2 (Gd2, 0) :(a3, 0)    
+    ~ C2 <-> C1 (Gr0, 0) :(a4, 0)
     CONSERVE C1 + I1 + O1 + O2 + I2 + C2 = 1
 }
 
@@ -179,19 +179,19 @@ PROCEDURE rates(phi) { : Define equations for calculating transition rates
 
     
     :a1 = a10*(phi/phi0)
-    a1 = a10 * h1
+    Ga1 = k1 * h1
     : a2 (const)
     :a3 = a30 + a31*log(1+phi/phi0)
-    a3 = a30 + a31 * h2
+    Gf = Gf0 + kf * h2
     : a4 (const)
     : a6 (const)
     
     : b1 (const)
     :b2 = b20 + b21*log(1+phi/phi0)
-    b2 = b20 + b21 * h2
+    Gb = Gb0 + kb * h2
     : b3 (const)
     :b4 = b40*(phi/phi0)
-    b4 = b40 * h1
+    Ga2 = k2 * h1
     
     
 :    a11 = e1*flux/Er0

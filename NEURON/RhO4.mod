@@ -5,7 +5,7 @@ NEURON {
     POINT_PROCESS RhO4
     NONSPECIFIC_CURRENT i
     RANGE E, gam, v0, v1, g, gph, gv, i    : , gbar
-    RANGE k1, k2, c1, c2, e12d, e21d, Gd1, Gd2, Gr, p, q
+    RANGE k1, k2, kf, kb, Gf0, Gb0, Gd1, Gd2, Gr0, p, q
     RANGE phiOn, phi, phim, delD, onD, offD, nPulses :phi0,
 }
 
@@ -31,14 +31,14 @@ PARAMETER { : Initialise parameters to defaults. These may be changed through ho
 : Illumination constants   
 :    Er0     = 0.1   : (mW/mm2)
 :    phi0 = 1e14
-    phim = 1e16
+    phim    = 1e16
 :   lambda  = 470   : (nm)
 :   flux0   = 2e16  : (photons/(sec*cm2))    
 
 : Conductance
-    E       = 0     (mV) : Channel reversal potential
-    gam    = 0.05  (1)  : Ratio of open-state conductances
-    g    = 75000     (pS) : gbar : defined in the main prog as HR_expression*Area
+    E       = 0         (mV) : Channel reversal potential
+    gam     = 0.05      (1)  : Ratio of open-state conductances
+    g       = 75000     (pS) : gbar : defined in the main prog as HR_expression*Area
 
 : Inward rectifier conductance    
     v0      = 43        (mV)
@@ -47,15 +47,15 @@ PARAMETER { : Initialise parameters to defaults. These may be changed through ho
 : State transition rate parameters (/ms)
     k1      = 0.05      (/ms)
     k2      = 0.015     (/ms)
-    c1      = 0.03      (/ms)
-    c2      = 0.0115    (/ms)
-    e12d    = 0.01      (/ms)
-    e21d    = 0.015     (/ms)
+    kf      = 0.03      (/ms)
+    kb      = 0.0115    (/ms)
+    Gf0     = 0.01      (/ms)
+    Gb0     = 0.015     (/ms)
     p       = 0.7       (1)
     q       = 0.47      (1)
     Gd1     = 0.11      (/ms)
     Gd2     = 0.025     (/ms)
-    Gr      = 0.0004    (/ms)
+    Gr0     = 0.0004    (/ms)
 
 }
 
@@ -66,8 +66,8 @@ ASSIGNED {
 
     Ga1     (/ms)  : C1 -> O1
     Ga2     (/ms)  : C2 -> O2
-    e12     (/ms)  : O1 -> O2
-    e21     (/ms)  : O2 -> O1
+    Gf     (/ms)  : O1 -> O2
+    Gb     (/ms)  : O2 -> O1
     h1      (1)
     h2      (1)
 
@@ -97,7 +97,7 @@ BREAKPOINT {
 
 
 INITIAL {   : Initialise variables
-: State occupancy proportions - starts in c1
+: State occupancy proportions - starts in C1
     C1  = 1     : Closed state 1 (Ground state)
     O1  = 0     : Open state 1 (High conductivity)
     O2  = 0     : Open state 2 (Low conductivity)
@@ -118,9 +118,9 @@ INITIAL {   : Initialise variables
 KINETIC kin {
     rates(phi)
     ~ C1 <-> O1 (Ga1, Gd1)
-    ~ O1 <-> O2 (e12, e21)
+    ~ O1 <-> O2 (Gf,  Gb)
     ~ O2 <-> C2 (Gd2, Ga2)
-    ~ C2 <-> C1 (Gr, 0)
+    ~ C2 <-> C1 (Gr0, 0)
     CONSERVE C1 + O1 + O2 + C2 = 1
 }
 
@@ -144,10 +144,10 @@ PROCEDURE rates(phi) { : Define equations for calculating transition rates
     Ga1 = k1 * h1             :Ga1 = k1 * pow(phi,p)/(pow(phi,p) + pow(phim,p))
         :Ga2 = k2*(phi/phi0)
     Ga2 = k2 * h1             :Ga2 = k2 * pow(phi,p)/(pow(phi,p) + pow(phim,p))
-        :e12 = e12d + c1*log(1+(phi/phi0))
-    e12 = e12d + c1 * h2      :e12 = e12d + c1 * pow(phi,q)/(pow(phi,q) + pow(phim,q))
-        :e21 = e21d + c2*log(1+(phi/phi0))
-    e21 = e21d + c2 * h2      :e21 = e21d + c2 * pow(phi,q)/(pow(phi,q) + pow(phim,q))
+        :Gf = Gf0 + kf*log(1+(phi/phi0))
+    Gf = Gf0 + kf * h2      :Gf = Gf0 + kf * pow(phi,q)/(pow(phi,q) + pow(phim,q))
+        :Gb = Gb0 + kb*log(1+(phi/phi0))
+    Gb = Gb0 + kb * h2      :Gb = Gb0 + kb * pow(phi,q)/(pow(phi,q) + pow(phim,q))
     
 }
 
