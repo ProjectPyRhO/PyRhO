@@ -4,9 +4,10 @@ from lmfit import Parameters
 #from .models import * # For times2cycles and cycles2times
 from .utilities import * # For times2cycles and cycles2times, expDecay, findPlateauCurrent
 from .parameters import tFromOff
-#from config import verbose
+from .config import verbose, colours, styles
 import warnings
-
+import copy
+#from copy import deepcopy
 
 # See also python electrophysiology modules
 # Neo: http://neuralensemble.org/neo/
@@ -48,11 +49,36 @@ def loadMatFile(filename):
 # Check for sign of current, subtract any shift
 #    return
 
+class RhodopsinStates():
+    """Data storage class for models states and their associated properties"""
+    
+    def __init__(self, states, t, varLabels):
+        ### Load data
+        self.states = np.copy(states)                     # Array of state values
+        
+        if len(t) == len(I):
+            assert(len(t) > 1)
+            self.t = np.copy(t)                 # Corresponding array of time points [ms] #np.array copies by default
+            tdiff = t[1:] - t[:-1]
+            self.dt = tdiff.sum()/len(tdiff)    # (Average) step size
+            self.sr = 1000/(self.dt)            # Sampling rate [samples/s]
+        elif len(t) == 1:                       # Assume time step is passed rather than time array
+            assert(t > 0)
+            self.t = np.array(t*range(len(I)))
+            self.dt = t                         # Step size
+            self.sr = 1000/t                    # Sampling rate [samples/s]
+        else:
+            raise ValueError("Dimension mismatch: t must be either an array of the same length as I or a scalar defining the timestep!")
+        
+        #...
+
+from lmfit import *
+method = 'powell'
 
 class PhotoCurrent():
     """Data storage class for an individual Photocurrent and its associated properties"""
     
-    def __init__(self, I, t, phi, V, pulses, label=None):
+    def __init__(self, I, t, pulses, phi, V, label=None):
         """ I       := Photocurrent [nA]
             t       := Time series (or time step) [ms]
             phi     := Stimulating flux (max) [ph*mm^-2*s^-1]
@@ -61,44 +87,47 @@ class PhotoCurrent():
                         e.g. [[t_on1,t_off1],[t_on2,t_off2],...]"""
                         
         ### Load data
-        self.I = I                  # Array of photocurrent values
+        self.I = np.copy(I)                     # Array of photocurrent values
         
         if len(t) == len(I):
             assert(len(t) > 1)
-            self.t = t              # Corresponding array of time points [ms]
+            self.t = np.copy(t)                 # Corresponding array of time points [ms] #np.array copies by default
             tdiff = t[1:] - t[:-1]
             self.dt = tdiff.sum()/len(tdiff)    # (Average) step size
-            self.sr = 1000/(self.dt)# Sampling rate [samples/s]
-        elif len(t) == 1:           # Assume time step is passed rather than time array
+            self.sr = 1000/(self.dt)            # Sampling rate [samples/s]
+        elif len(t) == 1:                       # Assume time step is passed rather than time array
             assert(t > 0)
-            self.t = t*range(len(I))
-            self.dt = t             # Step size
-            self.sr = 1000/t        # Sampling rate [samples/s]
+            self.t = np.array(t*range(len(I)))
+            self.dt = t                         # Step size
+            self.sr = 1000/t                    # Sampling rate [samples/s]
         else:
             raise ValueError("Dimension mismatch: t must be either an array of the same length as I or a scalar defining the timestep!")
         
-        self.begT = self.t[0]       # Beginning trial time
-        self.endT = self.t[-1]      # Last trial time point
-        self.totT = self.endT - self.begT      # Total trial time #max(self.t) # Handles negative delays
+        self.nSamples = len(self.I)             # Number of samples
+        
+        self.begT = self.t[0]                   # Beginning trial time
+        self.endT = self.t[-1]                  # Last trial time point
+        self.totT = self.endT - self.begT       # Total trial time #max(self.t) # Handles negative delays
         
         ### Load metadata
-        pulses = np.asarray(pulses)
-        
+        #pulses = np.asarray(pulses) # Copy only if necessary
         #if isinstance(pulses[0], int) or isinstance(pulses[0], int):
         #    pulses = [pulses]
-        self.pulses = pulses # nPulses x 2 array [t_on, t_off]      
+        #self.pulses = deepcopy(pulses) # nPulses x 2 array [t_on, t_off]  
+        self.pulses = np.array(pulses)          # nPulses x 2 array [t_on, t_off] # This may require deepcopy above... #, copy=True (default)
         self.nPulses = self.pulses.shape[0]
-        self.pulseCycles = times2cycles(self.pulses, self.endT) #self.totT)
+        self.pulseCycles, _ = times2cycles(self.pulses, self.endT) #self.totT)
         
         #if self.nPulses > 1: ### Revise this!!!
-        #self.delDs = [row[0] for row in pulses] # pulses[:,0]    # Delay Durations
+        
         self.delD = self.pulses[0,0] - self.begT # Handles negative delays
-        self.onDs = [row[1]-row[0] for row in pulses] # pulses[:,1] - pulses[:,0]   # Pulse Durations
+        self.delDs = np.array(self.pulses[:,0] - self.begT) #[pulse[0] for pulse in pulses] - self.begT # pulses[:,0]    # Delay Durations
+        self.onDs = np.array(self.pulses[:,1] - self.pulses[:,0]) #[pulse[1]-pulse[0] for pulse in pulses] # pulses[:,1] - pulses[:,0]   # Pulse Durations
         #if self.nPulses > 1:
         #    self.IPIs = np.zeros(self.nPulses - 1)
         #    for p in range(0, self.nPulses-1):
         #        self.IPIs[p] = self.pulses[p+1,0] - self.pulses[p,1]
-        self.IPIs = np.asarray([self.pulses[p+1,0] - self.pulses[p,1] for p in range(self.nPulses-1)]) # end <-> start
+        self.IPIs = np.array([self.pulses[p+1,0] - self.pulses[p,1] for p in range(self.nPulses-1)]) # end <-> start
         self.offDs = np.append(self.IPIs, self.endT-self.pulses[-1,1])
         # self.offDs = [self.totT-((onD+pOff)*nPulses)-delD for pOff in pulseCycles[:,1]]    
         
@@ -106,28 +135,33 @@ class PhotoCurrent():
         #   self.pulseInds[p,0] = np.searchsorted(self.t, pulses[p,0], side="left")  # CHECK: last index where value <= t_on
         #   self.pulseInds[p,1] = np.searchsorted(self.t, pulses[p,1], side="left")  # CHECK: last index where value <= t_off
         #self.pulseInds = np.array([[np.searchsorted(self.t, pulses[p,time]) for time in range(2)] for p in range(self.nPulses)])
-        self.pulseInds = np.array([np.searchsorted(self.t, pulses[p,:]) for p in range(self.nPulses)])
+        self.pulseInds = np.array([np.searchsorted(self.t, self.pulses[p,:]) for p in range(self.nPulses)], dtype=np.int)
         
         #if self.nPulses > 1:
         #    self.IPIs = [self.pulses[p,0]-self.pulses[p-1,1] for p in range(1,self.nPulses)]  # end <-> start
             # self.IPIs = [self.pulses[p,0]-self.pulses[p-1,0] for p in range(1,self.nPulses)]    # start <-> start
         
         ### Record Experimental constants
-        self.V = V                  # Clamp Voltage [mV]: None if no clamp was used
-        self.phi = phi              # Light intensity
+        self.V = copy.copy(V)           # Clamp Voltage [mV]: None if no clamp was used
+        self.clamped = bool(V != None)  # Flag for voltage-clamped recording
+        self.phi = copy.copy(phi)       # Light intensity
         # Future inclusions
-        # self.Lambda            # Wavelength
-        # self.pH                   # pH
-        # self.Temp                 # Temperature
-        self.label = label          # Optional trial label e.g. "saturate"
+        self.lam = 470 #Lambda          # Wavelength
+        # self.pH                       # pH
+        # self.Temp                     # Temperature
+        self.label = copy.copy(label)   # Optional trial label e.g. "saturate"
+        
+        self.isFiltered = False
+        #self.filterData()              ### Implement!
         
         ### Calibrate - correct any current offset in experimental recordings
-        Idel = self.getDelayPhase()
-        offset = np.mean(Idel[:int(round(0.9*len(Idel)))+1]) # Calculate the mean over the first 90% to avoid edge effects
-        if abs(offset) > 0.01 * abs(max(self.I) - min(self.I)): # Recalibrate if the offset is more than 1% of the span
-            self.I -= offset
+        Idel, _ = self.getDelayPhase()
+        I_offset = np.mean(Idel[:int(round(0.9*len(Idel)))+1]) # Calculate the mean over the first 90% to avoid edge effects
+        if abs(I_offset) > 0.01 * abs(max(self.I) - min(self.I)): # Recalibrate if the offset is more than 1% of the span
+            self.I -= I_offset
             if verbose > 0:
-                print("Photocurrent recalibrated by {} [nA]".format(offset))
+                print("Photocurrent recalibrated by {} [nA]".format(I_offset))
+            self.offset_ = I_offset
         
         #if pulses[0][0] > 0: # Check for an initial delay period
         #    onInd = self.pulseInds[0,0]
@@ -142,13 +176,15 @@ class PhotoCurrent():
             #self.t -= pulses[0][0]
             #self.endT = max(self.t)
         
+
         
+        ### Derive properties from the data
+        self.on_ = np.array([self.I[pInd[0]] for pInd in self.pulseInds])     # Current at t_on[:]
+        self.off_ = np.array([self.I[pInd[1]] for pInd in self.pulseInds])    # Current at t_off[:]
         
-        
-        ### Extract properties from the data
         # Add this to findPeaks
-        self.Irange = [min(self.I), max(self.I)]
-        self.Ispan = self.Irange[1] - self.Irange[0]
+        self.range_ = [min(self.I), max(self.I)]
+        self.span_ = self.range_[1] - self.range_[0]
         #if abs(self.Irange[0]) > abs(self.Irange[1]):
         #    self.Ipeak = self.Irange[0] # Min
         #    self.Ipeaks = np.asarray([min(self.getCycle(p)) for p in range(self.nPulses)]) # Peak may occur after stimulation #np.asarray([min(self.I[self.pulseInds[p,0]:self.pulseInds[p,1]]) for p in range(self.nPulses)])
@@ -158,54 +194,249 @@ class PhotoCurrent():
             #self.Ipeaks = np.asarray([max(self.I[self.pulseInds[p,0]:self.pulseInds[p,1]]) for p in range(self.nPulses)])
         #np.asarray([max(abs(self.I[self.pulseInds[p,0]:self.pulseInds[p,1]])) for p in range(self.nPulses)])
         
-        self.peakInd = np.argmax(abs(self.I)) #np.searchsorted(self.I, self.Ipeak)
-        self.tpeak = self.t[self.peakInd]
-        self.Ipeak = self.I[self.peakInd]
+        self.peakInd_ = np.argmax(abs(self.I)) #np.searchsorted(self.I, self.Ipeak)
+        self.tpeak_ = self.t[self.peakInd_]
+        self.peak_ = self.I[self.peakInd_]
         
-        self.peakInds = np.asarray([np.argmax(abs(self.getCycle(p))) for p in range(self.nPulses)]) #np.searchsorted(self.I, self.Ipeaks)
-        self.tpeaks = self.t[self.peakInds]
-        self.Ipeaks = self.I[self.peakInds]
-
-        if label == 'saturate':     ##### Remove...
-            self.Isat = self.Ipeak
-            self.Ipmax = self.Ipeak # Deprecate
+        #self.peakInds_ = np.array([np.argmax(abs(self.getCycle(p)[0])) for p in range(self.nPulses)]) #np.searchsorted(self.I, self.Ipeaks)
+        self.peakInds_ = self.findPeakInds()
+        self.tpeaks_ = self.t[self.peakInds_]
+        self.peaks_ = self.I[self.peakInds_]
+        
+        self.lags_ = np.array([self.tpeaks_[p] - self.pulses[p,0] for p in range(self.nPulses)]) # t_lag = t_peak - t_on
+        self.lag_ = self.lags_[0]
+        # For Go: t[peakInds[0]]-self.pulses[0,1]
+        
+        #if label == 'saturate':     ##### Remove...
+        #    self.Isat = self.Ipeak
+        #    self.Ipmax = self.Ipeak # Deprecate
         
         
-        self.Iss = findPlateauCurrent(self.I) # self.findPlateaus???
+        self.ss_ = self.findSteadyState(pulse=0) #findPlateauCurrent(self.I) # self.findPlateaus???
+        self.sss_ = np.array([self.findSteadyState(p) for p in range(self.nPulses)])
+        
+        # Align t_0 to the start of the first pulse
+        self.pulseAligned = False
+        self.alignPoint = 0
+        self.alignToPulse()
+        
+        
+        #self.findKinetics()
         
         if verbose > 1:
             print("Photocurrent data loaded! nPulses={}; Total time={}ms; Range={}nA".format(self.nPulses, self.totT, str(self.Irange)))
     
-    def alignToPulse(self):
+    def findKinetics(self, p=0, trim=0.1):
+        ### Segment the photocurrent into ON, INACT and OFF phases (Williams et al., 2013)
+        # I_p := maximum (absolute) current
+        # I_ss := mean(I[400ms:450ms])
+        # ON := 10ms before I_p to I_p ?!
+        # INACT := 10:110ms after I_p
+        # OFF := 500:600ms after I_p
+        
+
+        
+        def calcOn(p,t):
+            """Fit a biexponential curve to the on-phase to find lambdas"""
+            v = p.valuesdict()
+            return -(v['a0'] + v['a1']*(1-np.exp(-t/v['tau_act'])) + v['a2']*np.exp(-t/v['tau_deact']))
+        
+        #def jacOn(p,t):
+        #    v = p.valuesdict()
+        #    return [(v['a1']/v['tau_act'])*np.exp(-t/v['tau_act']) - (v['a2']/v['tau_deact'])*np.exp(-t/v['tau_deact'])]
+        
+        def residOn(p,I,t):
+            return I - calcOn(p,t)
+        
+        def calcOff(p,t):
+            v = p.valuesdict()
+            return -(v['a0'] + v['a1']*np.exp(-v['Gd1']*t) + v['a2']*np.exp(-v['Gd2']*t))
+        
+        def residOff(p,I,t):
+            return I - calcOff(p,t)
+        
+        def monoExp(t, A, B, C):
+            #C = -A
+            return A * np.exp(-B*t) + C
+
+        def biExp(t, a1, tau1, a2, tau2, I_ss):
+            return a1 * np.exp(-t/tau1) + a2 * np.exp(-t/tau2) + I_ss
+        
+        plt.figure()
+        self.plot()
+        
+        ### On phase
+        Ion, ton = self.getOnPhase(p)
+        
+        pOn = Parameters()
+        pOn.add('a0', value=0, expr='-a2')
+        pOn.add('a1', value=1, min=1e-9)
+        pOn.add('a2', value=0.1, min=1e-9)
+        pOn.add('tau_act', value=5, min=1e-9)
+        pOn.add('tau_deact', value=50, min=1e-9)
+        minObj = minimize(residOn, pOn, args=(Ion,ton), method=method)
+        print('tau_{{act}} = {:.3g}, tau_{{deact}} = {:.3g}'.format(pOn['tau_act'].value, pOn['tau_deact'].value))
+        if verbose > 1:
+            print(fit_report(minObj))
+        
+        plt.plot(ton, calcOn(pOn,ton), label='On-Fit $\\tau_{{act}}={:.3g}, \\tau_{{deact}}={:.3g}$'.format(pOn['tau_act'].value, pOn['tau_deact'].value))
+
+        
+        ### Add a check for steady-state before fitting the off-curve
+        
+        ### Off phase
+        Iss = pOn['a0'].value + pOn['a1'].value
+        pOff = Parameters() # copy.deepcopy(pOn)
+        Ioff, toff = self.getOffPhase(p)
+        
+        # Single exponential
+        pOff.add('a0', value=0, expr='{}-a1-a2'.format(Iss))
+        pOff.add('a1', value=0, vary=True)
+        pOff.add('a2', value=-0, vary=False)
+        pOff.add('Gd1', value=0.1)#, min=1e-9)
+        pOff.add('Gd2', value=0, vary=False) #, expr='Gd1')#, min=1e-9)
+        minObj = minimize(residOff, pOff, args=(Ioff,toff-toff[0]), method=method)
+        print('tau_{{off}} = {:.3g}'.format(1/pOff['Gd1'].value))
+        if verbose > 1:
+            print(fit_report(minObj))
+        
+        plt.plot(toff, calcOff(pOff,toff-toff[0]), label='Off-Fit (Mono-Exp) $\\tau_{{off}}={:.3g}$'.format(1/pOff['Gd1'].value))
+        
+        # Double exponential
+        pOff = Parameters()
+        pOff.add('a0', value=0, vary=False)
+        pOff.add('a1', value=0.1)
+        pOff.add('a2', value=-0.1, expr='{}-a0-a1'.format(Iss))
+        pOff.add('Gd1', value=0.1)#, min=1e-9)
+        pOff.add('Gd2', value=0.01)#, vary=True) #, expr='Gd1')#, min=1e-9)
+        minObj = minimize(residOff, pOff, args=(Ioff,toff-toff[0]), method=method)
+        print('tau_{{off1}} = {:.3g}, tau_{{off2}} = {:.3g}'.format(1/pOff['Gd1'].value, 1/pOff['Gd2'].value))
+        if verbose > 1:
+            print(fit_report(minObj))
+        
+        
+        def solveGo(tlag, Gd, Go0=1000, tol=1e-9):
+            Go, Go_m1 = Go0, 0
+            #print(tlag, Gd, Go, Go_m1)
+            while abs(Go_m1 - Go) > tol:
+                Go_m1 = Go
+                Go = ((tlag*Gd) - np.log(Gd/Go_m1))/tlag
+                #Go_m1, Go = Go, ((tlag*Gd) - np.log(Gd/Go_m1))/tlag
+                #print(Go, Go_m1)
+            return Go
+        
+        E = 0 ### Find this from fitting fV first!!!
+        
+        GoA = solveGo(self.lag_, Gd=1/pOn['tau_deact'].value)
+        GoB = solveGo(self.lag_, Gd=max(pOff['Gd1'].value, pOff['Gd2'].value))
+        
+        corrFac = lambda Gact, Gdeact: 1 + Gdeact / Gact
+        Gd = max(pOff['Gd1'].value, pOff['Gd2'].value)
+        
+        print('Lag method (tau_deact): Go = {}, cf={} --> g0 = {}'.format(GoA, corrFac(GoA, 1/pOn['tau_deact'].value), 1e6 * self.peak_ * corrFac(GoA, 1/pOn['tau_deact'].value) / (self.V - E))) #(1 + 1 / (GoA * pOn['tau_deact'].value))
+        print('Lag method (max(Gd1,Gd2)): Go = {}, cf={} --> g0 = {}'.format(GoB, corrFac(GoB, Gd), 1e6 * self.peak_ * corrFac(GoB, Gd) / (self.V - E) )) #(1 + max(pOff['Gd1'].value, pOff['Gd2'].value)/GoB)
+        print('Exp method (tau_deact): Gact = {}, cf={} --> g0 = {}'.format(1/pOn['tau_act'].value, corrFac(1/pOn['tau_act'].value, 1/pOn['tau_deact'].value), 1e6 * self.peak_ * corrFac(1/pOn['tau_act'].value, 1/pOn['tau_deact'].value) / (self.V - E) )) #(1 + pOn['tau_act'].value / pOn['tau_deact'].value)
+        print('Exp method (max(Gd1,Gd2)): Gact = {}, cf={} --> g0 = {}'.format(1/pOn['tau_act'].value, corrFac(1/pOn['tau_act'].value, Gd), 1e6 * self.peak_ * corrFac(1/pOn['tau_act'].value, Gd) / (self.V - E) )) #(1 + pOn['tau_act'].value * max(pOff['Gd1'].value, pOff['Gd2'].value))
+        
+        plt.plot(toff, calcOff(pOff,toff-toff[0]), label='Off-Fit (Bi-Exp) $\\tau_{{off1}}={:.3g}, \\tau_{{off2}}={:.3g}$'.format(1/pOff['Gd1'].value, 1/pOff['Gd2'].value))  
+        
+        #plt.show(block=False)
+        plt.legend(loc='best')
+        
+        # from scipy.optimize import curve_fit
+        # from .parameters import p0on, p0inact, p0off
+        
+        # def monoExp(t, r, Imax):
+            # return Imax * np.exp(-r*t) - Imax
+        
+        # def biExp(t, a1, tau1, a2, tau2, I_ss):
+            # return a1 * np.exp(-t/tau1) + a2 * np.exp(-t/tau2) + I_ss
+            
+        ### Fit curve for tau_on
+        #Iact, tact = pc.getActivation(p)
+        #popt, pcov = curve_fit(monoExp, tact, Iact, p0=(-1, -0.2, -1)) #Needs ball-park guesses (0.3, 125, 0.5)
+        #print("Activation: ", popt)
+
+        ### Fit curve for tau_inact
+        #Iinact, tinact = pc.getDeactivation(p)
+        #popt, pcov = curve_fit(monoExp, tinact, Iinact, p0=(-1, 0.02, -1)) #Needs ball-park guesses (0.3, 125, 0.5)
+        #print("Inactivation: ", popt)
+
+        ### Fit curve for tau_off (bi-exponential)
+        #Ioff, toff = pc.getOffPhase(p)
+        #popt, pcov = curve_fit(monoExp, toff, Ioff, p0=(-0.1, 0.1, -0.1)) #Needs ball-park guesses (0.3, 125, 0.5)
+        #print("Off (Mono-Exp): ", popt)
+
+        #popt, pcov = curve_fit(biExp, toff, Ioff, p0=(-1, 7.5, -1, 35, -1)) #Needs ball-park guesses (0.3, 125, 0.5)
+        #print("Off (Bi-Exp): ", popt)
+
+        return
+
+
+    
+    
+    def alignToPulse(self, pulse=0, alignPoint=0):
         """Set time array so that the first pulse occurs at t=0 (with negative delay period)"""
-        if abs(self.pulses[0,0]) > 1e-12: # HACK!!! Write compare floats function
-            p0 = self.delD #pulses[0,0]
-            self.t -= p0            # Time array
-            self.pulses -= p0       # Pulse times
-            self.begT = self.t[0]   # Beginning Time of Trial
-            self.endT = self.t[-1]  # End Time of Trial
-            self.tpeak = self.t[self.peakInd]
-            self.tpeaks = self.t[self.peakInds]
+        #print(self.pulses[pulse])
+        if not self.pulseAligned or alignPoint != self.alignPoint: #and abs(self.pulses[pulse,0]) > 1e-12: # HACK!!! Write compare floats function
+            #p0 = self.delD #pulses[0,0]
+            if alignPoint == 0: # Start
+                self.p0 = self.pulses[pulse,0] #self.delDs[pulse]; print(p0)
+            elif alignPoint == 1: # Peak
+                self.p0 = self.tpeaks_[pulse]
+            elif alignPoint == 2: # End
+                self.p0 = self.pulses[pulse,1]
+            else:
+                raise NotImplementedError
+            self.t -= self.p0           # Time array
+            self.pulses -= self.p0      # Pulse times
+            self.begT = self.t[0]       # Beginning Time of Trial
+            self.endT = self.t[-1]      # End Time of Trial
+            self.tpeak_ = self.t[self.peakInd_]
+            self.tpeaks_ = self.t[self.peakInds_] 
+            self.pulseAligned = True
+            self.alignPoint = alignPoint
             
         
     def alignToTime(self):
         """Set time array so that it begins at t=0 (with the first pulse at t>0)"""
-        if abs(self.pulses[0,0]) < 1e-12:
-            p0 = self.delD
-            self.t += p0            # Time array
-            self.pulses += p0       # Pulse times
-            self.begT = self.t[0]   # Beginning Time of Trial
-            self.endT = self.t[-1]  # End Time of Trial
-            self.tpeak = self.t[self.peakInd]
-            self.tpeaks = self.t[self.peakInds]
+        if self.pulseAligned: # and abs(self.pulses[0,0]) < 1e-12:
+            self.p0 = self.t[0] #self.delD
+            self.t -= self.p0           # Time array
+            self.pulses -= self.p0      # Pulse times
+            self.begT = self.t[0]       # Beginning Time of Trial
+            self.endT = self.t[-1]      # End Time of Trial
+            self.tpeak_ = self.t[self.peakInd_]
+            self.tpeaks_ = self.t[self.peakInds_]
+            self.pulseAligned = False
     
     
     #def printSummary(self):
     def __str__(self):
         """Print out summary details of the photocurrent"""
-        str = 'Photocurrent with {} stimulation periods sampled at {} samples/s over {} ms'.format(self.nPulses, self.sr, self.totT)
+        if self.nPulses > 1:
+            plural = 's'
+        else:
+            plural = ''
+        str = 'Photocurrent with {} pulse{} {} sampled at {:.3g} samples/s over {:.3g} ms @ {:.3g} mV; {:.3g} ph/s/mm^2'.format(self.nPulses, plural, self.pulses, self.sr, self.totT, self.V, self.phi)
         return str
-
+        
+    def __call__(self, incTime=False):
+        if incTime:
+            return self.I, self.t
+        else:
+            return self.I
+    
+    def findPeakInds(self): #, pulse=0):
+        
+        offsetInd = len(self.getDelayPhase()[0]) - 1
+        peakInds = np.zeros((self.nPulses,), dtype=np.int)
+        for p in range(self.nPulses):
+            peakInds[p] = np.argmax(abs(self.getCycle(p)[0])) + offsetInd
+            offsetInd += len(self.getCycle(p)[0]) - 1
+            #print(self.I[_peakInds[p]])
+            #print(self.getCycle(p)[0][np.argmax(abs(self.getCycle(p)[0]))])
+        return peakInds
     
     ### Move findPeaks from models.py to here?
     # def findPeaks(self): ### See findPeaks in models.py
@@ -213,59 +444,203 @@ class PhotoCurrent():
         # self.t_peaks = self.t[self.peakInds]
         # self.I_peaks = self.I[self.peakInds]
         
-    def findPlateaus(self, pulse=0, method=0, window=tFromOff): ### c.f. findPlateauCurrent() in models.py
-        # Find plateau
-        
+    def findSteadyState(self, pulse=0, tail=0.05, method=0): #, window=tFromOff): ### c.f. findPlateauCurrent() in models.py
+        """Find the steady-state current either as the last tail % of the on-phase or by fitting a decay function"""
         assert(0 <= pulse < self.nPulses)
         
-        offInd = self.pulseInds[pulse][1] #np.searchsorted(t,onD+delD,side="left")
+        #offInd = self.pulseInds[pulse][1] #np.searchsorted(t,onD+delD,side="left")
         
-        if self.onDs[pulse] < window:
-            raise ValueError('Error: The plateau buffer must be shorter than the on phase!')
+        #if self.onDs[pulse] < window:
+        #    raise ValueError('Error: The plateau buffer must be shorter than the on phase!')
             #windowInd = int(round(p*len(I_phi))) #np.searchsorted(t,t[onEndInd]-100,side="left") # Generalise
             #I_ss = np.mean(I_phi[-windowInd:])
+        #    return None
+
+        Ion, ton = self.getOnPhase(pulse)
         
-        if method == 0: # Empirical
+        # Calculate step change (or gradient with t[1:] - t[:-1])
+        cutInd = int(round(tail*len(Ion)))
+        if cutInd < 5: # On-phase is too short 
+            return None
+        
+        dI = Ion[-cutInd+1:] - Ion[-cutInd:-1]
+        if abs(np.mean(dI)) > 0.01 * self.span_:
+            warnings.warn('Steady-state Convergence Warning: The average step size is larger than 1% of the current span!')
+            return None
+        
+        if method == 0: # Empirical: Calculate Steady-state as the mean of the last 5% of the On phase
+
+            Iss = np.mean(Ion[-cutInd:])
+            
             # Calculate Steady-state as the mean of the last 50ms of the On phase
-            tFromOffInd = np.searchsorted(t,t[offInd]-window,side="left")
-            self.Iss = np.mean(self.I[tFromOffInd:offInd+1])
+            #tFromOffInd = np.searchsorted(t,t[offInd]-window,side="left")
+            #self.Iss = np.mean(self.I[tFromOffInd:offInd+1])
             #windowInd = int(round(p*len(self.I))) #np.searchsorted(t,t[onEndInd]-100,side="left") # Generalise
             #self.Iss = np.mean(self.I[-windowInd:])
             
             # Calculate step change (or gradient with t[1:] - t[:-1])
-            Idiff = self.I[tFromOffInd+1:offInd+1] - self.I[tFromOffInd:offInd]
-            if abs(np.mean(Idiff)) > 0.01 * self.Ispan:
-                warnings.warn('Steady-state Convergence Warning: The average step size is larger than 1% of the current span!')
+            #Idiff = self.I[tFromOffInd+1:offInd+1] - self.I[tFromOffInd:offInd]
+            #if abs(np.mean(Idiff)) > 0.01 * self.Ispan:
+            #    warnings.warn('Steady-state Convergence Warning: The average step size is larger than 1% of the current span!')
 
-        elif method == 1: # Analytical # Try this first, then resort to empirical method?
-            # Fit curve from peak to end of on phase
-            popt=fitPeaks(t[peakInds[0]:offInd+1], self.I[peakInds[0]:offInd+1], expDecay, p0inact, '$I_{{inact}} = {:.3}e^{{-t/{:g}}} {:+.3}$','')
-            self.Iss = popt[2]
+        elif method == 1: # Fit curve from peak to end of on phase
+            
+            postPeak = slice(self.peakInds_[pulse], self.pulseInds[pulse, 1]+1) # t_peak : t_off+1
+            popt = fitPeaks(self.t[postPeak], self.I[postPeak], expDecay, p0inact, '$I_{{inact}} = {:.3}e^{{-t/{:g}}} {:+.3}$','')
+            #popt=fitPeaks(t[peakInds[0]:offInd+1], self.I[peakInds[0]:offInd+1], expDecay, p0inact, '$I_{{inact}} = {:.3}e^{{-t/{:g}}} {:+.3}$','')
+            Iss = popt[2]
         
-        return self.Iss
+        return Iss
 
+    def getdIdt(self, offset=1):
+        dI = self.I[offset:] - self.I[:-offset]
+        dt = self.t[offset:] - self.t[:-offset]
+        #return (dI/dt, np.cumsum(dt) - dt/2)
+        #return (dI/dt, self.t[:-offset] + dt/2)
+        return (dI/dt, self.t[offset:] - dt/2)
+        
+    def getd2Idt2(self, offset=1):
+        dI = self.I[offset:] - self.I[:-offset]
+        dt = self.t[offset:] - self.t[:-offset]
+        d2I = dI[offset:] - dI[:-offset]
+        tp = self.t[offset:] - dt/2
+        dt2 = tp[offset:] - tp[:-offset]
+        #dt2 = dt[offset:] - dt[:-offset]
+        return (d2I/dt2, tp[offset:] - dt2/2)
+        #dIdt, t = self.getdIdt(offset)
+        #dt = (t - self.t[offset:]) * -2
+        #dI = dIdt * dt
+        #d2I = dI[offset:] - dI[:-offset]
+        #dt2 = dt[offset:] - dt[:-offset]
+        #return (d2I/dt2, t[offset:] - dt2/2)
+
+    #d3I = d2I[offset:] - d2I[:-offset]
+    #dt3 = dt2[offset:] - dt2[:-offset]
+    #plt.plot(dt2[offset:] - dt3/2, d3I/dt3)
+    
     def getDelayPhase(self):
-        return self.I[:self.pulseInds[0,0]+1]
+        """Return Idel, tdel"""
+        delSlice = slice(0, self.pulseInds[0,0]+1)
+        #return self.I[:self.pulseInds[0,0]+1]
+        return (self.I[delSlice], self.t[delSlice])
         
     def getOnPhase(self, pulse=0):
-        return self.I[self.pulseInds[pulse,0]:self.pulseInds[pulse,1]+1]
+        """Return Ion, ton"""
+        assert(0 <= pulse < self.nPulses)
+        onSlice = slice(self.pulseInds[pulse,0], self.pulseInds[pulse,1]+1)
+        #return (self.I[self.pulseInds[pulse,0]:self.pulseInds[pulse,1]+1], self.t[self.pulseInds[pulse,0]:self.pulseInds[pulse,1]+1])
+        return (self.I[onSlice], self.t[onSlice])
         
     def getOffPhase(self, pulse=0):
+        assert(0 <= pulse < self.nPulses)
         if 0 <= pulse < self.nPulses-1:
-            return self.I[self.pulseInds[pulse,1]:self.pulseInds[pulse+1,0]+1]
+            offSlice = slice(self.pulseInds[pulse,1], self.pulseInds[pulse+1,0]+1)
+            #return self.I[self.pulseInds[pulse,1]:self.pulseInds[pulse+1,0]+1]
         elif pulse == self.nPulses-1:   # Last Pulse
-            return self.I[self.pulseInds[pulse,1]:]
+            offSlice = slice(self.pulseInds[pulse,1], None)
+            #return self.I[self.pulseInds[pulse,1]:]
         else:
             raise IndexError("Error: Selected pulse out of range!")
+        return (self.I[offSlice], self.t[offSlice])
     
     def getCycle(self, pulse=0):
+        assert(0 <= pulse < self.nPulses)
         if 0 <= pulse < self.nPulses-1:
-            return self.I[self.pulseInds[pulse,0]:self.pulseInds[pulse+1,0]+1] # Consider removing the +1
+            cycleSlice = slice(self.pulseInds[pulse,0], self.pulseInds[pulse+1,0]+1)
+            #return self.I[self.pulseInds[pulse,0]:self.pulseInds[pulse+1,0]+1] # Consider removing the +1
         elif pulse == self.nPulses-1:   # Last Pulse
-            return self.I[self.pulseInds[pulse,0]:]
+            cycleSlice = slice(self.pulseInds[pulse,0], None)
+            #return self.I[self.pulseInds[pulse,0]:]
         else:
             raise IndexError("Error: Selected pulse out of range!")
+        return (self.I[cycleSlice], self.t[cycleSlice])
     
+    def getActivation(self, pulse=0):
+        assert(0 <= pulse < self.nPulses)
+        actSlice = slice(self.pulseInds[pulse,0], self.peakInds_[pulse]+1)
+        return (self.I[actSlice], self.t[actSlice])
+        
+    def getDeactivation(self, pulse=0): # Inactivation, Deactivation, Desensitisation???
+        assert(0 <= pulse < self.nPulses)
+        deactSlice = slice(self.peakInds_[pulse], self.pulseInds[pulse,1]+1)
+        return (self.I[deactSlice], self.t[deactSlice])
+    
+    def plot(self, ax=None, light='shade', addFeatures=True, colour=None, linestyle=None): #colour, linestyle
+        if ax == None:
+            #fig = plt.figure()    
+            ax = plt.gca()
+        else:
+            #plt.figure(fig.number)
+            plt.sca(ax)
+        
+        if colour is None or linestyle is None:
+            plt.plot(self.t, self.I)
+        else:
+            plt.plot(self.t, self.I, color=colour, linestyle=linestyle)
+        
+        plotLight(self.pulses, ax=ax, light=light, lam=470, alpha=0.2)
+        
+        #ax.set_xlabel('$\mathrm{Time\ [ms]}$', position=(0.95,0.8))
+        plt.xlabel('$\mathrm{Time\ [ms]}$') #(r'\textbf{Time} [ms]')
+        plt.xlim((self.begT, self.endT))
+        plt.ylabel('$\mathrm{Photocurrent\ [nA]}$')
+        
+        #ax.spines['left'].set_position('zero') # y-axis
+        ax.spines['right'].set_color('none')
+        ax.spines['bottom'].set_position('zero') # x-axis
+        ax.spines['top'].set_color('none')
+        ax.spines['left'].set_smart_bounds(True)
+        ax.spines['bottom'].set_smart_bounds(True)
+        ax.xaxis.set_ticks_position('bottom')
+        ax.yaxis.set_ticks_position('left')
+        
+        if addFeatures:
+            #eqSize=10
+            from .config import eqSize
+            #p = 0
+            #plt.axvline(x=self.tpeaks_[p], linestyle=':', color='k')
+            #plt.axhline(y=self.peaks_[p], linestyle=':', color='k')
+            
+            toffset = round(0.1 * self.endT)
+            
+            for p in range(self.nPulses):
+                # Add Pointer to peak currents
+                #ax.arrow(self.tpeaks_[p], 0.8*self.peaks_[p], 0, 0.05*self.peaks_[p], head_width=0.05, head_length=0.1, fc='k', ec='k')
+                # ax.annotate("", xy=(self.tpeaks_[p], self.peaks_[p]), xycoords='data',
+                    # xytext=(self.tpeaks_[p], 0.9*self.peaks_[p]), textcoords='data', #textcoords='axes fraction',
+                    # arrowprops=dict(arrowstyle="wedge,tail_width=1.", facecolor='red', shrinkB=10), #, shrinkB=5 , shrink=0.05
+                    # horizontalalignment='center', verticalalignment='top')
+                
+                # plt.text(self.tpeaks_[p], 1.02*self.peaks_[p], '$I_{{peak}} = {:.3g}\mathrm{{nA}};\ t_{{lag}} = {:.3g}\mathrm{{ms}}$'.format(self.peaks_[p], self.lags_[0]), ha='left', va='top', fontsize=eqSize)
+                
+                if self.peaks_[p] is not None:
+                    ax.annotate('$I_{{peak}} = {:.3g}\mathrm{{nA}};\ t_{{lag}} = {:.3g}\mathrm{{ms}}$'.format(self.peaks_[p], self.lags_[0]), xy=(self.tpeaks_[p], self.peaks_[p]), xytext=(toffset+self.tpeaks_[p], self.peaks_[p]), arrowprops=dict(arrowstyle="wedge,tail_width=0.6", shrinkA=5, shrinkB=5, facecolor='red'), horizontalalignment='left', verticalalignment='center', fontsize=eqSize)
+                
+                # Add pointer to steady-state currents
+                if self.sss_[p] is not None:
+                    #plt.text(1.1*self.pulses[p,1], self.ss_, '$I_{{ss}} = {:.3g}\mathrm{{nA}}$'.format(self.ss_), ha='left', va='center', fontsize=eqSize)
+                    ax.annotate('$I_{{ss}} = {:.3g}\mathrm{{nA}}$'.format(self.sss_[p]), xy=(self.pulses[p,1], self.sss_[p]), xytext=(toffset+self.pulses[p,1], self.sss_[p]), arrowprops=dict(arrowstyle="wedge,tail_width=0.6", shrinkA=5, shrinkB=5), horizontalalignment='left', verticalalignment='center', fontsize=eqSize)
+                
+                # Add labels for on and off phases
+                #ymin, ymax = plt.ylim()
+                #plt.ylim(round_sig(ymin,3), round_sig(ymax,3))
+                #pos = 0.95 * abs(ymax-ymin)
+                arrowy = 0.085 #0.075
+                texty = 0.05
+                #awidth=10
+                ax.annotate('', xy=(self.pulses[p,0], arrowy), xytext=(self.pulses[p,1], arrowy), arrowprops=dict(arrowstyle='<->',color='blue'))
+                plt.text(self.pulses[p,0]+self.onDs[p]/2, texty, '$\Delta on_{}={:.3g}\mathrm{{ms}}$'.format(p, self.onDs[p]), ha='center', va='bottom', fontsize=eqSize)
+                if p < self.nPulses-1:
+                    end = self.pulses[p+1,0]
+                else:
+                    end = self.endT
+                ax.annotate('', xy=(self.pulses[p,1], arrowy), xytext=(end, arrowy), arrowprops=dict(arrowstyle='<->',color='green'))
+                plt.text(self.pulses[p,1]+self.offDs[p]/2, texty, '$\Delta off_{}={:.3g}\mathrm{{ms}}$'.format(p, self.offDs[p]), ha='center', va='bottom', fontsize=eqSize)
+        
+        
+        return ax
+    
+    ###???
     def genPhiArray(self,phiOn,t_ons,t_offs,tstep):
         # t_ons and t_offs are the *start* of the on and off periods
         self.nPulses = len(t_ons)
@@ -279,12 +654,28 @@ class PhotoCurrent():
         for p in range(nPulses):
             phi[t_ons[p]/tstep:t_offs[p]/tstep] = phiOn
         
-    def filterData(self):
-        """Pass frequency bands to filter out"""
+    def filterData(self, t_window=1):
+        """
+        Pass frequency bands to filter out
+        t_window    := Time window [ms] over which to calculate the moving average
+        """
         # http://wiki.scipy.org/Cookbook/SignalSmooth
         # http://stackoverflow.com/questions/20618804/how-to-smooth-a-curve-in-the-right-way
         # http://www.nehalemlabs.net/prototype/blog/2013/04/05/an-introduction-to-smoothing-time-series-in-python-part-i-filtering-theory/
-        pass
+        
+        if not self.isFiltered:
+            self.Iorig = copy(self.I)
+            self.isFiltered = True
+            I = self.Iorig
+        else:
+            self.Iprev = copy(self.I)
+            I = self.Iprev
+        
+        # Moving average
+        # http://stackoverflow.com/questions/16820993/moving-average-of-an-array-in-python
+        nPoints = int(round(t_window/self.dt))
+        self.I = np.convolve(I, np.ones(nPoints)/nPoints, mode='same')
+        
 
 
         
@@ -366,62 +757,285 @@ class ProtocolData():
             # for phiInd in range(self.nPhis):
                 # for vInd in range(self.nVs):
                     
-    
+    def __iter__(self):
+        """Iterator to return the pulse sequence for the next trial"""
+        self.run = 0
+        self.phiInd = 0
+        self.vInd = 0
+        return self
+        
+    def __next__(self):
+        #print('Start: ', self.run, self.phiInd, self.vInd)
+        if self.run >= self.nRuns:
+            raise StopIteration
+        pc = self.trials[self.run][self.phiInd][self.vInd]
+        #self.vInd = (self.vInd + 1) % self.nVs
+        self.vInd += 1
+        if self.vInd >= self.nVs:
+            self.phiInd += 1
+            self.vInd = 0
+        if self.phiInd >= self.nPhis:
+            self.run += 1
+            self.phiInd = 0
+        #print('End: ', self.run, self.phiInd, self.vInd)
+        return pc #self.trials[self.run][self.phiInd][self.vInd]
     
     # Function to get array based on independent variable???
     # e.g. IPIs, onDs, phis etc. 
     
+    
+    def getLineProps(self, run, phiInd, vInd):
+        #global colours
+        #global styles
+        if verbose > 1 and (self.nRuns>len(colours) or len(self.phis)>len(colours) or len(self.Vs)>len(colours)):
+            warnings.warn("Warning: only {} line colours are available!".format(len(colours)))
+        if verbose > 0 and self.nRuns>1 and len(self.phis)>1 and len(self.Vs)>1:
+            warnings.warn("Warning: Too many changing variables for one plot!")
+        if verbose > 2:
+            print("Run=#{}/{}; phiInd=#{}/{}; vInd=#{}/{}".format(run,self.nRuns,phiInd,len(self.phis),vInd,len(self.Vs)))
+        if self.nRuns > 1:
+            col = colours[run % len(colours)]
+            if len(self.phis) > 1:
+                style = styles[phiInd % len(styles)]
+            elif len(self.Vs) > 1:
+                style = styles[vInd % len(styles)]
+            else:
+                style = '-'
+        else:
+            if len(self.Vs) > 1:
+                col = colours[vInd % len(colours)]
+                if len(self.phis) > 1:
+                    style = styles[phiInd % len(styles)]
+                else:
+                    style = '-'
+            else:
+                if len(self.phis) > 1:
+                    col = colours[phiInd % len(colours)]
+                    style = '-'
+                else:
+                    col = 'b'   ### colours[0]
+                    style = '-' ### styles[0]
+                    
+            
+            label = ""
+            if self.protocol == "shortPulse":
+                label = "$\mathrm{{Pulse}}={}\mathrm{{ms}}$ ".format(cycles[0][0]) #onD
+                #figTitle += "for varying pulse length "
+            elif self.protocol == "recovery":
+                label = "$\mathrm{{IPI}}={}\mathrm{{ms}}$ ".format(self.IPIs[run])
+                #figTitle += "for varying inter-pulse-interval "
+            elif self.protocol == 'sinusoid':
+                label = "$f={}\mathrm{{Hz}}$ ".format(round_sig(self.fs[run],3))
+            else:
+                label = ""
+                #figTitle += "\n "
+            
+            if len(self.phis)>1:
+                label += "$\phi = {:.3g}\ \mathrm{{photons \cdot s^{{-1}} \cdot mm^{{-2}}}}$ ".format(self.phis[phiInd])
+            #else:
+                #figTitle += "$\phi = {:.3g}\ \mathrm{{photons \cdot s^{{-1}} \cdot mm^{{-2}}}}$ ".format(phiOn)
+            
+            if len(self.Vs)>1:
+                label += "$\mathrm{{V}} = {:+}\ \mathrm{{mV}}$ ".format(self.Vs[vInd])
+            #else:
+                #figTitle += "$\mathrm{{V}} = {:+}\ \mathrm{{mV}}$ ".format(V)
+        return col, style#, label
+    
+    
+    def plot(self, ax=None, light='shade', addFeatures=True): #colour, linestyle
+        if ax == None:
+            #fig = plt.figure()    
+            ax = plt.gca()
+        else:
+            #plt.figure(fig.number)
+            plt.sca(ax)
+        legLabels = []
         
-    def getIpmax(self): 
-        """Find the maximum peak current for the whole data set. This is useful when the 'saturate' protocol is absent"""
-        self.Ipmax = 0
+        #onDs = []
+        begTs, endTs = [], []
+        #pulseSet = [[[None for v in range(self.nVs)] for p in range(self.nPhis)] for r in range(self.nRuns)]
+        self.nPulses = self.trials[0][0][0].nPulses # Assume all trials have the same number
+        pulseSet = np.zeros((self.nPulses, 2, self.nRuns))
         for run in range(self.nRuns):
-            for phiInd in range(self.nPhis):
-                for vInd in range(self.nVs):
-                    if abs(self.trials[run][phiInd][vInd].Ipeak) > abs(self.Ipmax):
-                        self.Ipmax = self.trials[run][phiInd][vInd].Ipeak
+            for phiInd, phi in enumerate(self.phis):
+                for vInd, V in enumerate(self.Vs):
+                    pc = self.trials[run][phiInd][vInd]
+                    #pc.alignToPulse()
+                    begTs.append(pc.begT)
+                    endTs.append(pc.endT)
+                    #pulseSet[run][phiInd][vInd] = pc.pulses
+                    pulseSet[:,:,run] = pc.pulses
+                    #onDs.append(pc.onDs)
+                    col, style = self.getLineProps(run, phiInd, vInd)
+                    pc.plot(ax=ax, light=None, addFeatures=False, colour=col, linestyle=style)
+                    label = ""
+                    if self.nRuns > 1 and hasattr(self, 'runLabels'):
+                        label += self.runLabels[run]
+                    if self.nPhis > 1:
+                        label += "$\phi = {:.3g}\ \mathrm{{[ph. \cdot s^{{-1}} \cdot mm^{{-2}}]}}$ ".format(phi)
+                    if self.nVs > 1:
+                        label += "$\mathrm{{V}} = {:+}\ \mathrm{{[mV]}}$ ".format(V)
+                    legLabels.append(label)
+                    #legLabels.append('$\phi={:.3g}\ \mathrm{{[ph. \cdot s^{{-1}} \cdot mm^{{-2}}]}},\, V={:+.3g}\ \mathrm{{[mV]}}$'.format(phi, V))
+                    #legLabels.append('$\phi={:.3g}\ \mathrm{{[mW \cdot mm^{{-2}}]}},\, V={:+.3g}\ \mathrm{{[mV]}}$'.format(flux2irrad(phi,pc.lam), V))
+                    # if run==0 and phiInd==0 and vInd==0:
+                        # #self.begT, self.endT = pc.begT, pc.endT
+                        # pulses = pc.pulses
+                        # plotLight(pulses, ax=ax, light=light, lam=470, alpha=0.2)
+                    # else:
+                        # for p in range(pc.nPulses):
+                            # if np.allclose(pulses[p], pc.pulses[p]):
+                                # pass
+                            # elif np.allclose(pulses[p,0], pc.pulses[p,0]) or np.allclose(pulses[p,1], pc.pulses[p,1]):
+                                # pass
+                            # else:
+                                # plotLight(np.asarray([pc.pulses[p]]), ax=ax, light=light, lam=470, alpha=0.2)
+                    # if pc.begT < self.begT:
+                        # self.begT = pc.begT
+                    # if pc.endT > self.begT:
+                        # self.endT = pc.endT
+                    #plotLight(pc.pulses, ax=ax, light=light, lam=470, alpha=0.2)
+        
+        self.begT, self.endT = min(begTs), max(endTs)
+        
+        # Add stimuli
+        for p in range(self.nPulses):
+            sameStart, sameEnd = False, False
+            if np.allclose(pulseSet[p,0,run], np.tile(pulseSet[p,0,0], (1,1,self.nRuns))): #pth t_on are the same
+                sameStart = True
+            if np.allclose(pulseSet[p,1,run], np.tile(pulseSet[p,1,0], (1,1,self.nRuns))): #pth t_off are the same
+                sameEnd = True
+            
+            if sameStart and sameEnd: #np.allclose(pulseSet[p,:,run], np.tile(pulseSet[p,:,0], (1,1,self.nRuns))): #pth pulses are the same
+                plotLight(np.asarray([pulseSet[p,:,0]]), ax=ax, light=light, lam=470, alpha=0.2)
+            
+            elif not sameStart and not sameEnd: # No overlap
+                for run in range(self.nRuns):
+                    plotLight(np.asarray([pulseSet[p,:,run]]), ax=ax, light=light, lam=470, alpha=0.2)
+            
+            else: #not (sameStart and sameEnd): # One or the other - xor
+                pass
+                #for run in range(self.nRuns):
+                    # Plot bars
+
+        
+        ### Move to protocols...
+        if len(self.Vs) == 1:
+            ncol = 1
+        else:
+            ncol = len(self.phis)
+        if label != "":
+            lgd = ax.legend(legLabels, loc='best', borderaxespad=0, ncol=ncol, fancybox=True) #, shadow=True , bbox_to_anchor=(1.02, 1)
+        #ax.legend(legLabels, loc='best')
+        
+        # Freeze y-limits
+        #ax.set_ylim(ax.get_ylim())
+        ax.set_ybound(ax.get_ylim())
+        #print(ax.get_ylim())
+        
+        #tickLabels = [item.get_text() for item in ax.get_yticklabels(which='both')]
+        #print(tickLabels)
+        
+        #ax.set_xlabel('$\mathrm{Time\ [ms]}$', position=(0.95,0.8))
+        ax.set_xlabel('$\mathrm{Time\ [ms]}$') #(r'\textbf{Time} [ms]')
+        plt.xlim((self.begT, self.endT))
+        ax.set_ylabel('$\mathrm{Photocurrent\ [nA]}$')
+        
+        #ax.spines['left'].set_position('zero') # y-axis
+        ax.spines['right'].set_color('none')
+        ax.spines['bottom'].set_position('zero') # x-axis
+        ax.spines['top'].set_color('none')
+        ax.spines['left'].set_smart_bounds(True)
+        ax.spines['bottom'].set_smart_bounds(True)
+        ax.xaxis.set_ticks_position('bottom')
+        ax.yaxis.set_ticks_position('left')
+        
+        #ax.set_yticklabels(tickLabels)
+        #print(onDs)
+        #if np.all([onD == onDs[0] for onD in onDs]):
+        #if np.allclose(onDs, onDs[0] * np.ones(len(onDs))):
+        #plotLight(pc.pulses, ax=ax, light=light, lam=470, alpha=0.2)
+        #else:
+            # Plot bars for on periods
+        #    pass
+        
+        #plotLight(self.getProtPulses(), ax=ax, light=light, lam=470, alpha=0.2)
+        
+        
+        
+        #ax.tight_layout()
+        
+        return ax
+        
+        
+    def getIpmax(self, vInd=None): 
+        """Find the maximum peak current for the whole data set. This is useful when the 'saturate' protocol is absent"""
+        self.Ipmax_ = 0
+        if vInd is None:
+            for run in range(self.nRuns):
+                for phiInd in range(self.nPhis):
+                    for vInd in range(self.nVs):
+                        if abs(self.trials[run][phiInd][vInd].peak_) > abs(self.Ipmax_):
+                            self.Ipmax = self.trials[run][phiInd][vInd].peak_
+                            rmax = run
+                            pmax = phiInd
+                            vmax = vInd
+        else:
+            assert(vInd < self.nVs)
+            for run in range(self.nRuns):
+                for phiInd in range(self.nPhis):                
+                    if abs(self.trials[run][phiInd][vInd].peak_) > abs(self.Ipmax_):
+                        self.Ipmax = self.trials[run][phiInd][vInd].peak_
                         rmax = run
                         pmax = phiInd
                         vmax = vInd
-        return self.Ipmax, (rmax, pmax, vmax)
+        return self.Ipmax_, (rmax, pmax, vmax)
     
+    # reduce(lambda a,b: a if (a > b) else b, list)
     
     def getProtPeaks(self):
         """Return the set of maximum (absolute) peak currents across a whole set of photocurrents"""
         if self.nRuns > 1:
             phiInd = 0
             vInd = 0
-            self.IrunPeaks = [self.trials[run][phiInd][vInd].Ipmax for run in range(self.nRuns)]
-            self.trunPeaks = [self.trials[run][phiInd][vInd].tpeak for run in range(self.nRuns)]
+            self.IrunPeaks = [self.trials[run][phiInd][vInd].peak_ for run in range(self.nRuns)]
+            self.trunPeaks = [self.trials[run][phiInd][vInd].tpeak_ for run in range(self.nRuns)]
             Ipeaks = self.IrunPeaks
             tpeaks = self.trunPeaks
         if self.nPhis > 1:
             run = 0
             vInd = 0
-            self.IphiPeaks = [self.trials[run][phiInd][vInd].Ipmax for phiInd in range(self.nPhis)]
-            self.trunPeaks = [self.trials[run][phiInd][vInd].tpeak for phiInd in range(self.nPhis)]
+            self.IphiPeaks = [self.trials[run][phiInd][vInd].peak_ for phiInd in range(self.nPhis)]
+            self.trunPeaks = [self.trials[run][phiInd][vInd].tpeak_ for phiInd in range(self.nPhis)]
             Ipeaks = self.IphiPeaks
             tpeaks = self.trunPeaks
         if self.nVs > 1:
             run = 0
             phiInd = 0
-            self.IVPeaks = [self.trials[run][phiInd][vInd].Ipmax for vInd in range(self.nVs)]
-            self.tVPeaks = [self.trials[run][phiInd][vInd].tpeak for vInd in range(self.nVs)]
+            self.IVPeaks = [self.trials[run][phiInd][vInd].peak_ for vInd in range(self.nVs)]
+            self.tVPeaks = [self.trials[run][phiInd][vInd].tpeak_ for vInd in range(self.nVs)]
             Ipeaks = self.IVPeaks
             tpeaks = self.tVPeaks
         return Ipeaks, tpeaks
         
     
-    def getSteadyStates(self,run=0):
-        
+    def getSteadyStates(self, run=0, phiInd=None):
+        """Return Iss, Vss"""
         assert(self.nVs > 1)
-        self.Iplats = np.zeros((self.nPhis,self.nVs))
-        self.Vplats = np.zeros((self.nPhis,self.nVs))
-        for phiInd, phi in enumerate(self.phis): 
+        if phiInd is None: # Return 2D array
+            self.Isss_ = np.zeros((self.nPhis,self.nVs))
+            self.Vss_ = np.zeros((self.nPhis,self.nVs))
+            for phiInd, phi in enumerate(self.phis): 
+                for vInd, V in enumerate(self.Vs): 
+                    self.Isss_[phiInd,vInd] = self.trials[run][phiInd][vInd].ss_ # Variations along runs are not useful here
+                    self.Vss_[phiInd,vInd] = self.trials[run][phiInd][vInd].V
+        else:
+            self.Isss_ = np.zeros(self.nVs)
+            self.Vss_ = np.zeros(self.nVs)
             for vInd, V in enumerate(self.Vs): 
-                self.Iplats[phiInd,vInd] = self.trials[run][phiInd][vInd].Iss # Variations along runs are not useful here
-                self.Vplats[phiInd,vInd] = self.trials[run][phiInd][vInd].V
-        return self.Iplats, self.Vplats
+                self.Isss_[vInd] = self.trials[run][phiInd][vInd].ss_
+                self.Vss_[vInd] = self.trials[run][phiInd][vInd].V
+        return self.Isss_, self.Vss_
         
         
         # self.Is = Is  # [run][phiInd][vInd]
@@ -454,10 +1068,10 @@ from collections import defaultdict
 class DataSet():
     """Container for photocurrent data used to produce arrays for parameter extraction"""
     
-    def __init__(self,protocol):
+    def __init__(self, fluxSet, saturate=None, recovery=None, rectifier=None, shortPulses=None):
         self.data = defaultdict(list)
         
-        self.protocol = protocol
+        #self.protocol = protocol
         
         # # if protocol == shortPulse:
             # # self.data = data
