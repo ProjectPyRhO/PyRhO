@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl # For plotStates
-from .utilities import plotLight
+from .utilities import plotLight, calcV1
 from scipy.signal import * #for argrelextrema
 from scipy.integrate import odeint
 import warnings
@@ -18,7 +18,7 @@ from collections import OrderedDict
 ###### Model class definitions ######
 
 
-class RhodopsinModel(object):
+class RhodopsinModel(PyRhOobject):
     """Common base class for all models"""
     
     phi = 0.0  # Instantaneous Light flux
@@ -27,45 +27,71 @@ class RhodopsinModel(object):
     # Solver parameters
     # dt = 0.1 #0.01 #0.1 #0.001
     
-    def __init__(self, nStates): #, rhoType='Rhodopsin'
-        self.nStates = nStates
+    # def __init__(self, nStates): #, rhoType='Rhodopsin'
+        # self.nStates = nStates
         #self.rhoType = rhoType # E.g. 'ChR2' or 'ArchT'
+    def __init__(self, params=None, rhoType='Rhodopsin'): #E=0.0, gam=0.05, phi0=1e14, #, A=31192)
+    
+        if params is None:
+            params = modelParams[str(self.nStates)]
+        self.rhoType = rhoType # E.g. 'ChR2' or 'ArchT'
+    
+        self.setParams(params)
+        
+        # Ensure v1 is scaled correctly so that f(V=-70) = 1
+        v1 = calcV1(self.v0, self.E)
+        if not np.isclose(self.v1, v1, rtol=1e-3, atol=1e-5):
+            warnings.warn("Correcting v1 scaling: {} <-- {}".format(self.v1, v1))
+            self.v1 = v1
+        
+        self.initStates(phi=self.phi_0, s0=self.s_0) # phi
+        #self.transRates = {r: getattr(self, r) for r in itertools.chain(self.photoRates, self.constRates)}
+        
+        if verbose > 1:
+            print("PyRhO {}-state {} model initialised!".format(self.nStates, self.rhoType))
+        
+        if verbose > 2: 
+            self.printParams()
         
     def __str__(self):
-        str = self.rhoType+" {} state model (phi={:.3g})".format(self.nStates,self.phi) # Display transition rates?
+        str = "{} {}-state model (phi={:.3g})".format(self.rhoType, self.nStates, self.phi) # Display transition rates?
         #if self.useIR:
         #    str += " with inward rectification"
         return str
         #self.__name__+
-
+    
+    def __repr__(self):
+        return "<PyRhO {}-state Model object>".format(self.nStates)
+    
     def __call__(self):
         """When a rhodopsin is called, return its internal state at that instant"""
         return self.calcI(self.V, self.states[-1,:])
     
-    def setParams(self, params):
-        """Set all model parameters from a Parameters() object"""
-        #for param, value in params.items():
-        for p in params.keys():
-            self.__dict__[p] = params[p].value #vars(self())[p]
+    ### Now moved to PyRhOobject class
+    # def setParams(self, params):
+        # """Set all model parameters from a Parameters() object"""
+        # #for param, value in params.items():
+        # for p in params.keys():
+            # self.__dict__[p] = params[p].value #vars(self())[p]
     
-    def updateParams(self, params):
-        """Update model parameters which already exist"""
-        pDict = params.valuesdict()
-        count = 0
-        for p, v in pDict.items():
-            if p in self.__dict__: # Added to allow dummy variables in fitting parameters
-                self.__dict__[p] = v #vars(self())[p]
-                count += 1
-        return count
+    # def updateParams(self, params):
+        # """Update model parameters which already exist"""
+        # pDict = params.valuesdict()
+        # count = 0
+        # for p, v in pDict.items():
+            # if p in self.__dict__: # Added to allow dummy variables in fitting parameters
+                # self.__dict__[p] = v #vars(self())[p]
+                # count += 1
+        # return count
     
-    def exportParams(self, params):
-        """Export parameters to lmfit dictionary"""
-        for p in self.__dict__.keys():
-            params[p].value = self.__dict__[p]
+    # def exportParams(self, params):
+        # """Export parameters to lmfit dictionary"""
+        # for p in self.__dict__.keys():
+            # params[p].value = self.__dict__[p]
             
-    def printParams(self):
-        for p in self.__dict__.keys():
-            print(p,' = ',self.__dict__[p])
+    # def printParams(self):
+        # for p in self.__dict__.keys():
+            # print(p,' = ',self.__dict__[p])
     
     def storeStates(self,soln,t):#,pulseInds):
         self.states = np.vstack((self.states, soln)) #np.append(self.states, soln, axis=0)
@@ -333,6 +359,14 @@ class RhO_3states(RhodopsinModel):
                 $$ f(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1} $$
                 $$ I_{\phi} = g \cdot O \cdot f(v) \cdot (v-E) $$
                 """
+    _latex =   ["$\dot{C} = G_{r}(\phi)D - G_{a}(\phi)C$", 
+                "$\dot{O} = G_{a}(\phi)C - G_{d}O$",
+                "$\dot{D} = G_{d}O - G_{r}(\phi)D$",
+                "$C + O + D = 1$",
+                "$G_a(\phi) = k\\frac{\phi^p}{\phi^p + \phi_m^p}$",
+                "$G_r(\phi) = G_{r0} + \mathcal{H}(\phi) \cdot G_{r1}$",
+                "$f(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1}$",
+                "$I_{\phi} = g \cdot O \cdot f(v) \cdot (v-E)$"]
     # $$ G_r = G_{r0} + G_{r1}(\phi) $$
     #"""
     #\begin{align*}
@@ -365,37 +399,37 @@ class RhO_3states(RhodopsinModel):
             stimulus : 1
             '''
 
-    def __init__(self, params=modelParams['3'], rhoType='Rhodopsin'): # E=0.0, #phi=0.0 RhO.setParams(d3sp)  # (self, E=0.0, rhoType='Rhodopsin')
+    # def __init__(self, params=modelParams['3'], rhoType='Rhodopsin'): # E=0.0, #phi=0.0 RhO.setParams(d3sp)  # (self, E=0.0, rhoType='Rhodopsin')
         
-        #self.equations = RhO_3states.equations
-        self.rhoType = rhoType # E.g. 'ChR2' or 'ArchT'
+        # #self.equations = RhO_3states.equations
+        # self.rhoType = rhoType # E.g. 'ChR2' or 'ArchT'
         
-        self.setParams(params)
+        # self.setParams(params)
         
-        # Three-state model parameters
-        #self.E = E                  # [mV]    Channel reversal potential
-        #self.k = 8.2#1.64e-16 *1e18#8.2*(2e-14*1e-3) #0.5*1.2e-14/1.1    # [ms^-1] Quantum efficiency * number of photons absorbed by a RhO molecule per unit time
-        #self.P = self.set_P(phi) # [ms^-1] Quantum efficiency * number of photons absorbed by a ChR2 molecule per unit time
-        #self.Gd = 0.1 #0.117  #1/11              # [ms^-1] @ 1mW mm^-2
-        #self.Gr0 = 1/5000 #Gr_dark = 1/5000       # [ms^-1] tau_r,dark = 5-10s p405 Nikolic et al. 2009
-        #self.Gr1 = 0.016 #Gr_light = 0.016#1/165       # [ms^-1] (Gr,light @ 1mW mm^-2)
-        #self.phi0 = 0.7e15#0.02/(2e-14*1e-3)
-        #self.phiSat = 4e17#6.7e17 #13.6/(2e-14*1e-3)
+        # # Three-state model parameters
+        # #self.E = E                  # [mV]    Channel reversal potential
+        # #self.k = 8.2#1.64e-16 *1e18#8.2*(2e-14*1e-3) #0.5*1.2e-14/1.1    # [ms^-1] Quantum efficiency * number of photons absorbed by a RhO molecule per unit time
+        # #self.P = self.set_P(phi) # [ms^-1] Quantum efficiency * number of photons absorbed by a ChR2 molecule per unit time
+        # #self.Gd = 0.1 #0.117  #1/11              # [ms^-1] @ 1mW mm^-2
+        # #self.Gr0 = 1/5000 #Gr_dark = 1/5000       # [ms^-1] tau_r,dark = 5-10s p405 Nikolic et al. 2009
+        # #self.Gr1 = 0.016 #Gr_light = 0.016#1/165       # [ms^-1] (Gr,light @ 1mW mm^-2)
+        # #self.phi0 = 0.7e15#0.02/(2e-14*1e-3)
+        # #self.phiSat = 4e17#6.7e17 #13.6/(2e-14*1e-3)
         
-        #self.g = 100e-3 * 1.67e5 *2   # [pS] g1 (100fS): Conductance of an individual ion channel * N (100000)
+        # #self.g = 100e-3 * 1.67e5 *2   # [pS] g1 (100fS): Conductance of an individual ion channel * N (100000)
         
-        #self.useIR = False # Implement rectifier!!!
-        # Initial conditions: Instantaneous photon flux density = 0.0
-        #self.s_0 = np.array([1,0,0])          # Initialise in dark 
-        self.initStates(phi=self.phi_0, s0=self.s_0)        # Initialise in dark
-        #self.transRates = {'Ga':self.Ga, 'Gd':self.Gd, 'Gr':self.Gr}
-        #self.transRates = {r: getattr(self, r) for r in itertools.chain(self.photoRates, self.constRates)}
+        # #self.useIR = False # Implement rectifier!!!
+        # # Initial conditions: Instantaneous photon flux density = 0.0
+        # #self.s_0 = np.array([1,0,0])          # Initialise in dark 
+        # self.initStates(phi=self.phi_0, s0=self.s_0)        # Initialise in dark
+        # #self.transRates = {'Ga':self.Ga, 'Gd':self.Gd, 'Gr':self.Gr}
+        # #self.transRates = {r: getattr(self, r) for r in itertools.chain(self.photoRates, self.constRates)}
         
-        if verbose > 1:
-            print("Nikolic et al. {}-state {} model initialised!".format(self.nStates,self.rhoType))
+        # if verbose > 1:
+            # print("Nikolic et al. {}-state {} model initialised!".format(self.nStates,self.rhoType))
         
-        if verbose > 1: 
-            self.printParams()
+        # if verbose > 1: 
+            # self.printParams()
             
 
     
@@ -523,8 +557,13 @@ class RhO_3states(RhodopsinModel):
         I_RhO = self.g*O*self.calcfV(V)*(V-self.E)
         return I_RhO * 1e-6 # pS * mV * 1e-6 = nA
     
-    def calcPsi(self, states):
-        return 1
+    def calcPsi(self, states=None):#, gam=None):
+        if states is None:
+            states = self.states
+        C, O, D = states
+        #if gam is None:
+        #    gam = self.gam
+        return O
     
     # def calcOn(self,t):
         # """Calculate the on phase current for square light pulses from the analytic solution"""
@@ -694,40 +733,40 @@ class RhO_4states(RhodopsinModel):
             I = g*(S_O1+gam*S_O2)*fv*(v-E) : amp
             '''
     
-    def __init__(self, params=modelParams['4'], rhoType='Rhodopsin'): #E=0.0, gam=0.05, phi0=1e14, #, A=31192)
+    # def __init__(self, params=modelParams['4'], rhoType='Rhodopsin'): #E=0.0, gam=0.05, phi0=1e14, #, A=31192)
     
-        self.rhoType = rhoType # E.g. 'ChR2' or 'ArchT'
+        # self.rhoType = rhoType # E.g. 'ChR2' or 'ArchT'
     
-        self.setParams(params)
-        # Four-state model parameters
-        #self.E = E                  # [mV]      Channel reversal potential
-        #self.gam = gam              # []        Ratio of single channel conductances: O2/O1
-        #self.phi0 = phi0            # [photons * s^-1 * mm^-2] Normalising photon flux density ~ 1/10 of threshold
-        ##self.A = A                  # [um^2]  Effective area of the cell / compartment
-        #self.sigma_ret = 1.2e-8 * 1e-6 # Convert from m^2 to mm^2
-        #self.w_loss = 1.1
-        #self.k1 = 0.5 * self.sigma_ret / self.w_loss # Quantum efficiency * sigma_ret / w_loss
-        #self.k2 = 0.15 * self.sigma_ret / self.w_loss # Quantum efficiency * sigma_ret / w_loss
-        #self.Gr = 0.000400 # [ms^-1] ==> tau_r = 2.5s
-        #self.Gd1 = 0.11 # [ms^-1]
-        #self.Gd2 = 0.025 # [ms^-1]
-        #self.c1 = 0.03
-        #self.c2 = 0.0115
-        #self.e12d = 0.01 # [ms^-1]
-        #self.e21d = 0.015 # [ms^-1]
-        #self.g = 100e-3 * 1.67e5   # [pS] g1 (100fS): Conductance of an individual ion channel * N (~150000)
+        # self.setParams(params)
+        # # Four-state model parameters
+        # #self.E = E                  # [mV]      Channel reversal potential
+        # #self.gam = gam              # []        Ratio of single channel conductances: O2/O1
+        # #self.phi0 = phi0            # [photons * s^-1 * mm^-2] Normalising photon flux density ~ 1/10 of threshold
+        # ##self.A = A                  # [um^2]  Effective area of the cell / compartment
+        # #self.sigma_ret = 1.2e-8 * 1e-6 # Convert from m^2 to mm^2
+        # #self.w_loss = 1.1
+        # #self.k1 = 0.5 * self.sigma_ret / self.w_loss # Quantum efficiency * sigma_ret / w_loss
+        # #self.k2 = 0.15 * self.sigma_ret / self.w_loss # Quantum efficiency * sigma_ret / w_loss
+        # #self.Gr = 0.000400 # [ms^-1] ==> tau_r = 2.5s
+        # #self.Gd1 = 0.11 # [ms^-1]
+        # #self.Gd2 = 0.025 # [ms^-1]
+        # #self.c1 = 0.03
+        # #self.c2 = 0.0115
+        # #self.e12d = 0.01 # [ms^-1]
+        # #self.e21d = 0.015 # [ms^-1]
+        # #self.g = 100e-3 * 1.67e5   # [pS] g1 (100fS): Conductance of an individual ion channel * N (~150000)
         
-        #self.useInwardRect = False # Implement rectifier!!!
-        # Initial conditions
-        #self.s_0 = np.array([1,0,0,0])
-        self.initStates(phi=self.phi_0, s0=self.s_0) # phi
-        #self.transRates = {r: getattr(self, r) for r in itertools.chain(self.photoRates, self.constRates)}
+        # #self.useInwardRect = False # Implement rectifier!!!
+        # # Initial conditions
+        # #self.s_0 = np.array([1,0,0,0])
+        # self.initStates(phi=self.phi_0, s0=self.s_0) # phi
+        # #self.transRates = {r: getattr(self, r) for r in itertools.chain(self.photoRates, self.constRates)}
         
-        if verbose > 1:
-            print("Nikolic et al. {}-state {} model initialised!".format(self.nStates,self.rhoType))
+        # if verbose > 1:
+            # print("Nikolic et al. {}-state {} model initialised!".format(self.nStates,self.rhoType))
         
-        if verbose > 1: 
-            self.printParams()
+        # if verbose > 1: 
+            # self.printParams()
     
     def reportParams(self): # Replace with local def __str__(self):
         report =  'Four-state model parameters\n'
@@ -822,9 +861,13 @@ class RhO_4states(RhodopsinModel):
         I_RhO = self.g*(O1 + self.gam*O2)*self.calcfV(V)*(V-self.E)
         return I_RhO * 1e-6 # pS * mV * 1e-6 = nA
     
-    def calcPsi(self, states):
+    def calcPsi(self, states=None):#, gam=None):
+        if states is None:
+            states = self.states
         C1, O1, O2, C2 = states
-        return O1 + self.gam * O2
+        #if gam is None:
+        gam = self.gam
+        return O1 + gam * O2
     
     # def calcfV(self, V):
         # return 1
@@ -941,68 +984,68 @@ class RhO_6states(RhodopsinModel):
             #'''
             
     
-    def __init__(self, params=modelParams['6'], rhoType='Rhodopsin'): # E=0.0, gam=0.05, phi0=1e14, A=3.12e4# phi=0.0
+    # def __init__(self, params=modelParams['6'], rhoType='Rhodopsin'): # E=0.0, gam=0.05, phi0=1e14, A=3.12e4# phi=0.0
         
-        self.rhoType = rhoType # E.g. 'ChR2' or 'ArchT'
+        # self.rhoType = rhoType # E.g. 'ChR2' or 'ArchT'
         
-        self.setParams(params)
-        #self.g = self.gbar * self.A # [pS]      Total conductance
+        # self.setParams(params)
+        # #self.g = self.gbar * self.A # [pS]      Total conductance
         
-        ### Model constants
-        #self.E = E                  # [mV]    Channel reversal potential
-        #self.gam = gam              # []      Ratio of single channel conductances: O2/O1
-        #self.phi0 = phi0            # [photons * s^-1 * mm^-2] Normalising photon flux density ~ 1/10 of threshold
-        #self.A = A                  # [um^2]  Effective area of the cell / compartment
-        #self.v0 = 43  # (mV)
-        #self.v1 = 4.1 # (mV) #-4.1 Changed to correct f(v) but preserve the form of the numerator
-        #self.gbar = 2.4 # (pS * um^-2)
-        # gam = 0.05 # (Dimensionless)
-        # A = 31192#e-6 # (um^2)
-        # E = 0 # 0:8 (mV) 0e-3
-        #self.g = self.gbar * self.A # [pS]      Total conductance
+        # ### Model constants
+        # #self.E = E                  # [mV]    Channel reversal potential
+        # #self.gam = gam              # []      Ratio of single channel conductances: O2/O1
+        # #self.phi0 = phi0            # [photons * s^-1 * mm^-2] Normalising photon flux density ~ 1/10 of threshold
+        # #self.A = A                  # [um^2]  Effective area of the cell / compartment
+        # #self.v0 = 43  # (mV)
+        # #self.v1 = 4.1 # (mV) #-4.1 Changed to correct f(v) but preserve the form of the numerator
+        # #self.gbar = 2.4 # (pS * um^-2)
+        # # gam = 0.05 # (Dimensionless)
+        # # A = 31192#e-6 # (um^2)
+        # # E = 0 # 0:8 (mV) 0e-3
+        # #self.g = self.gbar * self.A # [pS]      Total conductance
         
-        #self.a10 = 5
-        #self.a2 = 1
-        #self.a30 = 0.022
-        #self.a31 = 0.0135
-        #self.a4 = 0.025
-        #self.a6 = 0.00033   # = 1/tau6, tau6 = 3s = 3000ms
-        #self.b1 = 0.13
-        #self.b20 = 0.011
-        #self.b21 = 0.0048
-        #self.b3 = 1
-        #self.b40 = 1.1
+        # #self.a10 = 5
+        # #self.a2 = 1
+        # #self.a30 = 0.022
+        # #self.a31 = 0.0135
+        # #self.a4 = 0.025
+        # #self.a6 = 0.00033   # = 1/tau6, tau6 = 3s = 3000ms
+        # #self.b1 = 0.13
+        # #self.b20 = 0.011
+        # #self.b21 = 0.0048
+        # #self.b3 = 1
+        # #self.b40 = 1.1
         
-        #self.useIR = True
+        # #self.useIR = True
         
-        # Initial conditions
-        #self.s_0 = np.array([1,0,0,0,0,0])  # [s1_0=1, s2_0=0, s3_0=0, s4_0=0, s5_0=0, s6_0=0] # array not necessary
-        self.initStates(phi=self.phi_0, s0=self.s_0) # phi
-        #self.transRates = {r: getattr(self, r) for r in itertools.chain(self.photoRates, self.constRates)}
+        # # Initial conditions
+        # #self.s_0 = np.array([1,0,0,0,0,0])  # [s1_0=1, s2_0=0, s3_0=0, s4_0=0, s5_0=0, s6_0=0] # array not necessary
+        # self.initStates(phi=self.phi_0, s0=self.s_0) # phi
+        # #self.transRates = {r: getattr(self, r) for r in itertools.chain(self.photoRates, self.constRates)}
         
-        if verbose > 1:
-            print("Grossman et al. {}-state {} model initialised!".format(self.nStates,self.rhoType))
+        # if verbose > 1:
+            # print("Grossman et al. {}-state {} model initialised!".format(self.nStates,self.rhoType))
         
-        if verbose > 1: 
-            self.printParams()
+        # if verbose > 1: 
+            # self.printParams()
     
-    def _calcGa1(self,phi):
+    def _calcGa1(self, phi):
         #return self.a10*(phi/self.phi0)
         return self.k1 * phi**self.p/(phi**self.p + self.phim**self.p)
 
-    def _calcGf(self,phi):
+    def _calcGf(self, phi):
         #return self.a30 + self.a31*np.log(1+(phi/self.phi0))
         return self.Gf0 + self.kf * phi**self.q/(phi**self.q + self.phim**self.q)
 
-    def _calcGb(self,phi):
+    def _calcGb(self, phi):
         #return self.b20 + self.b21*np.log(1+(phi/self.phi0))
         return self.Gb0 + self.kb * phi**self.q/(phi**self.q + self.phim**self.q)
 
-    def _calcGa2(self,phi):
+    def _calcGa2(self, phi):
         #return self.b40*(phi/self.phi0)
         return self.k2 * phi**self.p/(phi**self.p + self.phim**self.p)
 
-    def setLight(self,phi):
+    def setLight(self, phi):
         #assert(phi >= 0)
         if phi < 0:
             phi = 0
@@ -1027,13 +1070,14 @@ class RhO_6states(RhodopsinModel):
         """Function describing the differential equations of the 6-state model to be solved by odeint"""
         if phi_t is not None:
             self.setLight(float(phi_t(t)))
-        s1,s2,s3,s4,s5,s6 = s_0 # Split state vector into individual variables s1=s[0], s2=s[1], etc
-        dC1dt = -self.Ga1*s1 + self.Gd1*s3 + self.Gr0*s6           # s1'
-        dI1dt =  self.Ga1*s1 - self.Go1*s2                        # s2'
-        dO1dt =  self.Go1*s2 - (self.Gd1+self.Gf)*s3 + self.Gb*s4 # s3'
-        dO2dt =  self.Gf*s3 - (self.Gb+self.Gd2)*s4 + self.Go2*s5 # s4'
-        dI2dt = -self.Go2*s5 + self.Ga2*s6                        # s5'
-        dC2dt =  self.Gd2*s4 - (self.Ga2+self.Gr0)*s6              # s6'
+        C1, I1, O1, O2, I2, C2 = s_0 # Unpack state vector
+        #s1,s2,s3,s4,s5,s6 = s_0 # Split state vector into individual variables s1=s[0], s2=s[1], etc
+        dC1dt = -self.Ga1*C1 + self.Gd1*O1 + self.Gr0*C2           # s1'
+        dI1dt =  self.Ga1*C1 - self.Go1*I1                        # s2'
+        dO1dt =  self.Go1*I1 - (self.Gd1+self.Gf)*O1 + self.Gb*O2 # s3'
+        dO2dt =  self.Gf*O1 - (self.Gb+self.Gd2)*O2 + self.Go2*I2 # s4'
+        dI2dt = -self.Go2*I2 + self.Ga2*C2                        # s5'
+        dC2dt =  self.Gd2*O2 - (self.Ga2+self.Gr0)*C2              # s6'
         #d5 = - (f0+f1+f2+f3+f4)
         #dr0 = -2*pi*f*sin(2*pi*f*t)*C(1+cos(2*pi*f*t))      # d/dt (A(1+cos(2*pi*f*t)))
         return np.array([ dC1dt, dI1dt, dO1dt, dO2dt, dI2dt, dC2dt ])
@@ -1046,57 +1090,54 @@ class RhO_6states(RhodopsinModel):
                          [0, 0, 0, 0, -self.Go2, self.Ga2],
                          [0, 0, 0, self.Gd2, 0, -(self.Ga2+self.Gr0)]])
         
-    def calcI(self, V, states=None): # Change to (V, psi)?
-        """Takes Voltage [mV] and state variables s_3 and s_4 to calculate current [nA]
+    def calcI(self, V, states=None):#, gam=None, E=None, g=None): # Change to (V, psi)?
+        """Takes Voltage [mV] and state variables O1 and O2 to calculate current [nA]
         By convention, positive ions entering the cell --> negative current (e.g. Na^+ influx). 
         Conversely, Positive ions leaving (or negative ions entering) the cell --> positive current (e.g. Cl^- in or K^+ out). """
+        #if g is None:
+        g = self.g
         if states is None:
             states = self.states
-        s3 = states[:,2] # O1
-        s4 = states[:,3] # O2
-        psi = s3 + (self.gam * s4) # Dimensionless
-        ### if useInwardRect: ... else: fV=1
-        # try:
-            # fV = (self.v1/(V-self.E))*(1-np.exp(-(V-self.E)/self.v0)) # Dimensionless
-        # except ZeroDivisionError:
-            # if np.isscalar(V):
-                # if (V == self.E):
-                    # fV = self.v1/self.v0
-            # else: #type(fV) in (tuple, list, array)
-                # fV[np.isnan(fV)] = self.v1/self.v0 # Fix the error when dividing by zero
-        g_RhO = self.g * psi * self.calcfV(V) #* fV # self.gbar * self.A # Conductance (pS * um^-2)
-        I_RhO =  g_RhO * (V - self.E) # Photocurrent: (pS * mV)
+        O1 = states[:,2] # O1
+        O2 = states[:,3] # O2
+        #if gam is None:
+        gam = self.gam
+        #if E is None:
+        E = self.E
+        psi = O1 + (gam * O2) # Dimensionless
+        
+        g_RhO = g * psi * self.calcfV(V) #* fV # self.gbar * self.A # Conductance (pS * um^-2)
+        I_RhO =  g_RhO * (V - E) # Photocurrent: (pS * mV)
         return I_RhO * (1e-6) # 10^-12 * 10^-3 * 10^-6 (nA)
     
     ##############################################################    
-    def rectifierifier(V): ##### Redundant
-        if self.v0 == 0:
-            #print("f(V) undefined for v0 = 0")
-            warnings.warn("f(V) undefined for v0 = 0")
-        try:
-            fV = (self.v1/(V-self.E))*(1-np.exp(-(V-self.E)/self.v0)) # Dimensionless
-        except ZeroDivisionError:
-            pass
-        fV = (self.v1/(V-self.E))*(1-np.exp(-(V-self.E)/self.v0)) # Dimensionless
-        if np.isscalar(fV):
-            if (V == self.E):
-                fV = self.v1/self.v0
-        else: #type(fV) in (tuple, list, array)
-            fV[np.isnan(fV)] = self.v1/self.v0 # Fix the error when dividing by zero
+    # def rectifier(V): ##### Redundant
+        # if self.v0 == 0:
+            # warnings.warn("f(V) undefined for v0 = 0")
+        # try:
+            # fV = (self.v1/(V-self.E))*(1-np.exp(-(V-self.E)/self.v0)) # Dimensionless
+        # except ZeroDivisionError:
+            # pass
+        # fV = (self.v1/(V-self.E))*(1-np.exp(-(V-self.E)/self.v0)) # Dimensionless
+        # if np.isscalar(fV):
+            # if (V == self.E):
+                # fV = self.v1/self.v0
+        # else: #type(fV) in (tuple, list, array)
+            # fV[np.isnan(fV)] = self.v1/self.v0 # Fix the error when dividing by zero
 
-        return fV
+        # return fV
     
-    def equalFloats(x,y,eps=1e-6): # Use numpy.allclose(a, b, rtol=1e-05, atol=1e-08)
-        diff = np.abs(x-y)
-        if (x == y): # Catch infinities
-            return True
-        elif (x == 0 or y == 0 or diff < floatmin): # Either one number is 0 or both are very close
-            return diff < (eps * floatmin)
-        else: # Use relative error
-            return diff / (np.abs(x) + np.abs(y)) < eps
+    # def equalFloats(x,y,eps=1e-6): # Use numpy.allclose(a, b, rtol=1e-05, atol=1e-08)
+        # diff = np.abs(x-y)
+        # if (x == y): # Catch infinities
+            # return True
+        # elif (x == 0 or y == 0 or diff < floatmin): # Either one number is 0 or both are very close
+            # return diff < (eps * floatmin)
+        # else: # Use relative error
+            # return diff / (np.abs(x) + np.abs(y)) < eps
     #############################################################
         
-    def calcSteadyState(self,phi): # implicitly depends on phi0
+    def calcSteadyState(self, phi): # implicitly depends on phi0
         self.setLight(phi)
         Ga1 = self.Ga1
         Go1 = self.Go1
@@ -1108,32 +1149,38 @@ class RhO_6states(RhodopsinModel):
         Go2 = self.Go2
         Ga2 = self.Ga2
         denom6 = (Ga1*Go1*(Gf*(Go2*(Ga2+Gd2)+Gd2*Ga2)+Gb*Go2*Ga2)+Gd1*(Go1*Gb*Go2*Ga2+Ga1*Gb*Go2*Ga2+Gr0*(Go1*(Gb*Go2+Gd2*Go2)+Ga1*(Gb*Go2+Gd2*Go2)))+Gr0*(Ga1*(Go1*(Gb*Go2+Gd2*Go2+Gf*Go2)+Gf*Gd2*Go2)+Go1*Gf*Gd2*Go2))
-        s1s = (Gd1*(Go1*Gb*Go2*Ga2 + Go1*Gr0*(Gb*Go2 + Gd2*Go2)) + Go1*Gf*Gd2*Gr0*Go2)/denom6
-        s2s = (Gd1*(Ga1*Gb*Go2*Ga2 + Ga1*Gr0*(Gb*Go2 + Gd2*Go2)) + Ga1*Gf*Gd2*Gr0*Go2)/denom6
-        s3s = (Ga1*Go1*Gb*Go2*Ga2 + Ga1*Go1*Gr0*(Gb*Go2 + Gd2*Go2))/denom6
-        s4s = (Ga1*Go1*Gf*Go2*Ga2 + Ga1*Go1*Gf*Gr0*Go2)/denom6
-        s5s = (Ga1*Go1*Gf*Gd2*Ga2)/denom6
-        s6s = (Ga1*Go1*Gf*Gd2*Go2)/denom6
-        self.steadyStates = np.array([s1s, s2s, s3s, s4s, s5s, s6s])
-        return np.array([s1s, s2s, s3s, s4s, s5s, s6s])
+        C1s = (Gd1*(Go1*Gb*Go2*Ga2 + Go1*Gr0*(Gb*Go2 + Gd2*Go2)) + Go1*Gf*Gd2*Gr0*Go2)/denom6
+        I1s = (Gd1*(Ga1*Gb*Go2*Ga2 + Ga1*Gr0*(Gb*Go2 + Gd2*Go2)) + Ga1*Gf*Gd2*Gr0*Go2)/denom6
+        O1s = (Ga1*Go1*Gb*Go2*Ga2 + Ga1*Go1*Gr0*(Gb*Go2 + Gd2*Go2))/denom6
+        O2s = (Ga1*Go1*Gf*Go2*Ga2 + Ga1*Go1*Gf*Gr0*Go2)/denom6
+        I2s = (Ga1*Go1*Gf*Gd2*Ga2)/denom6
+        C2s = (Ga1*Go1*Gf*Gd2*Go2)/denom6
+        self.steadyStates = np.array([C1s, I1s, O1s, O2s, I2s, C2s])
+        return self.steadyStates #np.array([C1s, I1s, O1s, O2s, I2s, C2s])
     
-    def calcPsi(self, states):
-        s1,s2,s3,s4,s5,s6 = states
-        return s3 + self.gam * s4
+    def calcPsi(self, states=None):#, gam=None):
+        """Function to calculate the conductance scalar from the photocycle"""
+        if states is None:
+            states = self.states
+        C1, I1, O1, O2, I2, C2 = states
+        #if gam is None:
+        gam = self.gam
+        return O1 + gam * O2
         
     def calcSoln(self, t, s0=[1,0,0,0,0,0]):
         raise NotImplementedError(self.nStates)
         
 
-models = OrderedDict([('3', RhO_3states), ('4', RhO_4states), ('6', RhO_6states)])#{'3': RhO_3states, '4': RhO_4states, '6': RhO_6states} # OrderedDict...
+#models = OrderedDict([('3', RhO_3states), ('4', RhO_4states), ('6', RhO_6states)])#{'3': RhO_3states, '4': RhO_4states, '6': RhO_6states} # OrderedDict...
+models = OrderedDict([('3', RhO_3states), ('4', RhO_4states), ('6', RhO_6states), (3, RhO_3states), (4, RhO_4states), (6, RhO_6states)])
 
 def selectModel(nStates):
     """Model selection function"""
-    if nStates == 3 or nStates == 'three':
+    if int(nStates) == 3 or nStates == 'three':
         return RhO_3states() #(E)
-    elif nStates == 4 or nStates == 'four':
+    elif int(nStates) == 4 or nStates == 'four':
         return RhO_4states() #(E,gam,phi0)
-    elif nStates == 6 or nStates == 'six':
+    elif int(nStates) == 6 or nStates == 'six':
         return RhO_6states() #(E,gam,phi0,A)
     else:
         print("Error in selecting model - please choose from 3, 4 or 6 states")
