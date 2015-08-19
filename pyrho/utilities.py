@@ -1,11 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import warnings
+import pickle
 
 # http://preshing.com/20110924/timing-your-code-using-pythons-with-statement/
 import time
 
-from .config import verbose
+import os
+import shutil # for file copying
+import subprocess # for running system commands
+
+from .config import verbose, dDir, fDir
 
 class Timer:    
     def __enter__(self):
@@ -15,6 +20,32 @@ class Timer:
     def __exit__(self, *args):
         self.end = time.clock()
         self.interval = self.end - self.start
+        
+
+def checkNEURON():
+    return
+    
+def setupNEURON(path=None):
+    # Check for a working NEURON installation...
+    
+    ### To load mod files:
+    # Add os.environ['NRN_NMODL_PATH'] to environment variables. See $NEURONPATH/nrn/lib/python/neuron/__init__.py
+    if path is None:
+        path = os.environ['NRN_NMODL_PATH']
+    
+    # Check path
+    if os.path.isdir(path):
+        for f in NMODLfiles:
+            shutil.copy2(pyrhoNEURONpath, path, f)
+    
+    nrnivmodl = os.join(path, "nrn/x86_64/bin/nrnivmodl")
+    subprocess.call(nrnivmodl) #nrn/x86_64/bin/nrnivmodl
+    
+def setupBrian():
+    return
+    
+def checkBrian():
+    return
         
         
 def printParams(params):
@@ -30,17 +61,69 @@ def printParams(params):
     report += '========================\n'
     print(report)
     
-def loadData(pkl):
-    if pkl in dir: ### Finish!!!
-        fh = open(pkl, "rb")
+def compareParams(origParams, newParams):
+    ovd = origParams.valuesdict()
+    nvd = newParams.valuesdict()
+    report = '------------------------\n'
+    report += '       Parameters\n'
+    report += '------------------------\n'
+    for k,nv in nvd.items():
+        ov = ovd[k]
+        if isinstance(nv, (int, float, complex)):
+            if ov != 0:
+                report += '{:>7} = {:8.3g} --> {:8.3g} ({:+.3g}%)\n'.format(k,ov,nv,(nv-ov)*100/ov)
+            else:
+                report += '{:>7} = {:8.3g} --> {:8.3g} (Diff: {:+.3g})\n'.format(k,ov,nv,nv-ov)
+        else: # Check for bool?
+            report += '{:>7} = {:8}\n'.format(k,str(nv))
+    report += '========================\n'
+    print(report)
+    
+def saveData(data, pkl, path=None):
+    #from os import path
+    # if pkl is None:
+        # pkl = data.__name__
+    if path is None:
+        path = dDir
+    pklFile = os.path.join(path, pkl+".pkl")
+    # fh = open(pklFile, "wb")
+    # pickle.dump(data, fh)
+    # fh.close()
+    with open(pklFile, "wb") as fh:
+        pickle.dump(data, fh)
+    if verbose > 0:
+        print("Data saved to disk: {}".format(pklFile))
+    return pklFile
+    
+def loadData(pkl, path=None):
+    # with, try, finaly etc...
+    #import os
+    pklFile = pkl+".pkl"
+    if path is None:
+        cwd = os.getcwd()
+        if pkl in cwd: ### Finish!!!
+            pass #pklFile = pklFile
+            #fh = open(pklFile, "rb")
+        else:
+            pklFile = os.path.join(dDir, pklFile)
+            #fh = open(os.path.join(dDir, pklFile), "rb") #dDir+'expData'+".pkl"
     else:
-        import os
-        fh = open(os.path.join(dDir, pkl), "rb") #dDir+'expData'+".pkl"
-    dataSet = pickle.load(fh)
-    fh.close()
+        pklFile = os.path.join(path, pklFile)
+    with open(pklFile, "rb") as fh :
+        dataSet = pickle.load(fh)
+    #fh.close()
     return dataSet
     
     # verbose = 0
+
+def getExt(vector, ext='max'):
+    if ext == 'max':
+        mVal = max(vector)
+    elif ext == 'min':
+        mVal = min(vector)
+    mInd = np.searchsorted(vector, mVal)
+    return mVal, mInd
+    
 #global verbose # global statement is so that subfunctions can assign to the global var
 
 #global phi0
@@ -56,6 +139,11 @@ h = 6.6260695729e-34   # Planck's constant (Js)
 c = 2.99792458e8     # Speed of light    (m*s^-1)
 #NA = 6.0221413e23    # Avogadro's Number (mol^-1)
 
+
+def calcV1(v0,E):
+    """Since f(V=-70):= 1, if v0 or E are changed, v1 must be recalculated to rescale correctly for simulations"""
+    return (70+E)/(np.exp((70+E)/v0)-1)
+    #return (-70-E)/(1-np.exp(-(-70-E)/v0))
 
 '''
     == A few notes about colour ==
@@ -202,7 +290,7 @@ def calcgbar(Ip,Vclamp,A):
 def times2cycles(times,totT):       # REVISE to handle negative delay times
     """Input    times:= [t_on,t_off], t_tot
        Output   cycles:= [onD,offD], delD"""
-    times = np.array(times)
+    times = np.array(times, copy=True)
     #print("Times: ",times)
     nPulses = times.shape[0]
     assert(times.shape[1] <= 2)
@@ -213,6 +301,7 @@ def times2cycles(times,totT):       # REVISE to handle negative delay times
     cycles = np.vstack((onDs,offDs)).transpose()
     return (cycles, delD)
 
+    
 def cycles2times(cycles,delD):
     """Function to convert pulse cycles to times. 
         Input    cycles:= [onD,offD], delD
@@ -233,6 +322,7 @@ def cycles2times(cycles,delD):
         lapsed += sum(cycles[p,:])
     return (times, lapsed)
 
+    
 def plotLight(times, ax=None, light='shade', lam=470, alpha=0.2): #=plt.gcf()
     """Function to plot light pulse(s)
     times   = [[t_on, t_off]...]
@@ -240,6 +330,7 @@ def plotLight(times, ax=None, light='shade', lam=470, alpha=0.2): #=plt.gcf()
     light   = Representation type: {'shade', 'borders', 'greyscale', 'hatch', 'spectral'}. Default: 'shade'
     lam     = Wavelength [nm] (default: 470)
     alpha   = Transparency (default: 0.2)"""
+    
     
     if ax==None:
         ax=plt.gca()
@@ -276,6 +367,7 @@ def plotLight(times, ax=None, light='shade', lam=470, alpha=0.2): #=plt.gcf()
         print(light)
         warnings.warn('Warning: Unrecognised light representation!')
     return
+    
     
 def round_sig(x, sig=3):
     """Round a float to n significant digits (default is 3). """
@@ -339,11 +431,12 @@ def round_sig(x, sig=3):
 def expDecay(t, a, b, c):
     return a * np.exp(-t/b) + c
 
-
 def biExpDecay(t, a1, tau1, a2, tau2, I_ss):
     return a1 * np.exp(-t/tau1) + a2 * np.exp(-t/tau2) + I_ss
 
-
+def biExpSum(t, a1, tau1, a2, tau2, I_ss):
+    return a0 + a1*(1-np.exp(-t/tau_act)) + a2*np.exp(-t/tau_deact)
+    
 # def fitPeaks(t_peaks, I_peaks, curveFunc, p0, eqString, fig=None):
     
     # shift = t_peaks[0] # ~ delD
