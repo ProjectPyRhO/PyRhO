@@ -41,6 +41,8 @@ import ast
 #%run -i modProtocols.py
 #%run -i models.py
 
+fitMethodsDict = OrderedDict([(m,i) for i,m in enumerate(methods)])
+
 # State keys must be padded with a leading ' ' to avoid a widgets bug: https://github.com/ipython/ipython/issues/6469
 #statesDict = OrderedDict([(' '+s,i) for i,s in enumerate(list(modelParams.keys()))]) # enumerate(modelList)
 #statesDict = OrderedDict([(' 3',0), (' 4',1), (' 6',2)]) 
@@ -155,11 +157,11 @@ def loadGUI():
         #print(globals())
         if dataVar.value in vars(): ### locals()? # http://stackoverflow.com/questions/7969949/whats-the-difference-between-globals-locals-and-vars
             dataSet = vars()[dataVar.value]
-            useFitCheck.value = True
+            #useFitCheck.value = True
             print('Successfully loaded from vars!')
         elif dataVar.value in globals():
             dataSet = globals()[dataVar.value] # eval(dataVar.value) ##### Is this safe?
-            useFitCheck.value = True
+            #useFitCheck.value = True
             print('Successfully loaded from globals!')
         else:
             # Try treating it as a file name instead?
@@ -183,9 +185,9 @@ def loadGUI():
         #global fitRhO
         #fitRhO = fitModels(dataSet, int(statesToFitButtons.value))
         
-        if plotExpData.value:
-            #plotData()
-            pass
+        #if plotExpData.value:
+        #    #plotData()
+        #    pass
         
         #global dataSet
         model = str(statesToFitButtons.value)
@@ -195,7 +197,7 @@ def loadGUI():
         #print(type(dataSet))
         #print(dataSet)
         initialParams = getGUIparams(pSet, pfValArr[mInd][:], varyList=fVaryArr[mInd][:], minList=pfMinArr[mInd][:], maxList=pfMaxArr[mInd][:], exprList=fExprArr[mInd][:])
-        fittedParams = fitModels(dataSet, nStates=int(statesToFitButtons.value), params=initialParams) #, method=methods[3])
+        fittedParams = fitModels(dataSet, nStates=int(statesToFitButtons.value), params=initialParams, postOpt=runPostOpt.value, method=methods[fitMethods.value])
         
         #fitParamReport = widgets.TextareaWidget(description='Report:',value=fitRhO.reportParams())
         #fitParamsPopup = widgets.PopupWidget(children=[fitParamReport],button_text='Fitted Parameters',description='Fitted {} state model parameters from: {}'.format(int(statesToFitButtons.value),dataVar.value))
@@ -206,17 +208,39 @@ def loadGUI():
         #[:]???
         setGUIparams(fittedParams, modelParamsList[model], pfValArr[mInd], varyList=fVaryArr[mInd], minList=pfMinArr[mInd], maxList=pfMaxArr[mInd], exprList=fExprArr[mInd])
         
-        if useFitCheck.value: # Set the run parameters too
-            setGUIparams(fittedParams, modelParamsList[model], pValArr[mInd])
+        # if useFitCheck.value: # Set the run parameters too
+            # setGUIparams(fittedParams, modelParamsList[model], pValArr[mInd])
         
         if runSSAcheck.value == True:
             fitRhO = models[modelList[mInd]]()
             fitRhO.updateParams(fittedParams)
+            fitRhO.plotRates()
             characterise(fitRhO)
         
         
         return
     
+    def characteriseButton_on_click(b):
+        model = str(statesToFitButtons.value)
+        mInd = statesDict[model]
+        pSet = modelParams[modelList[mInd]]
+        
+        fittedParams = getGUIparams(pSet, pfValArr[mInd][:], varyList=fVaryArr[mInd][:], minList=pfMinArr[mInd][:], maxList=pfMaxArr[mInd][:], exprList=fExprArr[mInd][:])
+        
+        fitRhO = models[modelList[mInd]]()
+        fitRhO.updateParams(fittedParams)
+        fitRhO.plotRates()
+        characterise(fitRhO)
+        return
+    
+    def exportFitButton_on_click(b):
+        model = str(statesToFitButtons.value)
+        mInd = statesDict[model]
+        pSet = modelParams[modelList[mInd]]
+        
+        fittedParams = getGUIparams(pSet, pfValArr[mInd][:], varyList=fVaryArr[mInd][:], minList=pfMinArr[mInd][:], maxList=pfMaxArr[mInd][:], exprList=fExprArr[mInd][:])
+        setGUIparams(fittedParams, modelParamsList[model], pValArr[mInd])
+        return
     
     
     ##### Run Bar Functions #####
@@ -508,8 +532,8 @@ def loadGUI():
         
         verbose = verbose
         nStates = int(model)
-        print("\nRunning Protocol '{}' on the {}-state model...".format(protocol,nStates))
-        print('--------------------------------------------------------------------------------\n')
+        # print("\nRunning Protocol '{}' on the {}-state model...".format(protocol,nStates))
+        # print('--------------------------------------------------------------------------------\n')
         
         ### Choose between 3, 4, & 6 state models
         #if useFitCheck.value: # fitButton.value and 
@@ -518,8 +542,8 @@ def loadGUI():
             #setGUIprotParams(expProtParams,'custom')            
         #else:
         RhO = selectModel(int(model))
-        if verbose > 0:
-            print(RhO)
+        # if verbose > 1:
+            # print(RhO)
         userModelParams = Parameters()
         mInd = statesDict[model] #statesDict[' '+str(nStates)]
         pSet = modelParams[modelList[mInd]]
@@ -534,8 +558,8 @@ def loadGUI():
         
         
         ### Get Simulator Parameters
-        if verbose > 0:
-            print('Simulating with {}...'.format(simulator))
+        # if verbose > 1:
+            # print('Simulating with {}...'.format(simulator))
         #if simulator != 'Python': ########################################### Hack!!!!!
         userSimParams = Parameters()
         sInd = simList.index(simulator)
@@ -559,10 +583,10 @@ def loadGUI():
         Prot = protocols[protocol](userProtParams)
         Prot.run(Sim,RhO,verbose)
         if verbose > 0: #saveData:
-            Prot.plot(Sim,RhO,verbose)
+            Prot.plot()#(Sim,RhO,verbose)
         
-        print("\nFinished!")
-        print('================================================================================\n\n')
+        # print("\nFinished!")
+        # print('================================================================================\n\n')
         
         return #Prot, RhO
         
@@ -656,9 +680,14 @@ def loadGUI():
     saveButton.visible = False
 
     ### Verbosity slider
+    def verboseChange(value):
+        global verbose
+        verbose = value
+        return
     #verboseSlide = widgets.FloatProgressWidget(value=1, min=-1, max=3, step=1, description='Verbosity:')
     verboseSlide = widgets.IntSlider(value=1, min=0, max=3, description='Output:')
-    verboseSlide.visible=True #False
+    verboseSlide.on_trait_change(verboseChange, 'value')
+    verboseSlide.visible = True #False
 
     ### Clear ouput checkbox
     clearOutput = widgets.Checkbox(description='Clear', value=True)
@@ -798,14 +827,14 @@ def loadGUI():
     ##### Fit Data parameters #####
     
     ### Create Data set entry
-    dataVar = widgets.Text(description='Data Set: ',placeholder='<variable name>')
+    dataVar = widgets.Text(placeholder='<Data Set>') #description='Data Set: ',
     dataLoad = widgets.Button(description='Load')
     dataLoad.on_click(onLoad)
     
-    rArrow = widgets.Latex(value='$\\Rightarrow$')
+    #rArrow = widgets.Latex(value='$\\Rightarrow$')
     
     ### Create Fit Model States buttons
-    statesToFitButtons = widgets.ToggleButtons(description='Model to fit: ',options=statesArray)#,value=u' 3') #https://github.com/ipython/ipython/issues/6469
+    statesToFitButtons = widgets.ToggleButtons(description='Model: ',options=statesArray)#,value=u' 3') #https://github.com/ipython/ipython/issues/6469
     statesToFitButtons.on_trait_change(changeFit,'value')
     
     #fitLabel = widgets.HTML(value='Models to fit: ')
@@ -820,13 +849,19 @@ def loadGUI():
     
     
     ### Create Checkboxes
-    runSSAcheck = widgets.Checkbox(description='Characterise', value=True)
-    useFitCheck = widgets.Checkbox(description='Use fit', value=False)
-    plotExpData = widgets.Checkbox(description='Plot data: ', value=True)
+    runSSAcheck = widgets.Checkbox(description='Characterise', value=False)
+    #useFitCheck = widgets.Checkbox(description='Use fit', value=False)
+    fitMethods = widgets.Dropdown(options=fitMethodsDict, value=fitMethodsDict[defMethod], description='Method:')
+    #plotExpData = widgets.Checkbox(description='Plot', value=True)
+    runPostOpt = widgets.Checkbox(description='Post-fit opt.', value=True)
     
     ### Create Run Fit Button
     runFitButton = widgets.Button(description="Fit!")
     runFitButton.on_click(runFitButton_on_click)
+    characteriseButton = widgets.Button(description="Characterise")
+    characteriseButton.on_click(characteriseButton_on_click)
+    exportFitButton = widgets.Button(description="Export")
+    exportFitButton.on_click(exportFitButton_on_click)
     
     ### Create Fit Bar
     #fitBar = widgets.HBox(children=[dataVar, dataLoad, statesToFitButtons, runSSAcheck, useFitCheck, plotExpData, runFitButton]) #fit3sCheck, fit4sCheck, fit6sCheck
@@ -839,11 +874,18 @@ def loadGUI():
     dataLoad.button_style = 'warning' #add_class('btn-warning')
     runFitButton.button_style = 'danger' #add_class('btn-danger')
     #runFitButton.margin = '5px'
+    characteriseButton.button_style = 'success'
     # Set Fit Bar formatting after display
     dataLoad._dom_classes = ('margin-left','10px')
     #fitBar.align = 'center'
+    exportFitButton.button_style = 'info'
     
-
+    runSSAcheck.margin = '5px'
+    #plotExpData.margin = '5px'
+    runPostOpt.margin = '5px'
+    runFitButton.margin = '5px'
+    #characteriseButton.margin = '5px'
+    exportFitButton.margin = '5px'
     
     #dataLoadBar = widgets.HBox(children=[dataVar, dataLoad, useFitCheck], align='center')
     ##statesBar = widgets.HBox(children=[fitLabel, fit3sCheck, fit4sCheck, fit6sCheck], align='center') #.align = 'center'
@@ -852,8 +894,8 @@ def loadGUI():
     hyperTitle = widgets.HTML(value='<h4>General Parameters</h4>')
     hyperParams = widgets.VBox(children=[hyperTitle, p0fVvar, p0IPIvar])#, border_color='blue')
     #fitOutputBar = widgets.HBox(children=[runSSAcheck, plotExpData, runFitButton], align='center')
-    
-    fitBar = widgets.HBox(children=[dataVar, dataLoad, useFitCheck, rArrow, statesToFitButtons, rArrow, runSSAcheck, plotExpData, runFitButton], align='center')
+    #runSSAcheck
+    fitBar = widgets.HBox(children=[dataVar, dataLoad, statesToFitButtons, fitMethods, runPostOpt, runFitButton, characteriseButton, exportFitButton], align='center') #plotExpData
     #fitParamsHead = widgets.VBox(children=[dataLoadBar, statesBar, hyperParams, fitOutputBar]) # Left side container
     fitParamsHead = widgets.VBox(children=[fitBar, hyperParams])
     fitNotesBoxes = widgets.VBox(children=[]) # Right side container for figure and equations
@@ -881,8 +923,10 @@ def loadGUI():
     spacer.width = '150px' # Equal to the width of a drop-drown menu
     
     #widgets.HTML(value='<strong>Initial Value</strong>')
-    colHeadings = widgets.HTML(value='<table style="width:800px"><tr><th>Parameter</th><th>Vary</th><th width=150px>Minimum</th><th width=150px>Initial</th><th width=150px>Maximum</th><th width=150px>Units</th><th width=150px>Expression</th></tr></table>')
+    #colHeadings = widgets.HTML(value='<table><tr><th width="40px"></th><th width=60px align="right">Vary</th><div align="center"><th width=150px align="center">Minimum</th><th width=150px align="center">Initial</th><th width=150px align="center">Maximum</th><th width=150px align="center">Units</th><th width=150px align="center">Expression</th></div></tr></table>')
+    # style="width:800px" <th>Parameter</th>
     
+    colHeadings = widgets.HBox(children = [widgets.HTML(value='<p align="right">Vary</p>', width='80px'), widgets.HTML(value='<p align="center">Minimum</p>', width='150px'), widgets.HTML(value='<p align="center">Value</p>', width='150px'), widgets.HTML(value='<p align="center">Maximum</p>', width='150px'), widgets.HTML(value='<p align="center">Units</p>', width='150px'), widgets.HTML(value='<p align="center">Expression</p>', width='150px')])
     for model, pSet in modelParams.items(): #range(len(modelParams)):
         #pSet = modelParams[m]            # Set of n-state model parameters
         m = modelList.index(model)
@@ -899,21 +943,27 @@ def loadGUI():
             #    pValArr[m][i] = widgets.FloatText(value=pSet[key].value, description=key)#"{} [{}]:".format(key, pSet[key].expr))
             #else:
             
-            pfLabArr[m][i] = widgets.HTML(value=key)
-            pfLabArr[m][i].width = '20px'
+            if key in modelLabels:
+                name = '$'+modelLabels[key]+'$'
+            else:
+                name = key
+            
+            pfLabArr[m][i] = widgets.Latex(value=name)
+            pfLabArr[m][i].width = '50px'#'20px'
             minVal = pSet[key].min if pSet[key].min != None else -np.inf
-            pfMinArr[m][i] = widgets.FloatText(value=minVal,description='min') #str(minVal)
+            pfMinArr[m][i] = widgets.FloatText(value=minVal)#,description='min') #str(minVal)
             maxVal = pSet[key].max if pSet[key].max != None else np.inf
-            pfMaxArr[m][i] = widgets.FloatText(value=maxVal,description='max') #str(maxVal)
-            pfValArr[m][i] = widgets.BoundedFloatText(value=pSet[key].value, min=minVal, max=maxVal, description='initial')#"{} [{}]:".format(key, pSet[key].expr))
+            pfMaxArr[m][i] = widgets.FloatText(value=maxVal)#,description='max') #str(maxVal)
+            pfValArr[m][i] = widgets.BoundedFloatText(value=pSet[key].value, min=minVal, max=maxVal)#, description='initial')#"{} [{}]:".format(key, pSet[key].expr))
             #pfValArr[m][i].width = '150px'
             
-            fExprArr[m][i] = widgets.Text(value='', description='expr')
+            fExprArr[m][i] = widgets.Text(value='')#, description='expr')
             fExprArr[m][i].width = '150px'
-            fVaryArr[m][i] = widgets.Checkbox(description='vary', value=True)
+            fVaryArr[m][i] = widgets.Checkbox(value=True)#, description='vary')
+            fVaryArr[m][i].width = '30px'
             
             if not pSet[key].expr == None:
-                fUnitArr[m][i] = widgets.Dropdown(options=[pSet[key].expr],value=pSet[key].expr)
+                fUnitArr[m][i] = widgets.Dropdown(options=[pSet[key].expr])#,value=pSet[key].expr)
                 pfBoxArr[m][i] = widgets.HBox(children=[pfLabArr[m][i],fVaryArr[m][i],pfMinArr[m][i],pfValArr[m][i],pfMaxArr[m][i],fUnitArr[m][i],fExprArr[m][i]], align='center')
             else:
                 
@@ -978,7 +1028,7 @@ def loadGUI():
         
         #modelNotesBoxes[m].add_class('box-flex1')
         #modelBox = widgets.HBox(children=[modelParamBoxes,modelNotesBoxes])
-        modelFitBoxes[m] = widgets.VBox(children=[modelFitParamBoxes[m]]) #colHeadings, #,modelFitNotesBoxes[m]])#modelBox
+        modelFitBoxes[m] = widgets.VBox(children=[colHeadings, modelFitParamBoxes[m]]) #, #,modelFitNotesBoxes[m]])#modelBox
         modelFitBoxes[m].margin = '5px'
         
     ### Linked parameters
@@ -1040,10 +1090,14 @@ def loadGUI():
             # if isinstance(pSet[key].value, bool): # Allow model features to be turned on or off
                 # pValArr[m][i] = widgets.Dropdown(options=boolDict,value=pSet[key].value,description=key)
             # elif isinstance(pSet[key].value, numbers.Number): # Number: (int, long, float, complex)
-            if pSet[key].min == (None or -np.inf) or pSet[key].max == (None or np.inf):
-                pValArr[m][i] = widgets.FloatText(value=pSet[key].value, description=key)#"{} [{}]:".format(key, pSet[key].expr))
+            if key in modelLabels:
+                name = '$'+modelLabels[key]+'$'
             else:
-                pValArr[m][i] = widgets.BoundedFloatText(value=pSet[key].value, min=pSet[key].min, max=pSet[key].max, description=key)#"{} [{}]:".format(key, pSet[key].expr))
+                name = key
+            if pSet[key].min == (None or -np.inf) or pSet[key].max == (None or np.inf):
+                pValArr[m][i] = widgets.FloatText(value=pSet[key].value, description=name)#"{} [{}]:".format(key, pSet[key].expr))
+            else:
+                pValArr[m][i] = widgets.BoundedFloatText(value=pSet[key].value, min=pSet[key].min, max=pSet[key].max, description=name)#"{} [{}]:".format(key, pSet[key].expr))
             
             if not pSet[key].expr == None:
                 unitArr[m][i] = widgets.Dropdown(options=[pSet[key].expr],value=pSet[key].expr)
@@ -1219,6 +1273,8 @@ def loadGUI():
         for param in pSet:#.keys(): #, value in pSet.items():
             if isinstance(pSet[param].value, list):
                 prot_pValArr[pInd][i] = widgets.Text(value=str(pSet[param].value), description=param) # np.asarray
+            elif isinstance(pSet[param].value, bool):
+                prot_pValArr[pInd][i] = widgets.Dropdown(options=boolDict, value=pSet[param].value, description=param)
             else:
                 if (pSet[param].min == None or pSet[param].min == -np.inf) or (pSet[param].max == None or pSet[param].max == np.inf):
                     prot_pValArr[pInd][i] = widgets.FloatText(value=pSet[param].value, description=param)
