@@ -90,7 +90,7 @@ if __name__ == '__main__':
 def runAll():
     """Run all protocols with all simulators on all models!"""
     
-    for model in models: #nStates in [3,4,6]:
+    for model in modelList: #models: #nStates in [3,4,6]:
         ### Select generative model
         RhO = models[model]()
         #nStates = int(model)
