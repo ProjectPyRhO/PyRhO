@@ -2539,7 +2539,7 @@ def plotData(Is,ts,t_on,t_off,phis): ##### Replace with onInds and offInds...
     
 
 
-def fitRecovery(t_peaks, I_peaks, totT, curveFunc, p0, eqString, ax=None):
+def fitRecovery_orig(t_peaks, I_peaks, totT, curveFunc, p0, eqString, ax=None):
 
     
     def expDecay(t, r, Imax): # Restrict so that a = -c to ensure (0,0) is passed through
@@ -2606,56 +2606,196 @@ def calcIssfromfV(V,v0,v1,E):#,G): # Added E as another parameter to fit # ==> F
     return fV * (V - E)
 
 
-def fitfV(Vs, Iss, pfV):
+
+def getRecoveryPeaks(recData, phiInd=None, vInd=None, usePeakTime=False):
+    
+    #usePeakTime = False # Change between t_peak1 and t_on1
+    
+    if phiInd is None:
+        phiMax, phiInd = getExt(recData.phis, 'max')
+    
+    if vInd is None:
+        if recData.nVs == 1:
+            vIndm70 = 0
+        else:
+            try: 
+                vIndm70 = setPC.Vs.index(-70)
+            except:
+                #vInd = 0
+                vIndm70 = np.searchsorted(setPC.Vs, -70)
+                #vInd = np.isclose(Vs, np.ones_like(Vs)*-70)
+        vInd = vIndm70
+    
+    tpeaks1 = []
+    Ipeaks1 = []
+    
+    ### Build array of second peaks
+    for run in range(recData.nRuns):
+        PC = recData.trials[run][phiInd][vInd]
+        PC.alignToPulse(pulse=0, alignPoint=2) # End of the first pulse
+        if usePeakTime:
+            tpeaks1.append(recData.trials[run][phiInd][vInd].tpeaks_[1]) # Time of second peak
+        else:
+            tpeaks1.append(recData.trials[run][phiInd][vInd].pulses[1,0]) # Time of second pulse
+        Ipeaks1.append(recData.trials[run][phiInd][vInd].peaks_[1])
+    
+    # Check for sorting...
+    
+    # Prepend t_off0 and Iss0
+    run = 0 # Take comparators from the first run's first pulse
+    tss0 = recData.trials[run][phiInd][vInd].pulses[0,1]
+    Iss0 = recData.trials[run][phiInd][vInd].sss_[0]
+    Ipeak0 = recData.trials[run][phiInd][vInd].peaks_[0]
+    t_peaks = np.r_[tss0, tpeaks1]
+    I_peaks = np.r_[Iss0, Ipeaks1]
+    
+    return t_peaks, I_peaks, Ipeak0, Iss0    
+    
+    
+def fitRecovery(t_peaks, I_peaks, params, Ipeak0, Iss0, ax=None):
+    
+    
+    if not params['Gr0'].vary:
+        print('Gr0 fixed at {}'.format(params['Gr0'].value))
+        return params
+    
+    def errExpRec(p, t, I=None): # Restrict so that a = -c to ensure (0,0) is passed through
+        #model = p['a'].value * np.exp(-p['Gr0'].value*t) - p['Ipeak0'].value
+        model = p['Ipeak0'].value - p['a'].value * np.exp(-p['Gr0'].value*t)
+        if I is None:
+            return model
+        return I - model
+    
+    shift = t_peaks[0]
+    if np.isclose(shift, 0):
+        Iss0 = I_peaks[0]
+    else:
+        Iss0 = 0.5 * Ipeak0 ### Reconsider
+    
+    pRec = Parameters() # Create parameter dictionary
+    copyParam('Gr0', params, pRec)
+    #pRec.add('a', value=Iss0+Ipeak0, expr='{Iss0} + Ipeak0'.format(Iss0=Iss0)) # Iss = a - c
+    #pRec.add('Ipeak0', value=-Ipeak0, vary=True) # Ipeak orig
+    pRec.add('a', value=Ipeak0-Iss0)#, expr='Ipeak0 - {Iss0}'.format(Iss0=Iss0)) # Iss = a - c
+    pRec.add('Ipeak0', value=Ipeak0, vary=False) # Ipeak orig
+    
+    recMin = minimize(errExpRec, pRec, args=(t_peaks-shift, I_peaks), method=method)
+    
+    # popt, pcov = curve_fit(curveFunc, t_peaks-shift, I_peaks, p0=p0) #Needs ball-park guesses (0.3, 125, 0.5)
+    # peakEq = eqString.format(*[round_sig(p,3) for p in popt]) # *popt rounded to 3s.f.
+    
+    copyParam('Gr0', pRec, params)
+    
+    eqString = '$I_{{peak}} = {Ipeak0:+.3} - {a:.3}e^{{-{Gr0:g} t}}$'
+    v = pRec.valuesdict()
+    peakEq = eqString.format(a=round_sig(v['a'],3), Gr0=round_sig(v['Gr0'],3), Ipeak0=round_sig(v['Ipeak0'],3))
+    
+    
+    if ax is None:
+        fig = plt.figure()
+        ax = plt.subplot(111)
+    #else:
+    ax.scatter(t_peaks, I_peaks, color='r', marker='*')
+    # Freeze axes
+    ymin, ymax = ax.get_ylim()
+    ax.set_ylim(ymin, ymax)
+    xmin, xmax = ax.get_xlim()
+    ax.set_xlim(xmin, xmax)
+    tsmooth = np.linspace(xmin, xmax, 1+(xmax-xmin)*10) #totT
+    Ismooth = errExpRec(pRec, tsmooth) #curveFunc(tsmooth,*popt)
+    
+    ax.plot(tsmooth+shift, Ismooth, linestyle=':', color='r')#, linewidth=1.5*mp.rcParams['lines.linewidth'])
+    ax.axhline(y=Iss0, linestyle=':', color='#aaaaaa')
+    ax.axhline(y=Ipeak0, linestyle=':', color='#aaaaaa')
+    
+    x = 0.8
+    y = Ismooth[-1] #popt[2]
+    ax.text(x*xmax, y, peakEq, ha='center', va='top', fontsize=eqSize) #, transform=ax.transAxes)
+    
+    # else:
+        # fig = plt.figure()
+        # ax1 = plt.subplot(211)
+        # ax1.scatter(t_peaks, I_peaks)
+        # tsmooth = np.linspace(xmin,xmax,1+(xmax-xmin)*10)
+        # ax1.plot(tsmooth, errExpRec(pRec, tsmooth))
+        # ax1.axhline(y=Iss0, linestyle=':')
+        # ax1.axhline(y=Ipeak0, linestyle=':')
+        # ax1.set_ylabel(r'$I_{peak} \mathrm{[nA]}$')
+        # plt.setp(ax1.get_xticklabels(), visible=False)
+        # ax2 = plt.subplot(212, sharex=ax1)
+        # ax2.scatter(t_peaks, abs(I_peaks)/max(abs(I_peaks)))
+        # ax2.plot(tsmooth, 1-(Iss0/Ipeak0)*np.exp(-Gr0*tsmooth))
+        # ax2.set_ylabel(r'$\mathrm{Proportion of}\ I_{peak0}$')
+        # ax2.set_xlabel(r'$\mathrm{Time [ms]}$')
+        # ax2.axhline(y=1-Iss0/Ipeak0, linestyle=':')
+        # ax2.text(x*xmax, 1-Iss0/Ipeak0, '$1-I_{ss0}/I_{peak0}$', ha='center', va='baseline', fontsize=eqSize)
+    
+    if verbose > 0:
+        print(peakEq)
+    # if verbose > 1:
+        # print("Parameters: {}".format(popt))
+        # if type(pcov) in (tuple, list):
+            # print("$\sigma$: {}".format(np.sqrt(pcov.diagonal())))
+        # else:
+            # print("Covariance: {}".format(pcov))
+    # return popt, pcov, peakEq
+    
+    return params
+    
+    
+    
+def errfV(pfV, V, fVs=None):
+    v = pfV.valuesdict()
+    v0 = v['v0']
+    v1 = v['v1']
+    E = v['E']
+    #if type(V) != np.ndarray:
+    #    V = np.array(V)
+    V = np.asarray(V)
+    fV = (1-np.exp(-(V-E)/v0))/((V-E)/v1) #*(v1/(V-E)) # Dimensionless #fV = abs((1 - exp(-v/v0))/v1) # Prevent signs cancelling
+    #zeroErrs = np.isclose(V, np.ones_like(V)*E)
+    #fV[zeroErrs] = v1/v0
+    #fV[np.isnan(fV)] = v1/v0 # Fix the error when dividing by zero
+    if fVs is None:
+        return fV
+    return fVs - fV #calcfV(pfV, V)
+
+# def errFV(pfV, V, FVs=None): #, v0, v1, E
+    # V = np.asarray(V)
+    # FV = errfV(pfV, V) * (V - pfV['E'].value)# * 1e-6
+    # if FVs is None:
+        # return FV
+    # return FVs - FV
+    
+def errFV(pfV, V, FVs=None):
+    v = pfV.valuesdict()
+    v0 = v['v0']
+    v1 = v['v1']
+    E = v['E']
+    #if type(V) != np.ndarray:
+    #    V = np.array(V)
+    V = np.asarray(V)
+    FV = v1*(1-np.exp(-(V-E)/v0))#/((V-E)/v1) # Dimensionless #fV = abs((1 - exp(-v/v0))/v1) # Prevent signs cancelling
+    #zeroErrs = np.isclose(V, np.ones_like(V)*E)
+    #fV[zeroErrs] = v1/v0
+    #fV[np.isnan(fV)] = v1/v0 # Fix the error when dividing by zero
+    if FVs is None:
+        return FV #* 1e-6
+    return FVs - FV #* 1e-6
+
+# def calcFV(pfV, V): #, v0, v1, E
+    # return calcfV(pfV, V) * (V - pfV['E'].value)
+    
+# def errFV(pfV, V, FVs): #, v0, v1, E
+    # return FVs - (calcfV(pfV, V) * (V - pfV['E'].value))
+    
+def fitfV(Vs, Iss, params):
     """Fitting function to find the parameters of the voltage dependence function"""
     
     # Use @staticmethod or @classmethod on RhodopsinModel.calcfV() and pass in parameters?
 
-        
-    def errfV(pfV, V, fVs=None):
-        v = pfV.valuesdict()
-        v0 = v['v0']
-        v1 = v['v1']
-        E = v['E']
-        #if type(V) != np.ndarray:
-        #    V = np.array(V)
-        V = np.asarray(V)
-        fV = (1-np.exp(-(V-E)/v0))/((V-E)/v1) #*(v1/(V-E)) # Dimensionless #fV = abs((1 - exp(-v/v0))/v1) # Prevent signs cancelling
-        #zeroErrs = np.isclose(V, np.ones_like(V)*E)
-        #fV[zeroErrs] = v1/v0
-        #fV[np.isnan(fV)] = v1/v0 # Fix the error when dividing by zero
-        if fVs is None:
-            return fV
-        return fVs - fV #calcfV(pfV, V)
     
-    # def errFV(pfV, V, FVs=None): #, v0, v1, E
-        # V = np.asarray(V)
-        # FV = errfV(pfV, V) * (V - pfV['E'].value)# * 1e-6
-        # if FVs is None:
-            # return FV
-        # return FVs - FV
-        
-    def errFV(pfV, V, FVs=None):
-        v = pfV.valuesdict()
-        v0 = v['v0']
-        v1 = v['v1']
-        E = v['E']
-        #if type(V) != np.ndarray:
-        #    V = np.array(V)
-        V = np.asarray(V)
-        FV = v1*(1-np.exp(-(V-E)/v0))#/((V-E)/v1) # Dimensionless #fV = abs((1 - exp(-v/v0))/v1) # Prevent signs cancelling
-        #zeroErrs = np.isclose(V, np.ones_like(V)*E)
-        #fV[zeroErrs] = v1/v0
-        #fV[np.isnan(fV)] = v1/v0 # Fix the error when dividing by zero
-        if FVs is None:
-            return FV #* 1e-6
-        return FVs - FV #* 1e-6
     
-    # def calcFV(pfV, V): #, v0, v1, E
-        # return calcfV(pfV, V) * (V - pfV['E'].value)
-        
-    # def errFV(pfV, V, FVs): #, v0, v1, E
-        # return FVs - (calcfV(pfV, V) * (V - pfV['E'].value))
     
     
     
@@ -2665,15 +2805,20 @@ def fitfV(Vs, Iss, pfV):
     #    del Prot.Vs[Prot.Vs.index(0)]
     #except ValueError:
     #    pass
-
     
     
     
-    #pfV = Parameters() # Create parameter dictionary
+    
+    pfV = Parameters() # Create parameter dictionary
+    copyParam('E', params, pfV)
+    copyParam('v0', params, pfV)
+    copyParam('v1', params, pfV)
+    
     #method = 'leastsq' #'lbfgsb' #'nelder'#'powell'# 
     Iss = np.asarray(Iss)
     #Vs = np.asarray(Vs)
-    FVmin = minimize(errFV, pfV, args=(Vs, Iss), method=method) # kws={'FVs':Iss},
+    if params['E'].vary:
+        FVmin = minimize(errFV, pfV, args=(Vs, Iss), method=method) # kws={'FVs':Iss},
     
     
     pfV['E'].vary = False 
@@ -2683,7 +2828,7 @@ def fitfV(Vs, Iss, pfV):
     v0 = pfV['v0'].value
     #v1 = pfV['v1'].value # Includes over scaling factors e.g. g0
     #print('E = ',E)
-    print(pfV)
+    #print(pfV)
     Vsmooth = np.linspace(min(Vs), max(Vs), 1+(max(Vs)-min(Vs))/.1)
     fig, ax1 = plt.subplots()
     ax1.plot(Vsmooth, errFV(pfV, Vsmooth), 'b')
@@ -2692,11 +2837,16 @@ def fitfV(Vs, Iss, pfV):
     if method != 'powell':
         pfV['v1'].expr = '(70+E)/(exp((70+E)/v0)-1)'
     # Powell algorithm error with only 1 d.f.: TypeError: zip argument #2 must support iteration
-    vInd = Vs.index(-70)
-    print('V=-70 at element {} ({})'.format(vInd, Vs[vInd]))
+    try:
+        vIndm70 = Vs.index(-70)
+    except:
+        cl = np.isclose(Vs, np.ones_like(Vs)*-70)
+        vIndm70 = np.searchsorted(cl, True)
+        #vIndm70 = np.searchsorted(Vs, -70)
+    print('V=-70 at element {} ({})'.format(vIndm70, Vs[vIndm70]))
     
     gs = 1e6 * Iss / (np.asarray(Vs) - E)
-    gm70 = 1e6 * Iss[Vs.index(-70)] / (-70 - E)# * -70
+    gm70 = 1e6 * Iss[vIndm70] / (-70 - E)# * -70
     print('g(v=-70) = ', gm70)
     #g0[(Vs - E)==0] = None #(v1/v0)
     gNorm = gs / gm70 # Normalised conductance relative to V=-70
@@ -2706,11 +2856,16 @@ def fitfV(Vs, Iss, pfV):
     if verbose > 1:
         print(np.c_[Vs,Iss,gs,gNorm]) #np.asarray(Vs)-E
     
-    fVmin = minimize(errfV, pfV, args=(Vs, gNorm), method=method)
+    if params['v0'].vary or params['v1'].vary:
+        fVmin = minimize(errfV, pfV, args=(Vs, gNorm), method=method)
     ax2 = ax1.twinx()
     ax2.plot(Vsmooth, errfV(pfV, Vsmooth), 'g')
     ax2.scatter(Vs, gNorm, c='g', marker='+')
-    return pfV
+    
+    copyParam('E', pfV, params)
+    copyParam('v0', pfV, params)
+    copyParam('v1', pfV, params)
+    return params #pfV
 
 
 def fitFV(Vs, Iss, p0, ax=None):#, eqString): =plt.gcf()
@@ -2851,6 +3006,9 @@ def calcCycle(p,ton,toff,RhO,V,phi,fitRates=False): #,fitDelay=False
 def errCycle(p,Is,tons,toffs,nfs,RhO,Vs,phis):
     return np.r_[ [(Is[i] - calcCycle(p,tons[i],toffs[i],RhO,Vs[i],phis[i]))/nfs[i] for i in range(len(Is))]]
 
+
+
+
     
     
     
@@ -2924,16 +3082,16 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, method=defMethod): 
     
         
     if nRuns == 1:
-        run = 0
+        runInd = 0
         
     if nVs == 1:
-        vInd = 0
+        vIndm70 = 0
     else:
         try: 
-            vInd = setPC.Vs.index(-70)
+            vIndm70 = setPC.Vs.index(-70)
         except:
             #vInd = 0
-            vInd = np.searchsorted(Vs, -70)
+            vIndm70 = np.searchsorted(setPC.Vs, -70)
             #vInd = np.isclose(Vs, np.ones_like(Vs)*-70)
 
     
@@ -2941,20 +3099,189 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, method=defMethod): 
         params['phim'].vary = False
         params['p'].vary = False
         # Fix other model specific parameters?
-        if nStates == 4 or nStates == 6:
+        if 'q' in params: #nStates == 4 or nStates == 6:
             params['q'].vary = False
+        if verbose > 0:
+            print("Only one flux value found [{}] - fixing parameters of light-sensitive transitions. ".format(setPC.phis[0]))
     
     
-    PCs = [setPC.trials[run][phiInd][vInd] for phiInd in range(nPhis)]
+    PCs = [setPC.trials[runInd][phiInd][vIndm70] for phiInd in range(nPhis)]
     Vs = [pc.V for pc in PCs]
     phis = [pc.phi for pc in PCs]
     
     if verbose > 0:
-        print('Fitting over {} flux values [{:.3g}, {:.3g}] at {} mV (run {}) '.format(nPhis, min(phis), max(phis), setPC.trials[run][0][vInd].V, run), end='')
+        print('Fitting over {} flux values [{:.3g}, {:.3g}] at {} mV (run {}) '.format(nPhis, min(phis), max(phis), setPC.trials[runInd][0][vIndm70].V, runInd), end='')
         print("{{nRuns={}, nPhis={}, nVs={}}}\n".format(nRuns, nPhis, nVs))
         
         
     ### Extract the parameters relevant to all models - move inside loop for recovery protocol?
+
+
+    ### Optionally fit f(V) (inward rectification) parameters with rectifier data: v0, v1
+    # MUST MEASURE E AND FIT AFTER OTHER PARAMETERS
+
+    if 'rectifier' in dataSet:
+        rectKey = 'rectifier'
+    elif setPC.nVs > 1:
+        rectKey = fluxKey
+    else:
+        rectKey = None
+        print("Only one voltage clamp value found [{}] - fixing parameters of voltage dependence. ".format(setPC.Vs[0]))
+        
+    if rectKey is not None:
+        phiMax, phiIndMax = getExt(dataSet[rectKey].phis, 'max')
+        IssSet, VsSet = dataSet[rectKey].getSteadyStates(run=0, phiInd=phiIndMax)
+        if params['E'].vary or params['v0'].vary or params['v1'].vary:
+            params = fitfV(VsSet, IssSet, params)
+
+    params['E'].vary = False
+    params['v0'].vary = False
+    params['v1'].vary = False
+    
+    if 'E' in params:
+        E = params['E'].value
+        print('E = {}'.format(E))
+    
+    if 'v0' in params:
+        v0 = params['v0'].value
+        print('v0 = {}'.format(v0))
+        
+    if 'v1' in params:
+        v1 = params['v1'].value
+        print('v1 = {}'.format(v1))    
+    
+    
+    ### Most extreme peak current: Ipmax   
+    Ipmax, (rmax, pmax, vmax) = setPC.getIpmax(vIndm70)
+    Vpmax = setPC.trials[rmax][pmax][vmax].V
+    if 'saturate' in dataSet:
+        if isinstance(dataSet['saturate'], ProtocolData):
+            Ipsat, (rsat, psat, vsat) = dataSet['saturate'].getIpmax()
+            # try: 
+                # vIndSat = dataSet['saturate'].Vs.index(-70)
+            # except:
+                # vIndSat = np.searchsorted(dataSet['saturate'].Vs, -70)
+            Vsat = dataSet['saturate'].trials[rsat][psat][vsat].V
+        elif isinstance(dataSet['saturate'], PhotoCurrent):
+            Ipsat = dataSet['saturate'].peak_
+            Vsat = dataSet['saturate'].V
+        
+        if abs(Ipsat) > abs(Ipmax) and np.isclose(Vsat, -70): ##### Reconsider safeguard for choosing V=-70
+            Ipmax = Ipsat
+            Vpmax = Vsat
+    
+    print('Ipmax = {}'.format(Ipmax))
+    
+    ### Maximum conductance: g
+    assert(Vpmax != E)
+    g0 = Ipmax / (Vpmax - E)
+    params['g'].value = g0
+    print('g0 = {}'.format(g0))
+    
+    
+
+        
+        
+    
+    ### Peak recovery: Gr, Gr0, Gr_dark, a6 ### This currently fits to the first flux
+    
+    #usePeakTime = False # Change between t_peak1 and t_on1
+    
+    ### 2. Fit exponential to peak recovery plots
+    if 'recovery' in dataSet and params['Gr0'].vary:
+        if hasattr(dataSet['recovery'], 'tau_r'):
+            Gr0 = 1/dataSet['recovery'].tau_r # Gr,dark
+        else:
+            #Ipeaks, tpeaks = dataSet['recovery'].getProtPeaks()
+            #totT = dataSet['recovery'].trials[0][0][0].endT #totT
+            ### Fit exponential
+            #popt, _, _ = fitRecovery(tpeaks, Ipeaks, totT, expDecay, p0IPI, '$I_{{peaks}} = {:.3}e^{{-t/{:g}}} {:+.3}$') ##### Revise fitting
+            #Gr0 = 1/popt[1]
+            #params.add('Gr0', value=Gr0, vary=False)
+            #params['Gr0'].value = Gr0
+            
+            
+            # phiMax, phiIndMax = getExt(dataSet['recovery'].phis, 'max')
+            # phiInd = phiIndMax
+            # if nVs == 1:
+                # vIndm70 = 0
+            # else:
+                # try: 
+                    # vIndm70 = setPC.Vs.index(-70)
+                # except:
+                    # #vInd = 0
+                    # vIndm70 = np.searchsorted(setPC.Vs, -70)
+                    # #vInd = np.isclose(Vs, np.ones_like(Vs)*-70)
+            # vInd = vIndm70
+            
+            # tpeaks1 = []
+            # Ipeaks1 = []
+            
+            # ### Build array of second peaks
+            # for run in range(nRuns):
+                # PC = dataSet['recovery'].trials[run][phiIndMax][vIndm70]
+                # PC.alignToPulse(pulse=0, alignPoint=2) # End of the first pulse
+                # if usePeakTime:
+                    # tpeaks1.append(dataSet['recovery'].trials[run][phiIndMax][vIndm70].tpeaks_[1]) # Time of second peak
+                # else:
+                    # tpeaks1.append(dataSet['recovery'].trials[run][phiIndMax][vIndm70].pulses[1,0]) # Time of second pulse
+                # Ipeaks1.append(dataSet['recovery'].trials[run][phiIndMax][vIndm70].peaks_[1])
+            
+            # # Check for sorting...
+            
+            # # Prepend t_off0 and Iss0
+            # run = 0 # Take comparators from the first run's first pulse
+            # tss0 = dataSet['recovery'].trials[run][phiIndMax][vIndm70].pulses[0,1]
+            # Iss0 = dataSet['recovery'].trials[run][phiIndMax][vIndm70].sss_[0]
+            # Ipeak0 = dataSet['recovery'].trials[run][phiIndMax][vIndm70].peaks_[0]
+            # t_peaks = np.r_[tss0, tpeaks1]
+            # I_peaks = np.r_[Iss0, Ipeaks1]
+
+            t_peaks, I_peaks, Ipeak0, Iss0 = getRecoveryPeaks(dataSet['recovery'])
+            params = fitRecovery(t_peaks, I_peaks, params, Ipeak0, Iss0, ax=None)
+            Gr0 = params['Gr0'].value
+    else:
+        Gr0 = params['Gr0'].value
+    params['Gr0'].vary = False
+    print('Gr0 = {}'.format(Gr0))
+    
+    
+    # if 'saturate' in dataSet:
+        # if hasattr(dataSet['saturate'], 'Ipmax'): 
+            # Ipmax = dataSet['saturate'].Ipmax
+        # else: # Find maximum peak for saturate protocol
+            #peakInd = findPeaks(I_phi,startInd=0,extOrder=5) 
+            # if (dataSet['saturate'].V < E): # Find Minima
+                # Ipmax = min(dataSet['saturate'].I)
+            # else:       # Find Maxima
+                # Ipmax = max(dataSet['saturate'].I)
+            # dataSet['saturate'].Ipmax = Ipmax
+    # else: #hasattr(dataSet['custom'], 'Ipeak'): # Use peak of sample photocurrent as an estimate
+        # Ipmax, inds = setPC.getIpmax()
+        # Vsat = setPC.trials[inds[0]][inds[1]][inds[2]].V
+        #Ipmax = dataSet['custom'].Ipeak
+        #Vsat = dataSet['custom'].V
+    
+    ### Maximum conductance: g        
+    # if 'g' in params: ###Ipeak
+        # gmax = params['g'].value        
+    # elif 'saturate' in dataSet:
+        # if hasattr(dataSet['saturate'], 'gbar_est'):
+            # gmax = dataSet['saturate'].gbar_est
+        # Vsat = dataSet['saturate'].V
+        
+    # else: ### 1. Load data for 'saturate' protocol to find Ipmax in order to calculate gmax
+        ### gmax = Ipmax/([O_p]*(V-E)) = Ipmax/(V-E) # with the assumption [O_p] = 1
+        ### This assumption is an underestimate for 4 & 6 state models: [O_p] =~ 0.71 (depending on rates)
+        # assert(Vsat != E) #if dataSet['saturate'].V != E:
+        # gmax = Ipmax/(Vsat-E) # Assuming [O_p] = 1
+        # dataSet['saturate'].gbar_est = gmax
+        ### calcG()
+    # print('g = {}'.format(gmax))
+        
+    # Change the model to be consistent so that g = gbar * A
+    
+    
     # if params is not None: # Allow you to pass parameters outside of dataSet
         # params = params
     # elif 'params' in dataSet:
@@ -2974,85 +3301,51 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, method=defMethod): 
     # Now check for the following: E,[phi0,gam,A]; Gr0,gmax,Ipeak,Iss
     
     ### Reversal potential: E
-    if 'E' in params:
-        E = params['E'].value
-    else:
+    # if 'E' in params:
+        # E = params['E'].value
+    # else:
         #global E # Set from global parameters
-        E = dataSet['E']
-    print('E = {}'.format(E))
+        # E = dataSet['E']
+    # print('E = {}'.format(E))
     
     ### Peak recovery: Gr, Gr0, Gr_dark, a6 ### This currently fits to the first flux
-    if 'Gr' in params:
-        Gr0 = params['Gr'].value
-    elif 'Gr0' in params:
-        Gr0 = params['Gr0'].value
-    elif 'Gr_dark' in params:
-        Gr0 = params['Gr_dark'].value
-    # elif 'a6' in params:
-        # Gr0 = params['a6'].value
-    else: ### 2. Fit exponential to peak recovery plots
-        if hasattr(dataSet['recovery'], 'tau_r'):
-            Gr0 = 1/dataSet['recovery'].tau_r # Gr,dark
-        else:
-            print("Extract the peaks and fit an exponential...")
-            if not (hasattr(dataSet['recovery'], 'tpIPI') and hasattr(dataSet['recovery'], 'IpIPI')):
-                # Extract peaks
-                dataSet['recovery'].IpIPI = np.zeros(dataSet['recovery'].nRuns)
-                dataSet['recovery'].tpIPI = np.zeros(dataSet['recovery'].nRuns)
-                for r in range(dataSet['recovery'].nRuns):
-                    ### Search only within the on phase of the second pulse
-                    I_RhO = dataSet['recovery'].Is[r][0][vInd] # phiInd=0 and vInd=0 Run for each phi and V?
-                    startInd = dataSet['recovery'].PulseInds[r][0][vInd][1,0]
-                    endInd = dataSet['recovery'].PulseInds[r][0][vInd][1,1]
-                    extOrder = int(1+endInd-startInd) #100#int(round(len(I_RhO)/5))
-                    #peakInds = findPeaks(I_RhO[:endInd+extOrder+1],minmax,startInd,extOrder)
-                    peakInds = findPeaks(I_RhO[:endInd+extOrder+1],startInd,extOrder)
-                    if len(peakInds) > 0: # Collect data at the (second) peak
-                        dataSet['recovery'].IpIPI[r] = I_RhO[peakInds[0]] #-1 peaks
-                        dataSet['recovery'].tpIPI[r] = t[peakInds[0]] # tPeaks
-            # Fit exponential
-            popt, _, _ = fitPeaks(dataSet['recovery'].tpIPI, dataSet['recovery'].IpIPI, expDecay, p0IPI, '$I_{{peaks}} = {:.3}e^{{-t/{:g}}} {:+.3}$')
-            Gr0 = 1/popt[1]
-            ### calcGr0()
-        params.add('Gr0', value=Gr0, vary=False)
-    print('Gr0 = {}'.format(Gr0))
+    # if 'Gr' in params:
+        # Gr0 = params['Gr'].value
+    # elif 'Gr0' in params:
+        # Gr0 = params['Gr0'].value
+    # elif 'Gr_dark' in params:
+        # Gr0 = params['Gr_dark'].value
+    ##elif 'a6' in params:
+        ##Gr0 = params['a6'].value
+    # else: ### 2. Fit exponential to peak recovery plots
+        # if hasattr(dataSet['recovery'], 'tau_r'):
+            # Gr0 = 1/dataSet['recovery'].tau_r # Gr,dark
+        # else:
+            # print("Extract the peaks and fit an exponential...")
+            # if not (hasattr(dataSet['recovery'], 'tpIPI') and hasattr(dataSet['recovery'], 'IpIPI')):
+                ###Extract peaks
+                # dataSet['recovery'].IpIPI = np.zeros(dataSet['recovery'].nRuns)
+                # dataSet['recovery'].tpIPI = np.zeros(dataSet['recovery'].nRuns)
+                # for r in range(dataSet['recovery'].nRuns):
+                    ## Search only within the on phase of the second pulse
+                    # I_RhO = dataSet['recovery'].Is[r][0][vInd] # phiInd=0 and vInd=0 Run for each phi and V?
+                    # startInd = dataSet['recovery'].PulseInds[r][0][vInd][1,0]
+                    # endInd = dataSet['recovery'].PulseInds[r][0][vInd][1,1]
+                    # extOrder = int(1+endInd-startInd) #100#int(round(len(I_RhO)/5))
+                    ##peakInds = findPeaks(I_RhO[:endInd+extOrder+1],minmax,startInd,extOrder)
+                    # peakInds = findPeaks(I_RhO[:endInd+extOrder+1],startInd,extOrder)
+                    # if len(peakInds) > 0: # Collect data at the (second) peak
+                        # dataSet['recovery'].IpIPI[r] = I_RhO[peakInds[0]] #-1 peaks
+                        # dataSet['recovery'].tpIPI[r] = t[peakInds[0]] # tPeaks
+            ###Fit exponential
+            # popt, _, _ = fitPeaks(dataSet['recovery'].tpIPI, dataSet['recovery'].IpIPI, expDecay, p0IPI, '$I_{{peaks}} = {:.3}e^{{-t/{:g}}} {:+.3}$')
+            # Gr0 = 1/popt[1]
+            ## calcGr0()
+        # params.add('Gr0', value=Gr0, vary=False)
+    # print('Gr0 = {}'.format(Gr0))
     
-    ### Most extreme peak current: Ipmax        
-    if 'saturate' in dataSet:
-        if hasattr(dataSet['saturate'], 'Ipmax'): 
-            Ipmax = dataSet['saturate'].Ipmax
-        else: # Find maximum peak for saturate protocol
-            # peakInd = findPeaks(I_phi,startInd=0,extOrder=5) 
-            if (dataSet['saturate'].V < E): # Find Minima
-                Ipmax = min(dataSet['saturate'].I)
-            else:       # Find Maxima
-                Ipmax = max(dataSet['saturate'].I)
-            dataSet['saturate'].Ipmax = Ipmax
-    else: #hasattr(dataSet['custom'], 'Ipeak'): # Use peak of sample photocurrent as an estimate
-        Ipmax, inds = setPC.getIpmax()
-        Vsat = setPC.trials[inds[0]][inds[1]][inds[2]].V
-        #Ipmax = dataSet['custom'].Ipeak
-        #Vsat = dataSet['custom'].V
-    print('Ipmax = {}'.format(Ipmax))
     
-    ### Maximum conductance: g        
-    if 'g' in params: ###Ipeak
-        gmax = params['g'].value        
-    elif 'saturate' in dataSet:
-        if hasattr(dataSet['saturate'], 'gbar_est'):
-            gmax = dataSet['saturate'].gbar_est
-        Vsat = dataSet['saturate'].V
-        
-    else: ### 1. Load data for 'saturate' protocol to find Ipmax in order to calculate gmax
-        ### gmax = Ipmax/([O_p]*(V-E)) = Ipmax/(V-E) # with the assumption [O_p] = 1
-        ### This assumption is an underestimate for 4 & 6 state models: [O_p] =~ 0.71 (depending on rates)
-        assert(Vsat != E) #if dataSet['saturate'].V != E:
-        gmax = Ipmax/(Vsat-E) # Assuming [O_p] = 1
-        dataSet['saturate'].gbar_est = gmax
-        ### calcG()
-    print('g = {}'.format(gmax))
-        
-    # Change the model to be consistent so that g = gbar * A
+
     
     if 'shortPulse' in dataSet:
         quickSet = dataSet['shortPulse'] # Override saturate
@@ -3068,64 +3361,7 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, method=defMethod): 
                 qI = setPC.trials[q][0][0]
         quickSet = ProtocolData(setPC.trials[q][0][0], nRuns=1, phis=[qI.phi], Vs=[qI.Vs])
     
-    ##### FINISH THIS!!! #####
-    # if hasattr(dataSet['custom'], 'Iss'):
-        # Iss = dataSet['custom'].Iss
-    # else: 
 
-    ############################################################# FINISH ME!!! ##########################################################
-    ### Optionally fit f(V) (inward rectification) parameters with rectifier data: v0, v1
-    # MUST MEASURE E AND FIT AFTER OTHER PARAMETERS
-    # if 'v0' in params and 'v1' in params:
-        # v0 = params['v0'].value
-        # v1 = params['v1'].value
-    # else:
-    if 'rectifier' in dataSet:
-        if hasattr(dataSet['rectifier'], 'Iss'): # Use extracted values
-            Iss = dataSet['rectifier'].Iss
-            Vs = dataSet['rectifier'].Vs
-        else: # Extract steady state values
-            print("Finish f(V) fitting!")
-            Iss = None
-    elif setPC.nVs > 1:
-        IssSet, VsSet = setPC.getIRdata()
-        for phiInd, phiOn in enumerate(phis): 
-            ### PLOT
-            RhO.calcSteadyState(phiOn)
-            popt, pcov, eqString = fitfV(Vs,self.IssVals[run][phiInd][:],calcIssfromfV,p0fV)#,eqString)
-            
-            # Add equations to legend
-            if len(phis) > 1: 
-                legLabels[phiInd] = eqString + '$,\ \phi={:.3g}$'.format(phiOn)
-            else:
-                legLabels[phiInd] = eqString
-            
-            ### Move this to fitting routines?
-            # v0 = popt[0], v1 = popt[1], E = popt[2]
-            params['v0'].value = popt[0]
-            params['v1'].value = popt[1]
-            params['E'].value = popt[2]
-            
-        # Fit Curve of V vs Iss
-    else: # Assume f(V) = (V-E)
-        #pass
-        #params['v0'].value = 1e12
-        #params['v1'].value = 1e12
-        # Fix parameters
-        #params['useIR'].vary = False
-        params['v0'].vary = False
-        params['v1'].vary = False
-    
-
-    
-    if 'v0' in params:
-        v0 = params['v0'].value
-        print('v0 = {}'.format(v0))
-        
-    if 'v1' in params:
-        v1 = params['v1'].value
-        print('v1 = {}'.format(v1))    
-    ### Should f(V) be incorporated into gmax (1.) and Oss (3b.) calculations?
     
     
     #Models = {'3':[[None for v in len(Vs)] for p in len(phis)]}
@@ -3180,14 +3416,14 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, method=defMethod): 
     
         if nStates==3:
             #phiFits[phiInd] = fit3states(I,t,onInd,offInd,phi,V,Gr0,gmax,Ipmax,params=pOns,method=method)#,Iss)
-            fittedParams = fit3states(setPC,run,vInd,fitParams,postOpt,method)
+            fittedParams = fit3states(setPC,runInd,vIndm70,fitParams,postOpt,method)
             constrainedParams = ['Gd']
         elif nStates==4:
             #phiFits[phiInd] = fit4states(I,t,onInd,offInd,phi,V,Gr0,gmax,params=pOns,method=method)
-            fittedParams = fit4states(setPC,run,vInd,fitParams,postOpt,method)
+            fittedParams = fit4states(setPC,runInd,vIndm70,fitParams,postOpt,method)
             constrainedParams = ['Gd1', 'Gd2', 'Gf0', 'Gb0']
         elif nStates==6:
-            fittedParams = fit6states(setPC,quickSet,run,vInd,fitParams,postOpt,method)
+            fittedParams = fit6states(setPC,quickSet,runInd,vIndm70,fitParams,postOpt,method)
             constrainedParams = ['Gd1', 'Gd2', 'Gf0', 'Gb0', 'Go1', 'Go2']
         else:
             raise Exception('Invalid choice for nStates: {}!'.format(nStates))
@@ -3201,7 +3437,7 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, method=defMethod): 
             fittedParams[p].max = round_sig(fittedParams[p].value * constraintMargin, sig=3)
             
         if postOpt: # Relax all parameters (except nonOptParams) and reoptimise
-            PCs = [setPC.trials[run][phiInd][vInd] for phiInd in range(setPC.nPhis)]
+            PCs = [setPC.trials[runInd][phiInd][vIndm70] for phiInd in range(setPC.nPhis)]
             Icycles = [pc.getCycle()[0] for pc in PCs]
             nfs = [pc.I[pc.pulseInds[0,1]] for pc in PCs]
             tons = [pc.getOnPhase()[1] for pc in PCs]
