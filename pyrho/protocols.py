@@ -1581,24 +1581,18 @@ class protRectifier(Protocol):
                 #popt, pcov, eqString = self.fitfV(self.Vs, self.PD.ss_[run][phiInd][:], calcIssfromfV, p0fV, RhO, ax)#,eqString)
                 
                 Iss = self.PD.ss_[run][phiInd][:]
+                
+                ### Original routines
                 #popt, pcov, eqString = fitFV(self.Vs, Iss, p0FV, ax=ax)
-                #popt, pcov = fitFV(self.Vs, Iss, p0FV, ax=ax)
-                
+                p0FV = (35, 15, 0)
                 poptI, poptg = fitFV(Vs, Iss, p0FV, ax=ax)
-                
+
+                ### New routines
                 pfV = Parameters()
-                #pfV.add('v0', value=40, vary=True, max=100)
-                #pfV.add('v1', value=20, vary=True)
-                #pfV.add('E', value=-1, vary=True)
-                # pfV.add_many(
-                # ('E',       0,      True, -1000,1000, None),
-                # ('v0',      35,     True, -100, 100, None),
-                # ('v1',      15,    True, -1e15, 1e15, None))
                 pfV.add_many(
-                ('E',       0,      True, -1000,1000, None),
-                ('v0',      50,     True, -1e15, 1e15, None),
-                ('v1',      10,    True, -1e9, 1e9, None))
-                
+                ('E',   0,           True, -100, 100, None),
+                ('v0',  50,          True, -1e12, 1e12, None),
+                ('v1',  calcV1(0,50),True, -1e9 , 1e9,  None))
                 
                 pfV = fitfV(Vs, Iss, pfV)
                 print(pfV)
@@ -1645,11 +1639,23 @@ class protRectifier(Protocol):
                 #E = poptI[2]
                 #vInd = np.searchsorted(self.Vs, (-70 - E))
                 #sf = Iss[vInd]
-                sf = Iss[Vs.index(-70)]
                 
-                g0 = Iss / (Vs - E)
-                g0rel = g0 / (sf / (-70 - E))
-                self.axfV.scatter(Vs, g0rel, marker='x', color=colours, s=markerSize)#,linestyle=''
+                #sf = Iss[Vs.index(-70)]
+                #g0 = Iss / (Vs - E)
+                #gNorm = g0 / (sf / (-70 - E))
+                
+                gs = Iss / (np.asarray(Vs) - E) # 1e6 * 
+                gm70 = Iss[Vs.index(-70)] / (-70 - E)# * -70 # 1e6 * 
+                if verbose > 0:
+                    print('g(v=-70) = ', gm70)
+                #g0[(Vs - E)==0] = None #(v1/v0)
+                gNorm = gs / gm70 # Normalised conductance relative to V=-70
+                
+                self.axfV.scatter(Vs, gNorm, marker='x', color=colours, s=markerSize)#,linestyle=''
+                if verbose > 1:
+                    print(gm70)
+                    print(np.c_[Vs, np.asarray(Vs)-E, Iss, gs, gNorm])
+                
                 
                 # Add equations to legend
                 if self.nPhis > 1: 
