@@ -129,7 +129,7 @@ modelFits['ChR2']['3'].add_many(
                 ('Gr1',   0.0386, True, 0.0001,  1, '/ms'),
                 ('E',     0,      True, -1000,1000, 'mV'),
                 ('v0',    43,     True, -1e15, 1e15, 'mV'),
-                ('v1',    4.1,    True, -1e15, 1e15, 'mV'))
+                ('v1',    17.1,    True, -1e15, 1e15, 'mV'))
 #modelLabels = OrderedDict([('3',OrderedDict()),('4',OrderedDict()),('6',OrderedDict())])
 #modelLabels['3'] = {'E':'E', 'g':'g', 'k':'k', 'p':'p', 'phim':'\phi_m', 'Gd':'G_d', 'Gr0':'G_{r0}', 'Gr1':'G_{r1}', 'v0':'v_0', 'v1':'v_1'}
 #modelLabels['3'] = [('E','E'), ('g','g'), ('k','k'), ('p','p'), ('phim','\phi_m'), ('Gd','G_d'), ('Gr0','G_{r0}'), ('Gr1','G_{r1}'), ('v0','v_0'), ('v1','v_1')]
@@ -217,7 +217,7 @@ modelFits['ChR2']['4'].add_many(
                 ('Gr0',     0.0004, True, 1e-6, 1,      '/ms'), #Gr
                 ('E',       0,      True, -1000,1000,   'mV'),
                 ('v0',      43,     True, -1e15, 1e15,   'mV'),
-                ('v1',      4.1,    True, -1e15, 1e15,   'mV'))    
+                ('v1',      17.1,    True, -1e15, 1e15,   'mV'))    
               
               
 #d6sp = Parameters()
