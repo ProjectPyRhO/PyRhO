@@ -5,7 +5,7 @@
 # %load
 
 # import lmfit
-from lmfit import minimize, Parameters, fit_report
+from lmfit import *#minimize, Parameters, fit_report
 import numpy as np
 import matplotlib as mp
 import matplotlib.pyplot as plt
@@ -21,6 +21,7 @@ from .config import verbose, saveFigFormat, addTitles, fDir, dDir, eqSize
 import os
 import pickle
 import time
+from copy import deepcopy
 
 from scipy.optimize import curve_fit
 
@@ -1698,7 +1699,7 @@ def fit3states(fluxSet, run, vInd, params, postOpt=True, method=defMethod): #,Ip
         if trial < nTrials-1:
             plt.setp(ax.get_xticklabels(), visible=False)
             plt.xlabel('')
-        ax.set_ylim(-1,0.1)
+        ax.set_ylim(-1,0.1) ### Reconsider!!!
     
     #print(">>> Off-phase fitting summary: <<<")
     #print(offPmin.message)
@@ -2679,7 +2680,22 @@ def fitRecovery(t_peaks, I_peaks, params, Ipeak0, Iss0, ax=None):
     pRec.add('a', value=Ipeak0-Iss0)#, expr='Ipeak0 - {Iss0}'.format(Iss0=Iss0)) # Iss = a - c
     pRec.add('Ipeak0', value=Ipeak0, vary=False) # Ipeak orig
     
+    from copy import deepcopy
+    pRecFresh = deepcopy(pRec)
+    
     recMin = minimize(errExpRec, pRec, args=(t_peaks-shift, I_peaks), method=method)
+    chosenFit = recMin.chisqr
+    
+    if verbose > 0:
+        fits = {}
+        for meth in methods:
+            recMin = minimize(errExpRec, deepcopy(pRecFresh), args=(t_peaks-shift, I_peaks), method=meth)
+            fits[meth] = recMin.chisqr
+            #print(fit_report(recMin))
+            if fits[meth] < chosenFit:
+                print("Consider using the '{}' algorithm for a better fit (chisqr = {:.3}) ==> Gr0 = {:.3}".format(meth, fits[meth], recMin.params['Gr0'].value))
+                if verbose > 2:
+                    print(fit_report(recMin))
     
     # popt, pcov = curve_fit(curveFunc, t_peaks-shift, I_peaks, p0=p0) #Needs ball-park guesses (0.3, 125, 0.5)
     # peakEq = eqString.format(*[round_sig(p,3) for p in popt]) # *popt rounded to 3s.f.
@@ -2755,7 +2771,7 @@ def errfV(pfV, V, fVs=None):
     fV = (1-np.exp(-(V-E)/v0))/((V-E)/v1) #*(v1/(V-E)) # Dimensionless #fV = abs((1 - exp(-v/v0))/v1) # Prevent signs cancelling
     #zeroErrs = np.isclose(V, np.ones_like(V)*E)
     #fV[zeroErrs] = v1/v0
-    #fV[np.isnan(fV)] = v1/v0 # Fix the error when dividing by zero
+    fV[np.isnan(fV)] = v1/v0 # Fix the error when dividing by zero
     if fVs is None:
         return fV
     return fVs - fV #calcfV(pfV, V)
@@ -2772,13 +2788,14 @@ def errFV(pfV, V, FVs=None):
     v0 = v['v0']
     v1 = v['v1']
     E = v['E']
-    #if type(V) != np.ndarray:
-    #    V = np.array(V)
+    ###if type(V) != np.ndarray:
+    ###    V = np.array(V)
     V = np.asarray(V)
     FV = v1*(1-np.exp(-(V-E)/v0))#/((V-E)/v1) # Dimensionless #fV = abs((1 - exp(-v/v0))/v1) # Prevent signs cancelling
-    #zeroErrs = np.isclose(V, np.ones_like(V)*E)
-    #fV[zeroErrs] = v1/v0
-    #fV[np.isnan(fV)] = v1/v0 # Fix the error when dividing by zero
+    ###zeroErrs = np.isclose(V, np.ones_like(V)*E)
+    ###fV[zeroErrs] = v1/v0
+    ###fV[np.isnan(fV)] = v1/v0 # Fix the error when dividing by zero
+    FV[np.isnan(FV)] = v1/v0 # Fix the error when dividing by zero
     if FVs is None:
         return FV #* 1e-6
     return FVs - FV #* 1e-6
@@ -2795,10 +2812,6 @@ def fitfV(Vs, Iss, params):
     # Use @staticmethod or @classmethod on RhodopsinModel.calcfV() and pass in parameters?
 
     
-    
-    
-    
-    
     ### Skip V == E
     #Prot.Vs = list(range(-100,80,5))
     #try:
@@ -2807,23 +2820,64 @@ def fitfV(Vs, Iss, params):
     #    pass
     
     
-    
-    
     pfV = Parameters() # Create parameter dictionary
     copyParam('E', params, pfV)
     copyParam('v0', params, pfV)
     copyParam('v1', params, pfV)
     
+
+    ### Model based fitting
+    
+    def calcFV(Vs, E, v0, v1):
+        Vs = np.asarray(Vs)
+        FV = v1*(1-np.exp(-(Vs-E)/v0))#/((V-E)/v1)
+        FV[np.isnan(FV)] = v1/v0
+        return FV
+    
+    FVmod = Model(calcFV)
+    FVmod.set_param_hint('E', value=pfV['E'].value, min=pfV['E'].min, max=pfV['E'].max, vary=pfV['E'].vary, expr=pfV['E'].expr)
+    FVmod.set_param_hint('v0', value=pfV['v0'].value, min=pfV['v0'].min, max=pfV['v0'].max, vary=pfV['v0'].vary, expr=pfV['v0'].expr)
+    FVmod.set_param_hint('v1', value=pfV['v1'].value, min=pfV['v1'].min, max=pfV['v1'].max, vary=pfV['v1'].vary, expr=pfV['v1'].expr)
+    modParams = FVmod.make_params()
+    #print(FVmod.independent_vars)
+    #print(modParams)
+    #FV = FVmod.eval(x=V, E=pfV['E'].value, v0=pfV['v0'].value, v1=pfV['v1'].value)
+    # for method in methods:
+        # print('>>> ', method, ' <<<')
+        # result = FVmod.fit(Iss, Vs=np.asarray(Vs), method=method) # , E=pfV['E'].value, v0=pfV['v0'].value, v1=pfV['v1'].value  method=method
+        # print(result.fit_report())
+        # print('')
+        # v = pfV.valuesdict()
+        # print('Method {}: '.format(method), np.r_[v['E'], v['v0'], v['v1'], result.chisqr])
+    result = FVmod.fit(Iss, Vs=np.asarray(Vs), method=method) # , E=pfV['E'].value, v0=pfV['v0'].value, v1=pfV['v1'].value  method=method
+    
+    
     #method = 'leastsq' #'lbfgsb' #'nelder'#'powell'# 
     Iss = np.asarray(Iss)
     #Vs = np.asarray(Vs)
+    
+    pfVfresh = deepcopy(pfV)
+    
     if params['E'].vary:
         FVmin = minimize(errFV, pfV, args=(Vs, Iss), method=method) # kws={'FVs':Iss},
+        chosenFit = FVmin.chisqr
     
+        if verbose > 0:
+            fits = {}
+            for meth in methods:
+                FVmin = minimize(errFV, deepcopy(pfVfresh), args=(Vs, Iss), method=meth)
+                fits[meth] = FVmin.chisqr
+                if fits[meth] < chosenFit:
+                    print("Consider using the '{}' algorithm for a better fit (chisqr = {:.3}) ==> E = {:.3}".format(meth, fits[meth], FVmin.params['E'].value))
+                    if verbose > 2:
+                        print(fit_report(FVmin))
     
-    pfV['E'].vary = False 
-    #pfV['E'].min = pfV['E'].value * 0.9
-    #pfV['E'].max = pfV['E'].value * 1.1
+    pfV['E'].vary = False
+    #pfV['E'].min = pfV['E'].value - 5
+    #pfV['E'].max = pfV['E'].value + 5
+    
+    #pfV['E'].value = 0
+    
     E = pfV['E'].value
     v0 = pfV['v0'].value
     #v1 = pfV['v1'].value # Includes over scaling factors e.g. g0
@@ -2831,8 +2885,13 @@ def fitfV(Vs, Iss, params):
     #print(pfV)
     Vsmooth = np.linspace(min(Vs), max(Vs), 1+(max(Vs)-min(Vs))/.1)
     fig, ax1 = plt.subplots()
-    ax1.plot(Vsmooth, errFV(pfV, Vsmooth), 'b')
+    ax1.plot(Vsmooth, errFV(pfV, Vsmooth), 'b', label='$I_{ss}$')
     ax1.scatter(Vs, Iss, c='b', marker='x')
+    ax1.set_ylabel('$I_{ss}$ $\mathrm{[nA]}$', color='b') #$f(V) \cdot (V-E)$
+    ax1.set_xlabel(r'$V_{clamp}\ \mathrm{[mV]}$')
+    
+    
+    pfV['v1'].value = calcV1(E, v0)
     
     if method != 'powell':
         pfV['v1'].expr = '(70+E)/(exp((70+E)/v0)-1)'
@@ -2843,24 +2902,65 @@ def fitfV(Vs, Iss, params):
         cl = np.isclose(Vs, np.ones_like(Vs)*-70)
         vIndm70 = np.searchsorted(cl, True)
         #vIndm70 = np.searchsorted(Vs, -70)
-    print('V=-70 at element {} ({})'.format(vIndm70, Vs[vIndm70]))
+    if verbose > 0:
+        print('V=-70 at element {} ({})'.format(vIndm70, Vs[vIndm70]))
     
-    gs = 1e6 * Iss / (np.asarray(Vs) - E)
-    gm70 = 1e6 * Iss[vIndm70] / (-70 - E)# * -70
-    print('g(v=-70) = ', gm70)
+    gs = Iss / (np.asarray(Vs) - E) # 1e6 * 
+    gm70 = Iss[vIndm70] / (-70 - E)# * -70 # 1e6 * 
+    if verbose > 0:
+        print('g(v=-70) = ', gm70)
     #g0[(Vs - E)==0] = None #(v1/v0)
     gNorm = gs / gm70 # Normalised conductance relative to V=-70
-    zeroErrs = np.isclose(Vs, np.ones_like(Vs)*E)
-    #gNorm[zeroErrs] = v1/v0
+    
+    #sf = Iss[Vs.index(-70)]
+    #g0 = Iss / (Vs - E)
+    #g0rel = g0 / (sf / (-70 - E))
+
     
     if verbose > 1:
         print(np.c_[Vs,Iss,gs,gNorm]) #np.asarray(Vs)-E
     
+    pfVfresh = deepcopy(pfV)
+    
     if params['v0'].vary or params['v1'].vary:
         fVmin = minimize(errfV, pfV, args=(Vs, gNorm), method=method)
+        
+        chosenFit = fVmin.chisqr
+    
+        if verbose > 0:
+            fits = {}
+            for meth in methods:
+                fVmin = minimize(errfV, deepcopy(pfVfresh), args=(Vs, gNorm), method=method)
+                fits[meth] = fVmin.chisqr
+                if fits[meth] < chosenFit:
+                    print("Consider using the '{}' algorithm for a better fit (chisqr = {:.3}) ==> v0 = {:.3}, v1 = {:.3}".format(meth, fits[meth], fVmin.params['v0'].value, fVmin.params['v1'].value))
+                    if verbose > 2:
+                        print(fit_report(fVmin))
+        
+    pfV['v0'].vary = False
+    pfV['v1'].vary = False
+    
+    # Corrections
+    v0 = pfV['v0'].value
+    v1 = pfV['v1'].value
+    zeroErrs = np.isclose(Vs, np.ones_like(Vs)*E, rtol=1e-3)
+    print(gNorm[zeroErrs])
+    gNorm[zeroErrs] = v1/v0
+    
     ax2 = ax1.twinx()
-    ax2.plot(Vsmooth, errfV(pfV, Vsmooth), 'g')
+    eqString = r'$f(V) = \frac{{{v1:.3}}}{{V-{E:+.2f}}} \cdot \left[1-\exp\left({{-\frac{{V-{E:+.2f}}}{{{v0:.3}}}}}\right)\right]$'
+    fVstring = eqString.format(E=pfV['E'].value, v0=pfV['v0'].value, v1=pfV['v1'].value)
+    ax2.plot(Vsmooth, errfV(pfV, Vsmooth), 'g', label=fVstring)
     ax2.scatter(Vs, gNorm, c='g', marker='+')
+    ax2.set_ylabel('$f(V)$ $\mathrm{[1]}$', color='g')
+    ax2.axvline(x=E, linestyle=':', color='k')
+    ymin, ymax = ax2.get_ylim()
+    revString = '$E = {}\ \mathrm{{[mV]}}$'.format(round_sig(E,3))
+    ax2.text(E, 0.05*(ymax-ymin), revString, ha='center', va='center', fontsize=eqSize)
+    ax2.axvline(x=-70, linestyle=':', color='k')
+    ax2.axhline(y=1, linestyle=':', color='k')
+    plt.legend()
+
     
     copyParam('E', pfV, params)
     copyParam('v0', pfV, params)
@@ -2891,8 +2991,6 @@ def fitFV(Vs, Iss, p0, ax=None):#, eqString): =plt.gcf()
     Iss = np.asarray(Iss)#/sf # np.asarray is not needed for the six-state model!!!
     #print(np.c_[Vs,Iss])
     
-    p0FVnew = (35, 15, 0)
-    
     #xfit = np.linspace(min(Vs), max(Vs), 1+(max(Vs)-min(Vs))/.1) #Prot.dt
     #yfit = calcRect(xfit, *p0FVnew)#*sf
     #ax.plot(xfit, yfit)
@@ -2902,11 +3000,11 @@ def fitFV(Vs, Iss, p0, ax=None):#, eqString): =plt.gcf()
     #plt.scatter(Vs, Iss, marker='x', s=markerSize)
     #plt.plot(xfit, calcRect(xfit, *p0FVnew))
     
-    popt, pcov = curve_fit(calcRect, Vs, Iss, p0=p0FVnew) # (curveFunc, Vs, Iss, p0=p0)
+    popt, pcov = curve_fit(calcRect, Vs, Iss, p0) # (curveFunc, Vs, Iss, p0=p0)
     
-    pFit = [round_sig(p,3) for p in popt]
-    print(pFit)
-    ##peakEq = eqString.format(pFit[0],pFit[2],pFit[2],pFit[1])
+    #pFit = [round_sig(p,3) for p in popt]
+    #print(pFit)
+    print('Phase I curve fit: ', popt)
     #peakEq = eqString.format(v0=pFit[0], E=pFit[2], v1=pFit[1])
     
     v0 = popt[0]
@@ -2931,7 +3029,7 @@ def fitFV(Vs, Iss, p0, ax=None):#, eqString): =plt.gcf()
         return fV
     
     poptrel, pcov = curve_fit(calcScale, Vs, gNorm, p0=(v0, v1))
-    print(poptrel)
+    print('Phase II curve fit: ', poptrel)
     
     if verbose > 1:
         print(np.c_[Vs,Iss,gs,gNorm])
@@ -3018,7 +3116,7 @@ nonOptParams = ['Gr0', 'E', 'v0', 'v1']
 
 
 
-def fitModels(dataSet, nStates=3, params=None, postOpt=True, method=defMethod): #, params, #fit3s=True, fit4s=False, fit6s=False):
+def fitModels(dataSet, nStates=3, params=None, postOpt=True, method=defMethod, verbose=verbose): #, params, #fit3s=True, fit4s=False, fit6s=False):
     """Routine to fit as many models as possible and select between them according to some parsimony criterion"""
     
     # .lower()
@@ -3109,10 +3207,7 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, method=defMethod): 
     Vs = [pc.V for pc in PCs]
     phis = [pc.phi for pc in PCs]
     
-    if verbose > 0:
-        print('Fitting over {} flux values [{:.3g}, {:.3g}] at {} mV (run {}) '.format(nPhis, min(phis), max(phis), setPC.trials[runInd][0][vIndm70].V, runInd), end='')
-        print("{{nRuns={}, nPhis={}, nVs={}}}\n".format(nRuns, nPhis, nVs))
-        
+    
         
     ### Extract the parameters relevant to all models - move inside loop for recovery protocol?
 
@@ -3382,7 +3477,7 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, method=defMethod): 
     ###Iplat is only required for the 3-state fitting procedure
 
 
-    from copy import deepcopy
+    
     
     #fitParams = deepcopy(modelParams[str(nStates)])
     fitParams = params ###################################### Revise
@@ -3410,7 +3505,10 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, method=defMethod): 
     #    print('\n\n*** Fitting a {}-state model to {} photocurrents ***'.format(nStates,nPhis))
     #phiFits[phiInd] = fitCurve(dataSet,nStates=nStates) #...
     
-    
+    if verbose > 0:
+        print('Fitting over {} flux values [{:.3g}, {:.3g}] at {} mV (run {}) '.format(nPhis, min(phis), max(phis), setPC.trials[runInd][0][vIndm70].V, runInd), end='')
+        print("{{nRuns={}, nPhis={}, nVs={}}}\n".format(nRuns, nPhis, nVs))
+        
     
     if True: #if nPhis > 1:
     
