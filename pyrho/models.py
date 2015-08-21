@@ -39,7 +39,7 @@ class RhodopsinModel(PyRhOobject):
         self.setParams(params)
         
         # Ensure v1 is scaled correctly so that f(V=-70) = 1
-        v1 = calcV1(self.v0, self.E)
+        v1 = calcV1(self.E, self.v0)
         if not np.isclose(self.v1, v1, rtol=1e-3, atol=1e-5):
             warnings.warn("Correcting v1 scaling: {} <-- {}".format(self.v1, v1))
             self.v1 = v1

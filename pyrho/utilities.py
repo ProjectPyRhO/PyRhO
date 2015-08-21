@@ -140,7 +140,7 @@ c = 2.99792458e8     # Speed of light    (m*s^-1)
 #NA = 6.0221413e23    # Avogadro's Number (mol^-1)
 
 
-def calcV1(v0,E):
+def calcV1(E, v0):
     """Since f(V=-70):= 1, if v0 or E are changed, v1 must be recalculated to rescale correctly for simulations"""
     return (70+E)/(np.exp((70+E)/v0)-1)
     #return (-70-E)/(1-np.exp(-(-70-E)/v0))
