@@ -1,17 +1,21 @@
 
 # Main module file for pyRhO
 
-#if IPython.__version__ < "3":
+#if sys.version_info < (3,0) #IPython.__version__ < "3":
 from __future__ import division # a/b -> float
 from __future__ import absolute_import, print_function, unicode_literals 
 
 
 #__all__ = ['parameters', 'loadData', 'models', 'protocols', 'fitting', 'IPythonGUI'] # 'config'
+#__all__ = ['parameters', 'loadData', 'models', 'protocols', 'fitting']
 
 __doc__ = """A Python module for fitting, characterising and simulating rhodopsin photocurrents"""
-__version__ = '0.5.0'
+#__version__ = '0.8.0'
+# http://stackoverflow.com/questions/17583443/what-is-the-correct-way-to-share-package-version-with-setup-py-and-the-package
+from pkg_resources import get_distribution
+__version__ = get_distribution('pyrho').version
 
-from .config import *
+from pyrho.config import *
 
 #deps = [numpy, scipy, matplotlib, lmfit, warnings, os, pickle, collections, platform]
 #depsGUI = [IPython, ast, base64]
@@ -47,14 +51,14 @@ import numpy as np
 #from lmfit import Parameters
 
 # Place all submodule functions and variables into namespace
-from .parameters import *
-from .utilities import *
-from .loadData import * #import loadData
-from .models import * #import models
-from .simulators import *
-from .protocols import * #import modProtocols
-from .fitting import * #import fitStates
-from .IPythonGUI import *
+from pyrho.parameters import *
+from pyrho.utilities import *
+from pyrho.loadData import * #import loadData
+from pyrho.models import * #import models
+from pyrho.simulators import *
+from pyrho.protocols import * #import modProtocols
+from pyrho.fitting import * #import fitStates
+from pyrho.IPythonGUI import *
 
 
 # Plot configuration

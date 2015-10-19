@@ -4,48 +4,26 @@ import warnings
 import pickle
 
 # http://preshing.com/20110924/timing-your-code-using-pythons-with-statement/
-import time
+#import time
 
 import os
 import shutil # for file copying
 import subprocess # for running system commands
+import copy
 
-from .config import verbose, dDir, fDir
+from pyrho.config import verbose, dDir, fDir
 
 class Timer:    
     def __enter__(self):
-        self.start = time.clock()
+        self.start = wallTime() #time.clock()
         return self
 
     def __exit__(self, *args):
-        self.end = time.clock()
+        self.end = wallTime() #time.clock()
         self.interval = self.end - self.start
         
 
-def checkNEURON():
-    return
-    
-def setupNEURON(path=None):
-    # Check for a working NEURON installation...
-    
-    ### To load mod files:
-    # Add os.environ['NRN_NMODL_PATH'] to environment variables. See $NEURONPATH/nrn/lib/python/neuron/__init__.py
-    if path is None:
-        path = os.environ['NRN_NMODL_PATH']
-    
-    # Check path
-    if os.path.isdir(path):
-        for f in NMODLfiles:
-            shutil.copy2(pyrhoNEURONpath, path, f)
-    
-    nrnivmodl = os.join(path, "nrn/x86_64/bin/nrnivmodl")
-    subprocess.call(nrnivmodl) #nrn/x86_64/bin/nrnivmodl
-    
-def setupBrian():
-    return
-    
-def checkBrian():
-    return
+
         
         
 def printParams(params):
@@ -65,12 +43,12 @@ def compareParams(origParams, newParams):
     ovd = origParams.valuesdict()
     nvd = newParams.valuesdict()
     report = '------------------------\n'
-    report += '       Parameters\n'
+    report += '          Original        New    Difference\n'
     report += '------------------------\n'
     for k,nv in nvd.items():
         ov = ovd[k]
         if isinstance(nv, (int, float, complex)):
-            if ov != 0:
+            if ov > 1e-4: #ov != 0:
                 report += '{:>7} = {:8.3g} --> {:8.3g} ({:+.3g}%)\n'.format(k,ov,nv,(nv-ov)*100/ov)
             else:
                 report += '{:>7} = {:8.3g} --> {:8.3g} (Diff: {:+.3g})\n'.format(k,ov,nv,nv-ov)
@@ -123,6 +101,60 @@ def getExt(vector, ext='max'):
         mVal = min(vector)
     mInd = np.searchsorted(vector, mVal)
     return mVal, mInd
+    
+def getIndex(valList, val):
+    """Return the index of val in valList.
+    This handles lists containing None"""
+    
+    # valList types: list, array, number
+    #   +/- None
+    # val types: list, array, number
+    #   +/- None
+    
+    # Vs=[-100,-70,-40,-10]
+    # V = -70
+    # np.where(np.isclose(Vs,V))[0] # Array of indices
+    
+    # locList = copy.copy(valList)
+    # if isinstance(valList, (list, tuple)):
+        # try:
+            # ind = valList.index(val)
+        # except:
+            # pass
+    # elif isinstance(valList, (np.ndarray, np.generic)):
+        # try:
+            # cl = np.isclose(valList, val)
+            # ind = np.searchsorted(cl, True)
+            ###ind = np.searchsorted(cl, True, equal_nan=True)
+        # except:
+            # pass
+        # else:
+            # locList = valList.tolist()
+    # elif isinstance(valList, (int, long, float, complex)):
+        # locList = list([copy.copy(valList)])
+    # else:
+        # raise TypeError("Value list must be a list, array or number")
+    
+    
+    
+    locList = list(copy.copy(valList))
+    if val is None:
+        try:
+            ind = locList.index(None)
+        except ValueError:
+            raise
+    else:
+        try:
+            iNone = locList.index(None)
+            locList[iNone] = np.nan
+        except:
+            pass
+        cl = list(np.isclose(locList, val))
+        try:
+            ind = cl.index(True)
+        except ValueError:
+            ind = None
+    return ind
     
 #global verbose # global statement is so that subfunctions can assign to the global var
 

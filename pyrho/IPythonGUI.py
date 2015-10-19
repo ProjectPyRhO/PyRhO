@@ -1,17 +1,25 @@
-from IPython.html.widgets import interact
-from IPython.html import widgets
+#from IPython.html.widgets import interact
+#from IPython.html import widgets # IPython < 4
+
+from __future__ import print_function
+import ipywidgets as widgets
+#from IPython.utils.traitlets import link # IPython < 4
+#from traitlets import link
+from traitlets import Unicode
 from IPython.display import display
 from IPython.display import clear_output
-from IPython.utils.traitlets import link
-from IPython.core.pylabtools import print_figure
-import base64
+#from IPython import get_ipython
 
-from .models import *
-from .simulators import *
-from .protocols import *
-from .loadData import *
-from .fitting import *
-from .config import dDir # For dataSet loading
+#from IPython.core.pylabtools import print_figure
+#import base64
+
+from pyrho.models import *
+from pyrho.simulators import *
+from pyrho.protocols import *
+from pyrho.loadData import *
+from pyrho.fitting import *
+from pyrho.config import dDir # For dataSet loading
+from pyrho.utilities import *
 import warnings
 import time
 from collections import OrderedDict
@@ -41,6 +49,9 @@ import ast
 #%run -i modProtocols.py
 #%run -i models.py
 
+# Create lists and dictionaries of titles
+modelTitles = ['Three-state model', 'Four-state model', 'Six-state model']
+
 fitMethodsDict = OrderedDict([(m,i) for i,m in enumerate(methods)])
 
 # State keys must be padded with a leading ' ' to avoid a widgets bug: https://github.com/ipython/ipython/issues/6469
@@ -63,10 +74,15 @@ modelParamsList = OrderedDict([ (model, list(modelParams[model])) for model in m
 #sParamsK2I = OrderedDict([ (sim,OrderedDict([(p,i) for i,p in enumerate(list(simParams[sim]))])) for sim in simList ])
 #sParamsI2K = OrderedDict([ (sim,list(simParams[sim])) for sim in simList ])
 simParamsList = OrderedDict([ (sim, list(simParams[sim])) for sim in simList ]) 
+loadedSims = [sim for sim in simList if simAvailable(sim) ]
 
 #pParamsK2I = OrderedDict([ (prot,OrderedDict([(p,i) for i,p in enumerate(list(protParams[prot]))])) for prot in protList ])
 #pParamsI2K = OrderedDict([ (prot,list(protParams[prot])) for prot in protList ]) 
 protParamsList = OrderedDict([ (prot, list(protParams[prot])) for prot in protList ])
+
+boolDict = OrderedDict([('True',True), ('False',False)])
+
+
 
 ### To Do: Replace GUI with object oriented code...
 class ParamWidgets(object):
@@ -113,7 +129,7 @@ class ParamWidgets(object):
             if maxList is not None:
                 maxList[i].value = pSet[param].max
             if exprList is not None and pSet[param].expr is not None:
-                exprList[i].value = pSet[param].expr
+                exprList[i].value = pSet[param].expr ### Change units handling
     
     def setParams(self, params):
         for p in params.keys():
@@ -152,7 +168,7 @@ def loadGUI():
     #dataSet = None
     def onLoad(name):
         global dataSet
-        print('Loading: "',dataVar.value, '"...', end=' ')
+        print('Loading: "', dataVar.value, '"...', end=' ')
         #print(vars())
         #print(globals())
         if dataVar.value in vars(): ### locals()? # http://stackoverflow.com/questions/7969949/whats-the-difference-between-globals-locals-and-vars
@@ -176,26 +192,20 @@ def loadGUI():
         #return dataSet
         
     def runFitButton_on_click(b): # on_button_clicked
+        """Main function to fit a model to a supplied data set"""
+        
         #global fitParamsPopup
         #global clearOutput
         if clearOutput.value:
             clear_output()
             #if 'fitParamsPopup' in vars() or 'fitParamsPopup' in globals():
             #    fitParamsPopup.close()
-        #global fitRhO
-        #fitRhO = fitModels(dataSet, int(statesToFitButtons.value))
         
-        #if plotExpData.value:
-        #    #plotData()
-        #    pass
-        
-        #global dataSet
+
         model = str(statesToFitButtons.value)
         mInd = statesDict[model] #statesDict[' '+str(nStates)]
         pSet = modelParams[modelList[mInd]]
-        #global fittedParams                                         ########################################################################
-        #print(type(dataSet))
-        #print(dataSet)
+
         initialParams = getGUIparams(pSet, pfValArr[mInd][:], varyList=fVaryArr[mInd][:], minList=pfMinArr[mInd][:], maxList=pfMaxArr[mInd][:], exprList=fExprArr[mInd][:])
         fittedParams = fitModels(dataSet, nStates=int(statesToFitButtons.value), params=initialParams, postOpt=runPostOpt.value, method=methods[fitMethods.value])
         
@@ -318,19 +328,25 @@ def loadGUI():
     
     def paramSetOnLoad(name):
         global paramSet
+        #from IPython import get_ipython # for output widgets
+        #with paramOutput:
         print('Loading: "',paramVar.value, '"...', end=' ')
         
         if paramVar.value in vars():
             paramSet = vars()[paramVar.value]
+            #with paramOutput:
             print('Successfully loaded from vars!')
             
         elif paramVar.value in globals():
             paramSet = globals()[paramVar.value]
+            #with paramOutput:
             print('Successfully loaded from globals!')
             
         else:
             paramSet = None
-            warnings.warn('Warning! Variable: {} not found!'.format(paramVar.value))
+            #with paramOutput:
+            print("Unable to find '{}'!".format(paramVar.value))
+            #warnings.warn('Warning! Variable: {} not found!'.format(paramVar.value))
             
         if paramTabs.selected_index == TabGroups['Models']:
             mInd = modelParamsTabs.selected_index
@@ -498,7 +514,7 @@ def loadGUI():
             if maxList is not None:
                 userParams[param].set(max=maxList[i].value)
             if exprList is not None:
-                userParams[param].set(expr=maxList[i].value)
+                userParams[param].set(expr=exprList[i].value)
                 
         return userParams
     
@@ -519,7 +535,7 @@ def loadGUI():
                 if maxList is not None:
                     maxList[i].value = pSet[param].max
                 if exprList is not None and pSet[param].expr is not None:
-                    exprList[i].value = pSet[param].expr
+                    exprList[i].value = pSet[param].expr ### Change units handling
     
     
         
@@ -529,9 +545,11 @@ def loadGUI():
         #@interact(nStates={'Three-state':3,'Four-state':4,'Six-state':6}, protocol=('custom', 'step', 'sinusoid', 'ramp', 'saturate', 'rectifier', 'shortPulse', 'recovery'), saveData=True, verbose=1)
 
     def runModel(model, protocol, simulator='Python', saveData=True, verbose=1): #verboseSlide.value
+        """Main GUI function to create protocol, simulator and rhdopsin objects, set parameters, run and plot"""
         
-        verbose = verbose
-        nStates = int(model)
+        
+        #verbose = verbose
+        #nStates = int(model)
         # print("\nRunning Protocol '{}' on the {}-state model...".format(protocol,nStates))
         # print('--------------------------------------------------------------------------------\n')
         
@@ -547,43 +565,24 @@ def loadGUI():
         userModelParams = Parameters()
         mInd = statesDict[model] #statesDict[' '+str(nStates)]
         pSet = modelParams[modelList[mInd]]
-        userModelParams = getGUIparams(pSet,pValArr[mInd][:])
-        # nParams = len(pSet)#.keys())
-        # i=0
-        # for key in pSet:#.keys():  # Set of n-state model pararmeters
-            # userModelParams.add(key,value=pValArr[mInd][i].value)
-            # i+=1
+        userModelParams = getGUIparams(pSet, pValArr[mInd][:])
         RhO.setParams(userModelParams)
-    
-        
         
         ### Get Simulator Parameters
-        # if verbose > 1:
-            # print('Simulating with {}...'.format(simulator))
-        #if simulator != 'Python': ########################################### Hack!!!!!
         userSimParams = Parameters()
         sInd = simList.index(simulator)
-        userSimParams = getGUIparams(simParams[simulator],sim_pValArr[sInd][:])
+        userSimParams = getGUIparams(simParams[simulator], sim_pValArr[sInd][:])
         Sim = simulators[simulator](RhO, userSimParams)
-        
-        
         
         ### Get Protocol Parameters
         userProtParams = Parameters()
         pInd = protList.index(protocol) #protIndDict[protocol]
-        userProtParams = getGUIparams(protParams[protocol],prot_pValArr[pInd][:])
-        # pSet = protParams[protocol]
-        # i=0
-        # for param in pSet:#.keys(): #, value in pSet.items():
-            # if isinstance(pSet[param].value, list): ################################## Change to not number!!!
-                # userProtParams.add(param, value=ast.literal_eval(prot_pValArr[pInd][i].value)) # or http://stackoverflow.com/questions/5387208/convert-a-string-to-an-array
-            # else:
-                # userProtParams.add(param, value=prot_pValArr[pInd][i].value)
-            # i+=1
+        userProtParams = getGUIparams(protParams[protocol], prot_pValArr[pInd][:])
         Prot = protocols[protocol](userProtParams)
-        Prot.run(Sim,RhO,verbose)
+        
+        Prot.run(Sim, RhO, verbose)
         if verbose > 0: #saveData:
-            Prot.plot()#(Sim,RhO,verbose)
+            Prot.plot()
         
         # print("\nFinished!")
         # print('================================================================================\n\n')
@@ -695,21 +694,22 @@ def loadGUI():
     
     #### Run Bar container
     runBar = widgets.HBox(children=[stateButtons,simDropdown,protDropdown,paramsButton,saveButton,verboseSlide,clearOutput,runButton]) #fitButton,
-    display(runBar)
+    #####display(runBar) # Commented to nest in GUI box
+    
 
     
     
     ### Set Button styles after displaying the runBar
-    paramsButton.button_style = 'info'
-    stateButtons.button_style = 'success'
-    stateButtons.margin = '5px'
-    simDropdown.button_style = 'success'
-    simDropdown.margin = '5px'
-    protDropdown.button_style = 'success'
-    protDropdown.margin = '5px'
-    #fitButton.button_style = 'success'
-    runButton.button_style = 'danger'
-    runButton.margin = '5px'
+    # paramsButton.button_style = 'info'
+    # stateButtons.button_style = 'success'
+    # stateButtons.margin = '5px'
+    # simDropdown.button_style = 'success'
+    # simDropdown.margin = '5px'
+    # protDropdown.button_style = 'success'
+    # protDropdown.margin = '5px'
+    ###fitButton.button_style = 'success'
+    # runButton.button_style = 'danger'
+    # runButton.margin = '5px'
     
     
     #stateButtons.add_class('btn-primary')
@@ -719,32 +719,34 @@ def loadGUI():
     ### button bootstrap styles: default, primary, success, info, warning, danger, link
     
 
-    runBar.align = 'center'
-    verboseSlide.width = '60px'
+    # runBar.align = 'center'
+    # verboseSlide.width = '60px'
     
     ##### Parameters control bar #####
     
     paramVar = widgets.Text(description='Parameter Set: ',placeholder='<variable name>')
     paramLoad = widgets.Button(description='Load')
     paramLoad.on_click(paramSetOnLoad)
+    paramOutput = widgets.Output()
     
+    paramBox = widgets.HBox(children=[paramVar])
     
     ### Reset Parameters Button
     paramsResetButton = widgets.Button(description="Reset")
     paramsResetButton.on_click(resetButton_on_click)
     
     ### Create Parameters control bar
-    paramsControlBar = widgets.HBox(children=[paramVar,paramLoad,paramsResetButton])
-    display(paramsControlBar)
+    paramsControlBar = widgets.HBox(children=[paramBox,paramLoad,paramsResetButton,paramOutput]) #paramVar
+    #####display(paramsControlBar) # Commented to nest in GUI box
     paramsControlBar.visible = False
     
     
     ### Set Parameters Bar style
-    paramVar.width = '150px' #set_css({'width': '150px'})
-    paramLoad.button_style = 'warning' #add_class('btn-warning')
-    paramsResetButton.button_style = 'warning' #add_class('btn-warning')
+    # paramVar.width = '150px' #set_css({'width': '150px'})
+    # paramLoad.button_style = 'warning' #add_class('btn-warning')
+    # paramsResetButton.button_style = 'warning' #add_class('btn-warning')
     
-    paramsControlBar.align = 'center'
+    # paramsControlBar.align = 'center'
     
     
     
@@ -754,12 +756,12 @@ def loadGUI():
     ### lmfit Parameters() are ordereddict objects (https://github.com/lmfit/lmfit-py/blob/master/lmfit/parameter.py) but it might be better to change pValArr and prot_pValArr etc. to ordereddicts too...
     
     
-    boolDict = OrderedDict([('True',True), ('False',False)])
     
     
     
     
     
+    ##### Not used yet... #####
     def buildLayerTab(paramGroup):
     
         pluginBoxes = [None for plugin in paramGroup] #{plugin: None for plugin in paramGroup}
@@ -789,10 +791,10 @@ def loadGUI():
                     else: # Bounded # ==> widgets.FloatSlider() ?
                         pluginValues[pluginInd][pInd] = widgets.BoundedFloatText(value=pSet[param].value, min=pSet[param].min, max=pSet[param].max, description=param)
                     pluginValues[pluginInd][pInd].width = '150px'
-                if pSet[param].expr == None: # No units
+                if pSet[param].expr is None: # No units
                     pluginParams[pluginInd][pInd] = widgets.HBox(children=[pluginValues[pluginInd][pInd]])
                 else:
-                    pluginUnits[pluginInd][pInd] = widgets.Dropdown(options=[pSet[param].expr],value=pSet[param].expr)
+                    pluginUnits[pluginInd][pInd] = widgets.Dropdown(options=[pSet[param].expr],value=pSet[param].expr) ### Change units handling
                     pluginParams[pluginInd][pInd] = widgets.HBox(children=[pluginValues[pluginInd][pInd],pluginUnits[pluginInd][pInd]])
                 
                     
@@ -831,11 +833,13 @@ def loadGUI():
     dataLoad = widgets.Button(description='Load')
     dataLoad.on_click(onLoad)
     
+    dataBox = widgets.HBox(children=[dataVar]) #dataLoad
+    
     #rArrow = widgets.Latex(value='$\\Rightarrow$')
     
     ### Create Fit Model States buttons
-    statesToFitButtons = widgets.ToggleButtons(description='Model: ',options=statesArray)#,value=u' 3') #https://github.com/ipython/ipython/issues/6469
-    statesToFitButtons.on_trait_change(changeFit,'value')
+    statesToFitButtons = widgets.ToggleButtons(description='Model: ', options=statesArray) #,value=u' 3') #https://github.com/ipython/ipython/issues/6469
+    statesToFitButtons.on_trait_change(changeFit, 'value')
     
     #fitLabel = widgets.HTML(value='Models to fit: ')
     #fit3sCheck = widgets.Checkbox(description='3 state', value=True)
@@ -844,8 +848,11 @@ def loadGUI():
     
     
     ### Hyperparameters
-    p0fVvar = widgets.Text(value=str(p0fV), description='p0fV: ', width='150px')
-    p0IPIvar = widgets.Text(value=str(p0IPI), description='p0IPI: ', width='150px')
+    #p0fVvar = widgets.Text(value=str(p0fV), description='p0fV: ', width='150px')
+    #p0IPIvar = widgets.Text(value=str(p0IPI), description='p0IPI: ', width='150px')
+    
+    #hyperTitle = widgets.HTML(value='<h4>General Parameters</h4>')
+    #hyperParams = widgets.VBox(children=[hyperTitle, p0fVvar, p0IPIvar])#, border_color='blue')
     
     
     ### Create Checkboxes
@@ -868,42 +875,42 @@ def loadGUI():
     #display(fitBar)
     #fitBar.visible=False
     
-    ### Set formatting
-    dataVar.width = '150px' #set_css({'width': '150px'})
-    #dataVar.margin = '0px'
-    dataLoad.button_style = 'warning' #add_class('btn-warning')
-    runFitButton.button_style = 'danger' #add_class('btn-danger')
-    #runFitButton.margin = '5px'
-    characteriseButton.button_style = 'success'
-    # Set Fit Bar formatting after display
-    dataLoad._dom_classes = ('margin-left','10px')
-    #fitBar.align = 'center'
-    exportFitButton.button_style = 'info'
+    # ### Set formatting
+    # dataVar.width = '150px' #set_css({'width': '150px'})
+    # #dataVar.margin = '0px'
+    # dataLoad.button_style = 'warning' #add_class('btn-warning')
+    # runFitButton.button_style = 'danger' #add_class('btn-danger')
+    # #runFitButton.margin = '5px'
+    # characteriseButton.button_style = 'success'
+    # # Set Fit Bar formatting after display
+    # dataLoad._dom_classes = ('margin-left','10px')
+    # #fitBar.align = 'center'
+    # exportFitButton.button_style = 'info'
     
-    runSSAcheck.margin = '5px'
-    #plotExpData.margin = '5px'
-    runPostOpt.margin = '5px'
-    runFitButton.margin = '5px'
-    #characteriseButton.margin = '5px'
-    exportFitButton.margin = '5px'
+    # runSSAcheck.margin = '5px'
+    # #plotExpData.margin = '5px'
+    # runPostOpt.margin = '5px'
+    # runFitButton.margin = '5px'
+    # #characteriseButton.margin = '5px'
+    # exportFitButton.margin = '5px'
     
     #dataLoadBar = widgets.HBox(children=[dataVar, dataLoad, useFitCheck], align='center')
     ##statesBar = widgets.HBox(children=[fitLabel, fit3sCheck, fit4sCheck, fit6sCheck], align='center') #.align = 'center'
     #statesBar = widgets.HBox(children=[statesToFitButtons], align='center')
     
-    hyperTitle = widgets.HTML(value='<h4>General Parameters</h4>')
-    hyperParams = widgets.VBox(children=[hyperTitle, p0fVvar, p0IPIvar])#, border_color='blue')
+
+    
     #fitOutputBar = widgets.HBox(children=[runSSAcheck, plotExpData, runFitButton], align='center')
     #runSSAcheck
-    fitBar = widgets.HBox(children=[dataVar, dataLoad, statesToFitButtons, fitMethods, runPostOpt, runFitButton, characteriseButton, exportFitButton], align='center') #plotExpData
+    fitBar = widgets.HBox(children=[dataBox, dataLoad, statesToFitButtons, fitMethods, runPostOpt, runFitButton, characteriseButton, exportFitButton], align='center') #plotExpData #dataVar, dataLoad
     #fitParamsHead = widgets.VBox(children=[dataLoadBar, statesBar, hyperParams, fitOutputBar]) # Left side container
-    fitParamsHead = widgets.VBox(children=[fitBar, hyperParams])
-    fitNotesBoxes = widgets.VBox(children=[]) # Right side container for figure and equations
+    fitParamsHead = widgets.VBox(children=[fitBar]) # , hyperParams
+    #fitNotesBoxes = widgets.VBox(children=[]) # Right side container for figure and equations
     
     #fitParamsTabs = widgets.HBox(children=[fitBox]) # fitNotesBoxes # Hack to have a parent tab with no children
     #fitParamsBox = widgets.VBox(children=[fitBox,fitParamsTabs])
     
-    
+    ### Create parameter fitting entries
     
     modelFitBoxes = [None for m in range(len(modelParams))]
     modelFitParamBoxes = [None for m in range(len(modelParams))] # Left side container
@@ -920,7 +927,7 @@ def loadGUI():
     pfBoxArr = [[None for p in modelParams[m]] for m in modelList] # Array of parameter boxes ###[[None for p in modelParams[modelList[m]]] for m in range(len(modelParams))]
     
     spacer = widgets.HTML()
-    spacer.width = '150px' # Equal to the width of a drop-drown menu
+    ###spacer.width = '150px' # Equal to the width of a drop-drown menu
     
     #widgets.HTML(value='<strong>Initial Value</strong>')
     #colHeadings = widgets.HTML(value='<table><tr><th width="40px"></th><th width=60px align="right">Vary</th><div align="center"><th width=150px align="center">Minimum</th><th width=150px align="center">Initial</th><th width=150px align="center">Maximum</th><th width=150px align="center">Units</th><th width=150px align="center">Expression</th></div></tr></table>')
@@ -949,7 +956,7 @@ def loadGUI():
                 name = key
             
             pfLabArr[m][i] = widgets.Latex(value=name)
-            pfLabArr[m][i].width = '50px'#'20px'
+            #pfLabArr[m][i].width = '50px'#'20px'
             minVal = pSet[key].min if pSet[key].min != None else -np.inf
             pfMinArr[m][i] = widgets.FloatText(value=minVal)#,description='min') #str(minVal)
             maxVal = pSet[key].max if pSet[key].max != None else np.inf
@@ -957,13 +964,20 @@ def loadGUI():
             pfValArr[m][i] = widgets.BoundedFloatText(value=pSet[key].value, min=minVal, max=maxVal)#, description='initial')#"{} [{}]:".format(key, pSet[key].expr))
             #pfValArr[m][i].width = '150px'
             
-            fExprArr[m][i] = widgets.Text(value='')#, description='expr')
-            fExprArr[m][i].width = '150px'
-            fVaryArr[m][i] = widgets.Checkbox(value=True)#, description='vary')
-            fVaryArr[m][i].width = '30px'
+            fitExpr = pSet[key].expr if pSet[key].expr is not None else ''
+            # if pSet[key].expr is None:
+                # fExprArr[m][i] = widgets.Text(value='')#, description='expr')
+            # else:
+                # fExprArr[m][i] = widgets.Text(value=pSet[key].expr)
+            fExprArr[m][i] = widgets.Text(value=fitExpr)
+            ###fExprArr[m][i].width = '150px'
+            #fVaryArr[m][i] = widgets.Checkbox(value=True)#, description='vary')
+            fVaryArr[m][i] = widgets.Checkbox(value=pSet[key].vary)#, description='vary')
+            ###fVaryArr[m][i].width = '30px'
             
-            if not pSet[key].expr == None:
-                fUnitArr[m][i] = widgets.Dropdown(options=[pSet[key].expr])#,value=pSet[key].expr)
+            if key in unitLabels: #pSet[key].expr is not None:
+                #fUnitArr[m][i] = widgets.Dropdown(options=[pSet[key].expr])#,value=pSet[key].expr) ### Change units handling
+                fUnitArr[m][i] = widgets.Dropdown(options=[unitLabels[key]])#,value=pSet[key].expr) ### Change units handling
                 pfBoxArr[m][i] = widgets.HBox(children=[pfLabArr[m][i],fVaryArr[m][i],pfMinArr[m][i],pfValArr[m][i],pfMaxArr[m][i],fUnitArr[m][i],fExprArr[m][i]], align='center')
             else:
                 
@@ -1029,7 +1043,7 @@ def loadGUI():
         #modelNotesBoxes[m].add_class('box-flex1')
         #modelBox = widgets.HBox(children=[modelParamBoxes,modelNotesBoxes])
         modelFitBoxes[m] = widgets.VBox(children=[colHeadings, modelFitParamBoxes[m]]) #, #,modelFitNotesBoxes[m]])#modelBox
-        modelFitBoxes[m].margin = '5px'
+        ###modelFitBoxes[m].margin = '5px'
         
     ### Linked parameters
     #E_Link = link((stateButtons, 'value'), (statesToFitButtons, 'value'))
@@ -1044,20 +1058,21 @@ def loadGUI():
     
     #fitParamsTabs = buildLayerTab(modelFitBoxes)
     fitParamsTabs = widgets.Tab(description='Parameter Settings', children=modelFitBoxes, values=statesArray)
-    fitParamsTabs.set_title(0, 'Three-state model')
-    fitParamsTabs.set_title(1, 'Four-state model')
-    fitParamsTabs.set_title(2, 'Six-state model')
-    fitParamsTabs.width = '800px'
+    # fitParamsTabs.set_title(0, 'Three-state model') # Moved to loop over modelTitles
+    # fitParamsTabs.set_title(1, 'Four-state model')
+    # fitParamsTabs.set_title(2, 'Six-state model')
+    ###fitParamsTabs.width = '800px'
     
-    modelFitTitle = widgets.HTML(value='<h4>Model Specific Parameters</h4>')
-    fitBox = widgets.VBox(children=[fitParamsHead,modelFitTitle,fitParamsTabs]) #HBox
-    fitBox.margin = '5px'
+    #modelFitTitle = widgets.HTML(value='<h4>Model Specific Parameters</h4>')
+    #fitBox = widgets.VBox(children=[fitParamsHead,modelFitTitle,fitParamsTabs]) #HBox
+    fitBox = widgets.VBox(children=[fitParamsHead, fitParamsTabs]) #HBox
+    ###fitBox.margin = '5px'
     #modelParamsTabs = widgets.Tab(description='Parameter Settings', children=modelBoxes, values=statesArray)
     #modelParamsTabs.margin = '5px'
     fitParamsTabs.on_trait_change(fitTabChange,'selected_index')
 
     
-    statesToFitButtons.button_style = 'info'
+    #statesToFitButtons.button_style = 'info'
     #statesToFitButtons.margin = '5px'
     
     
@@ -1099,17 +1114,24 @@ def loadGUI():
             else:
                 pValArr[m][i] = widgets.BoundedFloatText(value=pSet[key].value, min=pSet[key].min, max=pSet[key].max, description=name)#"{} [{}]:".format(key, pSet[key].expr))
             
-            if not pSet[key].expr == None:
-                unitArr[m][i] = widgets.Dropdown(options=[pSet[key].expr],value=pSet[key].expr)
+            if key in unitLabels: #pSet[key].expr is not None:
+                #unitArr[m][i] = widgets.Dropdown(options=[pSet[key].expr],value=pSet[key].expr) ### Change units handling
+                unitArr[m][i] = widgets.Dropdown(options=[unitLabels[key]],value=unitLabels[key]) ### Change units handling
                 pBoxArr[m][i] = widgets.HBox(children=[pValArr[m][i],unitArr[m][i]])
             else:
                 pBoxArr[m][i] = widgets.HBox(children=[pValArr[m][i]])
             i+=1
         
+        guiFigDir = 'gui/'
+        
         figHTML[m] = widgets.HTML()
         eqBox[m] = widgets.Latex()
+        #figPrefix = os.path.join(pyrhoPath, 'gui')
+        
         if int(statesArray[m]) == 3: # m==0
-            figHTML[m].value = '<img src="3-state-model.png" alt="Three state model" width=150>'
+            #figHTML[m].value = '<img src="{}" alt="Three state model" width=150>'.format('file://'+os.path.join(figPrefix, '3state_model.png'))
+            #figHTML[m].value = '<img src="3state_model.png" alt="Three state model" width=150>'
+            figHTML[m].value = '<img src="{}{}state_model.png" alt="{}-state model" width=150>'.format(guiFigDir, statesArray[m], stateLabs[statesArray[m]])
             eqBox[m].value = models[model].equations
                     #"""
                     #$$\\dot{C} = G_{r}(\\phi)D - P(\\phi)C$$
@@ -1126,7 +1148,8 @@ def loadGUI():
                     #\\epsilon F
                     #$$P = \\phi\\frac{\\epsilon \\sigma_{ret}}{w_{loss}} = k\\phi$$
         elif int(statesArray[m]) == 4: # m==1
-            figHTML[m].value = '<img src="4-state-model.png" alt="Four state model" width=180>' #width=200>'
+            #figHTML[m].value = '<img src="4state_model.png" alt="Four state model" width=180>' #width=200>'
+            figHTML[m].value = '<img src="{}{}state_model.png" alt="{}-state model" width=180>'.format(guiFigDir, statesArray[m], stateLabs[statesArray[m]])
             eqBox[m].value = models[model].equations
                     #"""
                     #$$\\dot{C_1} = G_rC_2 + G_{d1}O_1 - G_{a1}(\\phi)C_1$$
@@ -1149,7 +1172,8 @@ def loadGUI():
                     #$$e_{21}(\\phi) = e_{21, d} + c_2 log(1+\\phi / \\phi_0)$$
         else: #int(statesArray[m]) == 6:
             #figHTML[m].value = '<img src="http://link.springer.com/static-content/images/46/art%253A10.1007%252Fs10827-012-0431-7/MediaObjects/10827_2012_431_Fig1_HTML.gif" width=220>'
-            figHTML[m].value = '<img src="6-state-model.gif" alt="Six state model" width=220>'
+            #figHTML[m].value = '<img src="6state_model.png" alt="Six state model" width=210>'
+            figHTML[m].value = '<img src="{}{}state_model.png" alt="{}-state model" width=210>'.format(guiFigDir, statesArray[m], stateLabs[statesArray[m]])
             eqBox[m].value = models[model].equations
                     #"""
                     #$$\\dot{C_1} = -a_1(\\phi)C_1 + b_1O_1 + a_6C_2$$
@@ -1177,13 +1201,13 @@ def loadGUI():
         #modelNotesBoxes[m].add_class('box-flex1')
         #modelBox = widgets.HBox(children=[modelParamBoxes,modelNotesBoxes])
         modelBoxes[m] = widgets.HBox(children=[modelParamBoxes[m],modelNotesBoxes[m]])#modelBox
-        modelBoxes[m].margin = '5px'
+        ###modelBoxes[m].margin = '5px'
     
     ### Linked parameters
     #E_Link = link((stateButtons, 'value'), (statesToFitButtons, 'value'))
     
     modelParamsTabs = widgets.Tab(description='Parameter Settings', children=modelBoxes, values=statesArray)
-    modelParamsTabs.margin = '5px'
+    ###modelParamsTabs.margin = '5px'
     modelParamsTabs.on_trait_change(modelTabChange,'selected_index')
     #modelParamsTabs.on_displayed(setModelParamsTabs,'selected_index')
     #modelParamsTabs.on_displayed()
@@ -1204,12 +1228,12 @@ def loadGUI():
     sim_pValArr = [[None for p in simParams[sim]] for sim in simParams] # Array of parameter values
     sim_unitArr = [[None for p in simParams[sim]] for sim in simParams] # Array of units
     sim_pBoxArr = [[None for p in simParams[sim]] for sim in simParams] # Array of parameter boxes
-    
+    #sim_notesArr = [[None for p in simParams[sim]] for sim in simParams] # Array of notes boxes
     
     for sInd, sim in enumerate(simParams):
         pSet = simParams[sim]
-        i=0
-        for param in pSet:#.keys(): #, value in pSet.items():
+        #i=0
+        for i, param in enumerate(pSet): #param in pSet:#.keys(): #, value in pSet.items():
             if isinstance(pSet[param].value, list):
                 sim_pValArr[sInd][i] = widgets.Text(value=str(pSet[param].value), description=param) # np.asarray
             elif isinstance(pSet[param].value, str):
@@ -1221,14 +1245,21 @@ def loadGUI():
                     sim_pValArr[sInd][i] = widgets.FloatText(value=pSet[param].value, description=param)
                 else:
                     sim_pValArr[sInd][i] = widgets.BoundedFloatText(value=pSet[param].value, min=pSet[param].min, max=pSet[param].max, description=param)
-                sim_pValArr[sInd][i].width = '150px'
-            if not pSet[param].expr == None:
-                sim_unitArr[sInd][i] = widgets.Dropdown(options=[pSet[param].expr],value=pSet[param].expr)
-                sim_pBoxArr[sInd][i] = widgets.HBox(children=[sim_pValArr[sInd][i],sim_unitArr[sInd][i]])
+                ###sim_pValArr[sInd][i].width = '150px'
+            if param in simUnitLabels:
+                sim_unitArr[sInd][i] = widgets.Dropdown(options=[simUnitLabels[param]], value=simUnitLabels[param])
             else:
-                sim_pBoxArr[sInd][i] = widgets.HBox(children=[sim_pValArr[sInd][i]])
-                
-            i+=1
+                sim_unitArr[sInd][i] = widgets.HTML(value='') # Spacer
+                #sim_unitArr[sInd][i].width = '150px'
+            #sim_notesArr[sInd][i] = widgets.HTML(value=' '+simParamNotes[param]) #widgets.Latex(value='$'+simParamNotes[param]+'$')
+            # if param in simUnitLabels: #pSet[param].expr is not None:
+                # sim_unitArr[sInd][i] = widgets.Dropdown(options=[simUnitLabels[param]],value=simUnitLabels[param]) #pSet[param].expr ### Change units handling
+                # sim_pBoxArr[sInd][i] = widgets.HBox(children=[sim_pValArr[sInd][i],sim_unitArr[sInd][i]])
+            # else:
+                # sim_pBoxArr[sInd][i] = widgets.HBox(children=[sim_pValArr[sInd][i]])
+            sim_pBoxArr[sInd][i] = widgets.HBox(children=[sim_pValArr[sInd][i], sim_unitArr[sInd][i]]) #, sim_notesArr[sInd][i]])
+            
+            #i+=1
             
         simFigHTML[sInd] = widgets.HTML()
         #exampleProt = '{}{}6s.{}'.format(fDir,prot,'png')#saveFigFormat)
@@ -1242,12 +1273,12 @@ def loadGUI():
         
         simBoxes[sInd] = widgets.HBox(children=[simParamBoxes[sInd],simNotesBoxes[sInd]])#modelBox
         #display(protBoxes[pInd])
-        simBoxes[sInd].margin = '5px'
+        #simBoxes[sInd].margin = '5px'
         
     
     ##### Simulator parameters tab #####
     simParamsTabs = widgets.Tab(description='Simulator Settings', children=simBoxes)# \
-    simParamsTabs.margin = '5px'
+    ###simParamsTabs.margin = '5px'
     simParamsTabs.on_trait_change(simTabChange,'selected_index')
         
         
@@ -1265,30 +1296,70 @@ def loadGUI():
     prot_pValArr = [[None for p in protParams[prot]] for prot in protList] # Array of parameter values
     prot_unitArr = [[None for p in protParams[prot]] for prot in protList] # Array of units
     prot_pBoxArr = [[None for p in protParams[prot]] for prot in protList] # Array of parameter boxes
+    ### These should be included in prot_pBoxArr but are put in th eprotNotesBoxes to avoid alignment issues
+    protParamNotesWid = [[None for p in protParams[prot]] for prot in protList] # Array of parameter note boxes
+    #protParamNotesBoxes = [None for prot in protList] # Array of boxes for parameter note boxes
     
+    # Create Irradiance <-> Flux converter
+    def irradButton_on_click(b):
+        fluxVal.value = irrad2flux(E=irradVal.value, lam=lamVal.value)
+    
+    def fluxButton_on_click(b):
+        irradVal.value = flux2irrad(phi=fluxVal.value, lam=lamVal.value)
+    
+    irradVal = widgets.FloatText(description='Irradiance', value=1)
+    irradUnits = widgets.Dropdown(options=['mW/mm^2'], value='mW/mm^2')
+    lamVal = widgets.FloatText(description='$\lambda$', value=470)
+    lamUnits = widgets.Dropdown(options=['nm'], value='nm')
+    irradButton = widgets.Button(description="-->")
+    irradButton.on_click(irradButton_on_click)
+    irradButton.tooltips = "Calculate Flux"
+    fluxVal = widgets.FloatText(description='Flux', value=1e15)
+    fluxUnits = widgets.Dropdown(options=['ph./mm^2/s'], value='ph./mm^2/s')
+    fluxButton = widgets.Button(description="<--")
+    fluxButton.on_click(fluxButton_on_click)
+    fluxButton.tooltips = "Calculate Irradiance"
+    protParamsHead = widgets.HBox(children=[irradVal, irradUnits, fluxButton, lamVal, lamUnits, irradButton, fluxVal, fluxUnits])
     
     for pInd, prot in enumerate(protList):
         pSet = protParams[prot]
-        i=0
-        for param in pSet:#.keys(): #, value in pSet.items():
-            if isinstance(pSet[param].value, list):
-                prot_pValArr[pInd][i] = widgets.Text(value=str(pSet[param].value), description=param) # np.asarray
+        #i=0
+        for i, param in enumerate(pSet): #param in pSet:#.keys(): #, value in pSet.items():
+            label = '$' + protParamLabels[param] + '$'
+            if isinstance(pSet[param].value, list): # or isinstance(pSet[param].value, str):
+                prot_pValArr[pInd][i] = widgets.Text(value=str(pSet[param].value), description=label) # np.asarray #param
             elif isinstance(pSet[param].value, bool):
-                prot_pValArr[pInd][i] = widgets.Dropdown(options=boolDict, value=pSet[param].value, description=param)
+                prot_pValArr[pInd][i] = widgets.Dropdown(options=boolDict, value=pSet[param].value, description=label) #param
             else:
                 if (pSet[param].min == None or pSet[param].min == -np.inf) or (pSet[param].max == None or pSet[param].max == np.inf):
-                    prot_pValArr[pInd][i] = widgets.FloatText(value=pSet[param].value, description=param)
+                    prot_pValArr[pInd][i] = widgets.FloatText(value=pSet[param].value, description=label)
                 else:
-                    prot_pValArr[pInd][i] = widgets.BoundedFloatText(value=pSet[param].value, min=pSet[param].min, max=pSet[param].max, description=param)
-                prot_pValArr[pInd][i].width = '150px'
-            if not pSet[param].expr == None:
-                prot_unitArr[pInd][i] = widgets.Dropdown(options=[pSet[param].expr],value=pSet[param].expr)
-                prot_pBoxArr[pInd][i] = widgets.HBox(children=[prot_pValArr[pInd][i],prot_unitArr[pInd][i]])
+                    prot_pValArr[pInd][i] = widgets.BoundedFloatText(value=pSet[param].value, min=pSet[param].min, max=pSet[param].max, description=label)
+                ###prot_pValArr[pInd][i].width = '150px'
+            
+            
+            if param in protUnitLabels: #pSet[param].expr is not None:
+                prot_unitArr[pInd][i] = widgets.Dropdown(options=[protUnitLabels[param]], value=protUnitLabels[param])#pSet[param].expr ### Change units handling
+            else:
+                prot_unitArr[pInd][i] = widgets.HTML(value='')
+            
+            
+            #prot_unitArr[pInd][i] = widgets.Latex(value='$[\mathrm{'+protUnitLabels[param]+'}]$')
+            protParamNotesWid[pInd][i] = widgets.HTML(value=protParamNotes[prot][param]) # Latex is ok too
+            prot_pBoxArr[pInd][i] = widgets.HBox(children=[prot_pValArr[pInd][i], prot_unitArr[pInd][i], protParamNotesWid[pInd][i]])
+            
+            """
+            if param in protUnitLabels: #pSet[param].expr is not None:
+                print(param, '-->', protUnitLabels[param])
+                prot_unitArr[pInd][i] = widgets.Dropdown(options=[protUnitLabels[param]], value=protUnitLabels[param])#pSet[param].expr ### Change units handling
+                prot_pBoxArr[pInd][i] = widgets.HBox(children=[prot_pValArr[pInd][i], prot_unitArr[pInd][i]])
             else:
                 prot_pBoxArr[pInd][i] = widgets.HBox(children=[prot_pValArr[pInd][i]])
+            """
             
-            i+=1
-            
+            #i+=1
+        
+        """
         protStimHTML[pInd] = widgets.HTML()
         ### Add stimulus figures by printing to file
         # IPython.core.pylabtools.print_figure(fig, fmt='png', bbox_inches='tight', **kwargs)
@@ -1296,83 +1367,52 @@ def loadGUI():
         x = np.linspace(0, 3*np.pi, 500)
         #plt.figure(Ifig.number)
         plt.plot(x, np.sin(x**2))
-        fdata64 = base64.b64encode(print_figure(stimFig))
+        #fdata64 = base64.b64encode(print_figure(stimFig))
         title = 'Stimulus for {}'.format(prot)
-        #print(title,fdata64)
+        ###print(title,fdata64)
         html_fig = ''#'<img alt="{}" src="data:image/png;base64,{}">'.format(title,fdata64)
         #return html_tpl.format(**locals())
         plt.close(stimFig)
         protStimHTML[pInd].value = html_fig
+        """
         
         protFigHTML[pInd] = widgets.HTML()
-        exampleProt = '{}{}6s.{}'.format(fDir,prot,'png')#saveFigFormat)
+        exampleProt = '{}{}6s.{}'.format(guiFigDir,prot,'png')#saveFigFormat) # fDir
         if os.path.isfile(exampleProt):
             protFigHTML[pInd].value='<img src="{}" alt=Example {} width=200px>'.format(exampleProt,prot)
         else:
             protFigHTML[pInd].value='Example Figure'
         protParamBoxes[pInd] = widgets.Box(children=prot_pBoxArr[pInd])
-        protNotesBoxes[pInd] = widgets.HBox(children=[protStimHTML[pInd], protFigHTML[pInd]])#[figHTML[prot],eqBox[prot]])
+        
+        #protParamNotesBoxes[pInd] = widgets.VBox(children=protParamNotesWid[pInd])
+        
+        '''#protNotesBoxes[pInd] = widgets.HBox(children=[protStimHTML[pInd], protFigHTML[pInd]])#[figHTML[prot],eqBox[prot]])'''
+        #protNotesBoxes[pInd] = widgets.HBox(children=[ protParamNotesBoxes[pInd], protFigHTML[pInd] ])#[figHTML[prot],eqBox[prot]])
+        protNotesBoxes[pInd] = widgets.HBox(children=[ protFigHTML[pInd] ])#[figHTML[prot],eqBox[prot]])
         
         
-        protBoxes[pInd] = widgets.HBox(children=[protParamBoxes[pInd],protNotesBoxes[pInd]])#modelBox
-        protBoxes[pInd].margin = '5px'
+        protBoxes[pInd] = widgets.HBox(children=[protParamBoxes[pInd], protNotesBoxes[pInd]])#modelBox
+        #protBoxes[pInd].margin = '5px'
         #display(protBoxes[pInd])
         
         
         
-        
+    
     ##### Protocol parameters tab #####
     protParamsTabs = widgets.Tab(description='Parameter Settings', children=protBoxes)# \
-    protParamsTabs.margin = '5px'
+    ###protParamsTabs.margin = '5px'
     protParamsTabs.on_trait_change(protTabChange,'selected_index')
-    
+    protBox = widgets.VBox(children=[protParamsHead, protParamsTabs]) #HBox
     
     ##### Configure tabs for abstraction layers #####
-    paramTabs = widgets.Tab(description='Parameter Settings', children=[fitBox,modelParamsTabs,simParamsTabs,protParamsTabs])#fitParamsTabs #,values=['Model', 'Protocol']) #E_box,k_box
-    display(paramTabs)
+    paramTabs = widgets.Tab(description='Parameter Settings', children=[fitBox,modelParamsTabs,simParamsTabs,protBox]) # protParamsTabs #fitParamsTabs #,values=['Model', 'Protocol']) #E_box,k_box
+    #####display(paramTabs) # Commented to nest in GUI box
     paramTabs.selected_index = TabGroups['Models'] # Set to show model parameters initially
-    paramTabs.visible=False
-    paramTabs.margin = '5px'
+    paramTabs.visible = False
+    ###paramTabs.margin = '5px'
     
     
     
-    ### Set Tab titles ### # Titles must be set after display of tabs
-    paramTabs.set_title(0, 'Fit Parameters')
-    paramTabs.set_title(1, 'Model Parameters')
-    paramTabs.set_title(2, 'Simulator Parameters')
-    paramTabs.set_title(3, 'Protocol Parameters')
-    
-    modelParamsTabs.set_title(0, 'Three-state model')
-    modelParamsTabs.set_title(1, 'Four-state model')
-    modelParamsTabs.set_title(2, 'Six-state model')
-    modelParamsTabs.width = '800px' #set_css({'width': '800px'}) # 800
-    
-    ### Set Parameter Tabs style
-    for pInd, prot in enumerate(protList): # Change to protParams #for prot, pSet in protParams.items():
-        protParamsTabs.set_title(pInd, prot)
-        protNotesBoxes[pInd].flex = True #protNotesBoxes[pInd].add_class('box-flex1')
-        protFigHTML[pInd].width = '200px' #set_css({'width': '200px', 'margin-left': '20px'})
-        protFigHTML[pInd].margin = '20px'
-        for i in range(len(protParams[prot])): # pSet.keys(): #for i in range(len(protParams[prot])):
-            prot_pValArr[pInd][i].width = '150px' #set_css({'width': '150px'})
-    
-    ### Set Simulator Tabs style
-    for sInd, sim in enumerate(simList):
-        simParamsTabs.set_title(sInd, sim)
-        simNotesBoxes[sInd].flex = True #protNotesBoxes[pInd].add_class('box-flex1')
-        simFigHTML[sInd].width = '200px' #set_css({'width': '200px', 'margin-left': '20px'})
-        simFigHTML[sInd].margin = '20px'
-        for i in range(len(simParams[sim])): # pSet.keys(): #for i in range(len(protParams[prot])):
-            sim_pValArr[sInd][i].width = '150px' #set_css({'width': '150px'})
-    
-    
-    ### Hack to tile parameter fields horizontally - must come after displaying the parent
-    for model in modelParams: #for m in range(len(modelParams)):
-        m = modelList.index(model)
-        eqBox[m].width = '150px'
-        eqBox[m].margin = '10px'
-        modelNotesBoxes[m].width = '300px'
-        modelNotesBoxes[m].margin = '20px'
     
     
     # ### Create NEURON Control Bar
@@ -1392,18 +1432,161 @@ def loadGUI():
     
     # brianLoad.button_style = 'warning' #add_class('btn-warning')
     
-
-    
-    #GUI.children=[fitBar,runBar,paramsControlBar,paramTabs,NEURONbox,Brianbox]
-    #display(GUI)
-    #GUI.remove_class('vbox')
-    #GUI.add_class('hbox')
-   
     
     
-    return
+    ### Container box for the entire GUI
+    GUI = widgets.VBox()
+    GUI.children = [runBar, paramsControlBar, paramTabs] #[fitBar,runBar,paramsControlBar,paramTabs,NEURONbox,Brianbox]
+    display(GUI)
     
-GUI = widgets.Box()
+    
+    
+    ##### Add formatting here after display #####
+    
+    ### Set Button styles after displaying the runBar
+    paramsButton.button_style = 'info'
+    #stateButtons.button_style = 'success' ### Removed due to widgets bug
+    stateButtons.margin = '5px'
+    simDropdown.button_style = 'success'
+    simDropdown.margin = '5px'
+    protDropdown.button_style = 'success'
+    protDropdown.margin = '5px'
+    #fitButton.button_style = 'success'
+    runButton.button_style = 'danger'
+    runButton.margin = '5px'
+    runBar.align = 'center'
+    verboseSlide.width = '60px'
+    
+    ### Set paramTabs formatting
+    
+    ### Set Parameters Bar style
+    paramVar.width = '150px' #set_css({'width': '150px'})
+    paramBox.width = '250px'
+    paramOutput.width = '300px'
+    paramLoad.button_style = 'warning' #add_class('btn-warning')
+    paramsResetButton.button_style = 'warning' #add_class('btn-warning')
+    paramsControlBar.align = 'center'
+    
+    #lamVal.width = '75px'
+    #lamUnits.width = '75px'
+    
+    
+    ### Set fitBar formatting
+    dataVar.width = '150px' #set_css({'width': '150px'})
+    #dataVar.margin = '0px'
+    dataBox.width = '150px'
+    dataLoad.button_style = 'warning' #add_class('btn-warning')
+    # statesToFitButtons.button_style = 'info' ### Removed due to widgets bug
+    runFitButton.button_style = 'danger' #add_class('btn-danger')
+    #runFitButton.margin = '5px'
+    characteriseButton.button_style = 'success'
+    # Set Fit Bar formatting after display
+    dataLoad._dom_classes = ('margin-left','10px')
+    #fitBar.align = 'center'
+    exportFitButton.button_style = 'info'
+    runSSAcheck.margin = '5px'
+    #plotExpData.margin = '5px'
+    runPostOpt.margin = '5px'
+    runFitButton.margin = '5px'
+    #characteriseButton.margin = '5px'
+    exportFitButton.margin = '5px'
+    
+    fitParamsTabs.width = '800px'
+    fitBox.margin = '5px'
+    
+    
+    ### Set Tab titles ### # Titles must be set after display of tabs
+    paramTabs.set_title(0, 'Fitting Parameters')
+    paramTabs.set_title(1, 'Model Parameters')
+    paramTabs.set_title(2, 'Simulator Parameters')
+    paramTabs.set_title(3, 'Protocol Parameters')
+    
+    
+    stateButtons.tooltips = modelTitles
+    statesToFitButtons.tooltips = modelTitles
+    
+        
+    for ind, title in enumerate(modelTitles):
+        modelParamsTabs.set_title(ind, title)
+        fitParamsTabs.set_title(ind, title)
+        
+    # modelParamsTabs.set_title(0, 'Three-state model')
+    # modelParamsTabs.set_title(1, 'Four-state model')
+    # modelParamsTabs.set_title(2, 'Six-state model')
+    modelParamsTabs.width = '800px' #set_css({'width': '800px'}) # 800
+    
+    ### Set Parameter Tabs style
+    for pInd, prot in enumerate(protList): # Change to protParams #for prot, pSet in protParams.items():
+        protParamsTabs.set_title(pInd, prot)
+        protNotesBoxes[pInd].flex = True #protNotesBoxes[pInd].add_class('box-flex1')
+        protFigHTML[pInd].width = '200px' #set_css({'width': '200px', 'margin-left': '20px'})
+        protFigHTML[pInd].margin = '20px'
+        # protParamBoxes[pInd].width = '200px' # Does not work
+        for i, param in enumerate(protParams[prot]):
+            if isinstance(protParams[prot][param].value, list):
+                prot_pValArr[pInd][i].width = '150px'#'300px' # Hack since surrounding space does not contract '150px' #set_css({'width': '150px'})
+            else:
+                prot_pValArr[pInd][i].width = '150px'
+                if param in protUnitLabels:
+                    prot_unitArr[pInd][i].description = ' ' # Hack to correct spacing
+            protParamNotesWid[pInd][i].margin = '5px'
+        protBoxes[pInd].margin = '5px'
+    
+    ### Set Simulator Tabs style
+    for sInd, sim in enumerate(simList):
+        simParamsTabs.set_title(sInd, sim)
+        simNotesBoxes[sInd].flex = True #protNotesBoxes[pInd].add_class('box-flex1')
+        simFigHTML[sInd].width = '200px' #set_css({'width': '200px', 'margin-left': '20px'})
+        simFigHTML[sInd].margin = '20px'
+        for i, param in enumerate(simParams[sim]):
+        #for i in range(len(simParams[sim])): # pSet.keys(): #for i in range(len(protParams[prot])):
+            sim_pValArr[sInd][i].width = '150px' #set_css({'width': '150px'})
+            if param in simUnitLabels:
+                sim_unitArr[sInd][i].description = ' ' # Hack to correct spacing
+        simBoxes[sInd].margin = '5px'
+    
+    
+    ### Hack to tile parameter fields horizontally - must come after displaying the parent
+    for model in modelParams: #for m in range(len(modelParams)):
+        m = modelList.index(model)
+        eqBox[m].width = '150px'
+        eqBox[m].margin = '10px'
+        modelNotesBoxes[m].width = '300px'
+        modelNotesBoxes[m].margin = '20px'
+        modelBoxes[m].margin = '5px'
+    
+    spacer.width = '150px' # Equal to the width of a drop-drown menu
+    
+    for model, pSet in modelParams.items(): #range(len(modelParams)):
+        #pSet = modelParams[m]            # Set of n-state model parameters
+        m = modelList.index(model)
+        #nParams = len(pSet)#.keys())
+        i=0
+        for key in pSet:#.keys(): #, value in pSet.items():
+            pfLabArr[m][i].width = '50px'#'20px'
+            #pfValArr[m][i].width = '150px'
+            fExprArr[m][i].width = '150px'
+            fVaryArr[m][i].width = '30px'
+            i+=1
+        modelFitBoxes[m].margin = '5px'
+        
+        # Loop over Model Parameters Tab
+        #for i, param in enumerate(pSet):
+            #pValArr[m][i].width = '150px'
+            # #if param in protUnitLabels:
+            #unitArr[m][i].width = '150px'
+            #unitArr[m][i].description = ' ' # Hack to correct spacing
+    
+    modelParamsTabs.margin = '5px'
+    simParamsTabs.margin = '5px'
+    protParamsTabs.margin = '5px'
+    paramTabs.margin = '5px'
+    
+    
+    
+    return #GUI
+    
+#GUI = widgets.Box()
 #interact(runModel, nStates={'Three-state':3,'Four-state':4,'Six-state':6}, protocol=('custom', 'step', 'sinusoid', 'ramp', 'saturate', 'rectifier', 'shortPulse', 'recovery'), saveData=True, verbose=1);
 
 if __name__ == '__main__':

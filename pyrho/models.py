@@ -2,15 +2,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl # For plotStates
-from .utilities import plotLight, calcV1
+from pyrho.utilities import plotLight, calcV1
 from scipy.signal import * #for argrelextrema
 from scipy.integrate import odeint
 import warnings
 import itertools
 
-from .parameters import *
+from pyrho.parameters import *
 #print(vars()['verbose'])
-from .config import verbose, addTitles, saveFigFormat, fDir # For plotStates()
+from pyrho.config import * #verbose, addTitles, saveFigFormat, fDir # For plotStates()
 #from __init__ import verbose
 from collections import OrderedDict
 
@@ -234,7 +234,7 @@ class RhodopsinModel(PyRhOobject):
         plt.xlim((begT, endT)) #plt.xlim((0,delD+(nPulses*(onD+offD)))) # t_run
         #plt.ylim((-0.1,1.1))
         plt.ylim((0,1))
-        if addTitles:
+        if config.addTitles:
             plt.title('$\mathrm{State\ variables\ through\ time}$') #plt.title('State variables through time: $v={} \mathrm{{mV}},\ \phi={:.3g} \mathrm{{photons}} \cdot \mathrm{{s}}^{{-1}} \cdot \mathrm{{cm}}^{{-2}}$'.format(V,phiOn))
         plotLight(pulses, axLine)
         ### New plot format (plus change in ylims)
@@ -255,7 +255,7 @@ class RhodopsinModel(PyRhOobject):
         plt.ylim((0,1))
         plt.xlim((begT, endT)) #plt.xlim((0,delD+(nPulses*(onD+offD))))
         plotLight(pulses, axStack, 'borders')
-        if addTitles:
+        if config.addTitles:
             axStack.title.set_visible(False)
         plt.xlabel('$\mathrm{Time\ [ms]}$')
         plt.ylabel('$\mathrm{State\ occupancy}$')# proportion')
@@ -271,7 +271,7 @@ class RhodopsinModel(PyRhOobject):
                 texts[lab].set_fontsize(mpl.rcParams['ytick.labelsize'])
                 autotexts[lab].set_fontsize(mpl.rcParams['axes.labelsize'])
             plt.axis('equal')
-            if addTitles:
+            if config.addTitles:
                 plt.title('$\mathrm{Initial\ state\ occupancies}$')
             #else:
             #    plt.title('$t_{0}$')
@@ -292,7 +292,7 @@ class RhodopsinModel(PyRhOobject):
                     texts[lab].set_fontsize(mpl.rcParams['ytick.labelsize'])
                     autotexts[lab].set_fontsize(mpl.rcParams['axes.labelsize'])
                 plt.axis('equal')
-                if addTitles:
+                if config.addTitles:
                     plt.title('$\mathrm{Simulated\ peak\ state\ occupancies}$')
                 #else:
                 #    plt.title('$t_{peak}$')
@@ -310,7 +310,7 @@ class RhodopsinModel(PyRhOobject):
                     texts[lab].set_fontsize(mpl.rcParams['ytick.labelsize'])
                     autotexts[lab].set_fontsize(mpl.rcParams['axes.labelsize'])
                 plt.axis('equal')
-                if addTitles:
+                if config.addTitles:
                     plt.title('$\mathrm{Analytic\ steady\ state\ occupancies}$')
                 #else:
                 #    plt.title('$t_{\inf}$')
@@ -321,8 +321,8 @@ class RhodopsinModel(PyRhOobject):
         
         if name is not None:
             from os import path
-            figName = path.join(fDir, name+'.'+saveFigFormat)
-            plt.savefig(figName, format=saveFigFormat)
+            figName = path.join(fDir, name+'.'+config.saveFigFormat)
+            plt.savefig(figName, format=config.saveFigFormat)
 
 
 class RhO_3states(RhodopsinModel):
@@ -331,13 +331,15 @@ class RhO_3states(RhodopsinModel):
     nStates = 3
     useAnalyticSoln = True
     stateLabels = ['$C$','$O$','$D$']
-    stateVars = ['C','O','D']
+    stateVars = ['C','O','D'] # stateVars[0] is the 'ground' state
     
     photoFuncs = ['_calcGa', '_calcGr'] # {'Ga':'_calcGa', 'Gr':'_calcGr'}
     photoRates = ['Ga', 'Gr']
     photoLabels = ['$G_a$', '$G_r$'] # {'Ga':'$G_a$', 'Gr':'$G_r$'}
     constRates = ['Gd']
     constLabels = ['$G_d$']
+    
+    paramsList = ['g', 'phim', 'k', 'p', 'Gd', 'Gr0', 'Gr1', 'E', 'v0', 'v1'] # List of model constants    
     
     s_0 = np.array([1,0,0])          # Default: Initialise in dark 
     phi_0 = 0.0
@@ -388,6 +390,7 @@ class RhO_3states(RhodopsinModel):
     # Solver parameters
     # dt = 0.1 #0.01 #0.1 #0.001 
     
+    brianStateVars = ['S_C','S_O','S_D']
     brian = '''
             dS_C/dt = Gr*S_D - Ga*S_C : 1
             dS_O/dt = Ga*S_C - Gd*S_O : 1
@@ -660,13 +663,15 @@ class RhO_4states(RhodopsinModel):
     nStates = 4
     useAnalyticSoln = False
     stateLabels = ['$C_1$','$O_1$','$O_2$','$C_2$']
-    stateVars = ['C1','O1','O2','C2']
+    stateVars = ['C1','O1','O2','C2'] # stateVars[0] is the 'ground' state
     
     photoFuncs = ['_calcGa1', '_calcGa2', '_calcGf', '_calcGb']
     photoRates = ['Ga1', 'Ga2', 'Gf', 'Gb']
     photoLabels = ['$G_{a1}$', '$G_{a2}$', '$G_{f}$', '$G_{b}$', '$G_{d1}$', '$G_{d2}$']
     constRates = ['Gd1', 'Gd2', 'Gr0']
     constLabels = ['$G_{d1}$', '$G_{d2}$', '$G_{r0}$']
+    
+    paramsList = ['g', 'gam', 'phim', 'k1', 'k2', 'p', 'Gf0', 'kf', 'Gb0', 'kb', 'q', 'Gd1', 'Gd2', 'Gr0', 'E', 'v0', 'v1'] # List of model constants
     
     s_0 = np.array([1,0,0,0])       # Default: Initialise in the dark
     phi_0 = 0.0  # Instantaneous Light flux
@@ -715,7 +720,7 @@ class RhO_4states(RhodopsinModel):
     
     # Solver parameters
     # dt = 0.1 #0.01 #0.1 #0.001
-    
+    brianStateVars = ['S_C1','S_O1','S_O2','S_C2']
     brian = '''
             dS_C1/dt = Gr0*S_C2 + Gd1*S_O1 - Ga1*S_C1 : 1
             dS_O1/dt = Ga1*S_C1 - (Gd1+Gf)*S_O1 + Gb*S_O2 : 1
@@ -901,13 +906,15 @@ class RhO_6states(RhodopsinModel):
     #labels = ['$s_1$','$s_2$','$s_3$','$s_4$','$s_5$','$s_6$']
     stateLabels = ['$C_1$','$I_1$','$O_1$','$O_2$','$I_2$','$C_2$']
     # stateVars = ['s1','s2','s3','s4','s5','s6'] # 
-    stateVars = ['C1','I1','O1','O2','I2','C2'] #['C1','I1','O1','O2','I2','C2']
+    stateVars = ['C1','I1','O1','O2','I2','C2'] #['C1','I1','O1','O2','I2','C2']  # stateVars[0] is the 'ground' state
     
     photoFuncs = ['_calcGa1', '_calcGa2', '_calcGf', '_calcGb']
     photoRates = ['Ga1', 'Ga2', 'Gf', 'Gb']
     photoLabels = ['$G_{a1}$', '$G_{a2}$', '$G_{f}$', '$G_{b}$', '$G_{d1}$', '$G_{d2}$']
     constRates = ['Go1', 'Go2', 'Gd1', 'Gd2', 'Gr0']
     constLabels = ['$G_{o1}$', '$G_{o2}$', '$G_{d1}$', '$G_{d2}$', '$G_{r0}$']
+    
+    paramsList = ['g', 'gam', 'phim', 'k1', 'k2', 'p', 'Gf0', 'kf', 'Gb0', 'kb', 'q', 'Go1', 'Go2', 'Gd1', 'Gd2', 'Gr0', 'E', 'v0', 'v1'] # List of model constants    
     
     s_0 = np.array([1,0,0,0,0,0])  # [s1_0=1, s2_0=0, s3_0=0, s4_0=0, s5_0=0, s6_0=0] # array not necessary
     phi_0 = 0.0     # Default initial flux
@@ -944,6 +951,7 @@ class RhO_6states(RhodopsinModel):
     # Solver parameters
     # dt = 0.1 #0.01 #0.1 #0.001
     
+    brianStateVars = ['S_C1','S_I1','S_O1','S_O2','S_I2','S_C2']
     brian = '''
             dS_C1/dt = Gr0*S_C2 + Gd1*S_O1 - Ga1*S_C1 : 1
             dS_I1/dt = Ga1*S_C1 - Go1*S_I1 : 1

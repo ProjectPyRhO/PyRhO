@@ -1,10 +1,11 @@
 import numpy as np
 import scipy.io as sio # Use for Matlab files < v7.3
-from lmfit import Parameters
+#from lmfit import Parameters
+from lmfit import *
 #from .models import * # For times2cycles and cycles2times
-from .utilities import * # For times2cycles and cycles2times, expDecay, findPlateauCurrent
-from .parameters import tFromOff
-from .config import verbose, colours, styles
+from pyrho.utilities import * # For times2cycles and cycles2times, expDecay, findPlateauCurrent
+from pyrho.parameters import tFromOff
+from pyrho.config import * #verbose, colours, styles
 import warnings
 import copy
 #from copy import deepcopy
@@ -72,7 +73,7 @@ class RhodopsinStates():
         
         #...
 
-from lmfit import *
+#from lmfit import *
 method = 'powell'
 
 class PhotoCurrent():
@@ -87,12 +88,12 @@ class PhotoCurrent():
                         e.g. [[t_on1,t_off1],[t_on2,t_off2],...]"""
                         
         ### Load data
-        self.I = np.copy(I)                     # Array of photocurrent values
+        self.I = np.copy(I)                     # Array of photocurrent values np.copy(I) == np.array(I, copy=True) == np.array(I)
         
         if len(t) == len(I):
             assert(len(t) > 1)
             self.t = np.copy(t)                 # Corresponding array of time points [ms] #np.array copies by default
-            tdiff = t[1:] - t[:-1]
+            tdiff = self.t[1:] - self.t[:-1]
             self.dt = tdiff.sum()/len(tdiff)    # (Average) step size
             self.sr = 1000/(self.dt)            # Sampling rate [samples/s]
         elif len(t) == 1:                       # Assume time step is passed rather than time array
@@ -101,7 +102,7 @@ class PhotoCurrent():
             self.dt = t                         # Step size
             self.sr = 1000/t                    # Sampling rate [samples/s]
         else:
-            raise ValueError("Dimension mismatch: t must be either an array of the same length as I or a scalar defining the timestep!")
+            raise ValueError("Dimension mismatch: |t|={}; |I|={}. t must be either an array of the same length as I or a scalar defining the timestep!".format(len(t), len(I)))
         
         self.nSamples = len(self.I)             # Number of samples
         
@@ -113,8 +114,7 @@ class PhotoCurrent():
         #pulses = np.asarray(pulses) # Copy only if necessary
         #if isinstance(pulses[0], int) or isinstance(pulses[0], int):
         #    pulses = [pulses]
-        #self.pulses = deepcopy(pulses) # nPulses x 2 array [t_on, t_off]  
-        self.pulses = np.array(pulses)          # nPulses x 2 array [t_on, t_off] # This may require deepcopy above... #, copy=True (default)
+        self.pulses = np.array(pulses)          # nPulses x 2 array [t_on, t_off] # np assumes deepcopy(pulses) #, copy=True (default) - 
         self.nPulses = self.pulses.shape[0]
         self.pulseCycles, _ = times2cycles(self.pulses, self.endT) #self.totT)
         
@@ -146,7 +146,7 @@ class PhotoCurrent():
         self.clamped = bool(V != None)  # Flag for voltage-clamped recording
         self.phi = copy.copy(phi)       # Light intensity
         # Future inclusions
-        self.lam = 470 #Lambda          # Wavelength
+        self.lam = 470 #Lambda          # Wavelength [nm]
         # self.pH                       # pH
         # self.Temp                     # Temperature
         self.label = copy.copy(label)   # Optional trial label e.g. "saturate"
@@ -226,6 +226,31 @@ class PhotoCurrent():
         if verbose > 1:
             print("Photocurrent data loaded! nPulses={}; Total time={}ms; Range={}nA".format(self.nPulses, self.totT, str(self.Irange)))
     
+    
+    def __len__(self):
+        return self.totT
+    
+    #def printSummary(self):
+    def __str__(self):
+        """Print out summary details of the photocurrent"""
+        if self.nPulses > 1:
+            plural = 's'
+        else:
+            plural = ''
+        if self.clamped: # self.V is not None
+            clStr = '@ {:.3g} mV'.format(self.V)
+        else:
+            clStr = '(unclamped)'
+        str = 'Photocurrent with {} pulse{} {} sampled at {:.3g} samples/s over {:.3g} ms {}; {:.3g} ph/s/mm^2'.format(self.nPulses, plural, self.pulses, self.sr, self.totT, clStr, self.phi)
+        return str
+        
+    def __call__(self, incTime=False):
+        if incTime:
+            return self.I, self.t
+        else:
+            return self.I
+    
+    
     def findKinetics(self, p=0, trim=0.1):
         ### Segment the photocurrent into ON, INACT and OFF phases (Williams et al., 2013)
         # I_p := maximum (absolute) current
@@ -234,7 +259,6 @@ class PhotoCurrent():
         # INACT := 10:110ms after I_p
         # OFF := 500:600ms after I_p
         
-
         
         def calcOn(p,t):
             """Fit a biexponential curve to the on-phase to find lambdas"""
@@ -411,21 +435,7 @@ class PhotoCurrent():
             self.pulseAligned = False
     
     
-    #def printSummary(self):
-    def __str__(self):
-        """Print out summary details of the photocurrent"""
-        if self.nPulses > 1:
-            plural = 's'
-        else:
-            plural = ''
-        str = 'Photocurrent with {} pulse{} {} sampled at {:.3g} samples/s over {:.3g} ms @ {:.3g} mV; {:.3g} ph/s/mm^2'.format(self.nPulses, plural, self.pulses, self.sr, self.totT, self.V, self.phi)
-        return str
-        
-    def __call__(self, incTime=False):
-        if incTime:
-            return self.I, self.t
-        else:
-            return self.I
+
     
     def findPeakInds(self): #, pulse=0):
         
@@ -483,7 +493,7 @@ class PhotoCurrent():
             #if abs(np.mean(Idiff)) > 0.01 * self.Ispan:
             #    warnings.warn('Steady-state Convergence Warning: The average step size is larger than 1% of the current span!')
 
-        elif method == 1: # Fit curve from peak to end of on phase
+        elif method == 1: # Theoretical: Fit curve from peak to end of on phase
             
             postPeak = slice(self.peakInds_[pulse], self.pulseInds[pulse, 1]+1) # t_peak : t_off+1
             popt = fitPeaks(self.t[postPeak], self.I[postPeak], expDecay, p0inact, '$I_{{inact}} = {:.3}e^{{-t/{:g}}} {:+.3}$','')
@@ -525,13 +535,14 @@ class PhotoCurrent():
         return (self.I[delSlice], self.t[delSlice])
         
     def getOnPhase(self, pulse=0):
-        """Return Ion, ton"""
+        """Return I [nA] and t [ms] arrays from the on-phase (Ion, ton) for a given pulse"""
         assert(0 <= pulse < self.nPulses)
         onSlice = slice(self.pulseInds[pulse,0], self.pulseInds[pulse,1]+1)
         #return (self.I[self.pulseInds[pulse,0]:self.pulseInds[pulse,1]+1], self.t[self.pulseInds[pulse,0]:self.pulseInds[pulse,1]+1])
         return (self.I[onSlice], self.t[onSlice])
         
     def getOffPhase(self, pulse=0):
+        """Return I [nA] and t [ms] arrays from the off-phase (Ioff, toff) for a given pulse"""
         assert(0 <= pulse < self.nPulses)
         if 0 <= pulse < self.nPulses-1:
             offSlice = slice(self.pulseInds[pulse,1], self.pulseInds[pulse+1,0]+1)
@@ -544,6 +555,7 @@ class PhotoCurrent():
         return (self.I[offSlice], self.t[offSlice])
     
     def getCycle(self, pulse=0):
+        """Return I [nA] and t [ms] arrays from the on- and off-phase (Ip, tp) for a given pulse"""
         assert(0 <= pulse < self.nPulses)
         if 0 <= pulse < self.nPulses-1:
             cycleSlice = slice(self.pulseInds[pulse,0], self.pulseInds[pulse+1,0]+1)
@@ -556,16 +568,26 @@ class PhotoCurrent():
         return (self.I[cycleSlice], self.t[cycleSlice])
     
     def getActivation(self, pulse=0):
+        """Return I [nA] and t [ms] arrays from beginning of the on-phase to the peak for a given pulse"""
         assert(0 <= pulse < self.nPulses)
         actSlice = slice(self.pulseInds[pulse,0], self.peakInds_[pulse]+1)
         return (self.I[actSlice], self.t[actSlice])
         
     def getDeactivation(self, pulse=0): # Inactivation, Deactivation, Desensitisation???
+        """Return I [nA] and t [ms] arrays from the peak to the end of the on-phase for a given pulse"""
         assert(0 <= pulse < self.nPulses)
         deactSlice = slice(self.peakInds_[pulse], self.pulseInds[pulse,1]+1)
         return (self.I[deactSlice], self.t[deactSlice])
     
     def plot(self, ax=None, light='shade', addFeatures=True, colour=None, linestyle=None): #colour, linestyle
+        """Plot the photocurrent
+            Optional arguments:
+            ax          :=  Specify axes on which to plot
+            light       :=  Specify style of plotting for the stimulus. See plotLight()
+            addFeatures :=  Plot additional features including peak, steady-state and stimulation times
+            colour      :=  Specify colour for the photocurrent data
+            linestyle   :=  Specify linestyle for the photocurrent data
+            """
         if ax == None:
             #fig = plt.figure()    
             ax = plt.gca()
@@ -581,7 +603,8 @@ class PhotoCurrent():
         plotLight(self.pulses, ax=ax, light=light, lam=470, alpha=0.2)
         
         #ax.set_xlabel('$\mathrm{Time\ [ms]}$', position=(0.95,0.8))
-        plt.xlabel('$\mathrm{Time\ [ms]}$') #(r'\textbf{Time} [ms]')
+        #plt.xlabel('$\mathrm{Time\ [ms]}$') #(r'\textbf{Time} [ms]')
+        plt.xlabel('$\mathrm{Time\ [ms]}$', position=(xLabelPos,0), ha='right')
         plt.xlim((self.begT, self.endT))
         plt.ylabel('$\mathrm{Photocurrent\ [nA]}$')
         
@@ -596,7 +619,7 @@ class PhotoCurrent():
         
         if addFeatures:
             #eqSize=10
-            from .config import eqSize
+            #from .config import eqSize
             #p = 0
             #plt.axvline(x=self.tpeaks_[p], linestyle=':', color='k')
             #plt.axhline(y=self.peaks_[p], linestyle=':', color='k')
@@ -614,12 +637,12 @@ class PhotoCurrent():
                 # plt.text(self.tpeaks_[p], 1.02*self.peaks_[p], '$I_{{peak}} = {:.3g}\mathrm{{nA}};\ t_{{lag}} = {:.3g}\mathrm{{ms}}$'.format(self.peaks_[p], self.lags_[0]), ha='left', va='top', fontsize=eqSize)
                 
                 if self.peaks_[p] is not None:
-                    ax.annotate('$I_{{peak}} = {:.3g}\mathrm{{nA}};\ t_{{lag}} = {:.3g}\mathrm{{ms}}$'.format(self.peaks_[p], self.lags_[0]), xy=(self.tpeaks_[p], self.peaks_[p]), xytext=(toffset+self.tpeaks_[p], self.peaks_[p]), arrowprops=dict(arrowstyle="wedge,tail_width=0.6", shrinkA=5, shrinkB=5, facecolor='red'), horizontalalignment='left', verticalalignment='center', fontsize=eqSize)
+                    ax.annotate('$I_{{peak}} = {:.3g}\mathrm{{nA}};\ t_{{lag}} = {:.3g}\mathrm{{ms}}$'.format(self.peaks_[p], self.lags_[0]), xy=(self.tpeaks_[p], self.peaks_[p]), xytext=(toffset+self.tpeaks_[p], self.peaks_[p]), arrowprops=dict(arrowstyle="wedge,tail_width=0.6", shrinkA=5, shrinkB=5, facecolor='red'), horizontalalignment='left', verticalalignment='center', fontsize=config.eqSize)
                 
                 # Add pointer to steady-state currents
                 if self.sss_[p] is not None:
                     #plt.text(1.1*self.pulses[p,1], self.ss_, '$I_{{ss}} = {:.3g}\mathrm{{nA}}$'.format(self.ss_), ha='left', va='center', fontsize=eqSize)
-                    ax.annotate('$I_{{ss}} = {:.3g}\mathrm{{nA}}$'.format(self.sss_[p]), xy=(self.pulses[p,1], self.sss_[p]), xytext=(toffset+self.pulses[p,1], self.sss_[p]), arrowprops=dict(arrowstyle="wedge,tail_width=0.6", shrinkA=5, shrinkB=5), horizontalalignment='left', verticalalignment='center', fontsize=eqSize)
+                    ax.annotate('$I_{{ss}} = {:.3g}\mathrm{{nA}}$'.format(self.sss_[p]), xy=(self.pulses[p,1], self.sss_[p]), xytext=(toffset+self.pulses[p,1], self.sss_[p]), arrowprops=dict(arrowstyle="wedge,tail_width=0.6", shrinkA=5, shrinkB=5), horizontalalignment='left', verticalalignment='center', fontsize=config.eqSize)
                 
                 # Add labels for on and off phases
                 #ymin, ymax = plt.ylim()
@@ -629,13 +652,13 @@ class PhotoCurrent():
                 texty = 0.05
                 #awidth=10
                 ax.annotate('', xy=(self.pulses[p,0], arrowy), xytext=(self.pulses[p,1], arrowy), arrowprops=dict(arrowstyle='<->',color='blue'))
-                plt.text(self.pulses[p,0]+self.onDs[p]/2, texty, '$\Delta on_{}={:.3g}\mathrm{{ms}}$'.format(p, self.onDs[p]), ha='center', va='bottom', fontsize=eqSize)
+                plt.text(self.pulses[p,0]+self.onDs[p]/2, texty, '$\Delta on_{}={:.3g}\mathrm{{ms}}$'.format(p, self.onDs[p]), ha='center', va='bottom', fontsize=config.eqSize)
                 if p < self.nPulses-1:
                     end = self.pulses[p+1,0]
                 else:
                     end = self.endT
                 ax.annotate('', xy=(self.pulses[p,1], arrowy), xytext=(end, arrowy), arrowprops=dict(arrowstyle='<->',color='green'))
-                plt.text(self.pulses[p,1]+self.offDs[p]/2, texty, '$\Delta off_{}={:.3g}\mathrm{{ms}}$'.format(p, self.offDs[p]), ha='center', va='bottom', fontsize=eqSize)
+                plt.text(self.pulses[p,1]+self.offDs[p]/2, texty, '$\Delta off_{}={:.3g}\mathrm{{ms}}$'.format(p, self.offDs[p]), ha='center', va='bottom', fontsize=config.eqSize)
         
         
         return ax
@@ -726,7 +749,7 @@ class PhotoCurrent():
 class ProtocolData():
     """Container for PhotoCurrent data from parameter variations in the same protocol"""
     
-    def __init__(self,protocol,nRuns,phis,Vs):
+    def __init__(self, protocol, nRuns, phis, Vs):
         #self.trials = [] # Array of PhotoCurrent objects
         # self.trials.append(pc)
         self.protocol = protocol
@@ -742,8 +765,11 @@ class ProtocolData():
         #PD = [{'PC':PC, 'run':run, 'phi':phi, 'V':V, ...},{},... ]
         self.metaData = {'nRuns':self.nRuns, 'nPhis':self.nPhis, 'nVs':self.nVs}
         
-        
-        
+        ### ProtocolData(protocol, pcs, nRuns, phis, Vs)
+        ### ProtocolData(protocol, pcs)
+        ### Extract the parameters from the pcs and file them accordingly
+        ### Alternatively, put them all in a flat list/set and use getTrials to retrieve relevant pcs. 
+
     def __str__(self):
         return 'Protocol data set: [nRuns={}, nPhis={}, nVs={}]'.format(self.nRuns, self.nPhis, self.nVs)
         
@@ -782,6 +808,159 @@ class ProtocolData():
     
     # Function to get array based on independent variable???
     # e.g. IPIs, onDs, phis etc. 
+    
+    
+    def addTrials(self, photocurrents, run=0):
+        
+        assert(0 <= run < self.nRuns)
+        
+        if not isinstance(photocurrents, (list, tuple)):
+            if not isinstance(photocurrents, (PhotoCurrent)):
+                raise TypeError("Trials must be either a PhotoCurrent or a list of PhotoCurrent objects")
+            photocurrents = list([photocurrents])
+        
+        indicies = []
+        
+        Vs = [pc.V for pc in photocurrents]
+        phis = [pc.phi for pc in photocurrents]
+        if np.allclose(Vs, np.ones_like(Vs)*Vs[0]) and np.allclose(phis, np.ones_like(phis)*phis[0]):
+            V = Vs[0]
+            iV = getIndex(self.Vs, V) #self._getVindex(V)
+            if iV is None:
+                iV = 0
+            
+            phi = phis[0]
+            iPhi = getIndex(self.phis, phi)
+            if iPhi is None:
+                iPhi = 0
+            
+            for run, pc in enumerate(photocurrents):
+                self.trials[run][iPhi][iV] = pc
+            return
+            
+        for pc in photocurrents:
+            V = pc.V
+            iV = getIndex(self.Vs, V) #self._getVindex(V)
+            if iV is None:
+                iV = 0
+            
+            phi = pc.phi
+            iPhi = getIndex(self.phis, phi)
+            if iPhi is None:
+                iPhi = 0
+            
+            self.trials[run][iPhi][iV] = pc
+            
+            if verbose > 1:
+                print("PhotoCurrent added to run={}, iPhi={}, iV={}".format(run, iPhi, iV))
+            indicies.append((run, iPhi, iV))
+            
+        return indices
+    
+    def addTrial(self, photocurrent, run=0):
+        
+        assert(0 <= run < self.nRuns)
+
+
+        V = photocurrent.V
+        iV = getIndex(self.Vs, V) #self._getVindex(V)
+        if iV is None:
+            iV = 0
+        
+        phi = photocurrent.phi
+        # cl = list(np.isclose(self.phis, phi))
+        # try:
+            # iPhi = cl.index(True)
+        # except ValueError:
+            # iPhi = 0
+        iPhi = getIndex(self.phis, phi)
+        if iPhi is None:
+            iPhi = 0
+        
+        self.trials[run][iPhi][iV] = photocurrent
+        
+        if verbose > 1:
+            print("PhotoCurrent added to run={}, iPhi={}, iV={}".format(run, iPhi, iV))
+            
+        return (run, iPhi, iV)
+    
+    
+    def getTrials(self, **kwargs):
+        """Pass arrays of values for any/all/none of 'runs', 'phis' and 'Vs'
+            Return a flattened list of matching photocurrents"""
+        
+        #print(kwargs)
+        
+        for k, v in kwargs.items():
+            if not isinstance(v, (list, tuple)):
+                if isinstance(v, (np.ndarray, np.generic)):
+                    kwargs[k] = v.tolist()
+                else:
+                    kwargs[k] = list([v])
+            
+        runs = kwargs["runs"] if "runs" in kwargs else list(range(self.nRuns))
+        #assert(0 <= runs < self.nRuns)
+        assert(0 < len(runs) <= self.nRuns)
+        
+        if verbose > 0:
+            print("runs = ", runs)
+        
+        if "phis" in kwargs:
+            phis = kwargs["phis"]
+            cl = list(np.isclose(self.phis, phis))
+            iPhis = [i for i,el in enumerate(cl) if el]
+        else:
+            iPhis = list(range(self.nPhis))
+        
+        # phis = kwargs["phis"] if "phis" in kwargs else self.phis
+        # cl = list(np.isclose(self.phis, phis))
+        # iPhis = [i for i,el in enumerate(cl) if el]
+        assert(0 < len(iPhis) <= self.nPhis)
+        
+        if verbose > 0:
+            print("phis = ", iPhis)
+        
+        #cl = list(np.isclose(Vs, Vs))
+        #iVs = [i for i,el in enumerate(cl) if el]
+        if "Vs" in kwargs:
+            iVs = [getIndex(self.Vs, V) for V in kwargs["Vs"]]
+        else:
+            iVs = [getIndex(self.Vs, V) for V in self.Vs]
+        
+        if verbose > 0:
+            print("Vs = ", iVs)
+        
+        # Vs = kwargs["Vs"] if "Vs" in kwargs else self.nVs
+        # assert(0 <= len(Vs) < self.nVs)
+        
+        trials = []
+        for run in runs:
+            for iPhi in iPhis:
+                for iV in iVs:
+                    if self.trials[run][iPhi][iV]: # Skip missing PhotoCurrents
+                        trials.append(self.trials[run][iPhi][iV])
+        
+        return trials
+        
+    # def _getVindex(self, V): ### Generalise!!!
+        # Vs = list(copy.copy(self.Vs))
+        # if V is None:
+            # try:
+                # iV = Vs.index(None)
+            # except ValueError:
+                # raise
+        # else:
+            # try:
+                # iNone = Vs.index(None)
+                # Vs[iNone] = np.nan
+            # except:
+                # pass
+            # cl = list(np.isclose(Vs, V))
+            # try:
+                # iV = cl.index(True)
+            # except ValueError:
+                # iV = None
+        # return iV
     
     
     def getLineProps(self, run, phiInd, vInd):
@@ -937,7 +1116,8 @@ class ProtocolData():
         #print(tickLabels)
         
         #ax.set_xlabel('$\mathrm{Time\ [ms]}$', position=(0.95,0.8))
-        ax.set_xlabel('$\mathrm{Time\ [ms]}$') #(r'\textbf{Time} [ms]')
+        #ax.set_xlabel('$\mathrm{Time\ [ms]}$') #(r'\textbf{Time} [ms]')
+        ax.set_xlabel('$\mathrm{Time\ [ms]}$', position=(xLabelPos,0), ha='right')
         plt.xlim((self.begT, self.endT))
         ax.set_ylabel('$\mathrm{Photocurrent\ [nA]}$')
         
@@ -983,9 +1163,10 @@ class ProtocolData():
         else:
             assert(vInd < self.nVs)
             for run in range(self.nRuns):
-                for phiInd in range(self.nPhis):                
+                for phiInd in range(self.nPhis):
+                    #print(self.trials[run][phiInd][vInd].peak_)
                     if abs(self.trials[run][phiInd][vInd].peak_) > abs(self.Ipmax_):
-                        self.Ipmax = self.trials[run][phiInd][vInd].peak_
+                        self.Ipmax_ = self.trials[run][phiInd][vInd].peak_
                         rmax = run
                         pmax = phiInd
                         vmax = vInd
@@ -1086,22 +1267,7 @@ class DataSet():
 
 
 
-        
-# def MyClass(object):
-    # def __init__(number):
-        # self.number=number
 
-# my_objects = []
-
-# for i in range(100) :
-    # my_objects.append(MyClass(i))
-
-# #later
-
-# for obj in my_objects :
-    # print obj.number
-
-# # Or:
 # ProtocolData.append(TrialData(I,t,V,phi,pulses))
     
 # print "Sort the dataSet in place by V ..."

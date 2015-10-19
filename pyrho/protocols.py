@@ -3,17 +3,17 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl # for tick locators
 from scipy.interpolate import *
 from scipy.optimize import curve_fit
-from .parameters import *
-from .utilities import * # times2cycles, cycles2times, plotLight, round_sig, expDecay, biExpDecay, findPeaks
-from .loadData import * #import loadData
-from .fitting import * #calcIssfromfV and fitPeaks...
-from .models import *
-from .simulators import * # For characterise()
-from .config import verbose, saveFigFormat, eqSize, addTitles, addStimulus, colours, styles, dDir, fDir
+from pyrho.parameters import *
+from pyrho.utilities import * # times2cycles, cycles2times, plotLight, round_sig, expDecay, biExpDecay, findPeaks
+from pyrho.loadData import * #import loadData
+from pyrho.fitting import * #calcIssfromfV and fitPeaks...
+from pyrho.models import *
+from pyrho.simulators import * # For characterise()
+from pyrho.config import * #verbose, saveFigFormat, eqSize, addTitles, addStimulus, colours, styles, dDir, fDir
 import pickle
 import warnings
 import os
-import time
+#import time
 
 #from config import verbose
 
@@ -153,7 +153,7 @@ class Protocol(PyRhOobject): #object
     def run(self, Sim, RhO, verbose=verbose): 
         """Main routine to run the simulation protocol"""
         
-        t0 = time.perf_counter()
+        t0 = wallTime() #time.perf_counter()
         self.prepare()
         self.dt = Sim.prepare(self.getShortestPeriod())
         
@@ -241,7 +241,7 @@ class Protocol(PyRhOobject): #object
             #if verbose > 0:
             #    print("Protocol data saved to disk: {}".format(pklFile))
         
-        self.runTime = time.perf_counter() - t0
+        self.runTime = wallTime() - t0 #time.perf_counter() - t0
         if verbose > 0:
             print("\nFinished '{}' protocol with {} for the {}-state model in {:.3g}s".format(self.protocol, Sim.simulator, RhO.nStates, self.runTime))
             print("--------------------------------------------------------------------------------\n")
@@ -354,7 +354,7 @@ class Protocol(PyRhOobject): #object
             x = 0.8
             y = yfit[-1] #popt[2]
             
-            plt.text(x*self.totT,y,peakEq,ha='center',va='bottom',fontsize=eqSize) #, transform=ax.transAxes)
+            plt.text(x*self.totT,y,peakEq,ha='center',va='bottom',fontsize=config.eqSize) #, transform=ax.transAxes)
         
         print(peakEq)
         if verbose > 1:
@@ -382,38 +382,38 @@ class Protocol(PyRhOobject): #object
         # ##return I_ss * (1e-6) # 10^-12 * 10^-3 * 10^-6 (nA)
         # return fV * (V - E)
     
-    def fitfV(self, Vs, Iss, curveFunc, p0, RhO, fig=None):#, eqString): =plt.gcf()
-        if fig==None:
-            fig=plt.gcf()
-        markerSize=40
-        eqString = r'$f(V) = \frac{{{v1:.3}}}{{V-{E:+.2f}}} \cdot \left[1-\exp\left({{-\frac{{V-{E:+.2f}}}{{{v0:.3}}}}}\right)\right]$'
-        psi = RhO.calcPsi(RhO.steadyStates)
-        #sf = RhO.A * RhO.gbar * psi * 1e-6 # Six-state only
-        sf = RhO.g * psi * 1e-6 
-        fVs = np.asarray(Iss)/sf # np.asarray is not needed for the six-state model!!!
-        popt, pcov = curve_fit(curveFunc, Vs, fVs, p0=p0) # (curveFunc, Vs, Iss, p0=p0)
-        pFit = [round_sig(p,3) for p in popt]
-        #peakEq = eqString.format(pFit[0],pFit[2],pFit[2],pFit[1])
-        peakEq = eqString.format(v1=pFit[0],E=pFit[2],v0=pFit[1])
+    # def fitfV(self, Vs, Iss, curveFunc, p0, RhO, fig=None):#, eqString): =plt.gcf()
+        # if fig==None:
+            # fig=plt.gcf()
+        # markerSize=40
+        # eqString = r'$f(V) = \frac{{{v1:.3}}}{{V-{E:+.2f}}} \cdot \left[1-\exp\left({{-\frac{{V-{E:+.2f}}}{{{v0:.3}}}}}\right)\right]$'
+        # psi = RhO.calcPsi(RhO.steadyStates)
+        ##sf = RhO.A * RhO.gbar * psi * 1e-6 # Six-state only
+        # sf = RhO.g * psi * 1e-6 
+        # fVs = np.asarray(Iss)/sf # np.asarray is not needed for the six-state model!!!
+        # popt, pcov = curve_fit(curveFunc, Vs, fVs, p0=p0) # (curveFunc, Vs, Iss, p0=p0)
+        # pFit = [round_sig(p,3) for p in popt]
+        ##peakEq = eqString.format(pFit[0],pFit[2],pFit[2],pFit[1])
+        # peakEq = eqString.format(v1=pFit[0],E=pFit[2],v0=pFit[1])
         
-        Vrange = max(Vs)-min(Vs)
-        xfit=np.linspace(min(Vs),max(Vs),Vrange/.1) #Prot.dt
-        yfit=curveFunc(xfit,*popt)*sf
+        # Vrange = max(Vs)-min(Vs)
+        # xfit=np.linspace(min(Vs),max(Vs),Vrange/.1) #Prot.dt
+        # yfit=curveFunc(xfit,*popt)*sf
         
-        #peakEq = eqString.format(*[round_sig(p,3) for p in popt])
+        ##peakEq = eqString.format(*[round_sig(p,3) for p in popt])
         
-        fig.plot(xfit,yfit)#,label=peakEq)#,linestyle=':', color='#aaaaaa')
-        #col, = getLineProps(Prot, 0, 0, 0) #Prot, run, vInd, phiInd
-        #plt.plot(Vs,Iss,linestyle='',marker='x',color=col)
-        fig.scatter(Vs,Iss,marker='x',color=colours,s=markerSize)#,linestyle=''
+        # fig.plot(xfit,yfit)#,label=peakEq)#,linestyle=':', color='#aaaaaa')
+        ##col, = getLineProps(Prot, 0, 0, 0) #Prot, run, vInd, phiInd
+        ##plt.plot(Vs,Iss,linestyle='',marker='x',color=col)
+        # fig.scatter(Vs,Iss,marker='x',color=colours,s=markerSize)#,linestyle=''
         
-        # x = 1 #0.8*max(Vs)
-        # y = 1.2*yfit[-1]#max(IssVals[run][phiInd][:])
-        # plt.text(-0.8*min(Vs),y,peakEq,ha='right',va='bottom',fontsize=eqSize)#,transform=ax.transAxes)
+        ##x = 1 #0.8*max(Vs)
+        ##y = 1.2*yfit[-1]#max(IssVals[run][phiInd][:])
+        ##plt.text(-0.8*min(Vs),y,peakEq,ha='right',va='bottom',fontsize=eqSize)#,transform=ax.transAxes)
         
-        if verbose > 1:
-            print(peakEq)
-        return popt, pcov, peakEq
+        # if verbose > 1:
+            # print(peakEq)
+        # return popt, pcov, peakEq
     
 
     
@@ -481,21 +481,21 @@ class Protocol(PyRhOobject): #object
         plt.figure(Ifig.number)
         plt.sca(self.axI)
         self.axI.set_xlim(self.PD.begT, self.PD.endT)
-        if addTitles:
-            figTitle = self.getTitle()
-            plt.title(figTitle) #'Photocurrent through time'
+        # if addTitles:
+            # figTitle = self.getTitle()
+            # plt.title(figTitle) #'Photocurrent through time'
             
         #plt.show()
         plt.tight_layout()
         
         externalLegend = False
-        from os import path
-        figName = path.join(fDir, self.protocol+self.dataTag+"."+saveFigFormat)
+        #from os import path
+        figName = os.path.join(fDir, self.protocol+self.dataTag+"."+config.saveFigFormat)
         #plt.figure(Ifig.number)
         if externalLegend:
-            Ifig.savefig(figName, bbox_extra_artists=(lgd,), bbox_inches='tight', format=saveFigFormat) # Use this to save figures when legend is beside the plot
+            Ifig.savefig(figName, bbox_extra_artists=(lgd,), bbox_inches='tight', format=config.saveFigFormat) # Use this to save figures when legend is beside the plot
         else:
-            Ifig.savefig(figName, format=saveFigFormat)
+            Ifig.savefig(figName, format=config.saveFigFormat)
         
         return #Ifig.number
     
@@ -504,7 +504,7 @@ class Protocol(PyRhOobject): #object
         if Ifig == None:
             Ifig = plt.figure()
         
-        self.addStimulus = addStimulus
+        self.addStimulus = config.addStimulus # Necessary?
         if self.addStimulus: # Redraw stimulus functions in case data has been realigned
             vInd = 0
             # # for delD in len(self.delDs):
@@ -660,7 +660,7 @@ class Protocol(PyRhOobject): #object
         if len(self.phis) == 1:
             figTitle += "$\phi = {:.3g}\ \mathrm{{photons \cdot s^{{-1}} \cdot mm^{{-2}}}}$ ".format(phiOn)
         if len(self.Vs) == 1:
-            figTitle += "$\mathrm{{V}} = {:+}\ \mathrm{{mV}}$ ".format(V)
+            figTitle += "$\mathrm{{V}} = {:+}\ \mathrm{{mV}}$ ".format(V) # v=Vclamp
             
         for run in range(self.nRuns): 
             
@@ -695,7 +695,7 @@ class Protocol(PyRhOobject): #object
                         #figTitle += "$\phi = {:.3g}\ \mathrm{{photons \cdot s^{{-1}} \cdot mm^{{-2}}}}$ ".format(phiOn)
                     
                     if len(self.Vs) > 1:
-                        label += "$\mathrm{{V}} = {:+}\ \mathrm{{mV}}$ ".format(V)
+                        label += "$\mathrm{{V}} = {:+}\ \mathrm{{mV}}$ ".format(V) # v=Vclamp
                     #else:
                         #figTitle += "$\mathrm{{V}} = {:+}\ \mathrm{{mV}}$ ".format(V)
                     
@@ -717,7 +717,7 @@ class Protocol(PyRhOobject): #object
         if len(self.phis) == 1:
             figTitle += "$\phi = {:.3g}\ \mathrm{{photons \cdot s^{{-1}} \cdot mm^{{-2}}}}$ ".format(self.phis[0])
         if len(self.Vs) == 1:
-            figTitle += "$\mathrm{{V}} = {:+}\ \mathrm{{mV}}$ ".format(self.Vs[0])
+            figTitle += "$\mathrm{{v}} = {:+}\ \mathrm{{mV}}$ ".format(self.Vs[0])
         
         return figTitle
 
@@ -1055,6 +1055,7 @@ class protSinusoid(Protocol):
         return phi_t
         
     def plotExtras(self):
+        splineOrder = 2     #[1,5]
         if self.nRuns > 1:
             #plt.figure(Ifig.number)
             #axI.legend().set_visible(False)
@@ -1077,7 +1078,7 @@ class protSinusoid(Protocol):
                     col, style = self.getLineProps(run, vInd, phiInd)
                     self.axIp.plot(self.fs, Ipeaks, 'x', color=col)
                     #intIp = UnivariateSpline(self.fs, Ipeaks)
-                    intIp = InterpolatedUnivariateSpline(self.fs, Ipeaks)
+                    intIp = InterpolatedUnivariateSpline(self.fs, Ipeaks, k=splineOrder)
                     #intIp = interp1d(self.fs, Ipeaks, kind='cubic')
                     fsmooth = np.logspace(np.log10(self.fs[0]), np.log10(self.fs[-1]), num=101)
                     self.axIp.plot(fsmooth, intIp(fsmooth))
@@ -1091,7 +1092,7 @@ class protSinusoid(Protocol):
             
             self.axIp.set_xscale('log')
             self.axIp.set_ylabel('$|A|_{peak}$ $\mathrm{[nA]}$')
-            if addTitles:
+            if config.addTitles:
                 #self.axIp.set_title('$\mathrm{|Amplitude|_{peak}\ vs.\ frequency}.\ f^*:=arg\,max_f(|A|)$')
                 self.axIp.set_title('$f^*:=arg\,max_f(|A|_{peak})$')
             #axIp.set_aspect('auto')
@@ -1152,7 +1153,7 @@ class protSinusoid(Protocol):
                     col, style = self.getLineProps(run, vInd, phiInd) ### Modify to match colours correctly
                     self.axIss.plot(self.fs, Iabs, 'x', color=col)
                     #intIss = UnivariateSpline(self.fs, Iabs)
-                    intIss = InterpolatedUnivariateSpline(self.fs, Iabs)
+                    intIss = InterpolatedUnivariateSpline(self.fs, Iabs, k=splineOrder)
                     #intIss = interp1d(self.fs, Iabs, kind='cubic')
                     #fsmooth = np.logspace(self.fs[0], self.fs[-1], 100)
                     self.axIss.plot(fsmooth, intIss(fsmooth))
@@ -1166,7 +1167,7 @@ class protSinusoid(Protocol):
             self.axIss.set_xscale('log')
             self.axIss.set_xlabel('$f$ $\mathrm{[Hz]}$')
             self.axIss.set_ylabel('$|A|_{ss}$ $\mathrm{[nA]}$')
-            if addTitles:
+            if config.addTitles:
                 #axIss.set_title('$\mathrm{|Amplitude|_{ss}\ vs.\ frequency}.\ f^*:=arg\,max_f(|A|)$')
                 self.axIss.set_title('$f^*:=arg\,max_f(|A|_{ss})$')
             
@@ -1187,7 +1188,7 @@ class protSinusoid(Protocol):
                 #plt.xlabel('$\mathrm{Modulating}\ \phi_1(t)/\phi_0(t)\ \mathrm{[photons \cdot s^{-1} \cdot mm^{-2}]}$')
                 #plt.xlabel('$\mathrm{Modulating}\ \phi_1(t)/\phi_0(t)$')
                 plt.ylabel('$f^*\ \mathrm{[Hz]}$')
-                if addTitles:
+                if config.addTitles:
                     plt.title('$f^*\ vs.\ \phi_1(t).\ \mathrm{{Background\ illumination:}}\ \phi_0(t)={:.3g}$'.format(self.A0[0]))
             
         
@@ -1397,12 +1398,14 @@ class protRamp(Protocol):
         phi_t = InterpolatedUnivariateSpline([pStart, pEnd], [self.phi_ton, phi], k=1, ext=1)
         return phi_t
     
+    """
     def getPhiFunc_orig(self, run, phiOn, delD, onD):
         pStart, pEnd = delD, (delD+onD)
         phi_t = InterpolatedUnivariateSpline([pStart,pEnd], [self.phi_ton,phiOn], k=1, ext=1) #[start,delD,end,totT], [0,self.phi_ton,phiOn,0] 
         #phi_t = InterpolatedUnivariateSpline(pStart + t, self.phi_ton + phiOn*(t/onD), k=1, ext=1) #[start,delD,end,totT], [0,self.phi_ton,phiOn,0] 
         return phi_t
-
+    """
+        
 class protSaturate(Protocol): 
     # One very short, saturation intensity pulse e.g. 10 ns @ 100 mW*mm^-2 for wild type ChR
     # Used to calculate gbar, assuming that O(1)-->1 as onD-->0 and phi-->inf
@@ -1517,7 +1520,7 @@ class protSaturate(Protocol):
                         self.axI.axvline(x=tp, linestyle=':', color='k')
                         #plt.axhline(y=I_RhO[peakInds[0]], linestyle=':', color='k')
                         label = '$I_{{peak}} = {:.3g}\mathrm{{nA;}}\ t_{{lag}} = {:.3g}\mathrm{{ms}}$'.format(Ip, tlag)
-                        plt.text(1.05*tp, 1.05*Ip, label, ha='left', va='bottom', fontsize=eqSize)
+                        plt.text(1.05*tp, 1.05*Ip, label, ha='left', va='bottom', fontsize=config.eqSize)
 
             
             
@@ -1570,7 +1573,7 @@ class protRectifier(Protocol):
         ax = self.axVI #IssVfig.add_subplot(111)
         
         legLabels = [None for p in range(self.nPhis)]
-        eqString = r'$f(V) = \frac{{{v1:.3}}}{{V-{E:+.2f}}} \cdot \left[1-\exp\left({{-\frac{{V-{E:+.2f}}}{{{v0:.3}}}}}\right)\right]$'
+        #eqString = r'$f(v) = \frac{{{v1:.3}}}{{v-{E:+.2f}}} \cdot \left[1-\exp\left({{-\frac{{v-{E:+.2f}}}{{{v0:.3}}}}}\right)\right]$'
         Vs = self.Vs
         for run in range(self.nRuns):
             for phiInd, phiOn in enumerate(self.phis): 
@@ -1583,7 +1586,7 @@ class protRectifier(Protocol):
                 Iss = self.PD.ss_[run][phiInd][:]
                 
                 ### Original routines
-                #popt, pcov, eqString = fitFV(self.Vs, Iss, p0FV, ax=ax)
+                ##popt, pcov, eqString = fitFV(self.Vs, Iss, p0FV, ax=ax)
                 p0FV = (35, 15, 0)
                 poptI, poptg = fitFV(Vs, Iss, p0FV, ax=ax)
 
@@ -1595,12 +1598,15 @@ class protRectifier(Protocol):
                 ('v1',  calcV1(0,50),True, -1e9 , 1e9,  None))
                 
                 pfV = fitfV(Vs, Iss, pfV)
-                print(pfV)
+                #print(pfV)
                 
                 Vrange = max(Vs) - min(Vs)
                 Vsmooth = np.linspace(min(Vs), max(Vs), 1+Vrange/.1) #Prot.dt
                 
                 E = poptI[2]
+            #    E = pfV['E'].value
+                #v0 = pfV['v0'].value
+                #v1 = pfV['v1'].value
                 
                 ### Top plot
                 # self.RhO.v0 = poptI[0]
@@ -1632,10 +1638,20 @@ class protRectifier(Protocol):
                 fVsmooth = errfV(pfV, Vsmooth)
                 
                 self.axfV.plot(Vsmooth, fVsmooth)
-                fVstring = eqString.format(v0=poptg[0], E=poptI[2], v1=poptg[1])
+            #    fVstring = eqString.format(v0=poptg[0], E=poptI[2], v1=poptg[1])
+                v0 = pfV['v0'].value
+                v1 = pfV['v1'].value
+                if np.isclose(E, 0, atol=0.005):
+                    eqString = r'$f(v) = \frac{{{v1:.3}}}{{v-{E:.0f}}} \cdot \left[1-\exp\left({{-\frac{{v-{E:.0f}}}{{{v0:.3}}}}}\right)\right]$'
+                    fVstring = eqString.format(E=np.abs(E), v0=v0, v1=v1)
+                else:
+                    eqString = r'$f(v) = \frac{{{v1:.3}}}{{v-{E:+.2f}}} \cdot \left[1-\exp\left({{-\frac{{v-{E:+.2f}}}{{{v0:.3}}}}}\right)\right]$'
                 
-                v0 = poptg[0]
-                v1 = poptg[1]
+                    fVstring = eqString.format(E=E, v0=v0, v1=v1)
+                
+                #v0 = poptg[0]
+                #v1 = poptg[1]
+                
                 #E = poptI[2]
                 #vInd = np.searchsorted(self.Vs, (-70 - E))
                 #sf = Iss[vInd]
@@ -1654,7 +1670,8 @@ class protRectifier(Protocol):
                 self.axfV.scatter(Vs, gNorm, marker='x', color=colours, s=markerSize)#,linestyle=''
                 if verbose > 1:
                     print(gm70)
-                    print(np.c_[Vs, np.asarray(Vs)-E, Iss, gs, gNorm])
+                    if verbose > 2:
+                        print(np.c_[Vs, np.asarray(Vs)-E, Iss, gs, gNorm])
                 
                 
                 # Add equations to legend
@@ -1684,11 +1701,7 @@ class protRectifier(Protocol):
         ax.set_ylabel('$I_{ss}$ $\mathrm{[nA]}$')#, position=(0.95,0.8)) #plt.xlabel
         
         ax = self.axfV
-        ax.set_ylabel('$f(V)$ $\mathrm{[1]}$')#, position=(0.95,0.8)) #plt.xlabel
-        
-        ax.axvline(x=-70, linestyle=':', color='k')
-        yind = np.searchsorted(Vsmooth, -70)
-        ax.axhline(y=fVsmooth[yind], linestyle=':', color='k')
+        ax.set_ylabel('$f(v)$ $\mathrm{[1]}$')#, position=(0.95,0.8)) #plt.xlabel
         
         ax.spines['left'].set_position('zero')
         ax.spines['right'].set_color('none')
@@ -1700,9 +1713,28 @@ class protRectifier(Protocol):
         ax.yaxis.set_ticks_position('left')
         ax.set_xlim(min(Vs), max(Vs))
         
-        ax.legend(legLabels, loc='best')
+        # yticks = ax.get_yticklabels()
+        # ax.set_ylim(0, float(yticks[-1].get_text()))
         
-        ax.set_xlabel('$V_{clamp}$ $\mathrm{[mV]}$', position=(0.8,0.8)) #plt.xlabel
+        useLegend = True
+        if useLegend:
+            #ax.legend(legLabels, bbox_to_anchor=(0., 1.01, 1., .101), loc=3, mode="expand", borderaxespad=0., prop={'size':mp.rcParams['font.size']})
+            ax.legend(legLabels, loc='best')
+        else:
+            ymin, ymax = ax.get_ylim()
+            #ax.set_ylim(ymin, ymax)
+            
+            ax.text(min(Vs), 0.98*ymax, legLabels[phiInd], ha='left', va='top')#, fontsize=eqSize) #, transform=ax.transAxes)
+        
+        # ax.axvline(x=-70, linestyle=':', color='k')
+        # yind = np.searchsorted(Vsmooth, -70)
+        # ax.axhline(y=fVsmooth[yind], linestyle=':', color='k')
+        
+        ax.vlines(x=-70, ymin=0, ymax=1, linestyle=':', color='k')
+        ax.hlines(y=1, xmin=-70, xmax=0, linestyle=':', color='k')
+        
+        #ax.set_xlabel('$V_{clamp}$ $\mathrm{[mV]}$', position=(0.8,0.8)) #plt.xlabel
+        ax.set_xlabel('$V_{clamp}$ $\mathrm{[mV]}$', position=(xLabelPos,0), ha='right')
         #plt.xlim((min(Vs),max(Vs)))
         #ax.set_ylabel('$I_{ss}$ $\mathrm{[nA]}$', position=(0.55,0.05)) # Shared axis
         
@@ -1784,9 +1816,10 @@ class protShortPulse(Protocol):
     def addAnnotations(self):
         # Freeze axis limits
         ymin, ymax = plt.ylim()
-        plt.ylim(ymin, ymax)
+        #plt.ylim(ymin, ymax)
         pos = 0.02 * abs(ymax-ymin)
         #plt.ylim(ax.get_ylim())
+        plt.ylim(ymin, pos*(self.nRuns+1)) # Allow extra space for thick lines
         for run in range(self.nRuns): 
             # if self.nRuns > 1:
                 # delD = self.delDs[run]
@@ -1980,9 +2013,14 @@ class protRecovery(Protocol):
 
         # Freeze axis limits
         ymin, ymax = plt.ylim()
-        plt.ylim(ymin, ymax)
         pos = 0.02 * abs(ymax-ymin)
+        #plt.ylim(ymin, ymax)
+        plt.ylim(ymin, pos*self.nRuns)
         #plt.ylim(ax.get_ylim())
+        
+        xmin, xmax = plt.xlim()
+        plt.xlim(xmin, xmax)
+        
         for run in range(self.nRuns): 
             if self.nRuns > 1:
                 delD = self.delDs[run]

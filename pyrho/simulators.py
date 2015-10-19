@@ -1,13 +1,14 @@
 # simulators.py
 
-from .parameters import *
-from .utilities import * # cycles2times, plotLight
-from .models import *
-from .config import verbose
+from pyrho.parameters import *
+from pyrho.utilities import * # cycles2times, plotLight
+from pyrho.models import *
+from pyrho.config import * #verbose
+from pyrho import config
 import numpy as np
 import warnings
 
-from brian2 import *
+#from brian2 import *
 
 class Simulator(PyRhOobject): #object
     """Common base class for all simulators"""
@@ -314,31 +315,22 @@ class simNEURON(Simulator):
         
         
         
-        #import neuron
+        #import neuron as nrn
+        #self.nrn = nrn
+        #self.nrn.load_mechanisms(os.environ['NRN_NMODL_PATH'])
+        
         from neuron import h
         #self.neuron = neuron
         self.h = h
         
         self.h.load_file('stdrun.hoc')
         
-        ### Clear any previous models
-        # http://www.neuron.yale.edu/phpbb/viewtopic.php?f=2&t=2367
-        # http://www.ncbi.nlm.nih.gov/pmc/articles/PMC2655137/
-        # http://www.neuron.yale.edu/neuron/static/new_doc/modelspec/programmatic/network/parcon.html
-        pc = h.ParallelContext()
-        pc.gid_clear()
-        #unref all the cell objects
-        h("forall delete_section()")
-        #self.h('objectref compList')
-        #self.h('objectref rhoList')
-        #unref all the NetCon
-        #Other top level hoc objects (Vectors, Graphs etc.)
-        
+        #self.reset()
         
         ### Simulation control
-        self.CVODE = params['CVODE'].value
+        self.CVode = params['CVode'].value
         
-        if self.CVODE == True: #self.integrator == 'variable': #... if dt <= 0:
+        if self.CVode == True: #self.integrator == 'variable': #... if dt <= 0:
             self.h('objref cvode')
             self.h.cvode = self.h.CVode()
             self.h.cvode.active(1)
@@ -355,19 +347,23 @@ class simNEURON(Simulator):
         self.h.v_init = params['v_init'].value #-60
         
         #expdist = 600 ### Redundant
+        self.RhO = RhO
         
         self.buildCell(params['cell'].value)
-        h.topology() # Print topology
-        mod = self.mechanisms[RhO.nStates] ### Use this to select the appropriate mod file for insertion
-        self.transduce(RhO, expProb=params['expProb'].value)
-        self.setRhodopsinParams(self.rhoList, RhO, modelParams[str(RhO.nStates)])
+        self.h.topology() # Print topology
+        mod = self.mechanisms[self.RhO.nStates] ### Use this to select the appropriate mod file for insertion
+        self.transduce(self.RhO, expProb=params['expProb'].value)
+        self.setRhodopsinParams(self.rhoList, self.RhO, modelParams[str(self.RhO.nStates)])
+        
         #print(recInd)
         #for sec in self.cell:
         #    print(sec)
         #print(self.cell.count())
+        #print(self.rhoList)
         #print(self.rhoList.count())
+        
         self.rhoRec = self.rhoList[recInd] #self.compList.o(recInd) # Choose a rhodopsin to record
-        self.setRecords(self.rhoRec, params['Vcomp'].value, RhO)
+        self.setRecords(self.rhoRec, params['Vcomp'].value, self.RhO)
         self.Vclamp = params['Vclamp'].value
         if self.Vclamp == True:
             self.addVclamp() # params['Vhold'].value
@@ -383,6 +379,27 @@ class simNEURON(Simulator):
         # Run then plot
         
         
+    def reset(self):
+        ### Clear any previous models
+        # http://www.neuron.yale.edu/phpbb/viewtopic.php?f=2&t=2367
+        # http://www.ncbi.nlm.nih.gov/pmc/articles/PMC2655137/
+        # http://www.neuron.yale.edu/neuron/static/new_doc/modelspec/programmatic/network/parcon.html
+        
+        pc = self.h.ParallelContext()
+        pc.gid_clear()
+        
+        #unref all the cell objects
+        self.h("forall delete_section()")
+        for sec in self.h.allsec():
+            #self.h("%s{delete_section()}"%sec.name())
+            self.h("{}{{delete_section()}}".format(sec.name()))
+        #self.h('objectref compList')
+        #self.h('objectref rhoList')
+        
+        #unref all the NetCon
+        
+        #Other top level hoc objects (Vectors, Graphs etc.)
+        return
         
     def prepare(self, dt):
         """Function to compare simulator's timestep to the timestep required by the protocol"""
@@ -390,16 +407,22 @@ class simNEURON(Simulator):
             self.h.dt = dt #min(self.h.dt, dt)
             if verbose > 0:
                 print('Time step reduced to {}ms by protocol!'.format(self.h.dt))
+        # Include code to set Vclamp = False if Prot.Vs=[None]
         return self.h.dt
         
     def buildCell(self, scriptList=[]):
         """Pass a list of hoc or python files in the order in which they are to be processed"""
-        #import os
+        import os
         import subprocess
+        ### Check for script in cwd and then fallback to looking in NRN_NMODL_PATH
+        cwd = os.getcwd()
         for script in scriptList:
             #name, ext = os.path.splitext(script)
             ext = script.split(".")[-1]
-            script = 'PyRhO/NEURON/'+script #.join(script)
+            if not os.path.isfile(os.path.join(cwd, script)):
+                script = os.path.join(os.environ['NRN_NMODL_PATH'], script)
+            #script = 'PyRhO/NEURON/'+script #.join(script)
+            
             #if verbose > 0:
             print('Loading ',script)
             if ext == 'hoc' or ext == 'HOC':
@@ -457,10 +480,17 @@ class simNEURON(Simulator):
         self.h('objectvar rho')
         mech = self.mechanisms[RhO.nStates]
         for sec in self.cell: #self.h.allsec(): # Loop over every section in the cell
+            #print(sec)
+            self.compList.append(sec)
+            #print(random.random())
+            #print(expProb)
             if random.random() <= expProb: # Insert a rhodopsin and append it to a rhoList
-                self.compList.append(sec)
+                #self.compList.append(sec)
                 self.h('rho = new {}(0.5)'.format(mech))
                 self.rhoList.append(self.h.rho)
+        
+        #print(self.compList.count())
+        #print(self.rhoList.count())
         
         #self.h.ChR_in_apical(ChRexp,Irrad,delay,onD,offD,expdist) # Sets Er, del, ton, toff, num, gbar # 0,108
         # ChR_in_basal 0,83
@@ -678,7 +708,10 @@ class simNEURON(Simulator):
         I_RhO = np.array(self.h.Iphi.to_python(), copy=True)
         t = np.array(self.h.tvec.to_python(), copy=True)
         self.Vm = np.array(self.h.Vm.to_python(), copy=True)
+        self.t = t
         
+        #print(t)
+        #print(self.Vm)
         
         for p in range(nPulses):
             ##onInd = np.searchsorted(t,delD+p*(onD+offD),side="left")
@@ -702,7 +735,8 @@ class simNEURON(Simulator):
             self.h('{}Vec.clear()'.format(s))
             self.h('{}Vec.resize(0)'.format(s))
         
-        self.plotVm(times)
+        if self.Vclamp is False:
+            self.plotVm(times)
         
         # Reset vectors
         self.h.tvec.clear() # Necessary?
@@ -727,26 +761,45 @@ class simNEURON(Simulator):
         return I_RhO,t,soln
     
     
-    def plotVm(self,times=None):
+    def plotVm(self, times=None):
 
         # Count number of spikes
         # Find other properties e.g. spike delay, duration
         
-        fig = plt.figure()
+        Vfig = plt.figure()
+        axV = Vfig.add_subplot(111)
         #axI = fig.add_subplot(111)
         #axV = axI.twinx()
         #axI.plot(h.tvec,h.Iphi,color='b')
         #axI.set_ylabel('Current [nA]')
-        plt.plot(self.h.tvec,self.h.Vm,color='g') #axV.plot(h.tvec,h.Vm,color='g')
-        plt.ylabel('Voltage [mV]') #axV.set_ylabel('Voltage [mV]')
+        #print(self.h.tvec.to_python())
+        #print(self.h.Vm.to_python())
+        #plt.plot(self.h.tvec.to_python(), self.h.Vm.to_python(), color='g') #axV.plot(h.tvec,h.Vm,color='g')
+        plt.plot(self.t, self.Vm, color='g')
+        plt.ylabel('$\mathrm{Membrane\ Potential\ [mV]}$') #axV.set_ylabel('Voltage [mV]')
         if times is not None:
             plotLight(times)
-        plt.xlim((0,self.h.tstop))
-        plt.xlabel('Time [ms]')
+        plt.xlim((0, self.h.tstop))
+        #plt.xlabel('$\mathrm{Time\ [ms]}$')
+        plt.xlabel('$\mathrm{Time\ [ms]}$', position=(xLabelPos,0), ha='right')
         #axI.set_xlim(0,tstop)
+        
+        axV.spines['right'].set_color('none')
+        axV.spines['bottom'].set_position('zero') # x-axis
+        axV.spines['top'].set_color('none')
+        axV.spines['left'].set_smart_bounds(True)
+        axV.spines['bottom'].set_smart_bounds(True)
+        axV.xaxis.set_ticks_position('bottom')
+        axV.yaxis.set_ticks_position('left')
+        
+        axV.get_xaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
+        axV.get_yaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
+        axV.grid(b=True, which='minor', axis='both', linewidth=.2)
+        axV.grid(b=True, which='major', axis='both', linewidth=1)
+        
         plt.tight_layout()
         
-        return fig
+        return Vfig
     
     
     
@@ -785,7 +838,7 @@ class simBrian(Simulator):
     simulator = 'Brian'
     """Class for network level simulations with Brian"""
     
-    def __init__(self, RhO, params=simParams['Brian']):
+    def __init__(self, RhO, params=simParams['Brian'], network=None, netParams=None, monitors=None): # G_RhO='G0'):
         
         #from brian2 import *
         # from brian2.only import * # Do not import pylab etc
@@ -795,6 +848,8 @@ class simBrian(Simulator):
         
         import brian2.only as br
         self.br = br
+        
+        self.varIrho = 'I'
         
         self.dt = params['dt'].value
         #self.method_choice = params['method_choice'].value
@@ -810,10 +865,33 @@ class simBrian(Simulator):
         #        threshold='v > 1', reset='v=0; w+=0.1', refractory=2*ms)
         
         # Prepend S_ to state variables to avoid nameclash with MSVC under Windows
-        self.stateVars = ['S_'+s for s in RhO.stateVars]
+        self.stateVars = RhO.brianStateVars # ['S_'+s for s in RhO.stateVars]
+        
+        self.namespace = self.setParams(RhO)
+        self.namespace.update(netParams)
+        self.netParams = netParams
+        
+        #if network is None:
+        #    network = self.buildNetwork(self.namespace)
+        
+        self.net = network
+        
+        #setRecords(self, GroupRec=None, IndRec=None)
+        self.monitors = monitors
+        
+        self.G_RhO = 'Inputs' #'Retina'
+        self.net[self.G_RhO].__dict__[self.stateVars[0]] = 1. # Set rhodopsins to dark-adapted state
     
-    def setParams(self):
-        pass
+    def setParams(self, RhO):
+        params = {} #dict(RhO.paramsList) #Parameters()        
+        #params = RhO.exportParams(params)
+        #namespace = params.valuesdict()
+        #for k,v in namespace:
+        #    namespace[k] = v * modelUnits[k]
+        for p in RhO.paramsList:
+            params[p] = RhO.__dict__[p] * modelUnits[p]
+        
+        return params
     
     
     def prepare(self, dt):
@@ -826,8 +904,9 @@ class simBrian(Simulator):
         return self.dt
     
     
-    def buildNetwork(self, G_RhO, namespace, varIrho='I_RhO'):
+    def buildNetwork(self, network, namespace, G_RhO='G0', varIrho='I_RhO'):
         
+
         self.G_RhO = G_RhO
         #G_RhO = br.NeuronGroup(N, eqs+RhO.eqs, threshold='V>V_th', reset='V=V_r', refractory=self.t_r*ms)
         
@@ -839,6 +918,8 @@ class simBrian(Simulator):
         self.varIrho = varIrho
         
         # photoNeurons = neuronModel + Equations(RhO.brian, I=varIrho, g=vargrho, V=varV)
+        self.net = network
+        self.setRecords(self.G_RhO, 0)        
         
     
     def setRecords(self, GroupRec=None, IndRec=None): #StateRec=('I'),
@@ -858,7 +939,10 @@ class simBrian(Simulator):
         
         ### http://brian2.readthedocs.org/en/latest/user/running.html
         # If placing monitors in a list...
-        self.monitors = [self.br.StateMonitor(GroupRec, self.stateVars, record=IndRec), self.br.StateMonitor(GroupRec, self.varIrho, record=IndRec), self.br.SpikeMonitor(GroupRec)]
+        self.monitors = [self.br.StateMonitor(self.net[GroupRec], self.stateVars, record=IndRec),   # States
+                         self.br.StateMonitor(self.net[GroupRec], self.varIrho, record=IndRec),     # I
+                         self.br.StateMonitor(self.net[GroupRec], 'V', record=IndRec),              # V
+                         self.br.SpikeMonitor(self.net[GroupRec])]                                  # Spikes
         # Make this a dictionary... 'states', 'spikes', 'rates'
         self.net = self.br.Network(collect())  # automatically include G and S
         self.net.add(self.monitors)  # manually add the monitors
@@ -936,10 +1020,13 @@ class simBrian(Simulator):
         ### Delay phase (to allow the system to settle)
         phi = 0
         RhO.initStates(phi) # Reset state and time arrays from previous runs
-        self.G_RhO.phi = phi
-        self.G_RhO.stimulus = False
+        
+        #self.namespace.update({'phi':phi*modelUnits['phim'], 'stimulus':bool(phi>0)})
+        self.net[self.G_RhO].phi = phi*modelUnits['phim']
+        self.net[self.G_RhO].stimulus = False
         # Skip last state value since this is defined as 1 - sum(states) not as an ODE
-        self.G_RhO.set_states({s: o for s, o in zip(self.stateVars[:-1], RhO.s_0[:-1])})
+        #self.net[G_RhO].set_states({s: o for s, o in zip(self.stateVars[:-1], RhO.s_0[:-1])})
+        
         RhO.s0 = RhO.states[-1,:]   # Store initial state used
         #start, end = RhO.t[0], RhO.t[0]+delD
         #t = np.linspace(start,end,int(round(((end-start)/dt)+1)), endpoint=True) #t_del = np.linspace(start,end,((end-start)/dt)+1, endpoint=True) # Time vector
@@ -954,6 +1041,7 @@ class simBrian(Simulator):
         
         #self.br.Network.run(delD*ms, report)
         self.net.run(duration=delD*ms, namespace=self.namespace, report=report) #brianNamespace
+        #self.net.run(duration=delD*ms, report=report) #brianNamespace
         #self.br.run(duration=delD*ms, report=report)
         
         #t = t_del
@@ -980,8 +1068,14 @@ class simBrian(Simulator):
             phi = phiOn  # Light flux
             #RhO.setLight(phi)
             # Update G_RhO parameters?
-            self.G_RhO.phi = phi
-            self.G_RhO.stimulus = True
+            
+            #self.namespace.update({'phi':phi*modelUnits['phim'], 'stimulus':bool(phi>0)})
+            self.net[self.G_RhO].phi = phi*modelUnits['phim']
+            self.net[self.G_RhO].stimulus = True
+            
+            if verbose > 1:
+                print(self.namespace)
+            
             #if verbose > 1:
                 #print("On-phase initial conditions:{}".format(RhO.s_on))
                 #if verbose > 2:
@@ -994,7 +1088,7 @@ class simBrian(Simulator):
             
             
             self.net.run(duration=cycles[p,0]*ms, namespace=self.namespace, report=report)
-            #self.br.run(duration=cycles[p,0]*ms, report=report)
+            #self.net.run(duration=cycles[p,0]*ms, report=report)
             
             ### Light off phase
             #RhO.s_off = soln[-1,:] # [soln[-1,0], soln[-1,1], soln[-1,2], soln[-1,3], soln[-1,4], soln[-1,5]]
@@ -1007,8 +1101,11 @@ class simBrian(Simulator):
             phi = 0  # Light flux
             #RhO.setLight(phi)
             # Update G_RhO parameters?
-            self.G_RhO.phi = phi
-            self.G_RhO.stimulus = False
+            
+            self.net[self.G_RhO].phi = phi*modelUnits['phim']
+            self.net[self.G_RhO].stimulus = False
+            #self.namespace.update({'phi':phi*modelUnits['phim'], 'stimulus':bool(phi>0)})
+            
             #if verbose > 1:
                 #print("Off-phase initial conditions:{}".format(RhO.s_off))
                 #if verbose > 2:
@@ -1021,7 +1118,7 @@ class simBrian(Simulator):
             
             
             self.net.run(duration=cycles[p,1]*ms, namespace=self.namespace, report=report)
-            #self.br.run(duration=cycles[p,1]*ms, report=report)
+            #self.net.run(duration=cycles[p,1]*ms, report=report)
             
             elapsed += cycles[p,1]
             offInd = int(round(elapsed/dt))
@@ -1029,8 +1126,18 @@ class simBrian(Simulator):
             
         ### Calculate photocurrent
         ### Assumes that only one neuron is recorded from...
-        assert(self.monitors[0].n_indices == 1)
-        soln = np.hstack([self.monitors[0].variables['_recorded_'+s].get_value() for s in self.stateVars])
+        
+        assert(self.monitors['states'].n_indices == 1)
+        self.monitors['states'].record_single_timestep()
+        soln = np.hstack([self.monitors['states'].variables[s].get_value() for s in self.stateVars])
+        
+        #self.monitors[0].record_single_timestep()
+        #soln = np.hstack([self.monitors[0].variables[s].get_value() for s in self.stateVars])
+        
+        #soln = np.hstack([self.monitors['states'].variables['_recorded_'+s].get_value() for s in self.stateVars])
+        #assert(self.monitors[0].n_indices == 1)
+        #soln = np.hstack([self.monitors[0].variables['_recorded_'+s].get_value() for s in self.stateVars])
+        
         #RhO.storeStates(self.monitors[0].S1[0][1:], self.monitors[0].t[1:]/ms)
         
 
@@ -1038,30 +1145,51 @@ class simBrian(Simulator):
         # Print last value is not recorded!
         # https://github.com/brian-team/brian2/issues/452
         
-        t = self.monitors[0].t/ms
+        #t = self.monitors[0].t/ms
+        t = self.monitors['states'].t/ms
+        #t = self.monitors[0].t/ms
+        #t = np.append(t, t[-1]+dt)          ### HACK!!!
         
-        t = np.append(t, t[-1]+dt)          ### HACK!!!
         
-
-        RhO.storeStates(soln, t[1:]) # 1000 ### HACK!!! (not soln[1:])
+        #RhO.storeStates(soln, t[1:]) # 1000 ### HACK!!! (not soln[1:])
+        RhO.storeStates(soln[1:], t[1:]) # 1000 ### HACK!!! (not soln[1:])
         
         states, t = RhO.getStates()
         
-        
-        if V != None:
+        if V != None: # and 'I' in self.monitors:
             I_RhO = RhO.calcI(V, RhO.states)
         else:
-            I_RhO = self.monitors[1].variables['_recorded_'+self.varIrho].get_value() * 1e9# / nA
+            self.monitors['I'].record_single_timestep()
+            I_RhO = self.monitors['I'].variables[self.varIrho].get_value() * 1e9# / nA
+            #self.monitors[1].record_single_timestep()
+            #I_RhO = self.monitors[1].variables[self.varIrho].get_value() * 1e9# / nA
+            
+            #I_RhO = self.monitors['I'].variables['_recorded_'+self.varIrho].get_value() * 1e9# / nA
+            #I_RhO = self.monitors[1].variables['_recorded_'+self.varIrho].get_value() * 1e9# / nA
+            
             #I_RhO = np.asarray(I_RhO.T.tolist()[0])
         
-        I_RhO = np.append(0., I_RhO)        ### HACK!!!
+        
+        
+        
+        #I_RhO = np.append(0., I_RhO)        ### HACK!!!
         #print(self.monitors[1].t[0])
         #print(len(self.monitors[1].t))
         
-
+        # print(len(I_RhO))
+        # print(I_RhO)
+        # print(len(t))
+        # print(t)
+        # print(states.shape)
+        # print(states)
+        
+        times, totT = cycles2times(cycles, delD)
+        self.plotRasters(times, totT)
         
         return I_RhO, t, states #I_RhO, t[1:], states
         
+    
+
     
     def runTrialPhi_t(self, RhO, phi_ts, V, delD, cycles, endT, dt, verbose=verbose):
         """Main routine for simulating a pulse train"""
@@ -1124,6 +1252,65 @@ class simBrian(Simulator):
         
         return I_RhO, t, states
         
+    
+    def plotRasters(self, times=None, totT=None):
+        # Plot rasters
+        
+        nLayers = len(self.monitors['spikes'])
+        
+        Rfig = plt.figure() #figsize=(10, 6)
+        gs = plt.GridSpec(nLayers,1)
+        axes = [None for lay in range(nLayers)]
+        
+        for lay in range(nLayers):
+            
+            axes[lay] = Rfig.add_subplot(gs[lay])
+            gInd = nLayers-lay-1
+            plt.plot(self.monitors['spikes'][gInd].t/ms, self.monitors['spikes'][gInd].i, '.')
+            plt.ylabel('$\mathrm{' + self.monitors['spikes'][gInd].name + '}$')
+            if gInd > 0:
+                plt.setp(axes[lay].get_xticklabels(), visible=False)
+            else:
+                plt.xlabel('$\mathrm{Time\ [ms]}$')
+            if totT is not None:
+                plt.xlim((0,totT))
+            plt.ylim((0, len(self.monitors['spikes'][gInd].spike_trains())))
+            if times is not None:
+                #plotLight(times)
+                for pulse in times:
+                    axes[lay].axvspan(pulse[0], pulse[1], facecolor='y', alpha=0.2)
+            
+        # axV1 = fig.add_subplot(gs[0])
+        # plt.plot(self.monitors['spikes'][2].t/ms, self.monitors['spikes'][2].i, '.')
+        # #plt.plot(self.monitors[3][2].t/ms, self.monitors[3][2].i, '.')
+        # plt.setp(axV1.get_xticklabels(), visible=False)
+        # plt.ylabel('V1 Neuron')
+
+        # axLGN = fig.add_subplot(gs[1], sharex=axV1)
+        # plt.plot(self.monitors['spikes'][1].t/ms, self.monitors['spikes'][1].i, '.')
+        # #plt.plot(self.monitors[3][1].t/ms, self.monitors[3][1].i, '.')
+        # plt.setp(axLGN.get_xticklabels(), visible=False)
+        # plt.ylabel('LGN Neuron')
+        
+        # axRet = fig.add_subplot(gs[2], sharex=axV1)
+        # plt.plot(self.monitors['spikes'][0].t/ms, self.monitors['spikes'][0].i, '.')
+        # #plt.plot(self.monitors[3][0].t/ms, self.monitors[3][0].i, '.')
+        # plt.ylabel('Retinal Neuron')
+        # plt.xlabel('Time/ms')
+        
+
+        # Add stimulus shading
+        #times, totT = cycles2times(cycles, delD)
+        # for pulse in times:
+            # axRet.axvspan(pulse[0], pulse[1], facecolor='y', alpha=0.2)
+            # axLGN.axvspan(pulse[0], pulse[1], facecolor='y', alpha=0.2)
+            # axV1.axvspan(pulse[0], pulse[1], facecolor='y', alpha=0.2)
+
+        plt.tight_layout()
+        
+        from os import path
+        figName = path.join(fDir, "raster."+config.saveFigFormat)
+        Rfig.savefig(figName, format=config.saveFigFormat)
     
     def plotRaster(self, group=None, addHist=True):
         if group==None:
