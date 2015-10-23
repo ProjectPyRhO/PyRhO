@@ -349,9 +349,10 @@ class simNEURON(Simulator):
         #expdist = 600 ### Redundant
         self.RhO = RhO
         
+        ### Move into prepare() in order to insert the correct type of mechanism (continuous or discrete) according to the protocol
         self.buildCell(params['cell'].value)
         self.h.topology() # Print topology
-        mod = self.mechanisms[self.RhO.nStates] ### Use this to select the appropriate mod file for insertion
+        #mod = self.mechanisms[self.RhO.nStates] ### Use this to select the appropriate mod file for insertion ##### How to set this for continuous mods?
         self.transduce(self.RhO, expProb=params['expProb'].value)
         self.setRhodopsinParams(self.rhoList, self.RhO, modelParams[str(self.RhO.nStates)])
         
@@ -408,6 +409,8 @@ class simNEURON(Simulator):
             if verbose > 0:
                 print('Time step reduced to {}ms by protocol!'.format(self.h.dt))
         # Include code to set Vclamp = False if Prot.Vs=[None]
+        
+        
         return self.h.dt
         
     def buildCell(self, scriptList=[]):
@@ -751,14 +754,148 @@ class simNEURON(Simulator):
         return I_RhO, t, soln
 
 
-    def runTrialPhi_t(self, RhO,V,phi_t,delD,stimD,totT,dt,verbose=verbose): 
+    def runTrialPhi_t(self, RhO, phi_ts, V, delD, cycles, endT, dt, verbose=verbose): 
         # Make RhO.mod a continuous function of light - 9.12: Discontinuities 9.13: Time-dependent parameters p263
             #- Did cubic spline interpolation ever get implemented for vec.play(&rangevar, tvec, 1)?
             #- http://www.neuron.yale.edu/neuron/faq#vecplay
             #- http://www.neuron.yale.edu/neuron/static/new_doc/programming/math/vector.html#Vector.play
             #- Ramp example: http://www.neuron.yale.edu/phpbb/viewtopic.php?f=15&t=2602
         raise NotImplementedError('Error: Light as a continuous function of time has not been implemented for NEURON yet!')
-        return I_RhO,t,soln
+        
+        # vsrc.play(&var, Dt)
+        # vsrc.play(&var, tvec)
+        # vsrc.play("stmt involving $1", optional Dt or tvec arg)
+        # vsrc.play(index)
+        # vsrc.play(&var or stmt, tvec, continuous)
+        # vsrc.play(&var or stmt, tvec, indices_of_discontinuities_vector)
+        # vsrc.play(point_process_object, &var, ...)
+        
+        # The vsrc vector values are assigned to the "var" variable during a simulation.
+        # The same vector can be played into different variables.
+
+        # If the "stmt involving $1" form is used, that statement is executed with the appropriate value of the $1 arg. This is not as efficient as the pointer form but is useful for playing a value into a set of variables as in "forall g_pas = $1"
+        # The index form immediately sets the var (or executes the stmt) with the value of vsrc.x[index]
+
+        # v.x[i] -> var(t) where t(i) is Dt*i or tvec.x[i]
+        
+        # The discrete event delivery system is used to determine the precise time at which values are copied from vsrc to var. 
+        # Note that for variable step methods, unless continuity is specifically requested, the function is a step function. 
+        # Also, for the local variable dt method, var MUST be associated with the cell that contains the currently accessed section (but see the paragraph below about the use of a point_process_object inserted as the first arg).
+        # For the fixed step method transfers take place on entry to finitialize() and on entry to fadvance(). 
+        # At the beginning of finitialize(), var = v.x[0]. On fadvance() a transfer will take place if t will be (after the fadvance increment) equal or greater than the associated time of the next index. For the variable step methods, transfers take place exactly at the times specified by the Dt or tvec arguments.
+        
+        # If the end of the vector is reached, no further transfers are made (var becomes constant)
+        # c.f. UnivariateSpline ext=3
+        
+        # Note well: for the fixed step method, if fadvance exits with time equal to t (ie enters at time t-dt), then on entry to fadvance, var is set equal to the value of the vector at the index appropriate to time t. Execute tests/nrniv/vrecord.hoc to see what this implies during a simulation. ie the value of var from t-dt to t played into by a vector is equal to the value of the vector at index(t). If the vector was meant to serve as a continuous stimulus function, this results in a first order correct simulation with respect to dt. If a second order correct simulation is desired, it is necessary (though perhaps not sufficient since all other equations in the system must also be solved using methods at least second order correct) to fill the vector with function values at f((i-.5)*dt).
+        
+        # When continuous is 1 then linear interpolation is used to define the values between time points. # [c.f. UnivariateSpline k=1]
+        # However, events at each Dt or tvec are still used and that has beneficial performance implications for variable step methods since vsrc is equivalent to a piecewise linear function and variable step methods can excessively reduce dt as one approaches a discontinuity in the first derivative. 
+        # Note that if there are discontinuities in the function itself, then tvec should have adjacent elements with the same time value. As of version 6.2, when a value is greater than the range of the t vector, linear extrapolation of the last two points is used instead of a constant last value. 
+        # c.f. UnivariateSpline ext=0
+        # If a constant outside the range is desired, make sure the last two points have the same y value and have different t values (if the last two values are at the same time, the constant average will be returned). (note: the 6.2 change allows greater variable time step efficiency as one approaches discontinuities.)
+        
+        # The indices_of_discontinuities_vector argument is used to specifying the indices in tvec of the times at which discrete events should be used to notify that a discontinuity in the function, or any derivative of the function, occurs. Presently, linear interpolation is used to determine var(t) in the interval between these discontinuities (instead of cubic spline) so the length of steps used by variable step methods near the breakpoints depends on the details of how the parameter being played into affects the states.
+
+        # For the local variable timestep method, CVode.use_local_dt() and/or multiple threads, ParallelContext.nthread() , it is often helpful to provide specific information about which cell the var pointer is associated with by inserting as the first arg some POINT_PROCESS object which is located on the cell. This is necessary if the pointer is not a RANGE variable and is much more efficient if it is. The fixed step and global variable time step method do not need or use this information for the local step method but will use it for multiple threads. It is therefore a good idea to supply it if possible.
+        
+        # vec.x[i] to access values
+        
+        """Main routine for simulating a pulse train"""
+        # Add interpolation of values for phi(t) to initialisation phi_t = interp1d(t,sin(w*t),kind='cubic')
+        #print("Simulating experiment at V = {:+}mV, phi = {:.3g}photons/s/mm^2, pulse = {}ms".format(V,phiOn,onD))
+        
+        ### delD and stimD are only used for finding pulse indexes - could be removed along with separate delay phase?!!!
+        ### Combine this with the original runTrial
+        
+        # Set simulation run time
+        self.h.tstop = totT #delD + np.sum(cycles) #nPulses*(onD+offD) + padD
+        
+        if self.Vclamp == True:
+            self.setVclamp(V)
+        
+        nPulses = cycles.shape[0]
+        assert(len(phi_ts) == nPulses)
+        
+        times, totT = cycles2times(cycles,delD)
+        self.times = times
+        
+        
+        ### Delay phase (to allow the system to settle)
+        phi = 0
+        RhO.initStates(phi) # Reset state and time arrays from previous runs
+        RhO.s0 = RhO.states[-1,:]   # Store initial state used
+        
+        start, end = RhO.t[0], RhO.t[0]+delD #start, end = 0.00, delD
+        nSteps = int(round(((end-start)/dt)+1))
+        t = np.linspace(start, end, nSteps, endpoint=True)
+        #t = np.linspace(start,end,int(round(((end-start)/dt)+1)), endpoint=True) # Time vector
+        tVec = self.h.Vector(t) # tVec.from_python(t)
+        tVec.label('Time [ms]')
+        # phi_t = InterpolatedUnivariateSpline([pStart, pEnd], [self.phi_ton, phi], k=1, ext=1) # Ramp
+        phiVec = self.h.Vector(phi_t(t))
+        phiVec.label('phi [ph./mm^2/s]')
+        
+        #phiVec.play(&phi, tVec, continuous) # indices_of_discontinuities_vector
+        phiVec.play(rhoRec._ref_phi, tVec, 1) # continuous, indices_of_discontinuities_vector
+        
+        #phiVec.play_remove()
+        
+        if verbose > 1:
+            print("Trial initial conditions:{}".format(RhO.s0))
+        soln = odeint(RhO.solveStates, RhO.s0, t, args=(None,), Dfun=RhO.jacobian)
+        RhO.storeStates(soln[1:],t[1:])
+        
+        self.setPulses(phiOn, delD, onD, offD, nPulses)
+        self.h.init() #self.neuron.init()
+        #self.h.finitialize()
+        
+        self.h.run() #self.neuron.run(self.h.tstop)
+        
+        I_RhO = np.array(self.h.Iphi.to_python(), copy=True)
+        t = np.array(self.h.tvec.to_python(), copy=True)
+        self.Vm = np.array(self.h.Vm.to_python(), copy=True)
+        self.t = t
+        
+        ### Stimulation phases
+        for p in range(0, nPulses):
+            RhO.s_on = soln[-1,:] # [soln[-1,0], soln[-1,1], soln[-1,2], soln[-1,3], soln[-1,4], soln[-1,5]]
+            start = end
+            onD, offD = cycles[p,0], cycles[p,1]
+            if p < nPulses - 1:
+                end = start + onD + offD #totT #start + stimD
+            else:
+                end = endT
+            
+            onInd = len(RhO.t) - 1  # Start of on-phase
+            #offInd = onInd + len(t) - 1 # Start of off-phase
+            #offInd = onInd + int(round(stimD/dt)) # Consider rounding issues...
+            offInd = onInd + int(round(onD/dt))
+            RhO.pulseInd = np.vstack((RhO.pulseInd,[onInd,offInd]))
+            
+            t = np.linspace(start, end, int(round(((end-start)/dt)+1)), endpoint=True)
+            phi_t = phi_ts[p]
+            
+            if verbose > 1:
+                print("Pulse initial conditions:{}".format(RhO.s_on))
+                
+            
+            if verbose > 2:
+                soln, out = odeint(RhO.solveStates, RhO.s_on, t, args=(phi_t,), Dfun=RhO.jacobian, full_output=True)
+                print(out)
+            else:
+                soln = odeint(RhO.solveStates, RhO.s_on, t, args=(phi_t,), Dfun=RhO.jacobian)
+            
+            RhO.storeStates(soln[1:], t[1:]) # Skip first values to prevent duplicating initial conditions and times
+            
+            if verbose > 1:
+                print('t_pulse{} = [{}, {}]'.format(p,RhO.t[onInd],RhO.t[offInd]))
+        
+        ### Calculate photocurrent
+        I_RhO = RhO.calcI(V, RhO.states)
+        states, t = RhO.getStates()
+        
+        return I_RhO, t, soln
     
     
     def plotVm(self, times=None):
