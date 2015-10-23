@@ -443,28 +443,29 @@ def fit3statesIndiv(I,t,onInd,offInd,phi,V,Gr0,gmax,Ipmax,params=None,method=def
 
 
     
-    def calcOnPhase(p,t,RhO,V,phi):
-        """Simulate the on-phase from base parameters"""
-        if verbose > 2:
-            print('.', end="") # sys.stdout.write('.')
-        RhO.initStates(0)
-        RhO.updateParams(p)
-        RhO.setLight(phi) # Calculate transition rates for phi
-        
-        soln = odeint(RhO.solveStates, RhO.s_0, t, Dfun=RhO.jacobian)
-        # soln,out = odeint(RhO.solveStates, RhO.s_0, t, Dfun=RhO.jacobian, full_output=True)
-        # if out['message'] != 'Integration successful.':
-            # #print(out)
-            # print(RhO.reportParams())
-        I_RhO = RhO.calcI(V, soln)
-        return I_RhO
+def calcOnPhase(p,t,RhO,V,phi):
+    """Simulate the on-phase from base parameters"""
+    if verbose > 2:
+        print('.', end="") # sys.stdout.write('.')
+    RhO.initStates(0)
+    RhO.updateParams(p)
+    RhO.setLight(phi) # Calculate transition rates for phi
     
-    # Normalise? e.g. /Ions[trial][-1] or /min(Ions[trial])
-    def errOnPhase(p,Ions,tons,RhO,Vs,phis):
-        return np.r_[ [(Ions[i] - calcOnPhase(p,tons[i],RhO,Vs[i],phis[i]))/Ions[i][-1] for i in range(len(Ions))]]
-    
-    
+    soln = odeint(RhO.solveStates, RhO.s_0, t, Dfun=RhO.jacobian)
+    # soln,out = odeint(RhO.solveStates, RhO.s_0, t, Dfun=RhO.jacobian, full_output=True)
+    # if out['message'] != 'Integration successful.':
+        # #print(out)
+        # print(RhO.reportParams())
+    I_RhO = RhO.calcI(V, soln)
+    return I_RhO
 
+# Normalise? e.g. /Ions[trial][-1] or /min(Ions[trial])
+def errOnPhase(p,Ions,tons,RhO,Vs,phis):
+    return np.r_[ [(Ions[i] - calcOnPhase(p,tons[i],RhO,Vs[i],phis[i]))/Ions[i][-1] for i in range(len(Ions))]]
+    
+def errSetOnPhase(p,Ions,tons,RhO,Vs,phis):
+    return np.r_[ [Ions[i]/Ions[i][-1] - calcOnPhase(p,tons[i],RhO,Vs[i],phis[i])/Ions[i][-1] for i in range(len(Ions))]]
+    
 def calc4on(p,t,RhO,V,phi):
     """Simulate the on-phase from base parameters for the 4-state model"""
     if verbose > 2:
@@ -3683,6 +3684,7 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, relaxFact=2, method
             #fitParams = postParams
             if verbose > 0:
                 reportFit(postPmin, "Post-fit optimisation report for the {}-state model".format(nStates), method)
+            #fittedParams = postPmin.params # Change for lmfit 0.9
             
         for trial in range(len(PCs)):
             #pc = PCs[trial]

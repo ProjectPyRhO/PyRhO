@@ -298,18 +298,20 @@ class PhotoCurrent():
         pOn.add('a2', value=0.1, min=1e-9)
         pOn.add('tau_act', value=5, min=1e-9)
         pOn.add('tau_deact', value=50, min=1e-9)
-        minObj = minimize(residOn, pOn, args=(Ion,ton), method=method)
-        print('tau_{{act}} = {:.3g}, tau_{{deact}} = {:.3g}'.format(pOn['tau_act'].value, pOn['tau_deact'].value))
+        minRes = minimize(residOn, pOn, args=(Ion,ton), method=method)
+        #fp = minRes.params # Change for lmfit 0.9
+        fp = pOn
+        print('tau_{{act}} = {:.3g}, tau_{{deact}} = {:.3g}'.format(fp['tau_act'].value, fp['tau_deact'].value))
         if verbose > 1:
-            print(fit_report(minObj))
+            print(fit_report(minRes))
         
-        plt.plot(ton, calcOn(pOn,ton), label='On-Fit $\\tau_{{act}}={:.3g}, \\tau_{{deact}}={:.3g}$'.format(pOn['tau_act'].value, pOn['tau_deact'].value))
+        plt.plot(ton, calcOn(fp,ton), label='On-Fit $\\tau_{{act}}={:.3g}, \\tau_{{deact}}={:.3g}$'.format(fp['tau_act'].value, fp['tau_deact'].value))
 
         
         ### Add a check for steady-state before fitting the off-curve
         
         ### Off phase
-        Iss = pOn['a0'].value + pOn['a1'].value
+        Iss = fp['a0'].value + fp['a1'].value
         pOff = Parameters() # copy.deepcopy(pOn)
         Ioff, toff = self.getOffPhase(p)
         
@@ -319,12 +321,14 @@ class PhotoCurrent():
         pOff.add('a2', value=-0, vary=False)
         pOff.add('Gd1', value=0.1)#, min=1e-9)
         pOff.add('Gd2', value=0, vary=False) #, expr='Gd1')#, min=1e-9)
-        minObj = minimize(residOff, pOff, args=(Ioff,toff-toff[0]), method=method)
-        print('tau_{{off}} = {:.3g}'.format(1/pOff['Gd1'].value))
+        minRes = minimize(residOff, pOff, args=(Ioff,toff-toff[0]), method=method)
+        #fp = minRes.params # Change for lmfit 0.9
+        fp = pOff
+        print('tau_{{off}} = {:.3g}'.format(1/fp['Gd1'].value))
         if verbose > 1:
-            print(fit_report(minObj))
+            print(fit_report(minRes))
         
-        plt.plot(toff, calcOff(pOff,toff-toff[0]), label='Off-Fit (Mono-Exp) $\\tau_{{off}}={:.3g}$'.format(1/pOff['Gd1'].value))
+        plt.plot(toff, calcOff(fp, toff-toff[0]), label='Off-Fit (Mono-Exp) $\\tau_{{off}}={:.3g}$'.format(1/fp['Gd1'].value))
         
         # Double exponential
         pOff = Parameters()
@@ -333,10 +337,12 @@ class PhotoCurrent():
         pOff.add('a2', value=-0.1, expr='{}-a0-a1'.format(Iss))
         pOff.add('Gd1', value=0.1)#, min=1e-9)
         pOff.add('Gd2', value=0.01)#, vary=True) #, expr='Gd1')#, min=1e-9)
-        minObj = minimize(residOff, pOff, args=(Ioff,toff-toff[0]), method=method)
-        print('tau_{{off1}} = {:.3g}, tau_{{off2}} = {:.3g}'.format(1/pOff['Gd1'].value, 1/pOff['Gd2'].value))
+        minRes = minimize(residOff, pOff, args=(Ioff,toff-toff[0]), method=method)
+        #fp = minRes.params # Change for lmfit 0.9
+        fp = pOff
+        print('tau_{{off1}} = {:.3g}, tau_{{off2}} = {:.3g}'.format(1/fp['Gd1'].value, 1/fp['Gd2'].value))
         if verbose > 1:
-            print(fit_report(minObj))
+            print(fit_report(minRes))
         
         
         def solveGo(tlag, Gd, Go0=1000, tol=1e-9):
