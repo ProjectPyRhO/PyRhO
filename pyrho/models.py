@@ -540,9 +540,9 @@ class RhO_3states(RhodopsinModel):
         #self.setLight(phi_t(t))
         # Jacobian matrix used to improve precision / speed up ODE solver
         # jac[i,j] = df[i]/dy[j]; where y'(t) = f(t,y)
-        return np.array([[-self.Ga, 0, self.Gr],
-                         [self.Ga, -self.Gd, 0],
-                         [0, self.Gd, -self.Gr]])
+        return np.array([[-self.Ga, 0, self.Gr],    # [dCdt/dC, dCdt/dO, dCdt/dD]
+                         [self.Ga, -self.Gd, 0],    # [dOdt/dC, dOdt/dO, dOdt/dD]
+                         [0, self.Gd, -self.Gr]])   # [dDdt/dC, dDdt/dO, dDdt/dD]
     
     # def hessian(self, s_0, t):
         # Hessian matrix for scipy.optimize.minimize (Only for Newton-CG, dogleg, trust-ncg.)
