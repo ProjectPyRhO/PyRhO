@@ -144,7 +144,7 @@ def setupNEURON(path=None):
     nrnivmodl = shutil.which('nrnivmodl')
     if nrnivmodl is None:
         arch = platform.machine()
-        nrnivmodl = os.path.join(path, "nrn/{}/bin/nrnivmodl".format(arch)) # Should this be another variable?
+        nrnivmodl = os.path.join(path, "nrn", arch, "bin", "nrnivmodl") # Should this be another variable?
     print('Compiling mod files with ', nrnivmodl)
     try:
         cwd = os.getcwd()
@@ -155,9 +155,9 @@ def setupNEURON(path=None):
         if retcode < 0:
             print('NMODL compilation was terminated by signal', -retcode, file=sys.stderr)
         else:
-            print("NMODL compilation returned", retcode, file=sys.stderr)
+            print("NMODL compilation returned", retcode) #, file=sys.stderr)
     except OSError as e:
-        print('NMODL Compilation fialed: ', e, file=sys.stderr)
+        print('NMODL Compilation failed: ', e, file=sys.stderr)
     return
     
 def checkBrian(test=False):
