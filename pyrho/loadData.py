@@ -1034,7 +1034,7 @@ class ProtocolData():
         else:
             #plt.figure(fig.number)
             plt.sca(ax)
-        legLabels = []
+        self.legLabels = []
         
         #onDs = []
         begTs, endTs = [], []
@@ -1057,10 +1057,10 @@ class ProtocolData():
                     if self.nRuns > 1 and hasattr(self, 'runLabels'):
                         label += self.runLabels[run]
                     if self.nPhis > 1:
-                        label += "$\phi = {:.3g}\ \mathrm{{[ph. \cdot s^{{-1}} \cdot mm^{{-2}}]}}$ ".format(phi)
+                        label += "$\phi = {:.3g}\ \mathrm{{[ph. \cdot mm^{{-2}} \cdot s^{{-1}}]}}$ ".format(phi)
                     if self.nVs > 1:
                         label += "$\mathrm{{V}} = {:+}\ \mathrm{{[mV]}}$ ".format(V)
-                    legLabels.append(label)
+                    self.legLabels.append(label)
                     #legLabels.append('$\phi={:.3g}\ \mathrm{{[ph. \cdot s^{{-1}} \cdot mm^{{-2}}]}},\, V={:+.3g}\ \mathrm{{[mV]}}$'.format(phi, V))
                     #legLabels.append('$\phi={:.3g}\ \mathrm{{[mW \cdot mm^{{-2}}]}},\, V={:+.3g}\ \mathrm{{[mV]}}$'.format(flux2irrad(phi,pc.lam), V))
                     # if run==0 and phiInd==0 and vInd==0:
@@ -1110,7 +1110,7 @@ class ProtocolData():
         else:
             ncol = len(self.phis)
         if label != "":
-            lgd = ax.legend(legLabels, loc='best', borderaxespad=0, ncol=ncol, fancybox=True) #, shadow=True , bbox_to_anchor=(1.02, 1)
+            lgd = ax.legend(self.legLabels, loc='best', borderaxespad=0, ncol=ncol, fancybox=True) #, shadow=True , bbox_to_anchor=(1.02, 1)
         #ax.legend(legLabels, loc='best')
         
         # Freeze y-limits
