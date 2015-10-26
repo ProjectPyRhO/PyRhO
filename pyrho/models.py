@@ -54,10 +54,9 @@ class RhodopsinModel(PyRhOobject):
             self.printParams()
         
     def __str__(self):
-        str = "{} {}-state model (phi={:.3g})".format(self.rhoType, self.nStates, self.phi) # Display transition rates?
-        #if self.useIR:
-        #    str += " with inward rectification"
-        return str
+        #str = "{} {}-state model (phi={:.3g})".format(self.rhoType, self.nStates, self.phi) # Display transition rates?
+        #return str
+        return "{}-state {}".format(stateLabs[self.nStates], self.rhoType)
         #self.__name__+
     
     def __repr__(self):
