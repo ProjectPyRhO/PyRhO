@@ -97,7 +97,8 @@ unitLabels = OrderedDict([('g','pS'), ('gam',''), ('phim','ph./mm^2/s'), ('k','m
                             ('k1','ms^-1'), ('k2','ms^-1'), ('Gf0','ms^-1'), ('Gb0','ms^-1'), ('kf','ms^-1'), ('kb','ms^-1'), ('q',''), 
                             ('Gd1','ms^-1'), ('Gd2','ms^-1'), ('Go1','ms^-1'), ('Go2','ms^-1'), ('E','mV'), ('v0','mV'), ('v1','mV')])
 
-
+#'$\mathrm{[ph. / mm^{2} / s]}$'
+#'ph./mm^2/s'
                             
 ####|###10####|###20####|###30####|###40####|###50####|###60####|###70####|###80
 
@@ -337,12 +338,12 @@ simList = list(simParams)
 simParams['Python'].add_many(('dt',0.1,True,None,None,None)) #'ms'
 
 simParams['NEURON'].add_many(('cell',   ['minimal.hoc'],True,None,None, None), #'morphology'
-                             ('Vclamp', True,   True,   False,  True,   None),
+                             ('Vclamp', False,   True,   False,  True,   None), # Changed to False by default
                              ('Vcomp',  'soma', True,   None,   None,   None),
                              ('expProb',1.0,    True,   0.,     1.,     None),
                              ('v_init', -65,    True,   None,   None,   None), # 'mV'
                              ('CVode',  False,  True,   False,  True,   None),
-                             ('dt',     0.1,    True,   None,   None,   None)) # 'ms' #,
+                             ('dt',     0.1,    True,   None,   None,   None)) # 'ms' #, 0.025
                              #('nseg',3,True,1,1e9,None),
                              #('Vhold',-70,True,-200,200,'mV')) # Set by runTrial
 # atol
