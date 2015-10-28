@@ -371,7 +371,7 @@ simParams['Brian'].add_many(('dt', 0.1, True, None, None, None), # 'ms'
                              
                              
 ### Select simulation protocol
-#protocols = ['custom', 'saturate', 'rectifier', 'shortPulse', 'recovery']
+#protocols = ['custom', 'delta', 'rectifier', 'shortPulse', 'recovery']
 #protocol = protocols[2] #'recovery'#'shortPulse' # Set this interactively with radio buttons?
 #Prot = selectProtocol(protocol)
 #Prot = protocols['custom']([1e13,1e14,1e15], [-70,-40,-10,10,40], [[10.,160.]], 200., 1, 0.1)
@@ -379,7 +379,7 @@ simParams['Brian'].add_many(('dt', 0.1, True, None, None, None), # 'ms'
 ##Prot = protocols['sinusoid']([1e9,1e10,1e11,1e12,1e13,1e14,1e15], [1e9], [-70], np.logspace(0,2,num=15), [[25.,5000.]], 5050., 0.1)
 #Prot = protocols['sinusoid']([1e11,1e12,1e13,1e14,1e15], [1e13], [-70], np.logspace(0,2,num=50), [[25.,5000.]], 5050., 0.1)
 #Prot = protocols['ramp']() # Unfinished
-#Prot = protocols['saturate']([irrad2flux(1000,470)], [-70], [[5.,5+1e-3]], 20., 1, 1e-3)
+#Prot = protocols['delta']([irrad2flux(1000,470)], [-70], [[5.,5+1e-3]], 20., 1, 1e-3)
 #Prot = protocols['rectifier']([irrad2flux(1,470),irrad2flux(10,470)], [-100,-80,-60,-40,-20,0,20,40,60,80], [[50.,300.]], 400., 1, 0.1)
 #Prot = protocols['shortPulse']([1e12], [-70], 25, [1,2,3,5,8,10,20], 100, 0.1)
 #Prot = protocols['recovery']([1e14], [-70], 100, 200, [500,1000,1500,2500,5000,7500,10000], 0.1)
@@ -390,7 +390,7 @@ simParams['Brian'].add_many(('dt', 0.1, True, None, None, None), # 'ms'
 ### - pH (intracellular and extracellular)
 ### - Wavelength (lambda)
 
-protParams = OrderedDict([('custom',Parameters()), ('step',Parameters()), ('sinusoid',Parameters()), ('chirp',Parameters()), ('ramp',Parameters()), ('saturate',Parameters()), ('rectifier',Parameters()), ('shortPulse',Parameters()), ('recovery',Parameters())])
+protParams = OrderedDict([('custom',Parameters()), ('step',Parameters()), ('sinusoid',Parameters()), ('chirp',Parameters()), ('ramp',Parameters()), ('delta',Parameters()), ('rectifier',Parameters()), ('shortPulse',Parameters()), ('recovery',Parameters())])
 
 protList = list(protParams) # List of keys #This could be removed
 
@@ -447,9 +447,9 @@ protParamNotes['chirp']['f0'] = 'Starting frequency'
 protParamNotes['chirp']['fT'] = 'Ending frequency'
 protParamNotes['ramp']['phis'] = 'List of ending flux values'
 protParamNotes['ramp']['phi_ton'] = 'Starting flux value'
-protParamNotes['saturate']['cycles'] = ''
-protParamNotes['saturate']['onD'] = 'On-phase duration'
-protParamNotes['saturate']['totT'] = 'Total simulation duration'
+protParamNotes['delta']['cycles'] = ''
+protParamNotes['delta']['onD'] = 'On-phase duration'
+protParamNotes['delta']['totT'] = 'Total simulation duration'
 protParamNotes['shortPulse']['cycles'] = ''
 protParamNotes['shortPulse']['pDs'] = 'List of cycle on-phase durations'
 protParamNotes['shortPulse']['totT'] = 'Total simulation duration'
@@ -458,10 +458,10 @@ protParamNotes['recovery']['onD'] = 'Cycle on-phase duration'
 protParamNotes['recovery']['IPIs'] = 'List of cycle off-phase durations'
 protParamNotes['recovery']['totT'] = 'Total simulation duration'
     
-#squarePulses = ['custom', 'saturate', 'step', 'rectifier', 'shortPulse', 'recovery'] #{'custom': True, 'saturate': True, 'step': True, 'rectifier': True, 'shortPulse': True, 'recovery': True}
+#squarePulses = ['custom', 'delta', 'step', 'rectifier', 'shortPulse', 'recovery'] #{'custom': True, 'delta': True, 'step': True, 'rectifier': True, 'shortPulse': True, 'recovery': True}
 #arbitraryPulses = ['custom', 'sinusoid', 'chirp', 'ramp'] #{'custom': True, 'sinusoid': True, 'chirp': True, 'ramp':True} # Move custom here
 
-smallSignalAnalysis = ['saturate', 'step', 'sinusoid'] #{'sinusoid': True, 'step': True, 'saturate': True} 
+smallSignalAnalysis = ['delta', 'step', 'sinusoid'] #{'sinusoid': True, 'step': True, 'delta': True} 
 
                           
 protParams['custom'].add_many(('phis',[1e15,1e16],True,None,None,None), #'photons/s/mm^2'
@@ -504,7 +504,7 @@ protParams['ramp'].add_many(('phis',[1e12,1e13,1e14,1e15,1e16,1e17,1e18],True,No
                             ('cycles',[[250.,25.]],True,None,None,None)) # 'ms'#,
 
                             
-protParams['saturate'].add_many(('phis',[1e20],True,None,None,None), # 'photons/s/mm^2'
+protParams['delta'].add_many(('phis',[1e20],True,None,None,None), # 'photons/s/mm^2'
                             ('Vs',[-70],True,None,None,None), # 'mV'
                             ('delD', 5, True, 0, 1e9, None), # 'ms'
                             ('onD', 1e-3, True, 0, 1e9, None), # 'ms'
@@ -531,20 +531,16 @@ protParams['recovery'].add_many(('phis',[1e14],True,None,None,None), # 'photons/
                             ('IPIs',[500,1000,1500,2500,5000,7500,10000],True,None,None,None), # 'ms' 
                             ('totT', 12000, True, 0, None, None)) # 'ms'
 
-# Automatically link fields?
-#protocolParams = OrderedDict([('custom',ProtParamsCustom), ('step',ProtParamsStep), ('sinusoid',ProtParamsSinusoid), ('chirp',ProtParamsChirp), ('ramp',ProtParamsRamp), ('saturate',ProtParamsSaturate), ('rectifier',ProtParamsInwardRect), ('shortPulse',ProtParamsVaryPL), ('recovery',ProtParamsVaryIPI)])
-#protocolParams = {'custom':ProtParamsCustom, 'step':ProtParamsStep, 'sinusoid':ProtParamsSinusoid, 'chirp':ProtParamsChirp, 'ramp':ProtParamsRamp, 'saturate':ProtParamsSaturate, 'rectifier':ProtParamsInwardRect, 'shortPulse':ProtParamsVaryPL, 'recovery':ProtParamsVaryIPI}
 
 # Lists and Dicts
-#protDict={'custom':'custom', 'step':'step', 'sinusoid':'sinusoid', 'chirp':'chirp', 'ramp':'ramp', 'saturate':'saturate', 'rectifier':'rectifier', 'shortPulse':'shortPulse', 'recovery':'recovery'}
-#OrderedDict([('custom':'custom'), ('step':'step'), ('sinusoid':'sinusoid'), ('ramp':'ramp'), ('saturate':'saturate'), ('rectifier':'rectifier'), ('shortPulse':'shortPulse'), ('recovery':'recovery')])
-#protIndDict={'custom':0, 'step':1, 'sinusoid':2, 'chirp':3, 'ramp':4, 'saturate':5, 'rectifier':6, 'shortPulse':7, 'recovery':8} # This must match tabs ordering
+#protDict={'custom':'custom', 'step':'step', 'sinusoid':'sinusoid', 'chirp':'chirp', 'ramp':'ramp', 'delta':'delta', 'rectifier':'rectifier', 'shortPulse':'shortPulse', 'recovery':'recovery'}
+#OrderedDict([('custom':'custom'), ('step':'step'), ('sinusoid':'sinusoid'), ('ramp':'ramp'), ('delta':'delta'), ('rectifier':'rectifier'), ('shortPulse':'shortPulse'), ('recovery':'recovery')])
+#protIndDict={'custom':0, 'step':1, 'sinusoid':2, 'chirp':3, 'ramp':4, 'delta':5, 'rectifier':6, 'shortPulse':7, 'recovery':8} # This must match tabs ordering
 #{key:i for key in protInDict, i++}
 
-#protList = ['custom', 'step', 'sinusoid', 'chirp', 'ramp', 'saturate', 'rectifier', 'shortPulse', 'recovery']
+#protList = ['custom', 'step', 'sinusoid', 'chirp', 'ramp', 'delta', 'rectifier', 'shortPulse', 'recovery']
 
-
-
+### Move somewhere else e.g. base.py
 class PyRhOobject(object):
     """Common base class for all PyRhO objects"""
     

@@ -1155,7 +1155,7 @@ class ProtocolData():
         
         
     def getIpmax(self, vInd=None): 
-        """Find the maximum peak current for the whole data set. This is useful when the 'saturate' protocol is absent"""
+        """Find the maximum peak current for the whole data set. This is useful when the 'delta' protocol is absent"""
         self.Ipmax_ = 0
         if vInd is None:
             for run in range(self.nRuns):
@@ -1249,7 +1249,7 @@ class ProtocolData():
         # IssVals = [[[None for v in range(len(Vs))] for p in range(len(phis))] for r in range(nRuns)]
         # PulseInds = [[[None for v in range(len(Vs))] for p in range(len(phis))] for r in range(nRuns)]
 
-        
+'''
 from collections import defaultdict        
         
 class DataSet():
@@ -1270,7 +1270,7 @@ class DataSet():
     def addData(self, photoData, protocol):
         self.data[protocol].append(photoData)
         self.phis.append(photoData.phi)
-
+'''
 
 
 

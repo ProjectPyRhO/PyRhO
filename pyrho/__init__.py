@@ -106,7 +106,7 @@ def runAll():
             
             for prot in protocols: #protocol, init in protParams.items():
                 ### Select simulation protocol
-                #protocols = ['custom', 'saturate', 'rectifier', 'shortPulse', 'recovery']
+                #protocols = ['custom', 'delta', 'rectifier', 'shortPulse', 'recovery']
                 #protocol = protocols[2] #'recovery'#'shortPulse' # Set this interactively with radio buttons?
                 
                 print("\nRunning Protocol '{}' on the {}-state model...".format(prot, model))

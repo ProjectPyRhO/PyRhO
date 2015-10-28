@@ -16,7 +16,7 @@ import os
 #import time
 
 ### Select simulation protocol
-#protocols = ['custom', 'saturate', 'rectifier', 'shortPulse', 'recovery']
+#protocols = ['custom', 'delta', 'rectifier', 'shortPulse', 'recovery']
 #protocol = protocols[4] #'recovery'#'shortPulse' # Set this interactively with radio buttons?
 
 
@@ -405,7 +405,7 @@ class Protocol(PyRhOobject): #object
             # plotLight(protPulses, self.axI)
             # for run in range(self.nRuns):
                 # for phiInd in range(self.nPhis):
-                    # self.plotStimulus(self.phi_ts[run][phiInd], protPulses, self.totT, self.axS, None) #if protocol == 'saturate':
+                    # self.plotStimulus(self.phi_ts[run][phiInd], protPulses, self.totT, self.axS, None) #if protocol == 'delta':
         # else: # Create a separate stimulus figure
             # for run in range(self.nRuns):
                 # for phiInd in range(self.nPhis):
@@ -1211,10 +1211,10 @@ class protRamp(Protocol):
         return phi_t
     """
         
-class protSaturate(Protocol): 
+class protDelta(Protocol): 
     # One very short, saturation intensity pulse e.g. 10 ns @ 100 mW*mm^-2 for wild type ChR
     # Used to calculate gbar, assuming that O(1)-->1 as onD-->0 and phi-->inf
-    protocol = 'saturate'
+    protocol = 'delta'
     squarePulse = True
     nRuns = 1
     
@@ -1802,16 +1802,16 @@ class protRecovery(Protocol):
         #plt.legend(loc='upper right')
             
 from collections import OrderedDict
-protocols = OrderedDict([('step', protStep), ('saturate', protSaturate), ('sinusoid', protSinusoid), ('chirp', protChirp), ('ramp', protRamp), ('recovery', protRecovery), ('rectifier', protRectifier), ('shortPulse', protShortPulse), ('custom', protCustom)])
-#protocols = {'custom': protCustom, 'step': protStep, 'saturate': protSaturate, 'rectifier': protRectifier, 'shortPulse': protShortPulse, 'recovery': protRecovery, 'sinusoid': protSinusoid, 'chirp': protChirp, 'ramp': protRamp}
+protocols = OrderedDict([('step', protStep), ('delta', protDelta), ('sinusoid', protSinusoid), ('chirp', protChirp), ('ramp', protRamp), ('recovery', protRecovery), ('rectifier', protRectifier), ('shortPulse', protShortPulse), ('custom', protCustom)])
+#protocols = {'custom': protCustom, 'step': protStep, 'delta': protDelta, 'rectifier': protRectifier, 'shortPulse': protShortPulse, 'recovery': protRecovery, 'sinusoid': protSinusoid, 'chirp': protChirp, 'ramp': protRamp}
 # E.g. 
 # protocols['shortPulse']([1e12], [-70], 25, [1,2,3,5,8,10,20], 100, 0.1)
 
 #squarePulses = [protocol for protocol in protocols if protocol.squarePulse]
 #arbitraryPulses = [protocol for protocol in protocols if not protocol.squarePulse]
-#squarePulses = {'custom': True, 'saturate': True, 'step': True, 'rectifier': True, 'shortPulse': True, 'recovery': True}
+#squarePulses = {'custom': True, 'delta': True, 'step': True, 'rectifier': True, 'shortPulse': True, 'recovery': True}
 #arbitraryPulses = {'custom': True, 'sinusoid': True, 'chirp': True, 'ramp':True} # Move custom here
-#smallSignalAnalysis = {'sinusoid': True, 'step': True, 'saturate': True} 
+#smallSignalAnalysis = {'sinusoid': True, 'step': True, 'delta': True} 
 
 
 
@@ -1824,7 +1824,7 @@ def selectProtocol(protocol, params=None, saveData=True):
             return protocols[protocol](params=protParams[protocol], saveData=saveData)
     else:
         raise NotImplementedError(protocol)
-        #print("Error in selecting protocol - please choose from 'custom', 'saturate', 'rectifier', 'shortPulse' or 'recovery'")
+        #print("Error in selecting protocol - please choose from 'custom', 'delta', 'rectifier', 'shortPulse' or 'recovery'")
         
     ### Deprecated!!!
     # if protocol == 'custom':
@@ -1837,8 +1837,8 @@ def selectProtocol(protocol, params=None, saveData=True):
         # return protChirp()
     # elif protocol == 'ramp':
         # return protRamp()
-    # elif protocol == 'saturate':
-        # return protSaturate()
+    # elif protocol == 'delta':
+        # return protDelta()
     # elif protocol == 'rectifier':
         # return protInwardRect()
     # elif protocol == 'shortPulse':
@@ -1847,7 +1847,7 @@ def selectProtocol(protocol, params=None, saveData=True):
         # return protVaryIPI()
     # else:
         # raise NotImplementedError(protocol)
-        #print("Error in selecting protocol - please choose from 'custom', 'saturate', 'rectifier', 'shortPulse' or 'recovery'")
+        #print("Error in selecting protocol - please choose from 'custom', 'delta', 'rectifier', 'shortPulse' or 'recovery'")
         
 ### Protocols to be included in the next version:
 ### - Temperature (Q10)

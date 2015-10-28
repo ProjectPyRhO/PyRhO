@@ -202,18 +202,18 @@ def fit3statesIndiv(I,t,onInd,offInd,phi,V,Gr0,gmax,Ipmax,params=None,method=def
     
 
     
-    ### 1. Load data for 'saturate' protocol to find Ipmax in order to calculate gmax
+    ### 1. Load data for 'delta' protocol to find Ipmax in order to calculate gmax
     ### gmax = Ipmax/([O_p]*(V-E)) = Ipmax/(V-E) # with the assumption [O_p] = 1
     ### This assumption is an underestimate for 4 & 6 state models: [O_p] =~ 0.71 (depending on rates)
-    # if hasattr(dataset['saturate'], 'gmax'):
-        # gmax = dataset['saturate'].gmax
+    # if hasattr(dataset['delta'], 'gmax'):
+        # gmax = dataset['delta'].gmax
     # else: # findPeaks
-        # if (dataset['saturate'].V < E): # Find Minima
-            # Ipmax = min(dataset['saturate'].I_phi)
+        # if (dataset['delta'].V < E): # Find Minima
+            # Ipmax = min(dataset['delta'].I_phi)
         # else:       # Find Maxima
-            # Ipmax = max(dataset['saturate'].I_phi)
-        # gmax = Ipmax/(dataset['saturate'].V-E)
-        # dataset['saturate'].gmax = gmax
+            # Ipmax = max(dataset['delta'].I_phi)
+        # gmax = Ipmax/(dataset['delta'].V-E)
+        # dataset['delta'].gmax = gmax
     
     p3s.add('g', value=gmax, vary=False) # derived['gmax'] = True
     # Change the model to be consistent so that g = gbar * A
@@ -647,7 +647,7 @@ def fit4statesIndiv(I,t,onInd,offInd,phi,V,Gr0,gmax,params=None,method=defMethod
 
     ### phi0, gamma and E...
     
-    ### 1. Load data for 'saturate' protocol to find Ipeak in order to calculate gmax : g # Make model consistent so that g = gbar * A
+    ### 1. Load data for 'delta' protocol to find Ipeak in order to calculate gmax : g # Make model consistent so that g = gbar * A
     p4s.add('g', value=gmax, vary=False) # derived['gmax'] = True
             
     ### 2. Fit exponential to peak recovery plots : Gr0 # Is this a valid assumption for the 4-state model?
@@ -894,7 +894,7 @@ def fit4statesIndiv(I,t,onInd,offInd,phi,V,Gr0,gmax,params=None,method=defMethod
      #for protocol in []: # List of protocols for characterisation
         # Run protocols...
     #from .protocols import *
-    #smallSignal = { 'saturate': protSaturate, 'step': protStep, 'sinusoid': protSinusoid }
+    #smallSignal = { 'delta': protDelta, 'step': protStep, 'sinusoid': protSinusoid }
 #    for key in smallSignalAnalysis: ### for key, value in smallSignal.iteritems():
 #        P = smallSignalAnalysis[key]()
 #        P.runProtocol(RhO)
@@ -993,16 +993,16 @@ def fitCurve(dataSet, nStates=3, params=None):
     print('Gr0 = {}'.format(Gr0))
     
     ### Ipmax        
-    if 'saturate' in dataSet:
-        if hasattr(dataSet['saturate'], 'Ipmax'): 
-            Ipmax = dataSet['saturate'].Ipmax
-        else: # Find maximum peak for saturate protocol
+    if 'delta' in dataSet:
+        if hasattr(dataSet['delta'], 'Ipmax'): 
+            Ipmax = dataSet['delta'].Ipmax
+        else: # Find maximum peak for delta protocol
             # peakInd = findPeaks(I_phi,startInd=0,extOrder=5) 
-            if (dataSet['saturate'].V < E): # Find Minima
-                Ipmax = min(dataSet['saturate'].I)
+            if (dataSet['delta'].V < E): # Find Minima
+                Ipmax = min(dataSet['delta'].I)
             else:       # Find Maxima
-                Ipmax = max(dataSet['saturate'].I)
-            dataSet['saturate'].Ipmax = Ipmax
+                Ipmax = max(dataSet['delta'].I)
+            dataSet['delta'].Ipmax = Ipmax
     else: #hasattr(dataSet['custom'], 'Ipeak'): # Use peak of sample photocurrent as an estimate
         Ipmax, inds = setPC.getIpmax()
         Vsat = setPC[inds[0]][inds[1]][inds[2]].V
@@ -1013,16 +1013,16 @@ def fitCurve(dataSet, nStates=3, params=None):
     ### g        
     if 'g' in params: ###Ipeak
         gmax = params['g'].value        
-    elif 'saturate' in dataSet:
-        if hasattr(dataSet['saturate'], 'gbar_est'):
-            gmax = dataSet['saturate'].gbar_est
-        Vsat = dataSet['saturate'].V
-    else: ### 1. Load data for 'saturate' protocol to find Ipmax in order to calculate gmax
+    elif 'delta' in dataSet:
+        if hasattr(dataSet['delta'], 'gbar_est'):
+            gmax = dataSet['delta'].gbar_est
+        Vsat = dataSet['delta'].V
+    else: ### 1. Load data for 'delta' protocol to find Ipmax in order to calculate gmax
         ### gmax = Ipmax/([O_p]*(V-E)) = Ipmax/(V-E) # with the assumption [O_p] = 1
         ### This assumption is an underestimate for 4 & 6 state models: [O_p] =~ 0.71 (depending on rates)
-        assert(Vsat != E) #if dataSet['saturate'].V != E:
+        assert(Vsat != E) #if dataSet['delta'].V != E:
         gmax = Ipmax/(Vsat-E) # Assuming [O_p] = 1
-        dataSet['saturate'].gbar_est = gmax
+        dataSet['delta'].gbar_est = gmax
         ### calcG()
     print('g = {}'.format(gmax))
         
@@ -2345,8 +2345,8 @@ def fit6states(fluxSet, quickSet, run, vInd, params, postOpt=True, method=defMet
         # Go2 = solveGo(tlag=popt[0], Gd=Gd2, Go0=1000, tol=1e-9)
         # print('Go2 = ', Go2)
         
-    elif quickSet.nRuns == 1: #'saturate' in dataSet:
-        #PD = dataSet['saturate']
+    elif quickSet.nRuns == 1: #'delta' in dataSet:
+        #PD = dataSet['delta']
         #PCs = [PD.trials[p][0][0] for p in range(PD.nRuns)]
         PC = quickSet.trials[0][0][0]
         tlag = PC.lag_ # := lags_[0] ############################### Add to Photocurrent...
@@ -3355,17 +3355,17 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, relaxFact=2, method
     
     Ipmax, (rmax, pmax, vmax) = setPC.getIpmax(vIndm70)
     Vpmax = setPC.trials[rmax][pmax][vmax].V
-    if 'saturate' in dataSet:
-        if isinstance(dataSet['saturate'], ProtocolData):
-            Ipsat, (rsat, psat, vsat) = dataSet['saturate'].getIpmax()
+    if 'delta' in dataSet:
+        if isinstance(dataSet['delta'], ProtocolData):
+            Ipsat, (rsat, psat, vsat) = dataSet['delta'].getIpmax()
             # try: 
-                # vIndSat = dataSet['saturate'].Vs.index(-70)
+                # vIndSat = dataSet['delta'].Vs.index(-70)
             # except:
-                # vIndSat = np.searchsorted(dataSet['saturate'].Vs, -70)
-            Vsat = dataSet['saturate'].trials[rsat][psat][vsat].V
-        elif isinstance(dataSet['saturate'], PhotoCurrent):
-            Ipsat = dataSet['saturate'].peak_
-            Vsat = dataSet['saturate'].V
+                # vIndSat = np.searchsorted(dataSet['delta'].Vs, -70)
+            Vsat = dataSet['delta'].trials[rsat][psat][vsat].V
+        elif isinstance(dataSet['delta'], PhotoCurrent):
+            Ipsat = dataSet['delta'].peak_
+            Vsat = dataSet['delta'].V
         
         if abs(Ipsat) > abs(Ipmax) and np.isclose(Vsat, -70): ##### Reconsider safeguard for choosing V=-70
             Ipmax = Ipsat
@@ -3452,16 +3452,16 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, relaxFact=2, method
     print('Gr0 = {} ms**-1'.format(params['Gr0'].value))
     
     
-    # if 'saturate' in dataSet:
-        # if hasattr(dataSet['saturate'], 'Ipmax'): 
-            # Ipmax = dataSet['saturate'].Ipmax
-        # else: # Find maximum peak for saturate protocol
+    # if 'delta' in dataSet:
+        # if hasattr(dataSet['delta'], 'Ipmax'): 
+            # Ipmax = dataSet['delta'].Ipmax
+        # else: # Find maximum peak for delta protocol
             #peakInd = findPeaks(I_phi,startInd=0,extOrder=5) 
-            # if (dataSet['saturate'].V < E): # Find Minima
-                # Ipmax = min(dataSet['saturate'].I)
+            # if (dataSet['delta'].V < E): # Find Minima
+                # Ipmax = min(dataSet['delta'].I)
             # else:       # Find Maxima
-                # Ipmax = max(dataSet['saturate'].I)
-            # dataSet['saturate'].Ipmax = Ipmax
+                # Ipmax = max(dataSet['delta'].I)
+            # dataSet['delta'].Ipmax = Ipmax
     # else: #hasattr(dataSet['custom'], 'Ipeak'): # Use peak of sample photocurrent as an estimate
         # Ipmax, inds = setPC.getIpmax()
         # Vsat = setPC.trials[inds[0]][inds[1]][inds[2]].V
@@ -3471,17 +3471,17 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, relaxFact=2, method
     ### Maximum conductance: g        
     # if 'g' in params: ###Ipeak
         # gmax = params['g'].value        
-    # elif 'saturate' in dataSet:
-        # if hasattr(dataSet['saturate'], 'gbar_est'):
-            # gmax = dataSet['saturate'].gbar_est
-        # Vsat = dataSet['saturate'].V
+    # elif 'delta' in dataSet:
+        # if hasattr(dataSet['delta'], 'gbar_est'):
+            # gmax = dataSet['delta'].gbar_est
+        # Vsat = dataSet['delta'].V
         
-    # else: ### 1. Load data for 'saturate' protocol to find Ipmax in order to calculate gmax
+    # else: ### 1. Load data for 'delta' protocol to find Ipmax in order to calculate gmax
         ### gmax = Ipmax/([O_p]*(V-E)) = Ipmax/(V-E) # with the assumption [O_p] = 1
         ### This assumption is an underestimate for 4 & 6 state models: [O_p] =~ 0.71 (depending on rates)
-        # assert(Vsat != E) #if dataSet['saturate'].V != E:
+        # assert(Vsat != E) #if dataSet['delta'].V != E:
         # gmax = Ipmax/(Vsat-E) # Assuming [O_p] = 1
-        # dataSet['saturate'].gbar_est = gmax
+        # dataSet['delta'].gbar_est = gmax
         ### calcG()
     # print('g = {}'.format(gmax))
         
@@ -3554,9 +3554,9 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, relaxFact=2, method
 
     
     if 'shortPulse' in dataSet:
-        quickSet = dataSet['shortPulse'] # Override saturate
-    elif 'saturate' in dataSet:
-        quickSet = dataSet['saturate']
+        quickSet = dataSet['shortPulse'] # Override delta
+    elif 'delta' in dataSet:
+        quickSet = dataSet['delta']
     else:
         q = 0
         onD = dataSet[fluxKey].trials[q][0][0].onDs[0]
