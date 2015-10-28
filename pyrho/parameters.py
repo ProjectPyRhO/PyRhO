@@ -390,11 +390,11 @@ simParams['Brian'].add_many(('dt', 0.1, True, None, None, None), # 'ms'
 ### - pH (intracellular and extracellular)
 ### - Wavelength (lambda)
 
-protParams = OrderedDict([('custom',Parameters()), ('step',Parameters()), ('sinusoid',Parameters()), ('chirp',Parameters()), ('ramp',Parameters()), ('delta',Parameters()), ('rectifier',Parameters()), ('shortPulse',Parameters()), ('recovery',Parameters())])
+protParams = OrderedDict([('step',Parameters()), ('delta',Parameters()), ('sinusoid',Parameters()), ('chirp',Parameters()), ('ramp',Parameters()), ('rectifier',Parameters()), ('shortPulse',Parameters()), ('recovery',Parameters()), ('custom',Parameters())])
 
 protList = list(protParams) # List of keys #This could be removed
 
-# Change these to include $ $
+# Change these to include $ $ ?
 protParamLabels = OrderedDict([ ('phis', '\mathbf{\phi}'), 
                                 ('Vs', '\mathbf{\mathrm{V}}'), 
                                 ('delD', '\Delta t_{delay}'), 
@@ -461,18 +461,18 @@ protParamNotes['recovery']['totT'] = 'Total simulation duration'
 #squarePulses = ['custom', 'delta', 'step', 'rectifier', 'shortPulse', 'recovery'] #{'custom': True, 'delta': True, 'step': True, 'rectifier': True, 'shortPulse': True, 'recovery': True}
 #arbitraryPulses = ['custom', 'sinusoid', 'chirp', 'ramp'] #{'custom': True, 'sinusoid': True, 'chirp': True, 'ramp':True} # Move custom here
 
-smallSignalAnalysis = ['delta', 'step', 'sinusoid'] #{'sinusoid': True, 'step': True, 'delta': True} 
+smallSignalAnalysis = ['delta', 'step', 'sinusoid'] 
 
-                          
-protParams['custom'].add_many(('phis',[1e15,1e16],True,None,None,None), #'photons/s/mm^2'
+
+protParams['custom'].add_many(('phis',[1e16,1e17],True,None,None,None), #'photons/s/mm^2'
                             ('Vs',[-70,-20,10],True,None,None,None), #'mV'
                             ('delD', 25, True, 0, 1e9, None), #'ms'
                             ('cycles',[[150.,50.]],True,None,None,None), #'ms'#,
                             ('phi_ft', None, None, None, None))
 
 
-protParams['step'].add_many(('phis',[1e15,1e16,1e17],True,None,None,None), #'photons/s/mm^2'
-                            ('Vs',[-70,-40,-10,10,40],True,None,None,None), #'mV'
+protParams['step'].add_many(('phis',[1e16,1e17],True,None,None,None), #'photons/s/mm^2'
+                            ('Vs',[-70,-40,-10,10,40,70],True,None,None,None), #'mV'
                             ('delD', 25, True, 0, 1e9, None), #'ms'
                             ('cycles',[[150.,100.]],True,None,None,None))#, #'ms'#,
 
@@ -481,7 +481,7 @@ protParams['sinusoid'].add_many(('phis',[1e9],True,None,None,None), #'photons/s/
                             ('phi0',[0],True,None,None,None), #'photons/s/mm^2'
                             ('startOn',True,False,False,True,None),
                             ('Vs',[-70],True,None,None,None), #'mV'
-                            ('fs',[0.1,0.5,1,5,10,50,100,500,1000],True,None,None,None), #'Hz'
+                            ('fs',[0.1,0.5,1,5,10,50,100],True,None,None,None), #'Hz' #, 500, 1000
                             ('delD', 25, True, 0, 1e9, None), #'ms'
                             ('cycles',[[10000.,50.]],True,None,None,None)) #'ms'
 
@@ -524,7 +524,7 @@ protParams['shortPulse'].add_many(('phis',[1.5e15],True,None,None,None), # 'phot
                             ('totT', 100.,True,0,None,None)) # 'ms'
 
                             
-protParams['recovery'].add_many(('phis',[1e14],True,None,None,None), # 'photons/s/mm^2'
+protParams['recovery'].add_many(('phis',[1e17],True,None,None,None), # 'photons/s/mm^2'
                             ('Vs',[-70],True,None,None,None), # 'mV'
                             ('delD',100,True,0,None,None), # 'ms'
                             ('onD',100,True,0,None,None), # 'ms'
