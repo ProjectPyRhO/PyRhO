@@ -1,4 +1,3 @@
-
 TITLE Nikolic 4-state rhodopsin model
 
 NEURON {

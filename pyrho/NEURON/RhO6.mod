@@ -1,12 +1,10 @@
-: ChR 6-state model 2012-06-11
-
 TITLE Nikolic 6-state rhodopsin model
 
 NEURON {
     : SUFFIX RhO6 : For density mechanisms only
     POINT_PROCESS RhO6
     :ELECTRODE_CURRENT i :IRhO
-    NONSPECIFIC_CURRENT i :IRhO
+    NONSPECIFIC_CURRENT i :IRhO     : This could be changed to update a specific ion
     RANGE E, gam, v0, v1, g, gph, gv, i :IRhO :iChR   : , gbar
     :RANGE e1, e3, b10, a2dark, a2light, b2dark, b2light, a30, a40
     RANGE k1, Go1, Gf0, kf, Gd2, Gr0, Gd1, Gb0, kb, Go2, k2, p, q
@@ -27,7 +25,7 @@ UNITS {
 PARAMETER { : Initialise parameters to defaults. These may be changed through hoc files
 
 : Illumination
-    phiOn   = 1e12  :(photons/s mm2) :(mW/mm2): irradiance            _______
+    phiOn   = 1e12  :(photons/s mm2):(mW/mm2): irradiance            _______
     delD    = 25    (ms) <0, 1e9>   : delay before ON phase         |  ON   |  OFF
     onD     = 100   (ms) <0, 1e9>   : duration of ON phase  <-delD->|<-onD->|<-offD->
     offD    = 50    (ms) <0, 1e9>   : duration of OFF phase ________|       |________
