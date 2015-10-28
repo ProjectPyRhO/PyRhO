@@ -1403,7 +1403,8 @@ class simBrian(Simulator):
     def prepare(self, Prot):
         """Function to compare simulator's timestep to the timestep required by the protocol"""
         Prot.prepare()
-        self.checkDt()
+        dt = Prot.getShortestPeriod()
+        self.checkDt(dt)
         self.br.defaultclock.dt = self.dt*ms
         self.rasters = Prot.genContainer()
         return # self.dt
