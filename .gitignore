@@ -1,8 +1,12 @@
-# Compiled python modules.
-*.pyc
+# Backup files
+*.~
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
 
 # Setuptools distribution folder.
-/dist/
+#/dist/
 
 # Python egg metadata, regenerated from source files by setuptools.
 /*.egg-info
@@ -10,3 +14,41 @@
 # OS metadata
 */Thumbs.db
 .DS_Store
+
+
+
+# C extensions
+*.so
+
+# Distribution / packaging
+bin/
+build/
+develop-eggs/
+dist/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+.tox/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+
+# Translations
+*.mo
+
+# Sphinx documentation
+docs/_build/
