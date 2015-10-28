@@ -569,10 +569,10 @@ def loadGUI():
         RhO.setParams(userModelParams)
         
         ### Get Simulator Parameters
-        userSimParams = Parameters()
-        sInd = simList.index(simulator)
-        userSimParams = getGUIparams(simParams[simulator], sim_pValArr[sInd][:])
-        Sim = simulators[simulator](RhO, userSimParams)
+        # userSimParams = Parameters()
+        # sInd = simList.index(simulator)
+        # userSimParams = getGUIparams(simParams[simulator], sim_pValArr[sInd][:])
+        # Sim = simulators[simulator](RhO, userSimParams)
         
         ### Get Protocol Parameters
         userProtParams = Parameters()
@@ -580,9 +580,19 @@ def loadGUI():
         userProtParams = getGUIparams(protParams[protocol], prot_pValArr[pInd][:])
         Prot = protocols[protocol](userProtParams)
         
-        Prot.run(Sim, RhO, verbose)
+        ### Get Simulator Parameters
+        userSimParams = Parameters()
+        sInd = simList.index(simulator)
+        userSimParams = getGUIparams(simParams[simulator], sim_pValArr[sInd][:])
+        Sim = simulators[simulator](Prot, RhO, userSimParams)
+        
+        # Prot.run(Sim, RhO, verbose)
+        # if verbose > 0: #saveData:
+            # Prot.plot()
+        
+        Sim.run(verbose)
         if verbose > 0: #saveData:
-            Prot.plot()
+            Sim.plot()
         
         # print("\nFinished!")
         # print('================================================================================\n\n')
@@ -636,8 +646,8 @@ def loadGUI():
     ##### Run bar #####
     
     ### Protocol Dropdown
-    protDropdown = widgets.Dropdown(options=protList,value='saturate')###########,value='saturate') #protDict
-    protDropdown.on_trait_change(protDropdownChange,'value')
+    protDropdown = widgets.Dropdown(options=protList, value='step')###########,value='saturate') #protDict
+    protDropdown.on_trait_change(protDropdownChange, 'value')
     
     ### Run Button
     runButton = widgets.Button(description="Run!")
