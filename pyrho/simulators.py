@@ -1711,6 +1711,8 @@ class simBrian(Simulator):
         ### delD and stimD are only used for finding pulse indexes - could be removed along with separate delay phase?!!!
         ### Combine this with the original runTrial
         
+        raise NotImplementedError('Error: Light as a continuous function of time has not been implemented for Brian yet!')
+        
         nPulses = cycles.shape[0]
         assert(len(phi_ts) == nPulses)
         
