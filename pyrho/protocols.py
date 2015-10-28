@@ -794,6 +794,8 @@ class protSinusoid(Protocol):
         self.phi_ts = self.genPulseSet()
         self.runLabels = ["$f={}\mathrm{{Hz}}$ ".format(round_sig(f,3)) for f in self.fs]
         
+    def getShortestPeriod(self):
+        return 1000/self.sr
         
     def genPulse(self, run, phi, pulse):
         pStart, pEnd = pulse
