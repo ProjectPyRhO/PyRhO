@@ -97,6 +97,24 @@ unitLabels = OrderedDict([('g','pS'), ('gam',''), ('phim','ph./mm^2/s'), ('k','m
                             ('k1','ms^-1'), ('k2','ms^-1'), ('Gf0','ms^-1'), ('Gb0','ms^-1'), ('kf','ms^-1'), ('kb','ms^-1'), ('q',''), 
                             ('Gd1','ms^-1'), ('Gd2','ms^-1'), ('Go1','ms^-1'), ('Go2','ms^-1'), ('E','mV'), ('v0','mV'), ('v1','mV')])
 
+"""
+Params = OrderedDict([('model', OrderedDict()), ('protocol', OrderedDict()), ('simulator', OrderedDict())])
+# p, q: Hill coefficients
+# phim: Hill constant
+ 
+class PyRhOparameter(PyRhOobject):
+    def __init__(self, name, value, units, unitsLabel, latex, description):
+        self.name = name
+        self.value = value
+        self.units = units
+        self.unitsLabel = unitsLabel
+        self.latex = latex
+        self.description = description
+        self.constant = True
+        
+Params['g0'] = PyRhOparameter('g0', 2.5e4, psiemens, 'pS', 'g_0', 'Biological scaling factor for rhodopsin conductance')
+"""
+
 #'$\mathrm{[ph. / mm^{2} / s]}$'
 #'ph./mm^2/s'
                             
@@ -383,7 +401,7 @@ protParamLabels = OrderedDict([ ('phis', '\mathbf{\phi}'),
                                 ('onD', '\Delta t_{on}'), 
                                 ('totT', 'T_{total}'), 
                                 ('cycles', 'cycles'),
-                                ('A0', 'A_0'), 
+                                ('phi0', '\phi_0'), 
                                 ('fs', '\mathbf{f}'), 
                                 ('f0', 'f_0'), 
                                 ('fT', 'f_T'), 
@@ -391,11 +409,12 @@ protParamLabels = OrderedDict([ ('phis', '\mathbf{\phi}'),
                                 ('startOn', '\phi_{t=0}>0'), 
                                 ('phi_ton', '\phi_{t=0}'), 
                                 ('pDs', '\mathbf{\Delta t_{on}}'), 
-                                ('IPIs', '\mathbf{\Delta t_{off}}') ])
+                                ('IPIs', '\mathbf{\Delta t_{off}}'), 
+                                ('phi_ft', '\phi(t)') ])
 
 protUnitLabels = defaultdict(lambda: '')
 protUnitLabels['phis'] = 'ph./mm^2/s'
-protUnitLabels['A0'] = 'ph./mm^2/s'
+protUnitLabels['phi0'] = 'ph./mm^2/s'
 protUnitLabels['phi_ton'] = 'ph./mm^2/s' ### Revise!!!
 protUnitLabels['Vs'] = 'mV'
 protUnitLabels['delD'] = 'ms'
@@ -417,12 +436,13 @@ for prot in protList:
     
 
 #Exceptions
+protParamNotes['custom']['phi_ft'] = 'Pulse generation function'
 protParamNotes['sinusoid']['startOn'] = 'Start at maximum of flux modulation (else minimum)'
-protParamNotes['sinusoid']['A0'] = 'Constant offset for modulation'
+protParamNotes['sinusoid']['phi0'] = 'Constant offset for modulation'
 protParamNotes['sinusoid']['fs'] = 'List of modulation frequencies'
 protParamNotes['chirp']['linear'] = 'Use a linear frequency sweep (else exponential)'
 protParamNotes['chirp']['startOn'] = 'Start at maximum of flux modulation (else minimum)'
-protParamNotes['chirp']['A0'] = 'Constant offset for modulation'
+protParamNotes['chirp']['phi0'] = 'Constant offset for modulation'
 protParamNotes['chirp']['f0'] = 'Starting frequency'
 protParamNotes['chirp']['fT'] = 'Ending frequency'
 protParamNotes['ramp']['phis'] = 'List of ending flux values'
@@ -440,156 +460,76 @@ protParamNotes['recovery']['totT'] = 'Total simulation duration'
     
 #squarePulses = ['custom', 'saturate', 'step', 'rectifier', 'shortPulse', 'recovery'] #{'custom': True, 'saturate': True, 'step': True, 'rectifier': True, 'shortPulse': True, 'recovery': True}
 #arbitraryPulses = ['custom', 'sinusoid', 'chirp', 'ramp'] #{'custom': True, 'sinusoid': True, 'chirp': True, 'ramp':True} # Move custom here
+
 smallSignalAnalysis = ['saturate', 'step', 'sinusoid'] #{'sinusoid': True, 'step': True, 'saturate': True} 
 
-#ProtParamsCustom = Parameters()
-#phis=[1e14,1e15,1e16,1e17], Vs=[-70,-40,-10,10,40], pulses=[[10.,160.]], totT=200., nRuns=1, dt=0.1
-# protParams['custom'].add_many(('phis',[1e14,1e15,1e16,1e17],True,None,None,'photons/s/mm^2'),
-                          # ('Vs',[-70,-40,-10,10,40],True,None,None,'mV'),
-                          # ('pulses',[[10.,160.]],True,None,None,'ms'),
-                          # ('totT', 200.,True,0,None,'ms'),#)#,
-                          # #('nRuns', 1,True,1,None,None),
-                          # ('dt',0.1,True,1e-9,10,'ms'))
                           
 protParams['custom'].add_many(('phis',[1e15,1e16],True,None,None,None), #'photons/s/mm^2'
                             ('Vs',[-70,-20,10],True,None,None,None), #'mV'
                             ('delD', 25, True, 0, 1e9, None), #'ms'
-                            ('cycles',[[150.,50.]],True,None,None,None)) #'ms'#,
-                            #('totT', 200.,True,0,None,'ms'),#)#,
-                            #('dt',0.1,True,1e-9,10,'ms'))
+                            ('cycles',[[150.,50.]],True,None,None,None), #'ms'#,
+                            ('phi_ft', None, None, None, None))
 
-
-#ProtParamsStep = Parameters()
-#phis=[1e15,1e16,1e17], Vs=[-70,-40,-10,10,40], pulses=[[50.,200.]], totT=300., nRuns=1, dt=0.1
-# protParams['step'].add_many(('phis',[1e15,1e16,1e17],True,None,None,'photons/s/mm^2'),
-                        # ('Vs',[-70,-40,-10,10,40],True,None,None,'mV'),
-                        # ('pulses',[[50.,200.]],True,None,None,'ms'),
-                        # ('totT', 300.,True,0,None,'ms'),#)#,
-                        # #('nRuns', 1,True,1,None,None),
-                        # ('dt',0.1,True,1e-9,10,'ms'))
 
 protParams['step'].add_many(('phis',[1e15,1e16,1e17],True,None,None,None), #'photons/s/mm^2'
                             ('Vs',[-70,-40,-10,10,40],True,None,None,None), #'mV'
                             ('delD', 25, True, 0, 1e9, None), #'ms'
-                            ('cycles',[[150.,100.]],True,None,None,None)) #'ms'#,
-                            #('totT', 300.,True,0,None,'ms'),#)#,
-                            #('dt',0.1,True,1e-9,10,'ms'))
+                            ('cycles',[[150.,100.]],True,None,None,None))#, #'ms'#,
 
-#ProtParamsSinusoid = Parameters()
-#phis=[1e14], A0=[1e12], Vs=[-70], fs=np.logspace(-1,3,num=9), pulses=[[25.,275.]], totT=300., dt=0.1
-# protParams['sinusoid'].add_many(('phis',[1e9],True,None,None,'photons/s/mm^2'),
-                            # ('startOn',True,False,False,True,''),
-                            # ('A0',[0],True,None,None,'photons/s/mm^2'),
-                            # ('Vs',[-70],True,None,None,'mV'),
-                            # ('fs',[0.1,0.5,1,5,10,50,100,500,1000],True,None,None,'Hz'),
-                            # ('pulses',[[50.,1050.]],True,None,None,'ms'),
-                            # ('totT', 1100.,True,0,None,'ms'),#)#,
-                            # #('nRuns', 1,True,1,None,None),
-                            # ('dt',0.1,True,1e-9,10,'ms'))
-                            
+
 protParams['sinusoid'].add_many(('phis',[1e9],True,None,None,None), #'photons/s/mm^2'
+                            ('phi0',[0],True,None,None,None), #'photons/s/mm^2'
                             ('startOn',True,False,False,True,None),
-                            ('A0',[0],True,None,None,None), #'photons/s/mm^2'
                             ('Vs',[-70],True,None,None,None), #'mV'
                             ('fs',[0.1,0.5,1,5,10,50,100,500,1000],True,None,None,None), #'Hz'
                             ('delD', 25, True, 0, 1e9, None), #'ms'
-                            ('cycles',[[1000.,50.]],True,None,None,None)) #'ms' #,
-                            #('totT', 1100.,True,0,None,'ms'),#)#,
-                            #('dt',0.1,True,1e-9,10,'ms'))
+                            ('cycles',[[10000.,50.]],True,None,None,None)) #'ms'
 
-#ProtParamsChirp = Parameters()
-# protParams['chirp'].add_many(('phis',[1e14],True,None,None,'photons/s/mm^2'),
-                            # ('linear',True,True,False,True,''), # False := exponential
-                            # ('startOn',False,True,False,True,''),
-                            # ('A0',[0],True,None,None,'photons/s/mm^2'),
-                            # ('Vs',[-70],True,None,None,'mV'),
-                            # ('pulses',[[100.,1100.]],True,None,None,'ms'),
-                            # ('totT', 1200.,True,0,None,'ms'),
-                            # ('f0',0.1,True,None,None,'Hz'),
-                            # ('fT',1000,True,None,None,'Hz'),#)#,
-                            # ('dt',0.1,True,1e-9,10,'ms'))
-
+                            
 protParams['chirp'].add_many(('phis',[1e14],True,None,None,None), # 'photons/s/mm^2'
+                            ('phi0',[0],True,None,None,None), # 'photons/s/mm^2'
                             ('linear',True,True,False,True,None), # False := exponential
                             ('startOn',False,True,False,True,None),
-                            ('A0',[0],True,None,None,None), # 'photons/s/mm^2'
                             ('Vs',[-70],True,None,None,None), # 'mV'
                             ('delD', 100, True, 0, 1e9, None), # 'ms'
-                            ('cycles',[[1000.,100.]],True,None,None,None), # 'ms'
-                            #('totT', 1200.,True,0,None,'ms'),
+                            ('cycles',[[10000.,100.]],True,None,None,None), # 'ms'
                             ('f0',0.1,True,None,None,None), # 'Hz'
-                            ('fT',1000,True,None,None,None)) # 'Hz'#,
-                            #('dt',0.1,True,1e-9,10,'ms'))
-                            
-#ProtParamsRamp = Parameters()
-# protParams['ramp'].add_many(('phis',[1e12,1e13,1e14,1e15,1e16,1e17,1e18],True,None,None,'photons/s/mm^2'),
-                            # ('phi_ton',0,True,None,None,'photons/s/mm^2'),
-                            # ('Vs',[-70],True,None,None,'mV'),
-                            # ('pulses',[[25.,275.]],True,None,None,'ms'),
-                            # ('totT', 300.,True,0,None,'ms'),#)#,
-                            # #('nRuns', 1,True,1,None,None),
-                            # ('dt',0.1,True,1e-9,10,'ms'))
+                            ('fT',1000,True,None,None,None)) # 'Hz'
 
+                            
 protParams['ramp'].add_many(('phis',[1e12,1e13,1e14,1e15,1e16,1e17,1e18],True,None,None,None), # 'photons/s/mm^2'
                             ('phi_ton',0,True,None,None,None), # 'photons/s/mm^2'
                             ('Vs',[-70],True,None,None,None), # 'mV'
                             ('delD', 25, True, 0, 1e9, None), # 'ms'
                             ('cycles',[[250.,25.]],True,None,None,None)) # 'ms'#,
-                            #('totT', 300.,True,0,None,'ms'),#)#,
-                            #('dt',0.1,True,1e-9,10,'ms'))
-                            
-#ProtParamsSaturate = Parameters()
-#phis=[irrad2flux(1000,470)], Vs=[-70], pulses=[[5.,5+1e-3]], totT=20., nRuns=1, dt=1e-3
-# protParams['saturate'].add_many(('phis',[1e20],True,None,None,'photons/s/mm^2'),
-                            # ('Vs',[-70],True,None,None,'mV'),
-                            # ('pulses',[[5.,5.+1e-3]],True,None,None,'ms'),
-                            # ('totT', 20.,True,0,None,'ms'),#)#,
-                            # #('nRuns', 1,True,1,None,None),
-                            # ('dt',1e-3,True,1e-9,10,'ms'))
+
                             
 protParams['saturate'].add_many(('phis',[1e20],True,None,None,None), # 'photons/s/mm^2'
                             ('Vs',[-70],True,None,None,None), # 'mV'
                             ('delD', 5, True, 0, 1e9, None), # 'ms'
                             ('onD', 1e-3, True, 0, 1e9, None), # 'ms'
-                            #('pulses',[[5.,5.+1e-3]],True,None,None,'ms'),
-                            ('totT', 25.,True,0,None,None)) # 'ms' #,#)#,
-                            #('nRuns', 1,True,1,None,None),
-                            #('dt',1e-3,True,1e-9,10,'ms'))
+                            ('totT', 25.,True,0,None,None)) # 'ms'
 
-#ProtParamsInwardRect = Parameters()
-#phis=[irrad2flux(1,470),irrad2flux(10,470)], Vs=[-100,-80,-60,-40,-20,0,20,40,60,80], pulses=[[50.,300.]], totT=400., nRuns=1, dt=0.1
-# protParams['rectifier'].add_many(('phis',[1e16],True,None,None,'photons/s/mm^2'),
-                            # ('Vs',[-100,-80,-60,-40,-20,0,20,40,60,80],True,None,None,'mV'),
-                            # ('pulses',[[50.,300.]],True,None,None,'ms'),
-                            # ('totT', 400.,True,0,None,'ms'),#)#,
-                            # #('nRuns', 1,True,1,None,None),
-                            # ('dt',0.1,True,1e-9,10,'ms'))
-
+                            
 protParams['rectifier'].add_many(('phis',[1e16],True,None,None,None), # 'photons/s/mm^2'
                             ('Vs',[-100,-70,-40,-10,20,50,80],True,None,None,None), # 'mV' #[-100,-80,-60,-40,-20,0,20,40,60,80]
                             ('delD', 50, True, 0, 1e9, None), # 'ms'
                             ('cycles',[[250.,100.]],True,None,None,None)) # 'ms' #,
-                            #('totT', 400.,True,0,None,'ms'),#)#,
-                            #('dt',0.1,True,1e-9,10,'ms'))
+
                             
-#ProtParamsVaryPL = Parameters()
-#phis=[1e12], Vs=[-70], delD=25, pDs=[1,2,3,5,8,10,20], totT=100, dt=0.1
 protParams['shortPulse'].add_many(('phis',[1.5e15],True,None,None,None), # 'photons/s/mm^2' #1e12 # original
                             ('Vs',[-70],True,None,None,None), # 'mV'
                             ('delD',25,True,0,None,None), # 'ms'
                             ('pDs',[1,2,3,5,8,10,20],True,None,None,None), # 'ms' # [0.1, 0.2, 0.5, 1, 2, 5, 10]
-                            ('totT', 100.,True,0,None,None)) # 'ms' #,#)#,
-                            #('dt',0.1,True,1e-9,10,'ms'))
+                            ('totT', 100.,True,0,None,None)) # 'ms'
 
-#ProtParamsVaryIPI = Parameters()
-#phis=[1e14], Vs=[-70], delD=100, onD=200, IPIs=[500,1000,1500,2500,5000,7500,10000], dt=0.1
+                            
 protParams['recovery'].add_many(('phis',[1e14],True,None,None,None), # 'photons/s/mm^2'
                             ('Vs',[-70],True,None,None,None), # 'mV'
                             ('delD',100,True,0,None,None), # 'ms'
                             ('onD',100,True,0,None,None), # 'ms'
-                            ('IPIs',[500,1000,1500,2500,5000,7500,10000],True,None,None,None), # 'ms' #)#,
-                            ('totT', 12000, True, 0, None, None)) # 'ms' #,
-                            #('dt',0.1,True,1e-9,10,'ms'))
+                            ('IPIs',[500,1000,1500,2500,5000,7500,10000],True,None,None,None), # 'ms' 
+                            ('totT', 12000, True, 0, None, None)) # 'ms'
 
 # Automatically link fields?
 #protocolParams = OrderedDict([('custom',ProtParamsCustom), ('step',ProtParamsStep), ('sinusoid',ProtParamsSinusoid), ('chirp',ProtParamsChirp), ('ramp',ProtParamsRamp), ('saturate',ProtParamsSaturate), ('rectifier',ProtParamsInwardRect), ('shortPulse',ProtParamsVaryPL), ('recovery',ProtParamsVaryIPI)])

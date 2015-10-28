@@ -15,30 +15,9 @@ import warnings
 import os
 #import time
 
-#from config import verbose
-
 ### Select simulation protocol
 #protocols = ['custom', 'saturate', 'rectifier', 'shortPulse', 'recovery']
 #protocol = protocols[4] #'recovery'#'shortPulse' # Set this interactively with radio buttons?
-
-# if 'eqSize' not in vars() or 'eqSize' not in globals() or eqSize is None:
-    # eqSize = 18 # Move to config
-
-# #plt.tight_layout()
-# if 'addTitles' not in vars() or 'addTitles' not in globals() or addTitles is None:
-    # addTitles = True
-
-# ### Set default plotting colour and style cycles
-# if 'colours' not in vars() or 'colours' not in globals() or colours is None:
-    # colours = ['b','g','r','c','m','y','k']
-# if 'styles' not in vars() or 'styles' not in globals() or styles is None:
-    # styles = ['-', '--', '-.', ':']
-
-# if 'saveFigFormat' not in vars() or 'saveFigFormat' not in globals() or saveFigFormat is None:
-    # saveFigFormat = 'png'
-
-
-
 
 
 class Protocol(PyRhOobject): #object
@@ -91,18 +70,7 @@ class Protocol(PyRhOobject): #object
             #    warnings.warn('Warning: "{p}" not found in {self}'.format(p,self))
         self.prepare()
         self.lam = 470 # Default wavelength [nm]
-
-    ### Now moved to PyRhOobject class
-    # def exportParams(self, params):
-        # """Export parameters to lmfit dictionary"""
-        # for p in self.__dict__.keys():
-            # params[p].value = self.__dict__[p]
-        # return params
-            
-    # def printParams(self):
-        # for p in self.__dict__.keys():
-            # print(p,' = ',self.__dict__[p])
-            
+    
     def prepare(self):
         """Function to set-up additional variables and make parameters consistent after any changes"""
         if np.isscalar(self.cycles): #self.cycles.shape[1] == 1: # Only on duration specified
@@ -720,57 +688,18 @@ class protCustom(Protocol):
     # Class attributes
     protocol = 'custom'
     squarePulse = False
-    custPulseGenerator = None
+    #custPulseGenerator = None
+    phi_ft = None
     
-    # plotPeakRecovery = False #plotPeakRecovery
-    # plotStateVars = False #plotStateVars
-    # plotKinetics = False #plotKinetics
-    
-    # def __init__(self, params=protParams['custom'], saveData=True): #ProtParamsCustom #phis=[1e14,1e15,1e16,1e17], Vs=[-70,-40,-10,10,40], pulses=[[10.,160.]], totT=200., dt=0.1): # , nRuns=1
-        
-        # self.saveData = saveData
-        # ###self.dataTag = str(RhO.nStates)+"s"
-        # #self.plotResults = plotResults
-        # self.plotPeakRecovery = False #plotPeakRecovery
-        # self.plotStateVars = False #plotStateVars
-        # self.plotKinetics = False #plotKinetics
-        
-        # self.setParams(params)
-        # #self.phis = phis
-        # #self.Vs = Vs
-        # #if isinstance(pulses, (np.ndarray)): # , np.generic
-        # #    self.pulses = pulses
-        # #else:
-        # #self.pulses = np.array(pulses)
-        # #self.totT = totT
-        # #self.prepare() # Called in setParams() and run()
-        
-        # #self.dt=dt
-        # self.begT, self.endT = 0, self.totT
-
     def extraPrep(self):
         'Function to set-up additional variables and make parameters consistent after any changes'
-        # self.pulses = np.asarray(self.pulses)
-        # self.nPulses = self.pulses.shape[0]
-        # self.delDs = [row[0] for row in self.pulses] # pulses[:,0]    # Delay Durations
-        # self.onDs = [row[1]-row[0] for row in self.pulses] # pulses[:,1] - pulses[:,0]   # Pulse Durations
-        # self.offDs = np.append(self.pulses[1:,0],self.totT) - self.pulses[:,1]
-        #self.pulseInds = np.array([[np.searchsorted(self.t, pulses[p,time]) for time in range(2)] for p in range(self.nPulses)])
-        #pulses = np.array([[delD+(p*(onD+offD)),delD+(p*(onD+offD))+onD] for p in range(nPulses)]) #np.array([[delD,onD]])
         self.nRuns = 1 #nRuns ### Reconsider this...
-        # self.phis.sort(reverse=True)
-        # self.Vs.sort(reverse=True)
-        # self.nPhis = len(self.phis)
-        # self.nVs = len(self.Vs)
         
+        #self.custPulseGenerator = self.phi_ft
         if not hasattr(self, 'phi_ts') or self.phi_ts == None:
             #self.phi_ts = self.genPulseSet()
-            self.genPulseSet(self.custPulseGenerator)
-        
-    # def genPulse(self, run, phiOn, delD, onD):
-        # pStart, pEnd = delD, (delD+onD)
-        # phi_t = InterpolatedUnivariateSpline([pStart,pEnd],[phiOn,phiOn], k=1, ext=1)
-        # return phi_t
+            #self.genPulseSet(self.custPulseGenerator)
+            self.genPulseSet(self.phi_ft)
         
     
     def createLayout(self, Ifig=None, vInd=0):
@@ -781,7 +710,7 @@ class protCustom(Protocol):
         self.addStimulus = config.addStimulus
         
         if self.addStimulus: 
-            phi_ts = self.genPlottingStimuli(self.custPulseGenerator)
+            phi_ts = self.genPlottingStimuli(self.phi_ft) #self.genPlottingStimuli(self.custPulseGenerator)
             
             gsStim = plt.GridSpec(4,1)
             self.axS = Ifig.add_subplot(gsStim[0,:]) # Stimulus axes
@@ -809,52 +738,11 @@ class protStep(Protocol):
     squarePulse = True
     nRuns = 1
     
-    # plotPeakRecovery = False #plotPeakRecovery
-    # plotStateVars = False #plotStateVars
-    # plotKinetics = False #plotKinetics
-    
-    # def __init__(self, params=protParams['step'], saveData=True): #ProtParamsStep #phis=[1e15,1e16,1e17], Vs=[-70,-40,-10,10,40], pulses=[[50.,200.]], totT=300., dt=0.1): # , nRuns=1
-        
-        # self.saveData = saveData
-        # ###self.dataTag = str(RhO.nStates)+"s"
-        # #self.plotResults = plotResults
-        # self.plotPeakRecovery = False #plotPeakRecovery
-        # self.plotStateVars = False #plotStateVars
-        # self.plotKinetics = False #plotKinetics
-            
-        # self.setParams(params)
-        # #self.phis = phis
-        # #self.Vs = Vs
-        # #self.pulses = np.array(pulses)
-        # #self.totT = totT
-        # #self.dt=dt
-        # # pass
-        # # delD = 25.0  # Delay before on phase [ms]
-        # # onD = 250.0  # Duration of on phase [ms]
-        # # offD = 0.0   # Duration of off phase [ms]
-        # # padD = 0.0   # Duration of padding after last off phase [ms]
-        # # onSt = delD
-        # # offSt = delD+onD
-        # # totT = delD+nPulses*(onD+offD)  # Total simulation time [ms]
-        # # nRuns = 1
-        # # dt = 0.1
-        # #self.prepare() # Called in setParams() and run()
-        # self.begT, self.endT = 0, self.totT
-        
 
     def extraPrep(self):
         'Function to set-up additional variables and make parameters consistent after any changes'
-        # self.pulses = np.asarray(self.pulses)        
-        # self.nPulses = self.pulses.shape[0]
-        # self.delDs = [row[0] for row in self.pulses] # pulses[:,0]    # Delay Durations
-        # self.onDs = [row[1]-row[0] for row in self.pulses] # pulses[:,1] - pulses[:,0]   # Pulse Durations
-        # self.offDs = np.append(self.pulses[1:,0],self.totT) - self.pulses[:,1]
+        
         self.nRuns = 1 #nRuns
-        #phi_t = InterpolatedUnivariateSpline([start,delD-dt,delD,end], [0,0,A,A],k=1) # Heaviside
-        # self.phis.sort(reverse=True)
-        # self.Vs.sort(reverse=True)
-        # self.nPhis = len(self.phis)
-        # self.nVs = len(self.Vs)
         
         self.phi_ts = self.genPulseSet()
         #self.genPulseSet()
@@ -866,9 +754,6 @@ class protStep(Protocol):
             # else:
                 # return 0
                 
-    # def plot(self):
-        # self.PD.plot()
-        # lables, nCols = self.genLabels()
     
     def addAnnotations(self):
         self.axI.get_xaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
@@ -880,34 +765,10 @@ class protSinusoid(Protocol):
     protocol = 'sinusoid'
     squarePulse = False
     
-    # def __init__(self, params=protParams['sinusoid'], saveData=True): #ProtParamsSinusoid #phis=[1e14], A0=[1e12], Vs=[-70], fs=np.logspace(-1,3,num=9), pulses=[[50.,550.]], totT=600., dt=0.1):
-        
-        # self.saveData = saveData
-        # ###self.dataTag = str(RhO.nStates)+"s"
-        # #self.plotResults = plotResults
-        # self.plotPeakRecovery = False #plotPeakRecovery
-        # self.plotStateVars = False #plotStateVars
-        # self.plotKinetics = False #plotKinetics
-        
-        # self.setParams(params)
-        # #self.phis = phis
-        # #self.A0 = A0 # Background illumination
-        # #self.Vs = Vs
-        # #self.pulses = np.array(pulses)
-        # #self.prepare() # Called in setParams() and run()
-        # self.begT, self.endT = 0, self.totT
-        
-
+    
     def extraPrep(self):
         'Function to set-up additional variables and make parameters consistent after any changes'
-        # self.pulses = np.asarray(self.pulses)
-        # self.nPulses = self.pulses.shape[0]
-        # self.delDs = [row[0] for row in self.pulses] # pulses[:,0]    # Delay Durations
-        # self.onDs = [row[1]-row[0] for row in self.pulses] # pulses[:,1] - pulses[:,0]   # Pulse Durations
-        # self.offDs = np.append(self.pulses[1:,0],self.totT) - self.pulses[:,1]
         
-        #self.totT = totT
-        #self.dt=dt
         self.fs = np.sort(np.array(self.fs)) # Frequencies [Hz] 
         self.ws = 2 * np.pi * self.fs / (1000) # Frequencies [rads/ms] (scaled from /s to /ms
         #self.sr = min([(1000)/(10*max(self.fs)), self.dt]) # Nyquist frequency - sampling rate (10*f) >= 2*f
@@ -925,30 +786,9 @@ class protSinusoid(Protocol):
             warnings.warn('Warning: The period of the lowest frequency is longer than the stimulation time!')
             #print('Warning: The period of the lowest frequency is longer than the total simulation time!')
         
-        #figTitle = "Photocurrent through time "
-        #self.phis.sort(reverse=True)
-        # self.phis.sort(reverse=True)
-        # self.Vs.sort(reverse=True)
-        # self.nPhis = len(self.phis)
-        # self.nVs = len(self.Vs)
-
         #self.fs.sort()
         #self.ws.sort()
         
-        ### Create stimulation functions
-        # for run in range(self.nRuns):
-            # for phiInd, phiOn in enumerate(self.phis):
-                # cycles, delD = self.getRunCycles(run)
-                # #for cycle in cycles:
-                # onD, offD = cycle
-                # start, end = 0.0, self.totT #0.00, stimD
-                # pStart, pEnd = delD, (delD+onD)
-                # tcycle = np.linspace(0.0, onD, (onD*self.sr/1000)+1, endpoint=True)
-                # t = np.linspace(delD, self.totT, ((self.totT-delD)*self.sr/1000)+1, endpoint=True)
-                # f_phi = (self.A0[0] + 0.5*phiOn*(1-np.cos(self.ws[run]*t))) * H
-                # phi_t = InterpolatedUnivariateSpline(pStart + t, self.A0[0] + 0.5*phiOn*(1-np.cos(self.ws[run]*t)), ext=1) # A0[r]
-                # self.phiFuncs[run][phiInd]
-
         #self.startOn = False
         self.begT, self.endT = 0, self.totT
         self.phi_ts = self.genPulseSet()
@@ -960,9 +800,9 @@ class protSinusoid(Protocol):
         onD = pEnd - pStart
         t = np.linspace(0.0, onD, (onD*self.sr/1000)+1, endpoint=True) # Create smooth series of time points to interpolate between
         if self.startOn:
-            phi_t = InterpolatedUnivariateSpline(pStart + t, self.A0[0] + 0.5*phi*(1+np.cos(self.ws[run]*t)), ext=1) # A0[r]
+            phi_t = InterpolatedUnivariateSpline(pStart + t, self.phi0[0] + 0.5*phi*(1+np.cos(self.ws[run]*t)), ext=1, k=5) # phi0[r]
         else:
-            phi_t = InterpolatedUnivariateSpline(pStart + t, self.A0[0] + 0.5*phi*(1-np.cos(self.ws[run]*t)), ext=1) # A0[r]
+            phi_t = InterpolatedUnivariateSpline(pStart + t, self.phi0[0] + 0.5*phi*(1-np.cos(self.ws[run]*t)), ext=1, k=5) # phi0[r]
         
         return phi_t
     
@@ -971,9 +811,9 @@ class protSinusoid(Protocol):
         pStart, pEnd = delD, (delD+onD)
         t = np.linspace(0.0, onD, (onD*self.sr/1000)+1, endpoint=True) # Create smooth series of time points to interpolate between
         if self.startOn:
-            phi_t = InterpolatedUnivariateSpline(pStart + t, self.A0[0] + 0.5*phiOn*(1+np.cos(self.ws[run]*t)), ext=1) # A0[r]
+            phi_t = InterpolatedUnivariateSpline(pStart + t, self.phi0[0] + 0.5*phiOn*(1+np.cos(self.ws[run]*t)), ext=1) # phi0[r]
         else:
-            phi_t = InterpolatedUnivariateSpline(pStart + t, self.A0[0] + 0.5*phiOn*(1-np.cos(self.ws[run]*t)), ext=1) # A0[r]
+            phi_t = InterpolatedUnivariateSpline(pStart + t, self.phi0[0] + 0.5*phiOn*(1-np.cos(self.ws[run]*t)), ext=1) # phi0[r]
         
         return phi_t
     '''    
@@ -1118,11 +958,11 @@ class protSinusoid(Protocol):
             
             self.fstars = fstars
             if len(self.phis) > 1: # Multiple light amplitudes
-                #for i, A0 in enumerate(self.A0):
+                #for i, phi0 in enumerate(self.phi0):
                 fstarAfig = plt.figure()
                 for vInd, V in enumerate(self.Vs):
-                    if self.A0[0] > 0: # A0[r]
-                        plt.plot(np.array(self.phis)/self.A0[0], fstars[:,vInd])
+                    if self.phi0[0] > 0: # phi0[r]
+                        plt.plot(np.array(self.phis)/self.phi0[0], fstars[:,vInd])
                         plt.xlabel('$\mathrm{Modulating}\ \phi_1(t)/\phi_0(t)$')
                     else:
                         plt.plot(np.array(self.phis), fstars[:,vInd])
@@ -1132,7 +972,7 @@ class protSinusoid(Protocol):
                 #plt.xlabel('$\mathrm{Modulating}\ \phi_1(t)/\phi_0(t)$')
                 plt.ylabel('$f^*\ \mathrm{[Hz]}$')
                 if config.addTitles:
-                    plt.title('$f^*\ vs.\ \phi_1(t).\ \mathrm{{Background\ illumination:}}\ \phi_0(t)={:.3g}$'.format(self.A0[0]))
+                    plt.title('$f^*\ vs.\ \phi_1(t).\ \mathrm{{Background\ illumination:}}\ \phi_0(t)={:.3g}$'.format(self.phi0[0]))
             
         
 class protDualTone(Protocol):
@@ -1141,7 +981,7 @@ class protDualTone(Protocol):
     protocol = 'dualTone'
     squarePulse = False
     # Change default parameter key to 'dualTone'!!!
-    # def __init__(self, params=protParams['custom'], saveData=True): #ProtParamsSinusoid #phis=[1e14], A0=[1e12], Vs=[-70], fs=np.logspace(-1,3,num=9), pulses=[[50.,550.]], totT=600., dt=0.1):
+    # def __init__(self, params=protParams['custom'], saveData=True): #ProtParamsSinusoid #phis=[1e14], phi0=[1e12], Vs=[-70], fs=np.logspace(-1,3,num=9), pulses=[[50.,550.]], totT=600., dt=0.1):
         
         # self.saveData = saveData
         # self.plotPeakRecovery = False #plotPeakRecovery
@@ -1150,7 +990,7 @@ class protDualTone(Protocol):
         
         # self.setParams(params)
         # #self.phis = phis
-        # #self.A0 = A0 # Background illumination
+        # #self.phi0 = phi0 # Background illumination
         # #self.Vs = Vs
         # #self.pulses = np.array(pulses)
         # #self.prepare() # Called in setParams() and run()
@@ -1199,30 +1039,10 @@ class protChirp(Protocol):
     # http://en.wikipedia.org/wiki/Chirp
     protocol = 'chirp'
     squarePulse = False
-    # def __init__(self, params=protParams['chirp'], saveData=True): #ProtParamsSinusoid #phis=[1e14], A0=[1e12], Vs=[-70], fs=np.logspace(-1,3,num=9), pulses=[[50.,550.]], totT=600., dt=0.1):
-        
-        # self.saveData = saveData
-        # self.plotPeakRecovery = False #plotPeakRecovery
-        # self.plotStateVars = False #plotStateVars
-        # self.plotKinetics = False #plotKinetics
-        
-        # self.setParams(params)
-        # #self.phis = phis
-        # #self.A0 = A0 # Background illumination
-        # #self.Vs = Vs
-        # #self.f0 = f0
-        # #self.fgrad = Hz/s
-        # #self.prepare() # Called in setParams() and run()
-        # self.begT, self.endT = 0, self.totT
-        
+    
     def extraPrep(self):
         'Function to set-up additional variables and make parameters consistent after any changes'
-        # self.pulses = np.asarray(self.pulses)
-        # self.nPulses = self.pulses.shape[0]
-        # self.delDs = [row[0] for row in self.pulses] # pulses[:,0]    # Delay Durations
-        # self.onDs = [row[1]-row[0] for row in self.pulses] # pulses[:,1] - pulses[:,0]   # Pulse Durations
-        # self.offDs = np.append(self.pulses[1:,0],self.totT) - self.pulses[:,1]
-        
+    
         #self.fs = np.sort(np.array(self.fs)) # Frequencies [Hz] 
         #self.ws = 2 * np.pi * self.fs / (1000) # Frequencies [rads/ms] (scaled from /s to /ms
         #self.sr = min([1000/(10*max(self.fs)), self.dt]) # Nyquist frequency - sampling rate (10*f) >= 2*f
@@ -1242,14 +1062,7 @@ class protChirp(Protocol):
         if (1000)/self.f0 > min(self.onDs): #1/10**self.fs[0] > self.totT:
             warnings.warn('Warning: The period of the lowest frequency is longer than the stimulation time!')
             #print('Warning: The period of the lowest frequency is longer than the total simulation time!')
-        # self.phis.sort(reverse=True)
-        # self.Vs.sort(reverse=True)
-        # self.nPhis = len(self.phis)
-        # self.nVs = len(self.Vs)
-        
-        ### Add these to parameters
-        #self.startOn = True
-        #self.linear = False
+    
         self.phi_ts = self.genPulseSet()
 
     def getShortestPeriod(self):
@@ -1265,9 +1078,9 @@ class protChirp(Protocol):
             ft = self.f0 * (self.fT/self.f0)**(t/pEnd)
         ft /= 1000 # Convert to frequency in ms
         if self.startOn:
-            phi_t = InterpolatedUnivariateSpline(pStart + t, self.A0[0] + 0.5*phi*(1+np.cos(ft*t)), ext=1)
+            phi_t = InterpolatedUnivariateSpline(pStart + t, self.phi0[0] + 0.5*phi*(1+np.cos(ft*t)), ext=1, k=5)
         else:
-            phi_t = InterpolatedUnivariateSpline(pStart + t, self.A0[0] + 0.5*phi*(1-np.cos(ft*t)), ext=1)
+            phi_t = InterpolatedUnivariateSpline(pStart + t, self.phi0[0] + 0.5*phi*(1-np.cos(ft*t)), ext=1, k=5)
         return phi_t
     
     '''    
@@ -1280,9 +1093,9 @@ class protChirp(Protocol):
             ft = self.f0 * (self.fT/self.f0)**(t/pEnd)
         ft /= 1000 # Convert to frequency in ms
         if self.startOn:
-            phi_t = InterpolatedUnivariateSpline(pStart + t, self.A0[0] + 0.5*phiOn*(1+np.cos(ft*t)), ext=1)
+            phi_t = InterpolatedUnivariateSpline(pStart + t, self.phi0[0] + 0.5*phiOn*(1+np.cos(ft*t)), ext=1)
         else:
-            phi_t = InterpolatedUnivariateSpline(pStart + t, self.A0[0] + 0.5*phiOn*(1-np.cos(ft*t)), ext=1)
+            phi_t = InterpolatedUnivariateSpline(pStart + t, self.phi0[0] + 0.5*phiOn*(1-np.cos(ft*t)), ext=1)
         
         return phi_t        
     '''
@@ -1307,7 +1120,7 @@ class protChirp(Protocol):
             plt.setp(self.axS.get_xticklabels(), visible=False)
             self.axS.set_xlabel('') #plt.xlabel('')
             
-            self.axS.set_ylim(self.A0[0], max(self.phis)) ### A0[r]
+            self.axS.set_ylim(self.phi0[0], max(self.phis)) ### phi0[r]
 
             if max(self.phis) / min(self.phis) >= 100:
                 self.axS.set_yscale('log') #plt.yscale('log')
@@ -1342,49 +1155,17 @@ class protRamp(Protocol):
     protocol = 'ramp'
     squarePulse = False
     nRuns = 1
-    # def __init__(self, params=protParams['ramp'], saveData=True): # ProtParamsRamp #phis=[1e14,1e15,1e16,1e17,1e18], phi_ton = 0, Vs=[-70], pulses=[[25.,275.]], totT=300., dt=0.1): # , nRuns=1
-        # """Linearly increasing pulse"""
-        
-        # self.saveData = saveData
-        # ###self.dataTag = str(RhO.nStates)+"s"
-        # #self.plotResults = plotResults
-        # self.plotPeakRecovery = False #plotPeakRecovery
-        # self.plotStateVars = False #plotStateVars
-        # self.plotKinetics = False #plotKinetics
-        
-        # self.setParams(params)
-        # #phi_t = InterpolatedUnivariateSpline([start,delD,end], [0,0,A],k=1)
-        # #self.phis = phis
-        # #self.phi_ton = phi_ton
-        # #self.Vs = Vs
-        # #self.pulses = np.array(pulses)
-        # #self.totT = totT
-        # #self.dt = dt
-        # #self.prepare() # Called in setParams() and run()
-        # self.begT, self.endT = 0, self.totT
+    
 
     def extraPrep(self):
         'Function to set-up additional variables and make parameters consistent after any changes'
-        # self.pulses = np.asarray(self.pulses)
-        # self.nPulses = self.pulses.shape[0]
-        # self.delDs = [row[0] for row in self.pulses] # pulses[:,0]    # Delay Durations
-        # self.onDs = [row[1]-row[0] for row in self.pulses] # pulses[:,1] - pulses[:,0]   # Pulse Durations
-        # self.offDs = np.append(self.pulses[1:,0],self.totT) - self.pulses[:,1]
         self.nRuns = 1 #nRuns # Make len(phi_ton)?
         self.cycles = np.column_stack((self.onDs,self.offDs))
         #self.cycles=np.tile(np.column_stack((self.onDs,self.offDs)),(self.nRuns,1))
         self.padDs = np.zeros(self.nRuns)
-        # self.phis.sort(reverse=True)
-        # self.Vs.sort(reverse=True)
-        # self.nPhis = len(self.phis)
-        # self.nVs = len(self.Vs)
         
         self.phi_ts = self.genPulseSet()# [[[None for pulse in range(self.nPulses)] for phi in range(self.nPhis)] for run in range(self.nRuns)]
         
-        # for run in range(self.nRuns):
-            # for phiInd, phiOn in enumerate(self.phis):
-                # for pulse, onD in enumerate(self.onDs):
-                    # self.phi_ts[run][phiInd][pulse] = self.genPulse(run, phiOn, self.delDs[pulse], onD)
     
     def createLayout(self, Ifig=None, vInd=0):
     
@@ -1436,45 +1217,12 @@ class protSaturate(Protocol):
     protocol = 'saturate'
     squarePulse = True
     nRuns = 1
-    # def __init__(self, params=protParams['saturate'], saveData=True): # ProtParamsSaturate #phis=[irrad2flux(1000,470)], Vs=[-70], pulses=[[5.,5+1e-3]], totT=20., dt=1e-3): # delD=5, dt=1e-3, totT=20 # , nRuns=1
-        # #if verbose > 0:
-        # #    print("Running saturation protocol to find the maximum conductance (bar{g})")
-        
-        # #phis = [irrad2flux(1000,470)] # 100 mW*mm^-2
-        
-        # self.saveData = saveData
-        # ###self.dataTag = str(RhO.nStates)+"s"
-        # #self.plotResults = plotResults
-        # self.plotPeakRecovery = False #plotPeakRecovery
-        # self.plotStateVars = True #plotStateVars
-        # self.plotKinetics = False #plotKinetics
-        
-        # #self.plotStateVars = True
-        # self.setParams(params)
-        # #self.phis = phis
-        # #self.Vs = Vs
-        # #self.pulses = np.array(pulses)
-        # #self.prepare() # Called in setParams() and run()
-        # self.begT, self.endT = 0, self.totT
-
+    
     def prepare(self):
         """Function to set-up additional variables and make parameters consistent after any changes"""
-        # if np.isscalar(self.cycles): #self.cycles.shape[1] == 1: # Only on duration specified
-            # onD = self.cycles
-            # offD = self.totT - onD - self.delD
-            # self.cycles = np.asarray([self.cycles[0], offD])
         self.cycles = np.asarray([[self.onD, self.totT-self.delD]])
         self.nPulses = self.cycles.shape[0]
-        # Create a new multi-run cycle array... 
-        #self.delDs = np.array([self.delD] * self.nRuns)
-        #self.onDs = np.array([cycle[0] for cycle in self.cycles])
-        #self.offDs = np.array([cycle[1] for cycle in self.cycles])
         self.pulses, self.totT = cycles2times(self.cycles, self.delD)
-        
-        #self.pulses = np.asarray(self.pulses) #np.array(self.pulses, copy=True)
-        #self.nPulses = self.pulses.shape[0]
-        
-        #self.delD = self.pulses[0,0]
         self.delDs = np.array([row[0] for row in self.pulses], copy=True) # pulses[:,0]    # Delay Durations
         self.onDs = [row[1]-row[0] for row in self.pulses] # pulses[:,1] - pulses[:,0]   # Pulse Durations
         self.offDs = np.append(self.pulses[1:,0], self.totT) - self.pulses[:,1]
@@ -1494,23 +1242,8 @@ class protSaturate(Protocol):
 
     def extraPrep(self):
         'Function to set-up additional variables and make parameters consistent after any changes'
-        # self.pulses = np.asarray(self.pulses)
-        # self.nPulses = self.pulses.shape[0]
-        # self.delDs = [row[0] for row in self.pulses] # pulses[:,0]    # Delay Durations
-        # self.onDs = [row[1]-row[0] for row in self.pulses] # pulses[:,1] - pulses[:,0]   # Pulse Durations
-        # self.offDs = np.append(self.pulses[1:,0],self.totT) - self.pulses[:,1]
-        #self.totT = totT
+        
         self.nRuns = 1 #nRuns
-        #self.dt=dt
-        # if any(tp < self.dt for tp in self.onDs):
-            # warnings.warn('Warning: Time step is too large for the pulse width [pulse:{}]!'.format(p))
-        #for p, t in enumerate(self.onDs):
-        #    if self.onDs[p] < self.dt:
-        #        warnings.warn('Warning: Time step is too large for the pulse width [pulse:{}; t={}]!'.format(p,t))
-        # self.phis.sort(reverse=True)
-        # self.Vs.sort(reverse=True)
-        # self.nPhis = len(self.phis)
-        # self.nVs = len(self.Vs)
         
         self.phi_ts = self.genPulseSet()
         
@@ -1584,40 +1317,10 @@ class protRectifier(Protocol):
     protocol = 'rectifier'
     squarePulse = True
     nRuns = 1
-    # def __init__(self, params=protParams['rectifier'], saveData=True): # ProtParamsInwardRect #phis=[irrad2flux(1,470),irrad2flux(10,470)], Vs=[-100,-80,-60,-40,-20,0,20,40,60,80], pulses=[[50.,300.]], totT=400., dt=0.1): # , nRuns=1
-        # # Used to calculate v0 and v1
         
-        # # if verbose > 0:
-            # # print("Running inward rectification protocol to parameterise f(V)")
-        
-        # self.saveData = saveData
-        # ###self.dataTag = str(RhO.nStates)+"s"
-        # #self.plotResults = plotResults
-        # self.plotPeakRecovery = False #plotPeakRecovery
-        # self.plotStateVars = False #plotStateVars
-        # self.plotKinetics = False #True
-        
-        # self.setParams(params)
-        # #self.phis = phis
-        # #self.Vs = Vs
-        # #self.pulses = np.array(pulses)
-        # #self.totT = totT
-        # #self.dt=dt
-        # #self.prepare() # Called in setParams() and run()
-        # self.begT, self.endT = 0, self.totT
-    
     def extraPrep(self):
         'Function to set-up additional variables and make parameters consistent after any changes'
-        # self.pulses = np.asarray(self.pulses)
-        # self.nPulses = self.pulses.shape[0]
-        # self.delDs = [row[0] for row in self.pulses] # pulses[:,0]    # Delay Durations
-        # self.onDs = [row[1]-row[0] for row in self.pulses] # pulses[:,1] - pulses[:,0]   # Pulse Durations
-        # self.offDs = np.append(self.pulses[1:,0],self.totT) - self.pulses[:,1]
         self.nRuns = 1 #nRuns
-        # self.phis.sort(reverse=True)
-        # self.Vs.sort(reverse=True)
-        # self.nPhis = len(self.phis)
-        # self.nVs = len(self.Vs)
         
         self.phi_ts = self.genPulseSet()
         
@@ -1628,12 +1331,7 @@ class protRectifier(Protocol):
         
         self.addStimulus = config.addStimulus
         #phi_ts = self.genPlottingStimuli()
-            
-        #self.gsIR = plt.GridSpec(1,3)
-        #self.axVI = Ifig.add_subplot(self.gsIR[0,-1])
-        #self.axI = Ifig.add_subplot(self.gsIR[0,0:2], sharey=self.axVI)
-        ##plotLight(self.pulses, self.axI)
-                                                
+                                                        
         self.gsIR = plt.GridSpec(2,3)
         self.axI = Ifig.add_subplot(self.gsIR[:,0:2])
         self.axVI = Ifig.add_subplot(self.gsIR[0,-1])#, sharey=self.axI)
@@ -1649,7 +1347,6 @@ class protRectifier(Protocol):
         Vs = self.Vs
         for run in range(self.nRuns):
             for phiInd, phiOn in enumerate(self.phis): 
-                ### PLOT
                 #RhO.calcSteadyState(phiOn) ##################################### Is this necessary? Only for adjusting the gain (g)
                 #print(self.IssVals[run][phiInd][:])
                 #popt, pcov, eqString = self.fitfV(Vs,self.IssVals[run][phiInd][:],calcIssfromfV,p0fV,RhO,ax)#,eqString)
@@ -1826,35 +1523,7 @@ class protShortPulse(Protocol):
     protocol = 'shortPulse'
     squarePulse = True
     nPulses = 1 #Fixed at 1
-    # def __init__(self, params=protParams['shortPulse'], saveData=True): # ProtParamsVaryPL # phis=[1e12], Vs=[-70], delD=25, pDs=[1,2,3,5,8,10,20], totT=100, dt=0.1): #nPulses=1,
-        
-        # self.saveData = saveData
-        # ###self.dataTag = str(RhO.nStates)+"s"
-        # #self.plotResults = plotResults
-        # self.plotPeakRecovery = False
-        # self.plotStateVars = True #plotStateVars
-        # self.plotKinetics = False #plotKinetics
-        
-        # self.setParams(params)
-        # #delD = 25
-        # #IPI = 75 # Inter-Pulse-Interval
-        # #pDs = [1,2,3,5,8,10,20]
-        # #phis = [1e12]#[irrad2flux(0.65, 470)]#[1e50]#
-        # #Vs = [-70] # Could relax this?
-        # #delD = 25
-        # #nPulses = 1
-        # #totT = delD+IPI#delD+nPulses*(onD+offD)  # Total simulation time per run [ms]
-        # #self.totT = totT
-        # #self.phis = phis
-        # #self.Vs = Vs
-        # #self.pulses, _ = cycles2times(self.cycles,self.delD)
-        # #print(self.pulses)
-        # #self.cycles=np.column_stack((pDs,[IPI-pD for pD in pDs])) # [:,0] = on phase duration; [:,1] = off phase duration
-        # #self.nPulses = nPulses 
-        # #self.dt = dt
-        # #self.prepare() # Called in setParams() and run()
-        # self.begT, self.endT = 0, self.totT
-
+    
     # def __next__(self):
         # if self.run >= self.nRuns:
             # raise StopIteration
@@ -1907,14 +1576,6 @@ class protShortPulse(Protocol):
         #plt.ylim(ax.get_ylim())
         plt.ylim(ymin, pos*(self.nRuns+1)) # Allow extra space for thick lines
         for run in range(self.nRuns): 
-            # if self.nRuns > 1:
-                # delD = self.delDs[run]
-                # onD = self.cycles[run,0]
-                # offD = self.cycles[run,1]
-                # #padD = self.padDs[run]
-            # cycles, delD = self.getRunCycles(run)
-            # pulses, totT = cycles2times(cycles, delD)
-            # t_on, t_off = pulses[0,:]
             
             # Loop over light intensity...
             for phiInd, phiOn in enumerate(self.phis): #for phiInd in range(0, len(phis)):
@@ -1978,33 +1639,7 @@ class protRecovery(Protocol):
     protocol = 'recovery'
     squarePulse = True
     nPulses = 2 # Fixed at 2 for this protocol
-    # def __init__(self, params=protParams['recovery'], saveData=True): # ProtParamsVaryIPI #phis=[1e14], Vs=[-70], delD=100, onD=200, IPIs=[500,1000,1500,2500,5000,7500,10000], dt=0.1): #nPulses=2, 
-        # # if verbose > 0:
-            # # print("Running S1-S2 protocol to solve for tau_R")
-        
-        # self.saveData = saveData
-        # ###self.dataTag = str(RhO.nStates)+"s"
-        # #self.plotResults = plotResults
-        # self.plotPeakRecovery = False #plotPeakRecovery
-        # self.plotStateVars = False # plotStateVars
-        # self.plotKinetics = False #plotKinetics    
-        
-        # self.setParams(params)
-        # # delD = 100
-        # # IPIs = [500,1000,1500,2500,5000,7500,10000]#[10,35,55,105,155] #IPIs = [10,20,30,50,80,100]#,200] #[55,105,155,305,1005]#
-        # # onD = 200                # ???
-        # # phis = [1e14]#[irrad2flux(0.65, 470)]#[irrad2flux(10, 470)]#
-        # # Vs = [-70]#,-50] # Could relax this?
-        # #self.phis = phis
-        # #self.Vs = Vs
-        # #self.nPulses = 2 # Fixed at 2 for this protocol
-        # #self.dt = dt
-        # # Make self. ?
-        # #self.plotPeakRecovery = True
-        # #plotStateVars = True
-        # #self.prepare() # Called in setParams() and run()
-        # self.begT, self.endT = 0, self.totT
-
+    
     # def __next__(self):
         # if self.run >= self.nRuns:
             # raise StopIteration
