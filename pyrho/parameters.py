@@ -451,8 +451,8 @@ smallSignalAnalysis = ['saturate', 'step', 'sinusoid'] #{'sinusoid': True, 'step
                           # #('nRuns', 1,True,1,None,None),
                           # ('dt',0.1,True,1e-9,10,'ms'))
                           
-protParams['custom'].add_many(('phis',[1e14,1e15,1e16,1e17],True,None,None,None), #'photons/s/mm^2'
-                            ('Vs',[-70,-40,-10,10,40],True,None,None,None), #'mV'
+protParams['custom'].add_many(('phis',[1e15,1e16],True,None,None,None), #'photons/s/mm^2'
+                            ('Vs',[-70,-20,10],True,None,None,None), #'mV'
                             ('delD', 25, True, 0, 1e9, None), #'ms'
                             ('cycles',[[150.,50.]],True,None,None,None)) #'ms'#,
                             #('totT', 200.,True,0,None,'ms'),#)#,
