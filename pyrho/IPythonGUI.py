@@ -60,7 +60,7 @@ fitMethodsDict = OrderedDict([(m,i) for i,m in enumerate(methods)])
 statesDict = OrderedDict([(s,i) for i,s in enumerate(list(modelParams))]) #.keys()
 statesArray = modelList #statesArray = list(statesDict) #.keys() #[' 3', ' 4', ' 6'] # [u' 3',u' 4',u' 6'] ### Redundant!
 
-TabGroups = {'Fit':0, 'Models':1, 'Simulators':2, 'Protocols':3}
+TabGroups = {'Fit':0, 'Models':1, 'Protocols':2, 'Simulators':3}
 #TabGroups = {'Models':0, 'Simulators':1, 'Protocols':2}
 
 #clearDelay = 1.5 # Pause [s] before clearing text entry fields
@@ -703,7 +703,7 @@ def loadGUI():
     
     
     #### Run Bar container
-    runBar = widgets.HBox(children=[stateButtons,simDropdown,protDropdown,paramsButton,saveButton,verboseSlide,clearOutput,runButton]) #fitButton,
+    runBar = widgets.HBox(children=[stateButtons,protDropdown,simDropdown,paramsButton,saveButton,verboseSlide,clearOutput,runButton]) #fitButton,
     #####display(runBar) # Commented to nest in GUI box
     
 
@@ -1415,7 +1415,7 @@ def loadGUI():
     protBox = widgets.VBox(children=[protParamsHead, protParamsTabs]) #HBox
     
     ##### Configure tabs for abstraction layers #####
-    paramTabs = widgets.Tab(description='Parameter Settings', children=[fitBox,modelParamsTabs,simParamsTabs,protBox]) # protParamsTabs #fitParamsTabs #,values=['Model', 'Protocol']) #E_box,k_box
+    paramTabs = widgets.Tab(description='Parameter Settings', children=[fitBox,modelParamsTabs,protBox,simParamsTabs]) # protParamsTabs #fitParamsTabs #,values=['Model', 'Protocol']) #E_box,k_box
     #####display(paramTabs) # Commented to nest in GUI box
     paramTabs.selected_index = TabGroups['Models'] # Set to show model parameters initially
     paramTabs.visible = False
@@ -1508,9 +1508,8 @@ def loadGUI():
     ### Set Tab titles ### # Titles must be set after display of tabs
     paramTabs.set_title(0, 'Fitting Parameters')
     paramTabs.set_title(1, 'Model Parameters')
-    paramTabs.set_title(2, 'Simulator Parameters')
-    paramTabs.set_title(3, 'Protocol Parameters')
-    
+    paramTabs.set_title(2, 'Protocol Parameters')
+    paramTabs.set_title(3, 'Simulator Parameters')
     
     stateButtons.tooltips = modelTitles
     statesToFitButtons.tooltips = modelTitles
