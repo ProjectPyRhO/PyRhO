@@ -776,7 +776,7 @@ class protSinusoid(Protocol):
         self.ws = 2 * np.pi * self.fs / (1000) # Frequencies [rads/ms] (scaled from /s to /ms
         #self.sr = min([(1000)/(10*max(self.fs)), self.dt]) # Nyquist frequency - sampling rate (10*f) >= 2*f
         #self.sr = max([(10)*max(self.fs), 1000/self.dt]) # Nyquist frequency - sampling rate (10*f) >= 2*f
-        self.sr = 10*max(self.fs) # Nyquist frequency - sampling rate (10*f) >= 2*f
+        self.sr = int(round(10*max(self.fs))) # Nyquist frequency - sampling rate (10*f) >= 2*f
         self.dt = 1000/self.sr
         self.nRuns = len(self.ws)
         self.cycles = np.column_stack((self.onDs,self.offDs))
@@ -1056,7 +1056,7 @@ class protChirp(Protocol):
         #self.dt = Sim.prepare(self.getShortestPeriod())
         
         #self.sr = max([(10)*max(self.f0,self.fT), 1000/self.dt]) # Nyquist frequency - sampling rate (10*f) >= 2*f
-        self.sr = 10 * max(self.f0, self.fT) # Nyquist frequency - sampling rate (10*f) >= 2*f
+        self.sr = int(round(10 * max(self.f0, self.fT))) # Nyquist frequency - sampling rate (10*f) >= 2*f
         self.dt = 1000/self.sr
         #print(self.sr,self.dt)
         self.nRuns = 1 #len(self.ws)
