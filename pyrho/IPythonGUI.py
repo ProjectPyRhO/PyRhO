@@ -1340,6 +1340,8 @@ def loadGUI():
                 prot_pValArr[pInd][i] = widgets.Text(value=str(pSet[param].value), description=label) # np.asarray #param
             elif isinstance(pSet[param].value, bool):
                 prot_pValArr[pInd][i] = widgets.Dropdown(options=boolDict, value=pSet[param].value, description=label) #param
+            elif pSet[param].value is None: # Used for phi_ft
+                prot_pValArr[pInd][i] = widgets.Text(value=str(pSet[param].value), description=label)
             else:
                 if (pSet[param].min == None or pSet[param].min == -np.inf) or (pSet[param].max == None or pSet[param].max == np.inf):
                     prot_pValArr[pInd][i] = widgets.FloatText(value=pSet[param].value, description=label)
