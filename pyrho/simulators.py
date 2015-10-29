@@ -246,7 +246,8 @@ class simPython(Simulator):
         RhO.initStates(phi) # Reset state and time arrays from previous runs
         RhO.s0 = RhO.states[-1,:]   # Store initial state used
         start, end = RhO.t[0], RhO.t[0]+delD
-        t = np.linspace(start,end,int(round(((end-start)/dt)+1)), endpoint=True) #t_del = np.linspace(start,end,((end-start)/dt)+1, endpoint=True) # Time vector
+        nSteps = int(round(((end-start)/dt)+1))
+        t = np.linspace(start, end, nSteps, endpoint=True) #t_del = np.linspace(start,end,((end-start)/dt)+1, endpoint=True) # Time vector
         if verbose > 1:
             print("Trial initial conditions:{}".format(RhO.s0))
             if verbose > 2:
@@ -265,7 +266,8 @@ class simPython(Simulator):
             start = end
             #end = start + onD
             end = start + cycles[p,0] # onD
-            t = np.linspace(start,end,int(round(((end-start)/dt)+1)), endpoint=True) #t = np.linspace(start,end,((end-start)/dt)+1, endpoint=True)
+            nSteps = int(round(((end-start)/dt)+1))
+            t = np.linspace(start, end, nSteps, endpoint=True)
             onInd = len(RhO.t) - 1  # Start of on-phase
             offInd = onInd + len(t) - 1 # Start of off-phase
             RhO.pulseInd = np.vstack((RhO.pulseInd,[onInd,offInd]))
@@ -289,7 +291,8 @@ class simPython(Simulator):
             end = start + cycles[p,1] # offD
             #if (p+1) == nPulses: # Add (or subtract) extra time after (during) the off phase
             #    end += padD
-            t = np.linspace(start,end,int(round(((end-start)/dt)+1)), endpoint=True) #t = np.linspace(start,end,((end-start)/dt)+1, endpoint=True) # endpoint=True
+            nSteps = int(round(((end-start)/dt)+1))
+            t = np.linspace(start, end, nSteps, endpoint=True) #t = np.linspace(start,end,((end-start)/dt)+1, endpoint=True) # endpoint=True
             # Turn off light and set transition rates
             phi = 0  # Light flux
             RhO.setLight(phi)
@@ -328,7 +331,8 @@ class simPython(Simulator):
         RhO.initStates(phi) # Reset state and time arrays from previous runs
         RhO.s0 = RhO.states[-1,:]   # Store initial state used
         start, end = RhO.t[0], RhO.t[0]+delD #start, end = 0.00, delD
-        t = np.linspace(start,end,int(round(((end-start)/dt)+1)), endpoint=True) # Time vector
+        nSteps = int(round(((end-start)/dt)+1))
+        t = np.linspace(start, end, nSteps, endpoint=True) # Time vector
         if verbose > 1:
             print("Trial initial conditions:{}".format(RhO.s0))
         soln = odeint(RhO.solveStates, RhO.s0, t, args=(None,), Dfun=RhO.jacobian)
@@ -349,8 +353,8 @@ class simPython(Simulator):
             #offInd = onInd + int(round(stimD/dt)) # Consider rounding issues...
             offInd = onInd + int(round(onD/dt))
             RhO.pulseInd = np.vstack((RhO.pulseInd,[onInd,offInd]))
-            
-            t = np.linspace(start, end, int(round(((end-start)/dt)+1)), endpoint=True)
+            nSteps = int(round(((end-start)/dt)+1))
+            t = np.linspace(start, end, nSteps, endpoint=True)
             phi_t = phi_ts[p]
             
             if verbose > 1:
@@ -388,7 +392,7 @@ class simPython(Simulator):
         RhO.initStates(phi) # Reset state and time arrays from previous runs
         RhO.s0 = RhO.states[-1,:]   # Store initial state used
         start, end = RhO.t[0], RhO.t[0]+delD #start, end = 0.00, delD
-        t = np.linspace(start,end,int(round(((end-start)/dt)+1)), endpoint=True) #t_del = np.linspace(start,end,((end-start)/dt)+1, endpoint=True) # Time vector
+        t = np.linspace(start, end, int(round(((end-start)/dt)+1)), endpoint=True) #t_del = np.linspace(start,end,((end-start)/dt)+1, endpoint=True) # Time vector
         if verbose > 1:
             print("Trial initial conditions:{}".format(RhO.s0))
         soln = odeint(RhO.solveStates, RhO.s0, t, args=(None,), Dfun=RhO.jacobian) #t_del#delay # odeint(RhO.solveStates, RhO.s_0, t_del, Dfun=RhO.jacobian)
@@ -1721,7 +1725,8 @@ class simBrian(Simulator):
         RhO.initStates(phi) # Reset state and time arrays from previous runs
         RhO.s0 = RhO.states[-1,:]   # Store initial state used
         start, end = RhO.t[0], RhO.t[0]+delD #start, end = 0.00, delD
-        t = np.linspace(start,end,int(round(((end-start)/dt)+1)), endpoint=True) # Time vector
+        nSteps = int(round(((end-start)/dt)+1))
+        t = np.linspace(start, end, nSteps, endpoint=True) # int(round(((end-start)/dt)+1)), endpoint=True) # Time vector
         if verbose > 1:
             print("Trial initial conditions:{}".format(RhO.s0))
         soln = odeint(RhO.solveStates, RhO.s0, t, args=(None,), Dfun=RhO.jacobian)
@@ -1742,8 +1747,8 @@ class simBrian(Simulator):
             #offInd = onInd + int(round(stimD/dt)) # Consider rounding issues...
             offInd = onInd + int(round(onD/dt))
             RhO.pulseInd = np.vstack((RhO.pulseInd,[onInd,offInd]))
-            
-            t = np.linspace(start, end, int(round(((end-start)/dt)+1)), endpoint=True)
+            nSteps = int(round(((end-start)/dt)+1))
+            t = np.linspace(start, end, nSteps, endpoint=True) #int(round(((end-start)/dt)+1))
             phi_t = phi_ts[p]
             
             if verbose > 1:

@@ -77,7 +77,7 @@ def fitfV_orig(Vs, Iss, curveFunc, p0, RhO, fig=None):#, eqString): =plt.gcf()
     peakEq = eqString.format(v1=pFit[0],E=pFit[2],v0=pFit[1])
     
     Vrange = max(Vs)-min(Vs)
-    xfit=np.linspace(min(Vs),max(Vs),Vrange/.1) #Prot.dt
+    xfit=np.linspace(min(Vs), max(Vs), round(Vrange/.1)) #Prot.dt
     yfit=curveFunc(xfit,*popt)*sf
     
     #peakEq = eqString.format(*[round_sig(p,3) for p in popt])
@@ -2325,7 +2325,8 @@ def fit6states(fluxSet, quickSet, run, vInd, params, postOpt=True, method=defMet
         if plotResult:
             fig = plt.figure()
             ax = fig.add_subplot(111, aspect='equal')
-            tsmooth = np.linspace(0, max(tpulses), 101)
+            nPoints = 10*int(round(max(tpulses))+1) # 101
+            tsmooth = np.linspace(0, max(tpulses), nPoints)
             ax.plot(tpulses, tpeaks, 'x')
             ax.plot(tsmooth, devFunc(tsmooth, *popt))
             ax.plot(tsmooth, tsmooth,'--')
@@ -2544,7 +2545,8 @@ def fitRecovery_orig(t_peaks, I_peaks, totT, curveFunc, p0, eqString, ax=None):
 #     xfit=np.linspace(t_peaks[0]-ext-shift,t_peaks[-1]+ext-shift,xspan/dt)
         ax.plot(t_peaks, I_peaks, linestyle='', color='r', marker='*')
         #xfit = np.linspace(-shift,self.totT-shift,self.totT/self.dt) #totT
-        xfit = np.linspace(-shift, totT-shift, 1001) #totT
+        nPoints = 10*int(round(totT-shift)+1) # 1001
+        xfit = np.linspace(-shift, totT-shift, nPoints) #totT
         yfit = curveFunc(xfit,*popt)
         
         ax.plot(xfit+shift,yfit,linestyle=':',color='#aaaaaa',linewidth=1.5*mp.rcParams['lines.linewidth'])#,label="$v={:+} \mathrm{{mV}}$, $\phi={:.3g}$".format(V,phiOn)) # color='#aaaaaa' 
@@ -2724,7 +2726,8 @@ def fitRecovery(t_peaks, I_peaks, params, Ipeak0, Iss0, ax=None, verbose=verbose
     ax.set_ylim(ymin, ymax)
     xmin, xmax = ax.get_xlim()
     ax.set_xlim(xmin, xmax)
-    tsmooth = np.linspace(xmin, xmax, 1+(xmax-xmin)*10) #totT
+    nPoints = 10*int(round(xmax-xmin)+1)
+    tsmooth = np.linspace(xmin, xmax, nPoints)#1+(xmax-xmin)*10) #totT
     Ismooth = errExpRec(pRec, tsmooth) #curveFunc(tsmooth,*popt)
     
     #ax.plot(tsmooth+shift, Ismooth, linestyle=':', color='r')#, linewidth=1.5*mp.rcParams['lines.linewidth'])
@@ -2954,7 +2957,8 @@ def fitfV(Vs, Iss, params, relaxFact=2, verbose=verbose):
     #print('E = ',E)
     #print(pfV)
     if plotResult:
-        Vsmooth = np.linspace(min(Vs), max(Vs), 10*(max(Vs)-min(Vs))+1) #1+(max(Vs)-min(Vs))/.1
+        #nPoints = 10*int(round(endT-begT/self.dt))+1
+        Vsmooth = np.linspace(min(Vs), max(Vs), 10*round(max(Vs)-min(Vs))+1) #1+(max(Vs)-min(Vs))/.1
         fig, ax1 = plt.subplots()
         ax1.plot(Vsmooth, errFV(pfV, Vsmooth), 'b', label='$I_{ss}$')
         ax1.scatter(Vs, Iss, c='b', marker='x')

@@ -228,7 +228,8 @@ class Protocol(PyRhOobject): #object
         assert(nPulses == len(phi_ts))
         #t = np.linspace(0,totT,10*int(round(totT/self.dt))+1) #10001) # 
         #t = np.linspace(begT,endT,10*int(round(endT-begT/self.dt))+1)
-        t = np.linspace(begT, endT, 1001)
+        nPoints = 10*int(round(endT-begT/self.dt))+1
+        t = np.linspace(begT, endT, nPoints) #100001
         
         if ax == None:
             #fig = plt.figure()    
@@ -303,7 +304,8 @@ class Protocol(PyRhOobject): #object
     #     xfit=np.linspace(t_peaks[0]-ext-shift,t_peaks[-1]+ext-shift,xspan/dt)
             plt.plot(t_peaks, I_peaks, linestyle='', color='r', marker='*')
             #xfit=np.linspace(-shift,self.totT-shift,self.totT/self.dt) #totT
-            xfit=np.linspace(-shift, self.totT-shift, 1001) #totT
+            nPoints = 10*int(round(self.totT-shift/self.dt))+1 # 1001
+            xfit=np.linspace(-shift, self.totT-shift, nPoints) #totT
             yfit=curveFunc(xfit,*popt)
             
             plt.plot(xfit+shift,yfit,linestyle=':',color='#aaaaaa',linewidth=1.5*mp.rcParams['lines.linewidth'])#,label="$v={:+} \mathrm{{mV}}$, $\phi={:.3g}$".format(V,phiOn)) # color='#aaaaaa' 
@@ -865,7 +867,8 @@ class protSinusoid(Protocol):
                     #intIp = UnivariateSpline(self.fs, Ipeaks)
                     intIp = InterpolatedUnivariateSpline(self.fs, Ipeaks, k=splineOrder)
                     #intIp = interp1d(self.fs, Ipeaks, kind='cubic')
-                    fsmooth = np.logspace(np.log10(self.fs[0]), np.log10(self.fs[-1]), num=101)
+                    #nPoints = 10*int(round(abs(np.log10(self.fs[-1])-np.log10(self.fs[0]))+1))
+                    fsmooth = np.logspace(np.log10(self.fs[0]), np.log10(self.fs[-1]), num=1001)
                     self.axIp.plot(fsmooth, intIp(fsmooth))
                     fstar_p = self.fs[np.argmax(Ipeaks)]
                     fstars[phiInd,vInd] = fstar_p
@@ -1137,7 +1140,8 @@ class protChirp(Protocol):
                 #pEnd = self.onDs[p]
                 #delD = self.delDs[p]
                 onD = pEnd - pStart
-                tsmooth = np.linspace(0, onD, 10001)
+                nPoints = 10*int(round(onD/self.dt))+1 # 10001
+                tsmooth = np.linspace(0, onD, nPoints)
 
                 if self.linear:
                     ft = self.f0 + (self.fT-self.f0)*(tsmooth/onD)
