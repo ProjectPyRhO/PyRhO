@@ -79,6 +79,7 @@ class Protocol(PyRhOobject): #object
             self.cycles = np.asarray([self.cycles[0], offD])
         self.cycles = np.asarray(self.cycles)
         #self.dt = min(min(min(self.cycles)), self.delD)
+        #self.dt = self.getShortestPeriod()
         self.nPulses = self.cycles.shape[0]
         # Create a new multi-run cycle array... 
         #self.delDs = np.array([self.delD] * self.nRuns)

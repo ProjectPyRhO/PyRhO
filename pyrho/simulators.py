@@ -32,13 +32,13 @@ class Simulator(PyRhOobject): #object
             self.dt = dt #min(self.h.dt, dt)
             if config.verbose > 0:
                 print('Time step reduced to {}ms by protocol!'.format(self.dt))
-        return # self.dt
+        return self.dt
         
     def prepare(self, Prot):
         """Function to prepare the simulator according to the protocol and rhodopsin"""
         Prot.prepare()
         dt = Prot.getShortestPeriod()
-        self.checkDt(dt)
+        Prot.dt = self.checkDt(dt)
         return # self.dt
         
     def run(self, verbose=verbose): 
@@ -574,10 +574,10 @@ class simNEURON(Simulator):
         """Function to prepare the simulator according to the protocol and rhodopsin"""
         Prot.prepare()
         
-        if self.CVode is False:
-            dt = Prot.getShortestPeriod()
-            self.checkDt(dt)
-            self.h.dt = self.dt
+        #if self.CVode is False: # ~ Always set Prot.dt
+        dt = Prot.getShortestPeriod()
+        Prot.dt = self.checkDt(dt)
+        self.h.dt = self.dt
         
         # Include code to set Vclamp = False if Prot.Vs=[None]
         if self.Vclamp is False:
@@ -1259,9 +1259,12 @@ class simNEURON(Simulator):
             #print(axV.get_ylim())
             #axV.set_ylim(axV.get_ylim())
             ymin, ymax = axV.get_ylim()
-            if ymax < 0: ### HACK to fix matplotlib bug
-                axV.set_ylim((ymin,0))
-            plt.tight_layout() ### Bugged when min and max are negative?
+            
+            #if ymax < 0: ### HACK to fix matplotlib bug
+            #    axV.set_ylim((ymin,0))
+            if ymax > ymin:
+                plt.tight_layout() ### Bugged when min and max are negative?
+            
             #figName = '{}Vm{}s-{}-{}-{}'.format(Prot.protocol,RhO.nStates,run,phiInd,vInd)
             figName = '{}Vm{}s'.format(Prot.protocol,RhO.nStates)
             fileName = os.path.join(fDir, figName+"."+config.saveFigFormat)
@@ -1408,7 +1411,7 @@ class simBrian(Simulator):
         """Function to compare simulator's timestep to the timestep required by the protocol"""
         Prot.prepare()
         dt = Prot.getShortestPeriod()
-        self.checkDt(dt)
+        Prot.dt = self.checkDt(dt)
         self.br.defaultclock.dt = self.dt*ms
         self.rasters = Prot.genContainer()
         return # self.dt
