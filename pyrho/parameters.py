@@ -477,7 +477,7 @@ protParams['step'].add_many(('phis',[1e16,1e17],True,None,None,None), #'photons/
                             ('cycles',[[150.,100.]],True,None,None,None))#, #'ms'#,
 
 
-protParams['sinusoid'].add_many(('phis',[1e9],True,None,None,None), #'photons/s/mm^2'
+protParams['sinusoid'].add_many(('phis',[1e12],True,None,None,None), #'photons/s/mm^2'
                             ('phi0',[0],True,None,None,None), #'photons/s/mm^2'
                             ('startOn',True,False,False,True,None),
                             ('Vs',[-70],True,None,None,None), #'mV'
@@ -486,7 +486,7 @@ protParams['sinusoid'].add_many(('phis',[1e9],True,None,None,None), #'photons/s/
                             ('cycles',[[10000.,50.]],True,None,None,None)) #'ms'
 
                             
-protParams['chirp'].add_many(('phis',[1e14],True,None,None,None), # 'photons/s/mm^2'
+protParams['chirp'].add_many(('phis',[1e12],True,None,None,None), # 'photons/s/mm^2'
                             ('phi0',[0],True,None,None,None), # 'photons/s/mm^2'
                             ('linear',True,True,False,True,None), # False := exponential
                             ('startOn',False,True,False,True,None),
@@ -497,7 +497,7 @@ protParams['chirp'].add_many(('phis',[1e14],True,None,None,None), # 'photons/s/m
                             ('fT',1000,True,None,None,None)) # 'Hz'
 
                             
-protParams['ramp'].add_many(('phis',[1e12,1e13,1e14,1e15,1e16,1e17,1e18],True,None,None,None), # 'photons/s/mm^2'
+protParams['ramp'].add_many(('phis',[1e16,1e17,1e18],True,None,None,None), # 'photons/s/mm^2' #1e12,1e13,1e14,1e15,
                             ('phi_ton',0,True,None,None,None), # 'photons/s/mm^2'
                             ('Vs',[-70],True,None,None,None), # 'mV'
                             ('delD', 25, True, 0, 1e9, None), # 'ms'
@@ -511,7 +511,7 @@ protParams['delta'].add_many(('phis',[1e20],True,None,None,None), # 'photons/s/m
                             ('totT', 25.,True,0,None,None)) # 'ms'
 
                             
-protParams['rectifier'].add_many(('phis',[1e16],True,None,None,None), # 'photons/s/mm^2'
+protParams['rectifier'].add_many(('phis',[1e16],True,None,None,None), # 'photons/s/mm^2' # Change to 1e17?
                             ('Vs',[-100,-70,-40,-10,20,50,80],True,None,None,None), # 'mV' #[-100,-80,-60,-40,-20,0,20,40,60,80]
                             ('delD', 50, True, 0, 1e9, None), # 'ms'
                             ('cycles',[[250.,100.]],True,None,None,None)) # 'ms' #,
