@@ -1236,13 +1236,14 @@ class simNEURON(Simulator):
                             plotLight(pulses-delD) ### HACK
                             
             plt.ylabel('$\mathrm{Membrane\ Potential\ [mV]}$') #axV.set_ylabel('Voltage [mV]')
-            plt.xlim((-delD, self.h.tstop - delD)) ### HACK
+            axV.set_xlim((-delD, self.h.tstop - delD)) ### HACK
             #plt.xlabel('$\mathrm{Time\ [ms]}$')
             plt.xlabel('$\mathrm{Time\ [ms]}$', position=(xLabelPos,0), ha='right')
             #axI.set_xlim(0,tstop)
             
+            
             axV.spines['right'].set_color('none')
-            axV.spines['bottom'].set_position('zero') # x-axis
+            #axV.spines['bottom'].set_position('zero') # x-axis # Caused the plot to be too big!
             axV.spines['top'].set_color('none')
             axV.spines['left'].set_smart_bounds(True)
             axV.spines['bottom'].set_smart_bounds(True)
@@ -1254,7 +1255,9 @@ class simNEURON(Simulator):
             axV.grid(b=True, which='minor', axis='both', linewidth=.2)
             axV.grid(b=True, which='major', axis='both', linewidth=1)
             
-            plt.legend(Prot.PD.legLabels)
+            if len(Prot.PD.legLabels) > 0 and Prot.PD.legLabels[0] is not '':
+                plt.legend(Prot.PD.legLabels)
+                #print(Prot.PD.legLabels)
             #print(axV.get_xlim())
             #print(axV.get_ylim())
             #axV.set_ylim(axV.get_ylim())
@@ -1262,8 +1265,9 @@ class simNEURON(Simulator):
             
             #if ymax < 0: ### HACK to fix matplotlib bug
             #    axV.set_ylim((ymin,0))
-            if ymax > ymin:
-                plt.tight_layout() ### Bugged when min and max are negative?
+            #if ymax > ymin:
+            plt.tight_layout() ### Bugged when min and max are negative?
+            
             
             #figName = '{}Vm{}s-{}-{}-{}'.format(Prot.protocol,RhO.nStates,run,phiInd,vInd)
             figName = '{}Vm{}s'.format(Prot.protocol,RhO.nStates)
