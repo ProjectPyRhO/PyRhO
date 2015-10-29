@@ -69,7 +69,7 @@ def fitfV_orig(Vs, Iss, curveFunc, p0, RhO, fig=None):#, eqString): =plt.gcf()
     eqString = r'$f(V) = \frac{{{v1:.3}}}{{V-{E:+.2f}}} \cdot \left[1-\exp\left({{-\frac{{V-{E:+.2f}}}{{{v0:.3}}}}}\right)\right]$'
     psi = RhO.calcPsi(RhO.steadyStates)
     #sf = RhO.A * RhO.gbar * psi * 1e-6 # Six-state only
-    sf = RhO.g * psi * 1e-6 
+    sf = RhO.g0 * psi * 1e-6 
     fVs = np.asarray(Iss)/sf # np.asarray is not needed for the six-state model!!!
     popt, pcov = curve_fit(curveFunc, Vs, fVs, p0=p0) # (curveFunc, Vs, Iss, p0=p0)
     pFit = [round_sig(p,3) for p in popt]
@@ -215,7 +215,7 @@ def fit3statesIndiv(I,t,onInd,offInd,phi,V,Gr0,gmax,Ipmax,params=None,method=def
         # gmax = Ipmax/(dataset['delta'].V-E)
         # dataset['delta'].gmax = gmax
     
-    p3s.add('g', value=gmax, vary=False) # derived['gmax'] = True
+    p3s.add('g0', value=gmax, vary=False) # derived['gmax'] = True
     # Change the model to be consistent so that g = gbar * A
     
     
@@ -356,7 +356,7 @@ def fit3statesIndiv(I,t,onInd,offInd,phi,V,Gr0,gmax,Ipmax,params=None,method=def
     
     RhO = selectModel(3)
     #RhO.setParams(d3sp)
-    RhO.g = p3s['g'].value              # 16700     [pS]
+    RhO.g0 = p3s['g0'].value              # 16700     [pS]
     RhO.k = p3s['k'].value              # 0.545e-14 [ms^-1 * photons^-1 * s * mm^2]
     RhO.Gr0 = p3s['Gr0'].value          # 1/5000    [ms^-1] #Gr_dark
     RhO.Gr1 = p3s['Gr1'].value        # 1/165     [ms^-1] #Gr_light
@@ -648,7 +648,7 @@ def fit4statesIndiv(I,t,onInd,offInd,phi,V,Gr0,gmax,params=None,method=defMethod
     ### phi0, gamma and E...
     
     ### 1. Load data for 'delta' protocol to find Ipeak in order to calculate gmax : g # Make model consistent so that g = gbar * A
-    p4s.add('g', value=gmax, vary=False) # derived['gmax'] = True
+    p4s.add('g0', value=gmax, vary=False) # derived['gmax'] = True
             
     ### 2. Fit exponential to peak recovery plots : Gr0 # Is this a valid assumption for the 4-state model?
     p4s.add('Gr0', value=Gr0, vary=False)
@@ -707,8 +707,8 @@ def fit4statesIndiv(I,t,onInd,offInd,phi,V,Gr0,gmax,params=None,method=defMethod
         pOn = params #p4s
     else:
         pOn = Parameters()
-    if 'g' not in pOn:
-        pOn.add('g', value=gmax, vary=False) # derived['gmax'] = True
+    if 'g0' not in pOn:
+        pOn.add('g0', value=gmax, vary=False) # derived['gmax'] = True
     if 'Gr0' not in pOn:
         pOn.add('Gr0', value=Gr0, vary=False)
     
@@ -803,7 +803,7 @@ def fit4statesIndiv(I,t,onInd,offInd,phi,V,Gr0,gmax,params=None,method=defMethod
         p4s.add('kb',value=pOn['kb'].value,vary=False)
     
         # Generate Rhodopsin model
-        RhO.g = p4s['g'].value              # 16700     [pS]
+        RhO.g0 = p4s['g0'].value              # 16700     [pS]
         RhO.Gr0 = p4s['Gr0'].value            # 1/5000    [ms^-1]
         RhO.k1 = p4s['k1'].value            #           [ms^-1 * photons^-1 * s * mm^2]
         RhO.k2 = p4s['k2'].value            #           [ms^-1 * photons^-1 * s * mm^2]
@@ -1010,9 +1010,9 @@ def fitCurve(dataSet, nStates=3, params=None):
         #Vsat = dataSet['custom'].V
     print('Ipmax = {}'.format(Ipmax))
     
-    ### g        
-    if 'g' in params: ###Ipeak
-        gmax = params['g'].value        
+    ### g0        
+    if 'g0' in params: ###Ipeak
+        gmax = params['g0'].value        
     elif 'delta' in dataSet:
         if hasattr(dataSet['delta'], 'gbar_est'):
             gmax = dataSet['delta'].gbar_est
@@ -1024,7 +1024,7 @@ def fitCurve(dataSet, nStates=3, params=None):
         gmax = Ipmax/(Vsat-E) # Assuming [O_p] = 1
         dataSet['delta'].gbar_est = gmax
         ### calcG()
-    print('g = {}'.format(gmax))
+    print('g0 = {}'.format(gmax))
         
     # Change the model to be consistent so that g = gbar * A
     
@@ -2020,7 +2020,7 @@ def fit4states(fluxSet, run, vInd, params, postOpt=True, method=defMethod, verbo
     
     # Set parameters from general rhodopsin analysis routines
     #Gr0,gmax
-    copyParam('g',params,pOns) # pOns.add('g',value=gmax,vary=False)
+    copyParam('g0',params,pOns) # pOns.add('g0',value=gmax,vary=False)
     copyParam('Gr0',params,pOns) # pOns.add('Gr0',value=Gr0,vary=False)
     #copyParam('phi0',params,pOns) # pOns.add('phi0',value=5e18,min=1e14,max=1e20,vary=False) ################# Set this to be above the max flux??? 10**ceil(log10(max(phis)))
     copyParam('E',params,pOns)
@@ -2394,7 +2394,7 @@ def fit6states(fluxSet, quickSet, run, vInd, params, postOpt=True, method=defMet
     
     # Set parameters from general rhodopsin analysis routines
     #Gr0,gmax
-    copyParam('g',params,pOns) # pOns.add('g',value=gmax,vary=False)
+    copyParam('g0',params,pOns) # pOns.add('g0',value=gmax,vary=False)
     copyParam('Gr0',params,pOns) #Gr0 # pOns.add('Gr0',value=Gr0,vary=False)
     copyParam('E',params,pOns)
     copyParam('v0',params,pOns)
@@ -2846,11 +2846,11 @@ def fitfV(Vs, Iss, params, relaxFact=2, verbose=verbose):
     Iss = np.asarray(Iss)
     #Vs = np.asarray(Vs)
     
-    if 'g' in params:
-        g = params['g'].value
+    if 'g0' in params:
+        g0 = params['g0'].value
     else:
-        g = 25000
-    pseudoV1 = calcV1(pfV['E'].value, pfV['v0'].value) * (g * 1e-6 * 0.5) # g0*f(phi)*v1 (assuming I in nA and f(phi)=0.5)
+        g0 = 25000
+    pseudoV1 = calcV1(pfV['E'].value, pfV['v0'].value) * (g0 * 1e-6 * 0.5) # g0*f(phi)*v1 (assuming I in nA and f(phi)=0.5)
     
     Emeth = 'cf' #''#'model'#
     if Emeth == 'cf': # No bounds or expressions applied. Uses the Levenberg-Marquardt algorithm
@@ -2941,7 +2941,7 @@ def fitfV(Vs, Iss, params, relaxFact=2, verbose=verbose):
     #pfV['E'].min = pfV['E'].value - 5
     #pfV['E'].max = pfV['E'].value + 5
     
-    ###print('Estimate of f_phi = {}'.format(Ipeak/(pfV['g'].value*pfV['v1'].value)))
+    ###print('Estimate of f_phi = {}'.format(Ipeak/(pfV['g0'].value*pfV['v1'].value)))
     
     E = pfV['E'].value
     v0 = pfV['v0'].value
@@ -3373,10 +3373,10 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, relaxFact=2, method
     print('Estimating g0 from Ipmax = {:.3} nA: '.format(Ipmax), end='')
     #print('Ipmax = {} nA'.format(Ipmax))
     
-    ### Maximum conductance: g
+    ### Maximum conductance: g0
     assert(Vpmax != params['E'].value)
     g0 = 1e6 * Ipmax / (Vpmax - params['E'].value)
-    params['g'].value = g0
+    params['g0'].value = g0
     print('g0 = {} pS'.format(round_sig(g0, sig=3)))
     
     
@@ -3469,8 +3469,8 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, relaxFact=2, method
         #Vsat = dataSet['custom'].V
     
     ### Maximum conductance: g        
-    # if 'g' in params: ###Ipeak
-        # gmax = params['g'].value        
+    # if 'g0' in params: ###Ipeak
+        # gmax = params['g0'].value        
     # elif 'delta' in dataSet:
         # if hasattr(dataSet['delta'], 'gbar_est'):
             # gmax = dataSet['delta'].gbar_est
@@ -3483,7 +3483,7 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, relaxFact=2, method
         # gmax = Ipmax/(Vsat-E) # Assuming [O_p] = 1
         # dataSet['delta'].gbar_est = gmax
         ### calcG()
-    # print('g = {}'.format(gmax))
+    # print('g0 = {}'.format(gmax))
         
     # Change the model to be consistent so that g = gbar * A
     
@@ -3607,9 +3607,9 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, relaxFact=2, method
         #fitParams['useIR'].vary = False
         #fitParams['v0'].vary = False
         #fitParams['v1'].vary = False
-    #fitParams['g'].value = gmax; fitParams['g'].vary=False
-    #fitParams['g'].value = gmax; fitParams['g'].min = gmax*1/3; fitParams['g'].max = gmax*5/3 
-    #fitParams['g'].value = gmax*1.25; fitParams['g'].min = gmax*2/3; fitParams['g'].max = gmax*5/3 
+    #fitParams['g0'].value = gmax; fitParams['g0'].vary=False
+    #fitParams['g0'].value = gmax; fitParams['g0'].min = gmax*1/3; fitParams['g0'].max = gmax*5/3 
+    #fitParams['g0'].value = gmax*1.25; fitParams['g0'].min = gmax*2/3; fitParams['g0'].max = gmax*5/3 
     
     
     #if verbose > 0:

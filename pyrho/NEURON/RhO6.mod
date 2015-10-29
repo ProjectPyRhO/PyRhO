@@ -5,7 +5,7 @@ NEURON {
     POINT_PROCESS RhO6
     :ELECTRODE_CURRENT i :IRhO
     NONSPECIFIC_CURRENT i :IRhO     : This could be changed to update a specific ion
-    RANGE E, gam, v0, v1, g, gph, gv, i :IRhO :iChR   : , gbar
+    RANGE i, E, gam, v0, v1, g0 :, fphi, fv, i :IRhO :iChR   : , gbar
     :RANGE e1, e3, b10, a2dark, a2light, b2dark, b2light, a30, a40
     RANGE k1, Go1, Gf0, kf, Gd2, Gr0, Gd1, Gb0, kb, Go2, k2, p, q
     :RANGE Er, flux, delay, ton, toff, num
@@ -25,41 +25,41 @@ UNITS {
 PARAMETER { : Initialise parameters to defaults. These may be changed through hoc files
 
 : Illumination
-    phiOn   = 1e12  :(photons/s mm2):(mW/mm2): irradiance            _______
-    delD    = 25    (ms) <0, 1e9>   : delay before ON phase         |  ON   |  OFF
-    onD     = 100   (ms) <0, 1e9>   : duration of ON phase  <-delD->|<-onD->|<-offD->
-    offD    = 50    (ms) <0, 1e9>   : duration of OFF phase ________|       |________
-    nPulses = 1                     : num pulses to deliver         <-- one pulse -->
+    phiOn   = 1e18  :(photons/s mm2):(mW/mm2): irradiance                _______
+    delD    = 25    (ms)    <0, 1e9>    : delay before ON phase         |  ON   |  OFF
+    onD     = 100   (ms)    <0, 1e9>    : duration of ON phase  <-delD->|<-onD->|<-offD->
+    offD    = 50    (ms)    <0, 1e9>    : duration of OFF phase ________|       |________
+    nPulses = 1     (1)     <0, 1e3>    : num pulses to deliver         <-- one pulse -->
 
 : Illumination constants   
 :    Er0     = 0.1   : (mW/mm2)
     :phi0    = 1e14  :(photons/s mm2)
 :   lambda  = 470   : (nm)
-    phim    = 1e16  :(photons/s mm2)
+    phim    = 1e16  :(photons/s mm2)    : Hill Constant
 
 : Conductance
     E       = 0     (mV) : Channel reversal potential
     gam     = 0.05  (1)  : Ratio of open-state conductances
-    g       = 75000 (pS) : gbar : defined in the main prog as HR_expression*Area
+    g0      = 75000 (pS) : gbar : defined in the main prog as HR_expression*Area
 
 : Inward rectifier conductance    : reversal potential for NpHr is about -400mV        e_rev = -400        :(mV)  
     v0      = 43    (mV)
     v1      = 4.1   (mV)    
 
 : State transition rate parameters (/ms)
-    k1     = 5         (/ms)
-    Go1      = 1         (/ms)
+    k1      = 5         (/ms)
+    Go1     = 1         (/ms)
     Gf0     = 0.022     (/ms)
-    kf     = 0.0135    (/ms)
-    Gd2      = 0.025     (/ms)
-    Gr0      = 0.00033   (/ms)
-    Gd1      = 0.13      (/ms)
+    kf      = 0.0135    (/ms)
+    Gd2     = 0.025     (/ms)
+    Gr0     = 0.00033   (/ms)
+    Gd1     = 0.13      (/ms)
     Gb0     = 0.011     (/ms)
-    kb     = 0.0048    (/ms)
-    Go2      = 1         (/ms)
-    k2     = 1.1       (/ms)
-    p       = 0.7       (1)
-    q       = 0.47      (1)
+    kb      = 0.0048    (/ms)
+    Go2     = 1         (/ms)
+    k2      = 1.1       (/ms)
+    p       = 0.7       (1)     : Hill Coefficient Ga{1,2}
+    q       = 0.47      (1)     : Hill Coefficient G{f,b}
     
 :    e1      = 0.004 (/ms)     
 :    b10     = 0.08  (/ms)   : Gd1 O1->C1
@@ -80,7 +80,7 @@ ASSIGNED {
     phi     :(photons/s mm2)
 :    flux        : "flux" should now be "intensity". Er is normalised to be dimensionless
 
-    Ga1      (/ms)
+    Ga1     (/ms)
     :a2      (/ms)
     Gf      (/ms)
     :a4      (/ms)
@@ -102,13 +102,13 @@ ASSIGNED {
 :    b32     (/ms)      : ==b4 = b40*(phi/phi0)
 :    a4      (/ms)      : ==a6 (const)
     
-    gph     (1) : Fractional conductance
-    gv      (1) : Fractional conductance
+    fphi    (1) : Fractional conductance
+    fv      (1) : Fractional conductance
     :g       (1) : Fractional conductance
     v       (mV) 
     :on            : Flag for light
     tally         : Number of pulses left to deliver
-    i      (nA)
+    i       (nA)
     :IRhO    (nA)
     :iChR
 }
@@ -119,11 +119,11 @@ STATE { C1 I1 O1 O2 I2 C2 }
 
 BREAKPOINT {
     SOLVE kin METHOD sparse
-    gph     = O1+gam*O2        : light dependency op=[0:1] 
-    gv      = (1-exp(-(v-E)/v0))/((v-E)/v1) : voltage dependency (equal 1 at Vm=-70mV)
-    :g       = gph*gv            : total relative conductance
+    fphi    = O1+gam*O2                     : light dependency op=[0:1] 
+    fv      = (1-exp(-(v-E)/v0))/((v-E)/v1) : voltage dependency (equal 1 at Vm=-70mV)
+    :g   = fphi*fv            : total relative conductance
     :i   = gbar*g*(v-E)*(1e-6)       : +ve ELECTRODE_CURRENT depolarises the cell :IRhO
-    i = g*gph*gv*(v-E)*(1e-6)
+    i       = g0*fphi*fv*(v-E)*(1e-6)       : Photocurrent
     :iChR   = -i                : for plotting (by convention depolar. curr. are -ve)
 }
 
@@ -161,7 +161,7 @@ KINETIC kin {
     ~ I2 <-> C2 (0, Ga2) :(0, b32)
     ~ O2 <-> C2 (Gd2, 0) :(a3, 0)    
     ~ C2 <-> C1 (Gr0, 0) :(a4, 0)
-    CONSERVE C1 + I1 + O1 + O2 + I2 + C2 = 1
+    CONSERVE C1 + I1 + O1 + O2 + I2 + C2 = 1 : Ignored when CVode is active. Add a normalisation function instead?
 }
 
 

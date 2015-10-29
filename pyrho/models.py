@@ -338,7 +338,7 @@ class RhO_3states(RhodopsinModel):
     constRates = ['Gd']
     constLabels = ['$G_d$']
     
-    paramsList = ['g', 'phim', 'k', 'p', 'Gd', 'Gr0', 'Gr1', 'E', 'v0', 'v1'] # List of model constants    
+    paramsList = ['g0', 'phim', 'k', 'p', 'Gd', 'Gr0', 'Gr1', 'E', 'v0', 'v1'] # List of model constants    
     
     s_0 = np.array([1,0,0])          # Default: Initialise in dark 
     phi_0 = 0.0
@@ -358,7 +358,7 @@ class RhO_3states(RhodopsinModel):
                 $$ G_a(\phi) = k\\frac{\phi^p}{\phi^p + \phi_m^p} $$
                 $$ G_r(\phi) = G_{r0} + \mathcal{H}(\phi) \cdot G_{r1} $$
                 $$ f(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1} $$
-                $$ I_{\phi} = g \cdot O \cdot f(v) \cdot (v-E) $$
+                $$ I_{\phi} = g_0 \cdot O \cdot f(v) \cdot (v-E) $$
                 """
     _latex =   ["$\dot{C} = G_{r}(\phi)D - G_{a}(\phi)C$", 
                 "$\dot{O} = G_{a}(\phi)C - G_{d}O$",
@@ -367,7 +367,7 @@ class RhO_3states(RhodopsinModel):
                 "$G_a(\phi) = k\\frac{\phi^p}{\phi^p + \phi_m^p}$",
                 "$G_r(\phi) = G_{r0} + \mathcal{H}(\phi) \cdot G_{r1}$",
                 "$f(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1}$",
-                "$I_{\phi} = g \cdot O \cdot f(v) \cdot (v-E)$"]
+                "$I_{\phi} = g_0 \cdot O \cdot f(v) \cdot (v-E)$"]
     # $$ G_r = G_{r0} + G_{r1}(\phi) $$
     #"""
     #\begin{align*}
@@ -381,8 +381,8 @@ class RhO_3states(RhodopsinModel):
     #\end{align}
     #"""                
                 
-    eqIss = """$I_{SS} = \bar{g} \cdot \frac{G_a \cdot G_r}{G_d \cdot (G_r + G_a) + G_a \cdot G_r} \cdot (v-E) 
-    = \bar{g} \cdot \frac{\tau_d}{\tau_d + \tau_r + \tau_\phi} \cdot (v-E)$"""
+    eqIss = """$I_{SS} = \bar{g_0} \cdot \frac{G_a \cdot G_r}{G_d \cdot (G_r + G_a) + G_a \cdot G_r} \cdot (v-E) 
+    = \bar{g_0} \cdot \frac{\tau_d}{\tau_d + \tau_r + \tau_\phi} \cdot (v-E)$"""
     
     # phi0 = 1e14 # Normalising light intensity parameter [photons * s^-1 * mm^-2] ~ 1/10 of threshold
     
@@ -397,7 +397,7 @@ class RhO_3states(RhodopsinModel):
             Ga = int(phi>0)*k*((phi**p)/(phi**p+phim**p)) : second**-1
             Gr = Gr0 + int(phi>0)*Gr1 : second**-1
             fv = (1-exp(-(v-E)/v0))/((v-E)/v1) : 1
-            I = g*S_O*fv*(v-E) : amp
+            I = g0*S_O*fv*(v-E) : amp
             stimulus : 1
             '''
 
@@ -445,17 +445,8 @@ class RhO_3states(RhodopsinModel):
         report += 'Gd   = {:12.3g}\n'.format(self.Gd)
         report += 'Gr0  = {:12.3g}\n'.format(self.Gr0)
         report += 'Gr1  = {:12.3g}\n'.format(self.Gr1)
-        report += 'g    = {:12.3g}\n'.format(self.g)
+        report += 'g0   = {:12.3g}\n'.format(self.g0)
         report += '----------------------------'
-        #print('Three-state model parameters')
-        #print('============================')
-        #print('|  E        = {:12.3g} |'.format(self.E))
-        #print('|  k        = {:12.3g} |'.format(self.k))
-        #print('|  Gd       = {:12.3g} |'.format(self.Gd))
-        #print('|  Gr_dark  = {:12.3g} |'.format(self.Gr_dark))
-        #print('|  Gr_light = {:12.3g} |'.format(self.Gr_light))
-        #print('|  g        = {:12.3g} |'.format(self.g))
-        #print('----------------------------')
         return report
         
 
@@ -556,7 +547,7 @@ class RhO_3states(RhodopsinModel):
         if states is None:
             states = self.states
         O = states[:,1] # time x C,O,D
-        I_RhO = self.g*O*self.calcfV(V)*(V-self.E)
+        I_RhO = self.g0*O*self.calcfV(V)*(V-self.E)
         return I_RhO * 1e-6 # pS * mV * 1e-6 = nA
     
     def calcPsi(self, states=None):#, gam=None):
@@ -670,7 +661,7 @@ class RhO_4states(RhodopsinModel):
     constRates = ['Gd1', 'Gd2', 'Gr0']
     constLabels = ['$G_{d1}$', '$G_{d2}$', '$G_{r0}$']
     
-    paramsList = ['g', 'gam', 'phim', 'k1', 'k2', 'p', 'Gf0', 'kf', 'Gb0', 'kb', 'q', 'Gd1', 'Gd2', 'Gr0', 'E', 'v0', 'v1'] # List of model constants
+    paramsList = ['g0', 'gam', 'phim', 'k1', 'k2', 'p', 'Gf0', 'kf', 'Gb0', 'kb', 'q', 'Gd1', 'Gd2', 'Gr0', 'E', 'v0', 'v1'] # List of model constants
     
     s_0 = np.array([1,0,0,0])       # Default: Initialise in the dark
     phi_0 = 0.0  # Instantaneous Light flux
@@ -694,7 +685,7 @@ class RhO_4states(RhodopsinModel):
                 $$ G_{a2}(\phi) = k_2\\frac{\phi^p}{\phi^p + \phi_m^p} $$
                 $$$$
                 $$ f(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1} $$
-                $$ I_{\phi} = g (O_1+\gamma O_2) f(v) (v-E) $$
+                $$ I_{\phi} = g_0 \cdot (O_1+\gamma O_2) \cdot f(v) \cdot (v-E) $$
                 """     
     
                 # """
@@ -734,7 +725,7 @@ class RhO_4states(RhodopsinModel):
             fv = (1-exp(-(v-E)/v0))/((v-E)/v1) : 1
             phi : meter**-2*second**-1
             stimulus : 1
-            I = g*(S_O1+gam*S_O2)*fv*(v-E) : amp
+            I = g0*(S_O1+gam*S_O2)*fv*(v-E) : amp
             '''
     
     # def __init__(self, params=modelParams['4'], rhoType='Rhodopsin'): #E=0.0, gam=0.05, phi0=1e14, #, A=31192)
@@ -789,7 +780,7 @@ class RhO_4states(RhodopsinModel):
         report += 'kb   = {:12.3g}\n'.format(self.kb)
         report += 'Gf0  = {:12.3g}\n'.format(self.Gf0)
         report += 'Gb0  = {:12.3g}\n'.format(self.Gb0)
-        report += 'g    = {:12.3g}\n'.format(self.g)
+        report += 'g0   = {:12.3g}\n'.format(self.g0)
         report += '---------------------------'
         return report
     
@@ -862,7 +853,7 @@ class RhO_4states(RhodopsinModel):
             states = self.states
         O1 = states[:,1]
         O2 = states[:,2]
-        I_RhO = self.g*(O1 + self.gam*O2)*self.calcfV(V)*(V-self.E)
+        I_RhO = self.g0*(O1 + self.gam*O2)*self.calcfV(V)*(V-self.E)
         return I_RhO * 1e-6 # pS * mV * 1e-6 = nA
     
     def calcPsi(self, states=None):#, gam=None):
@@ -913,7 +904,7 @@ class RhO_6states(RhodopsinModel):
     constRates = ['Go1', 'Go2', 'Gd1', 'Gd2', 'Gr0']
     constLabels = ['$G_{o1}$', '$G_{o2}$', '$G_{d1}$', '$G_{d2}$', '$G_{r0}$']
     
-    paramsList = ['g', 'gam', 'phim', 'k1', 'k2', 'p', 'Gf0', 'kf', 'Gb0', 'kb', 'q', 'Go1', 'Go2', 'Gd1', 'Gd2', 'Gr0', 'E', 'v0', 'v1'] # List of model constants    
+    paramsList = ['g0', 'gam', 'phim', 'k1', 'k2', 'p', 'Gf0', 'kf', 'Gb0', 'kb', 'q', 'Go1', 'Go2', 'Gd1', 'Gd2', 'Gr0', 'E', 'v0', 'v1'] # List of model constants    
     
     s_0 = np.array([1,0,0,0,0,0])  # [s1_0=1, s2_0=0, s3_0=0, s4_0=0, s5_0=0, s6_0=0] # array not necessary
     phi_0 = 0.0     # Default initial flux
@@ -941,7 +932,7 @@ class RhO_6states(RhodopsinModel):
                 $$ G_{a2}(\phi) = k_{2} \\frac{\phi^p}{\phi^p + \phi_m^p} $$
                 $$$$
                 $$ f(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1} $$
-                $$ I_{\phi} = g (O_1+\gamma O_2) f(v)(v-E) $$
+                $$ I_{\phi} = g_0 \cdot (O_1+\gamma O_2) \cdot f(v) \cdot (v-E) $$
                 """    
     
     # phi = 0.0  # Instantaneous Light flux
@@ -967,7 +958,7 @@ class RhO_6states(RhodopsinModel):
             fv = (1-exp(-(V-E)/v0))/((V-E)/v1) : 1
             phi : meter**-2*second**-1 (shared)
             stimulus : boolean (shared) #1
-            I = g*(S_O1+gam*S_O2)*fv*(V-E) : amp
+            I = g0*(S_O1+gam*S_O2)*fv*(V-E) : amp
             '''
     #stimulus = (phi>0) : 1
     
@@ -1102,7 +1093,7 @@ class RhO_6states(RhodopsinModel):
         By convention, positive ions entering the cell --> negative current (e.g. Na^+ influx). 
         Conversely, Positive ions leaving (or negative ions entering) the cell --> positive current (e.g. Cl^- in or K^+ out). """
         #if g is None:
-        g = self.g
+        g0 = self.g0
         if states is None:
             states = self.states
         O1 = states[:,2] # O1
@@ -1113,7 +1104,7 @@ class RhO_6states(RhodopsinModel):
         E = self.E
         psi = O1 + (gam * O2) # Dimensionless
         
-        g_RhO = g * psi * self.calcfV(V) #* fV # self.gbar * self.A # Conductance (pS * um^-2)
+        g_RhO = g0 * psi * self.calcfV(V) #* fV # self.gbar * self.A # Conductance (pS * um^-2)
         I_RhO =  g_RhO * (V - E) # Photocurrent: (pS * mV)
         return I_RhO * (1e-6) # 10^-12 * 10^-3 * 10^-6 (nA)
     

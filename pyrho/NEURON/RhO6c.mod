@@ -4,7 +4,7 @@ NEURON {
     : SUFFIX RhO6c : For density mechanisms only
     POINT_PROCESS RhO6c
     NONSPECIFIC_CURRENT i :IRhO     : This could be changed to update a specific ion
-    RANGE E, gam, v0, v1, g, gph, gv, i
+    RANGE i, E, gam, v0, v1, g0 :, fphi, fv, i
     RANGE k1, Go1, Gf0, kf, Gd2, Gr0, Gd1, Gb0, kb, Go2, k2, p, q
     RANGE phi, phim :, lambda
 }
@@ -28,24 +28,24 @@ PARAMETER { : Initialise parameters to defaults. These may be changed through ho
 : Conductance
     E       = 0     (mV) : Channel reversal potential
     gam     = 0.05  (1)  : Ratio of open-state conductances
-    g       = 75000 (pS) : gbar : defined in the main prog as HR_expression*Area
+    g0      = 75000 (pS) : gbar : defined in the main prog as HR_expression*Area
 
 : Inward rectifier conductance    : reversal potential for NpHr is about -400mV        e_rev = -400        :(mV)  
     v0      = 43    (mV)
     v1      = 4.1   (mV)    
 
 : State transition rate parameters (/ms)
-    k1     = 5         (/ms)
-    Go1      = 1         (/ms)
+    k1      = 5         (/ms)
+    Go1     = 1         (/ms)
     Gf0     = 0.022     (/ms)
-    kf     = 0.0135    (/ms)
-    Gd2      = 0.025     (/ms)
-    Gr0      = 0.00033   (/ms)
-    Gd1      = 0.13      (/ms)
+    kf      = 0.0135    (/ms)
+    Gd2     = 0.025     (/ms)
+    Gr0     = 0.00033   (/ms)
+    Gd1     = 0.13      (/ms)
     Gb0     = 0.011     (/ms)
-    kb     = 0.0048    (/ms)
-    Go2      = 1         (/ms)
-    k2     = 1.1       (/ms)
+    kb      = 0.0048    (/ms)
+    Go2     = 1         (/ms)
+    k2      = 1.1       (/ms)
     p       = 0.7       (1)
     q       = 0.47      (1)
 }
@@ -54,17 +54,17 @@ PARAMETER { : Initialise parameters to defaults. These may be changed through ho
 ASSIGNED {
     phi     :(photons/s mm2)
 
-    Ga1      (/ms)
+    Ga1     (/ms)
     Gf      (/ms)
     Gb      (/ms)
-    Ga2      (/ms)
+    Ga2     (/ms)
     h1      (1)
     h2      (1)
     
-    gph     (1) : Fractional conductance
-    gv      (1) : Fractional conductance
+    fphi    (1) : Fractional conductance
+    fv      (1) : Fractional conductance
     v       (mV) 
-    i      (nA)
+    i       (nA)
 }
 
 
@@ -73,9 +73,9 @@ STATE { C1 I1 O1 O2 I2 C2 }
 
 BREAKPOINT {
     SOLVE kin METHOD sparse
-    gph     = O1+gam*O2        : light dependency op=[0:1] 
-    gv      = (1-exp(-(v-E)/v0))/((v-E)/v1) : voltage dependency (equal 1 at Vm=-70mV)
-    i = g*gph*gv*(v-E)*(1e-6)
+    fphi    = O1+gam*O2                     : light dependency op=[0:1] 
+    fv      = (1-exp(-(v-E)/v0))/((v-E)/v1) : voltage dependency (equal 1 at Vm=-70mV)
+    i       = g0*fphi*fv*(v-E)*(1e-6)       : Photocurrent
 }
 
 
@@ -96,14 +96,14 @@ INITIAL {   : Initialise variables
 
 KINETIC kin {
     rates(phi)
-    ~ C1 <-> I1 (Ga1, 0) :(a11, 0)
-    ~ I1 <-> O1 (Go1, 0) :(a12, 0)
+    ~ C1 <-> I1 (Ga1, 0)
+    ~ I1 <-> O1 (Go1, 0)
     ~ O1 <-> C1 (Gd1, 0)      
-    ~ O1 <-> O2 (Gf, Gb) :(a2, b2)    
-    ~ O2 <-> I2 (0, Go2) :(0, b31)
-    ~ I2 <-> C2 (0, Ga2) :(0, b32)
-    ~ O2 <-> C2 (Gd2, 0) :(a3, 0)    
-    ~ C2 <-> C1 (Gr0, 0) :(a4, 0)
+    ~ O1 <-> O2 (Gf, Gb)
+    ~ O2 <-> I2 (0, Go2)
+    ~ I2 <-> C2 (0, Ga2)
+    ~ O2 <-> C2 (Gd2, 0)
+    ~ C2 <-> C1 (Gr0, 0)
     CONSERVE C1 + I1 + O1 + O2 + I2 + C2 = 1
 }
 

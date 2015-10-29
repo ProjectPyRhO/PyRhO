@@ -80,7 +80,7 @@ stateLabs = {3:'Three', '3':'Three', 4:'Four', '4':'Four', 6:'Six', '6':'Six'}
 modelFits = OrderedDict([('3', OrderedDict([('ChR2',Parameters()), ('ArchT',Parameters())])), ('4', OrderedDict([('ChR2',Parameters())])), ('6', OrderedDict([('ChR2',Parameters())]))])
 #ChR2 = OrderedDict([('3',Parameters()),('4',Parameters()),('6',Parameters())])
 
-modelLabels = OrderedDict([('E','E'), ('g','g'), ('k','k'), ('p','p'), ('phim','\phi_m'), ('Gd','G_d'), ('Gr0','G_{r0}'), ('Gr1','G_{r1}'), ('v0','v_0'), ('v1','v_1'),
+modelLabels = OrderedDict([('E','E'), ('g0','g_0'), ('k','k'), ('p','p'), ('phim','\phi_m'), ('Gd','G_d'), ('Gr0','G_{r0}'), ('Gr1','G_{r1}'), ('v0','v_0'), ('v1','v_1'),
                             ('gam','\gamma'), ('k1','k_1'), ('k2','k_2'), ('Gf0','G_{f0}'), ('Gb0','G_{b0}'), ('kf','k_f'), ('kb','k_b'), ('q','q'), 
                             ('Gd1','G_{d1}'), ('Gd2','G_{d2}'), ('Go1','G_{o1}'), ('Go2','G_{o2}')])
 
@@ -88,12 +88,12 @@ modelLabels = OrderedDict([('E','E'), ('g','g'), ('k','k'), ('p','p'), ('phim','
 # Replace with http://pythonhosted.org/NeuroTools/parameters.html
 from brian2.units.allunits import *
 from brian2.units.stdunits import *
-modelUnits = OrderedDict([('g',psiemens), ('gam',1), ('phim',mm**-2*second**-1), ('k',ms**-1), ('p',1), ('Gd',ms**-1), ('Gr0',ms**-1), ('Gr1',ms**-1), 
+modelUnits = OrderedDict([('g0',psiemens), ('gam',1), ('phim',mm**-2*second**-1), ('k',ms**-1), ('p',1), ('Gd',ms**-1), ('Gr0',ms**-1), ('Gr1',ms**-1), 
                             ('k1',ms**-1), ('k2',ms**-1), ('Gf0',ms**-1), ('Gb0',ms**-1), ('kf',ms**-1), ('kb',ms**-1), ('q',1), 
                             ('Gd1',ms**-1), ('Gd2',ms**-1), ('Go1',ms**-1), ('Go2',ms**-1), ('E',mV), ('v0',mV), ('v1',mV)])
 
 #paramUnits
-unitLabels = OrderedDict([('g','pS'), ('gam',''), ('phim','ph./mm^2/s'), ('k','ms^-1'), ('p',''), ('Gd','ms^-1'), ('Gr0','ms^-1'), ('Gr1','ms^-1'), 
+unitLabels = OrderedDict([('g0','pS'), ('gam',''), ('phim','ph./mm^2/s'), ('k','ms^-1'), ('p',''), ('Gd','ms^-1'), ('Gr0','ms^-1'), ('Gr1','ms^-1'), 
                             ('k1','ms^-1'), ('k2','ms^-1'), ('Gf0','ms^-1'), ('Gb0','ms^-1'), ('kf','ms^-1'), ('kb','ms^-1'), ('q',''), 
                             ('Gd1','ms^-1'), ('Gd2','ms^-1'), ('Go1','ms^-1'), ('Go2','ms^-1'), ('E','mV'), ('v0','mV'), ('v1','mV')])
 
@@ -151,7 +151,7 @@ Params['g0'] = PyRhOparameter('g0', 2.5e4, psiemens, 'pS', 'g_0', 'Biological sc
                 
 #modelFits['ChR2']['3'].add_many(                
 modelFits['3']['ChR2'].add_many(
-                ('g',     1.57e5, True, 0.001,  1e6,  None),
+                ('g0',    1.57e5, True, 0.001,  1e6,  None),
                 ('phim',  1.32e18,True, 1e15,   1e19, None),
                 ('k',     4.51,   True, 0.001,  1000, None),
                 ('p',     0.793,  True, 0.1,    5,    None),
@@ -233,7 +233,7 @@ modelFits['3']['ChR2'].add_many(
     
 #modelFits['ChR2']['4'].add_many(
 modelFits['4']['ChR2'].add_many(
-                ('g',       1.14e5, True, 0.001,1e15,   None),
+                ('g0',      1.14e5, True, 0.001,1e15,   None),
                 ('gam',     0.00742,True, 0.0,  1,      None),
                 ('phim',    2.33e17,True, 1e15, 1e19,   None),
                 ('k1',      4.15,   True, 0.001,1e5,    None), #3
@@ -302,7 +302,7 @@ modelFits['4']['ChR2'].add_many(
 
 #modelFits['ChR2']['6'].add_many(
 modelFits['6']['ChR2'].add_many(                
-                ('g',       2.52e4,  True, 0.0,  1e15, None),
+                ('g0',      2.52e4,  True, 0.0,  1e15, None),
                 ('gam',     0.0161, True, 0.0,  1,    None), # Max=1 if gO1 >= gO2
                 ('phim',    3.54e17,True, 1e15, 1e19, None),
                 ('k1',      13.4,   True, 0.0,  1000, None),
