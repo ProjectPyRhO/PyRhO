@@ -276,6 +276,28 @@ def setFigOutput(figDisplay='screen', width=None):
 #saveFigFormat, addTitles, addStimulus, eqSize = setFigOutput(display)
 setFigOutput(figDisplay)
 
+fancyPlots = False #True
+
+def setFigStyle(fancyPlots=False): # Merge this with setFigOutput
+    if fancyPlots:
+        try:
+            import seaborn
+        except ImportError:
+            warnings.warn('Seaborn not found - using default plotting scheme.')
+        else: # Try another package?
+            pass
+        finally: # Always do this last
+            pass
+    else:
+        if 'seaborn' in sys.modules:
+            seaborn.reset_orig()
+        #setFigOutput(figDisplay)
+        
+def resetPlot():
+    if 'seaborn' in sys.modules:
+        seaborn.reset_orig()
+    setFigOutput(figDisplay)
+        
 try:
     __IPYTHON__
     import IPython
