@@ -130,7 +130,7 @@ setup(
     extras_require = {
     #    'dev': ['check-manifest'],
     #    'test': ['coverage'],
-        'full': ['brian2'],
+        'full': ['brian2', 'seaborn'],
     },
     
     include_package_data=True,
