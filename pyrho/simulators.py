@@ -1396,7 +1396,7 @@ class simBrian(Simulator):
         #setRecords(self, GroupRec=None, IndRec=None)
         self.monitors = monitors
         
-        self.G_RhO = 'Inputs' #'Retina'
+        self.G_RhO = 'Inputs' #'Retina' ### Change to match RhO type?
         self.net[self.G_RhO].__dict__[self.stateVars[0]] = 1. # Set rhodopsins to dark-adapted state
     
     def setParams(self, RhO):
@@ -1470,54 +1470,6 @@ class simBrian(Simulator):
     def runTrial(self, RhO, phiOn, V, delD, cycles, dt, verbose=verbose): 
         """Main routine for simulating a square pulse train"""
         
-        
-        # phim = 3.54*10**17*mm**-2*second**-1
-        # p = 0.985
-        # q = 1.58
-        # E = 0*mvolt
-        # v = -70*mvolt
-        # v0 = 43*mvolt
-        # v1 = 4.1*mvolt
-        # g = 1.1e5*psiemens
-        # gam = 0.0161
-        # k1 = 13.4*ms**-1
-        # k2 = 2.71*ms**-1
-        # kf = 0.103*ms**-1
-        # kb = 0.139*ms**-1
-        # Gd1 = 0.112*ms**-1
-        # Gd2 = 0.0185*ms**-1
-        # Gf0 = 0.0389*ms**-1
-        # Gb0 = 0.0198*ms**-1
-        # Gr0 = 0.00163*ms**-1
-        # Go1 = 2*ms**-1
-        # Go2 = 0.0567*ms**-1
-        
-        
-        
-        # N = 100
-        # tau = 10*ms
-        # vr = -70*mV
-        # vt0 = -50*mV
-        # delta_vt0 = 5*mV
-        # tau_t = 75*ms
-        # sigma = 0.5*(vt0-vr)
-        
-        # Rm = 70*Mohm
-        
-        #'sigma':'0.5*(vt0-vr)'
-        
-        #brianNamespace = {'N':100, 'tau':10*ms, 'vr':-70*mV, 'vt0':-50*mV, 'delta_vt0':5*mV, 'tau_t':75*ms, 'sigma':0.5*(-50--70)*mV, 'duration':100*ms, 'Rm':70.*Mohm,
-        #'phim':3.54*10**17*mm**-2*second**-1, 'p':0.985, 'q':1.58, 'E':0*mvolt, 'v':-70*mvolt, 'v0':43*mvolt, 'v1':4.1*mvolt, 'g':1.1e5*psiemens, 'gam':0.0161, 
-        #'k1':13.4*ms**-1, 'k2':2.71*ms**-1, 'kf':0.103*ms**-1, 'kb':0.139*ms**-1, 
-        #'Gd1':0.112*ms**-1, 'Gd2':0.0185*ms**-1, 'Gf0':0.0389*ms**-1, 'Gb0':0.0198*ms**-1, 'Gr0':0.00163*ms**-1, 'Go1':2*ms**-1, 'Go2':0.0567*ms**-1}
-        
-        #'N':100, 
-        #'duration':100*ms,
-        #'v':-70*mvolt,
-        #brianNamespace = {'tau':10*ms, 'V_r':-70*mV, 'V_th':-50*mV, 'delta_V':5*mV, 'tau_t':75*ms, 'R_m':70.*Mohm,
-        #'phim':3.54*10**17*mm**-2*second**-1, 'p':0.985, 'q':1.58, 'E':0*mvolt, 'v0':43*mvolt, 'v1':4.1*mvolt, 'g':1.1e5*psiemens, 'gam':0.0161, 
-        #'k1':13.4*ms**-1, 'k2':2.71*ms**-1, 'kf':0.103*ms**-1, 'kb':0.139*ms**-1, 
-        #'Gd1':0.112*ms**-1, 'Gd2':0.0185*ms**-1, 'Gf0':0.0389*ms**-1, 'Gb0':0.0198*ms**-1, 'Gr0':0.00163*ms**-1, 'Go1':2*ms**-1, 'Go2':0.0567*ms**-1}
         
         nPulses = cycles.shape[0]
         #delD *= self.br.ms
@@ -1608,9 +1560,8 @@ class simBrian(Simulator):
             #    soln = odeint(RhO.solveStates, RhO.s_on, t, args=(None,), Dfun=RhO.jacobian)
             #RhO.storeStates(soln[1:],t[1:]) # Skip first values to prevent duplicating initial conditions and times
             
-            
             self.net.run(duration=cycles[p,0]*ms, namespace=self.namespace, report=report)
-            #self.net.run(duration=cycles[p,0]*ms, report=report)
+            
             
             ### Light off phase
             #RhO.s_off = soln[-1,:] # [soln[-1,0], soln[-1,1], soln[-1,2], soln[-1,3], soln[-1,4], soln[-1,5]]
@@ -1638,10 +1589,8 @@ class simBrian(Simulator):
             #    soln = odeint(RhO.solveStates, RhO.s_off, t, args=(None,), Dfun=RhO.jacobian)
             #RhO.storeStates(soln[1:],t[1:]) # Skip first values to prevent duplicating initial conditions and times
             
-            
             self.net.run(duration=cycles[p,1]*ms, namespace=self.namespace, report=report)
-            #self.net.run(duration=cycles[p,1]*ms, report=report)
-            
+                        
             elapsed += cycles[p,1]
             offInd = int(round(elapsed/dt))
             RhO.pulseInd = np.vstack((RhO.pulseInd,[onInd,offInd]))
@@ -1661,8 +1610,6 @@ class simBrian(Simulator):
         #soln = np.hstack([self.monitors[0].variables['_recorded_'+s].get_value() for s in self.stateVars])
         
         #RhO.storeStates(self.monitors[0].S1[0][1:], self.monitors[0].t[1:]/ms)
-        
-
         
         # Print last value is not recorded!
         # https://github.com/brian-team/brian2/issues/452
@@ -1691,19 +1638,7 @@ class simBrian(Simulator):
             
             #I_RhO = np.asarray(I_RhO.T.tolist()[0])
         
-        
-        
-        
         #I_RhO = np.append(0., I_RhO)        ### HACK!!!
-        #print(self.monitors[1].t[0])
-        #print(len(self.monitors[1].t))
-        
-        # print(len(I_RhO))
-        # print(I_RhO)
-        # print(len(t))
-        # print(t)
-        # print(states.shape)
-        # print(states)
         
         times, totT = cycles2times(cycles, delD)
         self.plotRasters(times, totT)
@@ -1722,61 +1657,189 @@ class simBrian(Simulator):
         ### delD and stimD are only used for finding pulse indexes - could be removed along with separate delay phase?!!!
         ### Combine this with the original runTrial
         
-        raise NotImplementedError('Error: Light as a continuous function of time has not been implemented for Brian yet!')
+        #raise NotImplementedError('Error: Light as a continuous function of time has not been implemented for Brian yet!')
+        
+        
+        # TimedArray([x1, x2, ...], dt=my_dt), the value x1 will be returned for all 0<=t<my_dt, x2 for my_dt<=t<2*my_dt etc.
         
         nPulses = cycles.shape[0]
         assert(len(phi_ts) == nPulses)
+        
+        times, totT = cycles2times(cycles,delD)
+        self.times = times
+        
+        if verbose > 1:
+            if V is not None:
+                Vstr = 'V = {:+}mV, '.format(V)
+            else:
+                Vstr = ''
+            info = "Simulating experiment at phi = {:.3g}photons/mm^2/s, {}pulse cycles: [delD={:.4g}ms".format(phiOn,Vstr,delD)
+            #info = "Simulating experiment at phi = {}, V = {:+}mV, pulse cycles: [delD={:.4g}ms".format(phiOn,V,delD) # {:.3g}photons/s/mm^2
+            for p in range(nPulses):
+                info += "; [onD={:.4g}ms; offD={:.4g}ms]".format(cycles[p,0],cycles[p,1])
+            info += "]"
+            print(info)
+            
+            report = 'text' #'stdout', 'stderr', function
+        else:
+            report = None
+        
         
         ### Delay phase (to allow the system to settle)
         phi = 0
         RhO.initStates(phi) # Reset state and time arrays from previous runs
         RhO.s0 = RhO.states[-1,:]   # Store initial state used
-        start, end = RhO.t[0], RhO.t[0]+delD #start, end = 0.00, delD
-        nSteps = int(round(((end-start)/dt)+1))
-        t = np.linspace(start, end, nSteps, endpoint=True) # int(round(((end-start)/dt)+1)), endpoint=True) # Time vector
+        
         if verbose > 1:
             print("Trial initial conditions:{}".format(RhO.s0))
-        soln = odeint(RhO.solveStates, RhO.s0, t, args=(None,), Dfun=RhO.jacobian)
-        RhO.storeStates(soln[1:],t[1:])
-
-        ### Stimulation phases
-        for p in range(0, nPulses):
-            RhO.s_on = soln[-1,:] # [soln[-1,0], soln[-1,1], soln[-1,2], soln[-1,3], soln[-1,4], soln[-1,5]]
+        
+        #self.namespace.update({'phi':phi*modelUnits['phim'], 'stimulus':bool(phi>0)})
+        self.net[self.G_RhO].phi = phi*modelUnits['phim']
+        self.net[self.G_RhO].stimulus = False
+        # Skip last state value since this is defined as 1 - sum(states) not as an ODE
+        #self.net[G_RhO].set_states({s: o for s, o in zip(self.stateVars[:-1], RhO.s_0[:-1])})
+        
+        
+        elapsed = delD
+        
+        
+        start, end = RhO.t[0], RhO.t[0]+delD #start, end = 0.00, delD
+        nSteps = int(round(((end-start)/dt)+1))
+        t = np.linspace(start, end, nSteps, endpoint=True)
+        #t = np.linspace(start,end,int(round(((end-start)/dt)+1)), endpoint=True) # Time vector
+        phiPulse = np.zeros_like(t)
+        
+        #self.br.Network.run(delD*ms, report)
+        self.net.run(duration=delD*ms, namespace=self.namespace, report=report) #brianNamespace
+        #self.net.run(duration=delD*ms, report=report) #brianNamespace
+        #self.br.run(duration=delD*ms, report=report)
+        
+        
+        for p in range(nPulses):
+            
             start = end
             onD, offD = cycles[p,0], cycles[p,1]
+            
+            ### Light on phase
+            #elapsed += cycles[p,0]
+            elapsed += onD + offD
+            #onInd = int(round(elapsed/dt))
+            #onInd = len(RhO.t) - 1  # Start of on-phase
+            #onInd = 
+            #offInd = int(round(elapsed/dt))
+            
             if p < nPulses - 1:
-                end = start + onD + offD #totT #start + stimD
+                end = start + onD + offD
             else:
                 end = endT
             
-            onInd = len(RhO.t) - 1  # Start of on-phase
-            #offInd = onInd + len(t) - 1 # Start of off-phase
-            #offInd = onInd + int(round(stimD/dt)) # Consider rounding issues...
-            offInd = onInd + int(round(onD/dt))
-            RhO.pulseInd = np.vstack((RhO.pulseInd,[onInd,offInd]))
             nSteps = int(round(((end-start)/dt)+1))
-            t = np.linspace(start, end, nSteps, endpoint=True) #int(round(((end-start)/dt)+1))
+            tPulse = np.linspace(start, end, nSteps, endpoint=True)
             phi_t = phi_ts[p]
+            phiPulse = phi_t(tPulse) # -tPulse[0] # Align time vector to 0 for phi_t to work properly
+            
+            phi = self.br.TimedArray(phiPulse, dt=dt*ms)
+            
+            self.net[self.G_RhO].phi = phi #*modelUnits['phim']
+            self.net[self.G_RhO].stimulus = True
+            
+            ### Alternative
+            #self.G_RhO.run_regularly('''phi = phi_t(t)''', dt=self.dt*ms)
+            
+            ### Alternative
+            #@network_operation(dt=self.dt*ms)
+            #def updateInput(t):
+            #    self.net[self.G_RhO].phi = phi_t(t)
             
             if verbose > 1:
-                print("Pulse initial conditions:{}".format(RhO.s_on))
-                if verbose > 2:
-                    print('Pulse = [{}, {}]'.format(RhO.t[onInd],RhO.t[offInd]))
+                print(self.namespace)
             
-            if verbose > 2:
-                soln, out = odeint(RhO.solveStates, RhO.s_on, t, args=(phi_t,), Dfun=RhO.jacobian, full_output=True)
-                print(out)
-            else:
-                soln = odeint(RhO.solveStates, RhO.s_on, t, args=(phi_t,), Dfun=RhO.jacobian)
+            duration = onD + offD
+            self.net.run(duration=duration*ms, namespace=self.namespace, report=report)
             
-            RhO.storeStates(soln[1:], t[1:]) # Skip first values to prevent duplicating initial conditions and times
+            '''
+            ### Light off phase
+            phi = 0  # Light flux
+            
+            
+            
+            self.net[self.G_RhO].phi = phi*modelUnits['phim']
+            self.net[self.G_RhO].stimulus = False
+            
+            self.net.run(duration=cycles[p,1]*ms, namespace=self.namespace, report=report)
+                        
+            elapsed += cycles[p,1]
+            offInd = int(round(elapsed/dt))
+            RhO.pulseInd = np.vstack((RhO.pulseInd,[onInd,offInd]))
+            
+            #onInd = len(RhO.t) - 1 # Start of on-phase
+            onInd = len(t) - 1 # Start of on-phase
+            offInd = onInd + int(round(onD/dt))
+            RhO.pulseInd = np.vstack((RhO.pulseInd,[onInd,offInd]))
+            
+            #t = np.r_[t, tPulse[1:]]
+            #phi_tV = np.r_[phi_tV, phiPulse[1:]]
+            
+            #RhO.storeStates(soln[1:], t[1:])
+            '''
         
+        #self.net[self.G_RhO].phi = phi*modelUnits['phim']
+        #self.net[self.G_RhO].stimulus = False
+        #self.net.run(duration=cycles[p,0]*ms, namespace=self.namespace, report=report) #brianNamespace
+        
+        
+
         
         ### Calculate photocurrent
-        I_RhO = RhO.calcI(V, RhO.states)
+        ### Assumes that only one neuron is recorded from...
+        
+        assert(self.monitors['states'].n_indices == 1)
+        self.monitors['states'].record_single_timestep()
+        soln = np.hstack([self.monitors['states'].variables[s].get_value() for s in self.stateVars])
+        
+        #self.monitors[0].record_single_timestep()
+        #soln = np.hstack([self.monitors[0].variables[s].get_value() for s in self.stateVars])
+        
+        #soln = np.hstack([self.monitors['states'].variables['_recorded_'+s].get_value() for s in self.stateVars])
+        #assert(self.monitors[0].n_indices == 1)
+        #soln = np.hstack([self.monitors[0].variables['_recorded_'+s].get_value() for s in self.stateVars])
+        
+        #RhO.storeStates(self.monitors[0].S1[0][1:], self.monitors[0].t[1:]/ms)
+        
+        # Print last value is not recorded!
+        # https://github.com/brian-team/brian2/issues/452
+        
+        #t = self.monitors[0].t/ms
+        t = self.monitors['states'].t/ms
+        #t = self.monitors[0].t/ms
+        #t = np.append(t, t[-1]+dt)          ### HACK!!!
+        
+        
+        #RhO.storeStates(soln, t[1:]) # 1000 ### HACK!!! (not soln[1:])
+        RhO.storeStates(soln[1:], t[1:]) # 1000 ### HACK!!! (not soln[1:])
+        
         states, t = RhO.getStates()
         
-        return I_RhO, t, states
+        if V != None: # and 'I' in self.monitors:
+            I_RhO = RhO.calcI(V, RhO.states)
+        else:
+            self.monitors['I'].record_single_timestep()
+            I_RhO = self.monitors['I'].variables[self.varIrho].get_value() * 1e9# / nA
+            #self.monitors[1].record_single_timestep()
+            #I_RhO = self.monitors[1].variables[self.varIrho].get_value() * 1e9# / nA
+            
+            #I_RhO = self.monitors['I'].variables['_recorded_'+self.varIrho].get_value() * 1e9# / nA
+            #I_RhO = self.monitors[1].variables['_recorded_'+self.varIrho].get_value() * 1e9# / nA
+            
+            #I_RhO = np.asarray(I_RhO.T.tolist()[0])
+        
+        #I_RhO = np.append(0., I_RhO)        ### HACK!!!
+        
+        times, totT = cycles2times(cycles, delD)
+        self.plotRasters(times, totT)
+        self.raster = self.monitors['spikes']
+        
+        return I_RhO, t, states #I_RhO, t[1:], states
         
     
     def saveExtras(self, run, phiInd, vInd):
