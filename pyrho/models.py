@@ -30,7 +30,7 @@ class RhodopsinModel(PyRhOobject):
     # def __init__(self, nStates): #, rhoType='Rhodopsin'
         # self.nStates = nStates
         #self.rhoType = rhoType # E.g. 'ChR2' or 'ArchT'
-    def __init__(self, params=None, rhoType='Rhodopsin'): #E=0.0, gam=0.05, phi0=1e14, #, A=31192)
+    def __init__(self, params=None, rhoType=rhoType): #'Rhodopsin'): #E=0.0, gam=0.05, phi0=1e14, #, A=31192)
     
         if params is None:
             params = modelParams[str(self.nStates)]
@@ -355,10 +355,13 @@ class RhO_3states(RhodopsinModel):
                 $$ \dot{O} = G_{a}(\phi)C - G_{d}O $$
                 $$ \dot{D} = G_{d}O - G_{r}(\phi)D $$
                 $$ C + O + D = 1 $$
+                $$ $$
                 $$ G_a(\phi) = k\\frac{\phi^p}{\phi^p + \phi_m^p} $$
                 $$ G_r(\phi) = G_{r0} + \mathcal{H}(\phi) \cdot G_{r1} $$
+                $$ $$
+                $$ f(\phi) = O \qquad \qquad $$
                 $$ f(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1} $$
-                $$ I_{\phi} = g_0 \cdot O \cdot f(v) \cdot (v-E) $$
+                $$ I_{\phi} = g_0 \cdot f(\phi) \cdot f(v) \cdot (v-E) $$
                 """
     _latex =   ["$\dot{C} = G_{r}(\phi)D - G_{a}(\phi)C$", 
                 "$\dot{O} = G_{a}(\phi)C - G_{d}O$",
@@ -366,17 +369,18 @@ class RhO_3states(RhodopsinModel):
                 "$C + O + D = 1$",
                 "$G_a(\phi) = k\\frac{\phi^p}{\phi^p + \phi_m^p}$",
                 "$G_r(\phi) = G_{r0} + \mathcal{H}(\phi) \cdot G_{r1}$",
+                "$f(\phi) = O$"
                 "$f(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1}$",
-                "$I_{\phi} = g_0 \cdot O \cdot f(v) \cdot (v-E)$"]
+                "$I_{\phi} = g_0 \cdot f(\phi) \cdot f(v) \cdot (v-E)$"]
     # $$ G_r = G_{r0} + G_{r1}(\phi) $$
     #"""
     #\begin{align*}
-    #\frac{dC}{dt} &= G_{r}D - P C
-    #\frac{dO}{dt} &= P C -G_{d}O
-    #\frac{dD}{dt} &= G_{d}O-G_{r}D
-    #C+O+D &= 1
-    #P &= \phi\frac{\epsilon \sigma_{ret}}{w_{loss}}
-    #G_r &= G_{r,d} + \mathcal{H}(\phi) \cdot G_{r,l}
+    #\frac{dC}{dt} &= G_{r}D - P C \\
+    #\frac{dO}{dt} &= P C -G_{d}O \\
+    #\frac{dD}{dt} &= G_{d}O-G_{r}D \\
+    #C+O+D &= 1 \\
+    #P &= \phi\frac{\epsilon \sigma_{ret}}{w_{loss}} \\
+    #G_r &= G_{r,d} + \mathcal{H}(\phi) \cdot G_{r,l} \\
     #I_{\phi} &= \bar{g} O \cdot (v-E)
     #\end{align}
     #"""                
@@ -684,8 +688,9 @@ class RhO_4states(RhodopsinModel):
                 $$ G_{b}(\phi) = G_{b0} + k_{b} \\frac{\phi^q}{\phi^q + \phi_m^q} $$
                 $$ G_{a2}(\phi) = k_2\\frac{\phi^p}{\phi^p + \phi_m^p} $$
                 $$$$
+                $$ f(\phi) = O_1+\gamma O_2 $$
                 $$ f(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1} $$
-                $$ I_{\phi} = g_0 \cdot (O_1+\gamma O_2) \cdot f(v) \cdot (v-E) $$
+                $$ I_{\phi} = g_0 \cdot f(\phi) \cdot f(v) \cdot (v-E) $$
                 """     
     
                 # """
@@ -931,8 +936,9 @@ class RhO_6states(RhodopsinModel):
                 $$ G_{b}(\phi) = G_{b0} + k_{b} \\frac{\phi^q}{\phi^q + \phi_m^q} $$
                 $$ G_{a2}(\phi) = k_{2} \\frac{\phi^p}{\phi^p + \phi_m^p} $$
                 $$$$
+                $$ f(\phi) = O_1+\gamma O_2 $$
                 $$ f(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1} $$
-                $$ I_{\phi} = g_0 \cdot (O_1+\gamma O_2) \cdot f(v) \cdot (v-E) $$
+                $$ I_{\phi} = g_0 \cdot f(\phi) \cdot f(v) \cdot (v-E) $$
                 """    
     
     # phi = 0.0  # Instantaneous Light flux
