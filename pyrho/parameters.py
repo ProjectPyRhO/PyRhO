@@ -327,9 +327,11 @@ modelFits['6']['ChR2'].add_many(
 #modelParamsDict = {'3':d3sp, '4':d4sp, '6':d6sp} # Rename these to be consistent with protParams
 
 #defModelParams = modelFits['ChR2']
-modelParams['3'] = modelFits['3']['ChR2']
-modelParams['4'] = modelFits['4']['ChR2']
-modelParams['6'] = modelFits['6']['ChR2']
+defaultRhodopsinType = 'ChR2'
+rhoType = defaultRhodopsinType # Set this when selecting 
+modelParams['3'] = modelFits['3'][defaultRhodopsinType]
+modelParams['4'] = modelFits['4'][defaultRhodopsinType]
+modelParams['6'] = modelFits['6'][defaultRhodopsinType]
 
 unitPrefixes = {} ### Use a units library to convert between different prefixes
 
@@ -431,17 +433,17 @@ protParamNotes = OrderedDict([ (prot, defaultdict(lambda: '')) for prot in protL
 for prot in protList:
     protParamNotes[prot]['phis'] = 'List of flux values'
     protParamNotes[prot]['Vs'] = 'List of voltage clamp values (if applied)'
-    protParamNotes[prot]['delD'] = 'Delay duration before the first pulse cycle'
-    protParamNotes[prot]['cycles'] = 'List of [on, off] durations for each pulse cycle'
+    protParamNotes[prot]['delD'] = 'Delay duration before the first pulse' # cycle'
+    protParamNotes[prot]['cycles'] = 'List of [on, off] durations for each pulse' # cycle'
     
 
 #Exceptions
 protParamNotes['custom']['phi_ft'] = 'Pulse generation function'
-protParamNotes['sinusoid']['startOn'] = 'Start at maximum of flux modulation (else minimum)'
+protParamNotes['sinusoid']['startOn'] = 'Start at maximum flux (else minimum)' # maximum of flux modulation 
 protParamNotes['sinusoid']['phi0'] = 'Constant offset for modulation'
 protParamNotes['sinusoid']['fs'] = 'List of modulation frequencies'
-protParamNotes['chirp']['linear'] = 'Use a linear frequency sweep (else exponential)'
-protParamNotes['chirp']['startOn'] = 'Start at maximum of flux modulation (else minimum)'
+protParamNotes['chirp']['linear'] = 'Linear frequency sweep (else exponential)'
+protParamNotes['chirp']['startOn'] = 'Start at maximum flux (else minimum)'
 protParamNotes['chirp']['phi0'] = 'Constant offset for modulation'
 protParamNotes['chirp']['f0'] = 'Starting frequency'
 protParamNotes['chirp']['fT'] = 'Ending frequency'
@@ -451,11 +453,11 @@ protParamNotes['delta']['cycles'] = ''
 protParamNotes['delta']['onD'] = 'On-phase duration'
 protParamNotes['delta']['totT'] = 'Total simulation duration'
 protParamNotes['shortPulse']['cycles'] = ''
-protParamNotes['shortPulse']['pDs'] = 'List of cycle on-phase durations'
+protParamNotes['shortPulse']['pDs'] = 'List of pulse on-phase durations' #'List of cycle on-phase durations'
 protParamNotes['shortPulse']['totT'] = 'Total simulation duration'
 protParamNotes['recovery']['cycles'] = ''
-protParamNotes['recovery']['onD'] = 'Cycle on-phase duration'
-protParamNotes['recovery']['IPIs'] = 'List of cycle off-phase durations'
+protParamNotes['recovery']['onD'] = 'Pulse on-phase duration' #'Cycle on-phase duration'
+protParamNotes['recovery']['IPIs'] = 'List of pulse off-phase durations' #'List of cycle off-phase durations'
 protParamNotes['recovery']['totT'] = 'Total simulation duration'
     
 #squarePulses = ['custom', 'delta', 'step', 'rectifier', 'shortPulse', 'recovery'] #{'custom': True, 'delta': True, 'step': True, 'rectifier': True, 'shortPulse': True, 'recovery': True}
@@ -467,8 +469,8 @@ smallSignalAnalysis = ['delta', 'step', 'sinusoid']
 protParams['custom'].add_many(('phis',[1e16,1e17],True,None,None,None), #'photons/s/mm^2'
                             ('Vs',[-70,-20,10],True,None,None,None), #'mV'
                             ('delD', 25, True, 0, 1e9, None), #'ms'
-                            ('cycles',[[150.,50.]],True,None,None,None), #'ms'#,
-                            ('phi_ft', None, None, None, None))
+                            ('cycles',[[150.,50.]],True,None,None,None))#, #'ms'#,
+                            #('phi_ft', None, None, None, None))
 
 
 protParams['step'].add_many(('phis',[1e16,1e17],True,None,None,None), #'photons/s/mm^2'
