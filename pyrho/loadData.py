@@ -6,6 +6,7 @@ from lmfit import *
 from pyrho.utilities import * # For times2cycles and cycles2times, expDecay, findPlateauCurrent
 from pyrho.parameters import tFromOff
 from pyrho.config import * #verbose, colours, styles
+from pyrho import config
 import warnings
 import copy
 #from copy import deepcopy
@@ -109,6 +110,23 @@ class PhotoCurrent():
         self.begT = self.t[0]                   # Beginning trial time
         self.endT = self.t[-1]                  # Last trial time point
         self.totT = self.endT - self.begT       # Total trial time #max(self.t) # Handles negative delays
+        
+        '''
+        if states is not None:
+            self.states = np.copy(states)
+            self.nStates = self.states.shape[0]
+            self.stateLabels = copy.copy(stateLabels)
+            assert(len(self.stateLabels) == self.nStates)
+            self.synthetic = True
+            assert(self.states.shape[1] == self.nSamples)
+        
+        if Vm is not None:
+            self.Vm = np.copy(Vm)               # Array of membrane voltage values
+            assert(len(self.Vm) == self.nSamples)
+        
+        if spikes is not None:
+            self.spikes = np.copy(spikes)       # Array of spike times
+        '''
         
         ### Load metadata
         #pulses = np.asarray(pulses) # Copy only if necessary
@@ -444,14 +462,17 @@ class PhotoCurrent():
 
     
     def findPeakInds(self): #, pulse=0):
-        
+        """Find the indicies of the photocurrent peaks for each pulse
+            OUT:    np.array([peakInd_0, peakInd_1, ..., peakInd_n])"""
         offsetInd = len(self.getDelayPhase()[0]) - 1
         peakInds = np.zeros((self.nPulses,), dtype=np.int)
         for p in range(self.nPulses):
             peakInds[p] = np.argmax(abs(self.getCycle(p)[0])) + offsetInd
             offsetInd += len(self.getCycle(p)[0]) - 1
-            #print(self.I[_peakInds[p]])
+            
+            #print(self.I[peakInds[p]])
             #print(self.getCycle(p)[0][np.argmax(abs(self.getCycle(p)[0]))])
+        
         return peakInds
     
     ### Move findPeaks from models.py to here?
@@ -667,7 +688,7 @@ class PhotoCurrent():
                 plt.text(self.pulses[p,1]+self.offDs[p]/2, texty, '$\Delta off_{}={:.3g}\mathrm{{ms}}$'.format(p, self.offDs[p]), ha='center', va='bottom', fontsize=config.eqSize)
         
         
-        return ax
+        return # ax
     
     ###???
     def genPhiArray(self,phiOn,t_ons,t_offs,tstep):
@@ -725,30 +746,8 @@ class PhotoCurrent():
         #gam  = 0.05   # [Dimensionless]          Ratio of single channel conductances: O2/O1
         #A    = 31192  # [mu m^2]                 Effective area of the cell / compartment
 
-
-        
-        
-        
-        
+  
 ### Add functions to bundle Protocol data with Empirical parameters into a dataSet dictionary, check for minimum requirements and report which models/features can be fit from the dataSet. ###
-
-
-
-
-# bundle['recovery'][IPI].I
-
-
-# def loadDataSet(self):
-    # filename = '%s-in-%s.hoc'%(opsin,loc[0])
-    # print("filename =",filename)
-    # try:
-        # h.load_file(filename)
-        # print("loaded %s %s successful"%(opsin,loc[0]))
-    # except:
-        # print("Error: could not load hoc file for opsin/location: ", filename)
-    # ss = '%s_in_%s(%s)'%(opsin,loc[0],','.join([str(x) for x in loc[1]]))
-    # print(ss)
-    # h(ss)
 
 
 
@@ -1001,7 +1000,8 @@ class ProtocolData():
                     col = 'b'   ### colours[0]
                     style = '-' ### styles[0]
                     
-            
+            '''
+            ### HACK!!!
             label = ""
             if self.protocol == "shortPulse":
                 label = "$\mathrm{{Pulse}}={}\mathrm{{ms}}$ ".format(cycles[0][0]) #onD
@@ -1024,6 +1024,8 @@ class ProtocolData():
                 label += "$\mathrm{{V}} = {:+}\ \mathrm{{mV}}$ ".format(self.Vs[vInd])
             #else:
                 #figTitle += "$\mathrm{{V}} = {:+}\ \mathrm{{mV}}$ ".format(V)
+            '''
+        
         return col, style#, label
     
     
@@ -1151,7 +1153,7 @@ class ProtocolData():
         
         #ax.tight_layout()
         
-        return ax
+        return # ax
         
         
     def getIpmax(self, vInd=None): 
