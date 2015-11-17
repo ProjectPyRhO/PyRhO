@@ -3,17 +3,28 @@ import matplotlib.pyplot as plt
 import warnings
 import pickle
 
-# http://preshing.com/20110924/timing-your-code-using-pythons-with-statement/
-#import time
-
 import os
 import shutil # for file copying
 import subprocess # for running system commands
 import copy
 
-from pyrho.config import verbose, dDir, fDir
+from pyrho.config import * #verbose, dDir, fDir
 
-class Timer:    
+### Physical constants
+h = 6.6260695729e-34    # Planck's constant (Js)
+c = 2.99792458e8        # Speed of light    (m*s^-1)
+#NA = 6.0221413e23      # Avogadro's Number (mol^-1)
+
+
+# http://preshing.com/20110924/timing-your-code-using-pythons-with-statement/
+#import time
+#with Timer() as t:
+#   run code...
+# print('Execution took ', t)
+
+class Timer:
+    interval = 0
+    
     def __enter__(self):
         self.start = wallTime() #time.clock()
         return self
@@ -21,11 +32,11 @@ class Timer:
     def __exit__(self, *args):
         self.end = wallTime() #time.clock()
         self.interval = self.end - self.start
-        
+    
+    def __str__(self):
+        return '{:.3g}s'.format(self.interval)
 
 
-        
-        
 def printParams(params):
     vd = params.valuesdict()
     report = '------------------------\n'
@@ -57,43 +68,40 @@ def compareParams(origParams, newParams):
     report += '========================\n'
     print(report)
     
+def texIt(texString):
+    """Function to add '$' signs around a (La)TeX string"""
+    from string import Template
+    texTemplate = Template('${content}$')
+    return texTemplate.substitute(content=texString)
+    
 def saveData(data, pkl, path=None):
-    #from os import path
     # if pkl is None:
         # pkl = data.__name__
     if path is None:
         path = dDir
     pklFile = os.path.join(path, pkl+".pkl")
-    # fh = open(pklFile, "wb")
-    # pickle.dump(data, fh)
-    # fh.close()
-    with open(pklFile, "wb") as fh:
+    with open(pklFile, 'wb') as fh:
         pickle.dump(data, fh)
-    if verbose > 0:
+    if verbose > 0: #config.verbose?!
         print("Data saved to disk: {}".format(pklFile))
     return pklFile
     
 def loadData(pkl, path=None):
-    # with, try, finaly etc...
-    #import os
-    pklFile = pkl+".pkl"
+    if pkl.lower().endswith('.pkl'):
+        pklFile = pkl
+    else:
+        pklFile = pkl + '.pkl'
     if path is None:
-        cwd = os.getcwd()
-        if pkl in cwd: ### Finish!!!
-            pass #pklFile = pklFile
-            #fh = open(pklFile, "rb")
+        if os.path.isfile(pklFile):
+            pass
         else:
             pklFile = os.path.join(dDir, pklFile)
-            #fh = open(os.path.join(dDir, pklFile), "rb") #dDir+'expData'+".pkl"
     else:
         pklFile = os.path.join(path, pklFile)
-    with open(pklFile, "rb") as fh :
+    with open(pklFile, 'rb') as fh:
         dataSet = pickle.load(fh)
-    #fh.close()
     return dataSet
     
-    # verbose = 0
-
 def getExt(vector, ext='max'):
     if ext == 'max':
         mVal = max(vector)
@@ -156,20 +164,6 @@ def getIndex(valList, val):
             ind = None
     return ind
     
-#global verbose # global statement is so that subfunctions can assign to the global var
-
-#global phi0
-#global E
-#global A
-
-#addTitles = True
-
-### Model Parameters ###
-
-### Physical constants
-h = 6.6260695729e-34   # Planck's constant (Js)
-c = 2.99792458e8     # Speed of light    (m*s^-1)
-#NA = 6.0221413e23    # Avogadro's Number (mol^-1)
 
 
 def calcV1(E, v0):
@@ -209,13 +203,6 @@ def calcV1(E, v0):
                 Peak frequency response shifts to 498 nm.
 
 '''
-
-#import sys
-#import os
-#import traceback
-#import optparse
-#import time
-#import logging
 
 
 def lam2rgb(wav, gamma=0.8, output='norm'):
@@ -274,23 +261,6 @@ def lam2rgb(wav, gamma=0.8, output='norm'):
         #return (int(R), int(G), int(B)) # int() truncates towards 0
         return "#{0:02x}{1:02x}{2:02x}".format(R,G,B), (R,G,B)
 
-### Default parameter dictionaries
-
-#d3sp = {'E':E, 'k':8.2, 'Gd':0.1, 'Gr0':1/5000, 'Gr1':0.016, 'phi0':1e15, 'phiSat':1e20, 'g':1.67e4}
-# E         [mV]    Channel reversal potential
-# k         [ms^-1] Quantum efficiency * number of photons absorbed by a RhO molecule per unit time
-# P        [ms^-1] Quantum efficiency * number of photons absorbed by a ChR2 molecule per unit time
-# Gd        [ms^-1] @ 1mW mm^-2
-# Gr_dark   [ms^-1] tau_r,dark = 5-10s p405 Nikolic et al. 2009
-# Gr_light  [ms^-1] (Gr,light @ 1mW mm^-2)
-# phi0 
-# phiSat
-# g         [nS]
-
-
-### Output information
-#verbose = 0
-
 
 ### Model functions ###
 
@@ -319,32 +289,27 @@ def calcgbar(Ip,Vclamp,A):
 
     
     
-def times2cycles(times,totT):       # REVISE to handle negative delay times
+def times2cycles(times, totT):       # REVISE to handle negative delay times
     """Input    times:= [t_on,t_off], t_tot
        Output   cycles:= [onD,offD], delD"""
     times = np.array(times, copy=True)
-    #print("Times: ",times)
     nPulses = times.shape[0]
     assert(times.shape[1] <= 2)
-    #delDs = [row[0] for row in times] # pulses[:,0]    # Delay Durations
-    delD = times[0,0]
+    delD = times[0,0] # This assumes that the times have not been shifted
     onDs = [row[1]-row[0] for row in times] # pulses[:,1] - pulses[:,0]   # Pulse Durations
     offDs = np.append(times[1:,0],totT) - times[:,1]
     cycles = np.vstack((onDs,offDs)).transpose()
     return (cycles, delD)
 
     
-def cycles2times(cycles,delD):
+def cycles2times(cycles, delD):
     """Function to convert pulse cycles to times. 
         Input    cycles:= [onD,offD], delD
         Output   times:= [t_on,t_off], totT"""
     
     ### Generalise to delDs c.f. recovery
-        
     cycles = np.array(cycles)
-    #print("Cycles: ",cycles)
     nPulses = cycles.shape[0]
-    #print(nPulses)
     assert(cycles.shape[1] <= 2)
     times = np.zeros((nPulses, 2)) #[delD,delD+cycles[row,0] for row in pulses]
     lapsed = delD
@@ -363,7 +328,7 @@ def plotLight(times, ax=None, light='shade', lam=470, alpha=0.2): #=plt.gcf()
     lam     = Wavelength [nm] (default: 470)
     alpha   = Transparency (default: 0.2)"""
     
-    
+    ### Change plt.axvspan to ax.axvspan etc. 
     if ax==None:
         ax=plt.gca()
     else:
@@ -371,33 +336,34 @@ def plotLight(times, ax=None, light='shade', lam=470, alpha=0.2): #=plt.gcf()
     nPulses = times.shape[0]
     if light == 'shade':
         for p in range(nPulses):
-            plt.axvspan(times[p][0],times[p][1],facecolor='y',alpha=alpha)    
+            ax.axvspan(times[p][0],times[p][1],facecolor='y',alpha=alpha)    # plt.
     elif light == 'borders': 
         for p in range(0, nPulses): ############################ Move to plotLight
-            plt.axvline(x=times[p][0],linestyle='--',color='k')
-            plt.axvline(x=times[p][1],linestyle='--',color='k')
+            ax.axvline(x=times[p][0],linestyle='--',color='k')
+            ax.axvline(x=times[p][1],linestyle='--',color='k')
     elif light == 'greyscale':
-        # Set background to grey and illumination to white
-        ax.set_axis_bgcolor('0.3')
-        plt.axvspan(times[p][0],times[p][1],facecolor='w')#,alpha=alpha)  
+        for p in range(nPulses):
+            # Set background to grey and illumination to white
+            ax.set_axis_bgcolor('0.4') #'0.3'
+            ax.axvspan(times[p][0],times[p][1],facecolor='w')#,alpha=alpha)  
     elif light == 'hatch':
-        plt.axvspan(times[p][0],times[p][1],hatch='*')
+        for p in range(nPulses):
+            ax.axvspan(times[p][0],times[p][1],hatch='/') #'*'
     elif light == 'spectral':
         # Plot the colour corresponding to the wavelength
         if 380 <= lam <= 750:
             rgb = lam2rgb(lam)
             for p in range(0, nPulses): 
-                plt.axvspan(times[p][0],times[p][1],facecolor=rgb,alpha=alpha)
+                ax.axvspan(times[p][0],times[p][1],facecolor=rgb,alpha=alpha)
         else: # Light is not in the visible spectrum - plot borders instead
             for p in range(0, nPulses): 
-                plt.axvline(x=times[p][0],linestyle='--',color='k')
-                plt.axvline(x=times[p][1],linestyle='--',color='k')
-                plt.axvspan(times[p][0],times[p][1],hatch='/') #'*'
+                ax.axvline(x=times[p][0],linestyle='--',color='k')
+                ax.axvline(x=times[p][1],linestyle='--',color='k')
+                ax.axvspan(times[p][0],times[p][1],hatch='/') #'*'
     elif light == 'None' or light == None:
         pass
     else:
-        print(light)
-        warnings.warn('Warning: Unrecognised light representation!')
+        warnings.warn('Warning: Unrecognised light representation: {}!'.format(light))
     return
     
     
@@ -505,38 +471,6 @@ def biExpSum(t, a1, tau1, a2, tau2, I_ss):
         # else:
             # print("Covariance: {}".format(pcov))
     # return popt, pcov, peakEq
-
-
-# def getLineProps(Prot, run, vInd, phiInd):
-    # if verbose > 1 and (Prot.nRuns>len(colours) or len(Prot.phis)>len(colours) or len(Prot.Vs)>len(colours)):
-        # print("Warning: only {} line colours are available!".format(len(colours)))
-    # if Prot.nRuns>1 and len(Prot.phis)>1 and len(Prot.Vs)>1:
-        # print("Warning: Too many changing variables for one plot!")
-    # if verbose:
-        # print("Run={}/{}; phiInd={}/{}; vInd={}/{}".format(run,nRuns,phiInd,len(phis),vInd,len(Vs)))
-    # if Prot.nRuns>1:
-        # col = colours[run%len(colours)]
-        # if len(Prot.phis)>1:
-            # style=styles[phiInd%len(styles)]
-        # elif len(Prot.Vs)>1:
-            # style=styles[vInd%len(styles)]
-        # else:
-            # style = '-'
-    # else:
-        # if len(Prot.Vs)>1:
-            # col = colours[vInd%len(colours)]
-            # if len(Prot.phis)>1:
-                # style = styles[phiInd%len(styles)]
-            # else:
-                # style = '-'
-        # else:
-            # if len(Prot.phis)>1:
-                # col = colours[phiInd%len(colours)]
-                # style = '-'
-            # else:
-                # col = 'b'   ### colours[0]
-                # style = '-' ### styles[0]
-    # return col, style
 
 
 
