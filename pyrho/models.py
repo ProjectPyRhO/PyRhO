@@ -338,7 +338,7 @@ class RhO_3states(RhodopsinModel):
     constRates = ['Gd']
     constLabels = ['$G_d$']
     
-    paramsList = ['g0', 'phim', 'k', 'p', 'Gd', 'Gr0', 'Gr1', 'E', 'v0', 'v1'] # List of model constants    
+    paramsList = ['g0', 'phi_m', 'k', 'p', 'Gd', 'Gr0', 'Gr1', 'E', 'v0', 'v1'] # List of model constants    
     
     s_0 = np.array([1,0,0])             # Default: Initialise in dark 
     phi_0 = 0.0                         # Default flux level in dark-adapted state
@@ -396,7 +396,7 @@ class RhO_3states(RhodopsinModel):
             dS_C/dt = Gr*S_D - Ga*S_C : 1
             dS_O/dt = Ga*S_C - Gd*S_O : 1
             dS_D/dt = Gd*S_O - Gr*S_D : 1
-            Ga = k*((phi**p)/(phi**p + phim**p)) : second**-1
+            Ga = k*((phi**p)/(phi**p + phi_m**p)) : second**-1
             Gr = Gr0 + int(stimulus)*Gr1 : second**-1
             fv = (1-exp(-(v-E)/v0))/((v-E)/v1) : 1
             I = g0*S_O*fv*(v-E) : amp
@@ -405,15 +405,15 @@ class RhO_3states(RhodopsinModel):
             '''
     #S_D = 1 - S_C - S_O : 1 #
     #int(phi>0)
-    #Ga = stimulus*k*((phi**p)/(phi**p+phim**p)) : second**-1
-    #H = stimulus*((phi**p)/(phi**p+phim**p)) : 1
+    #Ga = stimulus*k*((phi**p)/(phi**p+phi_m**p)) : second**-1
+    #H = stimulus*((phi**p)/(phi**p+phi_m**p)) : 1
     #Ga = k * H : second**-1
     
     brian_phi_t = '''
             dS_C/dt = Gr*S_D - Ga*S_C : 1
             dS_O/dt = Ga*S_C - Gd*S_O : 1
             dS_D/dt = Gd*S_O - Gr*S_D : 1
-            Ga = k*((phi(t)**p)/(phi(t)**p + phim**p)) : second**-1
+            Ga = k*((phi(t)**p)/(phi(t)**p + phi_m**p)) : second**-1
             Gr = Gr0 + Theta*Gr1 : second**-1
             f_v = (1-exp(-(v-E)/v0))/((v-E)/v1) : 1
             f_phi = S_O : 1
@@ -429,7 +429,7 @@ class RhO_3states(RhodopsinModel):
         report += '============================\n'
         report += 'E    = {:12.3g}\n'.format(self.E)
         report += 'k    = {:12.3g}\n'.format(self.k)
-        report += 'phim = {:12.3g}\n'.format(self.phim)
+        report += 'phi_m = {:12.3g}\n'.format(self.phi_m)
         report += 'p    = {:12.3g}\n'.format(self.p)
         report += 'Gd   = {:12.3g}\n'.format(self.Gd)
         report += 'Gr0  = {:12.3g}\n'.format(self.Gr0)
@@ -444,7 +444,7 @@ class RhO_3states(RhodopsinModel):
         #return self.k * phi
         #return 0.5 * phi * (1.2e-8 * 1e-6) / 1.1  # eps * phi * sigma_ret (mm^-2) / wloss
         #return self.k * phi #(1 - np.exp(-phi/self.phiSat))
-        return self.k * phi**self.p/(phi**self.p + self.phim**self.p)
+        return self.k * phi**self.p/(phi**self.p + self.phi_m**self.p)
     
     def _calcGr(self, phi):
         return self.Gr0 + (phi>0)*self.Gr1
@@ -613,7 +613,7 @@ class RhO_4states(RhodopsinModel):
     constRates = ['Gd1', 'Gd2', 'Gr0']
     constLabels = ['$G_{d1}$', '$G_{d2}$', '$G_{r0}$']
     
-    paramsList = ['g0', 'gam', 'phim', 'k1', 'k2', 'p', 'Gf0', 'kf', 'Gb0', 'kb', 'q', 'Gd1', 'Gd2', 'Gr0', 'E', 'v0', 'v1'] # List of model constants
+    paramsList = ['g0', 'gam', 'phi_m', 'k1', 'k2', 'p', 'Gf0', 'kf', 'Gb0', 'kb', 'q', 'Gd1', 'Gd2', 'Gr0', 'E', 'v0', 'v1'] # List of model constants
     
     s_0 = np.array([1,0,0,0])       # Default: Initialise in the dark
     phi_0 = 0.0  # Instantaneous Light flux
@@ -663,8 +663,8 @@ class RhO_4states(RhodopsinModel):
             dS_O1/dt = Ga1*S_C1 - (Gd1+Gf)*S_O1 + Gb*S_O2 : 1
             dS_O2/dt = Ga2*S_C2 + Gf*S_O1 - (Gd2+Gb)*S_O2 : 1
             S_C2 = 1 - S_C1 - S_O1 - S_O2 : 1
-            H_p = int(stimulus)*((phi**p)/(phi**p+phim**p)) : 1
-            H_q = int(stimulus)*((phi**q)/(phi**q+phim**q)) : 1
+            H_p = int(stimulus)*((phi**p)/(phi**p+phi_m**p)) : 1
+            H_q = int(stimulus)*((phi**q)/(phi**q+phi_m**q)) : 1
             Ga1 = k1*H_p : second**-1
             Ga2 = k2*H_p : second**-1
             Gf = Gf0 + kf*H_q : second**-1
@@ -682,8 +682,8 @@ class RhO_4states(RhodopsinModel):
             dS_O1/dt = Ga1*S_C1 - (Gd1+Gf)*S_O1 + Gb*S_O2 : 1
             dS_O2/dt = Ga2*S_C2 + Gf*S_O1 - (Gd2+Gb)*S_O2 : 1
             S_C2 = 1 - S_C1 - S_O1 - S_O2 : 1
-            H_p = Theta*((phi(t)**p)/(phi(t)**p+phim**p)) : 1
-            H_q = Theta*((phi(t)**q)/(phi(t)**q+phim**q)) : 1
+            H_p = Theta*((phi(t)**p)/(phi(t)**p+phi_m**p)) : 1
+            H_q = Theta*((phi(t)**q)/(phi(t)**q+phi_m**q)) : 1
             Ga1 = k1*H_p : second**-1
             Ga2 = k2*H_p : second**-1
             Gf = Gf0 + kf*H_q : second**-1
@@ -699,10 +699,10 @@ class RhO_4states(RhodopsinModel):
             dS_O1/dt = Ga1*S_C1 - (Gd1+Gf)*S_O1 + Gb*S_O2 : 1
             dS_O2/dt = Ga2*S_C2 + Gf*S_O1 - (Gd2+Gb)*S_O2 : 1
             S_C2 = 1 - S_C1 - S_O1 - S_O2 : 1
-            Ga1 = Theta*k1*phi(t)**p/(phi(t)**p+phim**p) : second**-1
-            Ga2 = Theta*k2*phi(t)**p/(phi(t)**p+phim**p) : second**-1
-            Gf = Gf0 + Theta*kf*phi(t)**q/(phi(t)**q+phim**q) : second**-1
-            Gb = Gb0 + Theta*kb*phi(t)**q/(phi(t)**q+phim**q) : second**-1
+            Ga1 = Theta*k1*phi(t)**p/(phi(t)**p+phi_m**p) : second**-1
+            Ga2 = Theta*k2*phi(t)**p/(phi(t)**p+phi_m**p) : second**-1
+            Gf = Gf0 + Theta*kf*phi(t)**q/(phi(t)**q+phi_m**q) : second**-1
+            Gb = Gb0 + Theta*kb*phi(t)**q/(phi(t)**q+phi_m**q) : second**-1
             f_v = (1-exp(-(v-E)/v0))/((v-E)/v1) : 1
             f_phi = S_O1+gam*S_O2 : 1
             I = g0*f_phi*f_v*(v-E) : amp
@@ -717,7 +717,7 @@ class RhO_4states(RhodopsinModel):
         report += 'phi0 = {:12.3g}\n'.format(self.phi0)
         report += 'k1   = {:12.3g}\n'.format(self.k1)
         report += 'k2   = {:12.3g}\n'.format(self.k2)
-        report += 'phim = {:12.3g}\n'.format(self.phim)
+        report += 'phi_m = {:12.3g}\n'.format(self.phi_m)
         report += 'p    = {:12.3g}\n'.format(self.p)
         report += 'Gr0  = {:12.3g}\n'.format(self.Gr0)
         report += 'Gd1  = {:12.3g}\n'.format(self.Gd1)
@@ -739,7 +739,7 @@ class RhO_4states(RhodopsinModel):
         #w_loss = 1.1
         #return self.k1 * phi/self.phi0 #e*phi*sigma_ret / w_loss
         #return self.k1 * (1-np.exp(-phi/self.phi0)) #e*phi*sigma_ret / w_loss
-        return self.k1 * phi**self.p/(phi**self.p + self.phim**self.p)
+        return self.k1 * phi**self.p/(phi**self.p + self.phi_m**self.p)
     
     def _calcGa2(self, phi):
         #e = 0.15
@@ -747,15 +747,15 @@ class RhO_4states(RhodopsinModel):
         #w_loss = 1.1
         #return self.k2 * phi/self.phi0 #e*phi*sigma_ret / w_loss
         #return self.k2 * (1-np.exp(-phi/self.phi0))
-        return self.k2 * phi**self.p/(phi**self.p + self.phim**self.p)
+        return self.k2 * phi**self.p/(phi**self.p + self.phi_m**self.p)
     
     def _calcGf(self, phi):
         #return self.e12d + self.c1*np.log(1+(phi/self.phi0)) # e12(phi=0) = e12d
-        return self.Gf0 + self.kf * phi**self.q/(phi**self.q + self.phim**self.q)
+        return self.Gf0 + self.kf * phi**self.q/(phi**self.q + self.phi_m**self.q)
 
     def _calcGb(self, phi):
         #return self.e21d + self.c2*np.log(1+(phi/self.phi0)) # e21(phi=0) = e21d
-        return self.Gb0 + self.kb * phi**self.q/(phi**self.q + self.phim**self.q)
+        return self.Gb0 + self.kb * phi**self.q/(phi**self.q + self.phi_m**self.q)
 
     def setLight(self, phi):
         """Set transition rates according to the instantaneous photon flux density"""
@@ -851,7 +851,7 @@ class RhO_6states(RhodopsinModel):
     constRates = ['Go1', 'Go2', 'Gd1', 'Gd2', 'Gr0']
     constLabels = ['$G_{o1}$', '$G_{o2}$', '$G_{d1}$', '$G_{d2}$', '$G_{r0}$']
     
-    paramsList = ['g0', 'gam', 'phim', 'k1', 'k2', 'p', 'Gf0', 'kf', 'Gb0', 'kb', 'q', 'Go1', 'Go2', 'Gd1', 'Gd2', 'Gr0', 'E', 'v0', 'v1'] # List of model constants    
+    paramsList = ['g0', 'gam', 'phi_m', 'k1', 'k2', 'p', 'Gf0', 'kf', 'Gb0', 'kb', 'q', 'Go1', 'Go2', 'Gd1', 'Gd2', 'Gr0', 'E', 'v0', 'v1'] # List of model constants    
     
     s_0 = np.array([1,0,0,0,0,0])  # [s1_0=1, s2_0=0, s3_0=0, s4_0=0, s5_0=0, s6_0=0] # array not necessary
     phi_0 = 0.0     # Default initial flux
@@ -890,8 +890,8 @@ class RhO_6states(RhodopsinModel):
             dS_O2/dt = Go2*S_I2 + Gf*S_O1 - (Gd2+Gb)*S_O2 : 1
             dS_I2/dt = Ga2*S_C2 - Go2*S_I2 : 1
             S_C2 = 1 - S_C1 - S_I1 - S_O1 - S_O2 - S_I2 : 1
-            H_p = int(stimulus)*((phi**p)/(phi**p+phim**p)) : 1
-            H_q = int(stimulus)*((phi**q)/(phi**q+phim**q)) : 1
+            H_p = int(stimulus)*((phi**p)/(phi**p+phi_m**p)) : 1
+            H_q = int(stimulus)*((phi**q)/(phi**q+phi_m**q)) : 1
             Ga1 = k1*H_p : second**-1
             Ga2 = k2*H_p : second**-1
             Gf = Gf0 + kf*H_q : second**-1
@@ -910,8 +910,8 @@ class RhO_6states(RhodopsinModel):
             #dS_O2/dt = Go2*S_I2 + Gf*S_O1 - (Gd2+Gb)*S_O2 : 1
             #dS_I2/dt = Ga2*S_C2 - Go2*S_I2 : 1
             #S_C2 = 1 - S_C1 - S_I1 - S_O1 - S_O2 - S_I2 : 1
-            #H_p = int(stimulus)*((phi**p)/(phi**p+phim**p)) : 1
-            #H_q = int(stimulus)*((phi**q)/(phi**q+phim**q)) : 1
+            #H_p = int(stimulus)*((phi**p)/(phi**p+phi_m**p)) : 1
+            #H_q = int(stimulus)*((phi**q)/(phi**q+phi_m**q)) : 1
             #Ga1 = k1*H_p : second**-1
             #Ga2 = k2*H_p : second**-1
             #Gf = Gf0 + kf*H_q : second**-1
@@ -929,8 +929,8 @@ class RhO_6states(RhodopsinModel):
             dS_O2/dt = Go2*S_I2 + Gf*S_O1 - (Gd2+Gb)*S_O2 : 1
             dS_I2/dt = Ga2*S_C2 - Go2*S_I2 : 1
             S_C2 = 1 - S_C1 - S_I1 - S_O1 - S_O2 - S_I2 : 1
-            H_p = Theta*((phi(t)**p)/(phi(t)**p+phim**p)) : 1
-            H_q = Theta*((phi(t)**q)/(phi(t)**q+phim**q)) : 1
+            H_p = Theta*((phi(t)**p)/(phi(t)**p+phi_m**p)) : 1
+            H_q = Theta*((phi(t)**q)/(phi(t)**q+phi_m**q)) : 1
             Ga1 = k1*H_p : second**-1
             Ga2 = k2*H_p : second**-1
             Gf = Gf0 + kf*H_q : second**-1
@@ -944,19 +944,19 @@ class RhO_6states(RhodopsinModel):
     
     def _calcGa1(self, phi):
         #return self.a10*(phi/self.phi0)
-        return self.k1 * phi**self.p/(phi**self.p + self.phim**self.p)
+        return self.k1 * phi**self.p/(phi**self.p + self.phi_m**self.p)
 
     def _calcGf(self, phi):
         #return self.a30 + self.a31*np.log(1+(phi/self.phi0))
-        return self.Gf0 + self.kf * phi**self.q/(phi**self.q + self.phim**self.q)
+        return self.Gf0 + self.kf * phi**self.q/(phi**self.q + self.phi_m**self.q)
 
     def _calcGb(self, phi):
         #return self.b20 + self.b21*np.log(1+(phi/self.phi0))
-        return self.Gb0 + self.kb * phi**self.q/(phi**self.q + self.phim**self.q)
+        return self.Gb0 + self.kb * phi**self.q/(phi**self.q + self.phi_m**self.q)
 
     def _calcGa2(self, phi):
         #return self.b40*(phi/self.phi0)
-        return self.k2 * phi**self.p/(phi**self.p + self.phim**self.p)
+        return self.k2 * phi**self.p/(phi**self.p + self.phi_m**self.p)
 
     def setLight(self, phi):
         #assert(phi >= 0)

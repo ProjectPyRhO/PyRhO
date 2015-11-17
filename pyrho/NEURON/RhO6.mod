@@ -9,7 +9,7 @@ NEURON {
     :RANGE e1, e3, b10, a2dark, a2light, b2dark, b2light, a30, a40
     RANGE k1, Go1, Gf0, kf, Gd2, Gr0, Gd1, Gb0, kb, Go2, k2, p, q
     :RANGE Er, flux, delay, ton, toff, num
-    RANGE phiOn, phi, phim, delD, onD, offD, nPulses :phi0,
+    RANGE phiOn, phi, phi_m, delD, onD, offD, nPulses :phi0,
 }
 
 
@@ -35,7 +35,7 @@ PARAMETER { : Initialise parameters to defaults. These may be changed through ho
 :    Er0     = 0.1   : (mW/mm2)
     :phi0    = 1e14  :(photons/s mm2)
 :   lambda  = 470   : (nm)
-    phim    = 1e16  :(photons/s mm2)    : Hill Constant
+    phi_m    = 1e16  :(photons/s mm2)    : Hill Constant
 
 : Conductance
     E       = 0     (mV) : Channel reversal potential
@@ -168,8 +168,8 @@ KINETIC kin {
 PROCEDURE rates(phi) { : Define equations for calculating transition rates
 
     if (phi>0) {
-        h1 = 1/(1+pow(phim,p)/pow(phi,p))  : pow(phi,p)/(pow(phi,p) + pow(phim,p))
-        h2 = 1/(1+pow(phim,q)/pow(phi,q))  : pow(phi,q)/(pow(phi,q) + pow(phim,q))
+        h1 = 1/(1+pow(phi_m,p)/pow(phi,p))  : pow(phi,p)/(pow(phi,p) + pow(phi_m,p))
+        h2 = 1/(1+pow(phi_m,q)/pow(phi,q))  : pow(phi,q)/(pow(phi,q) + pow(phi_m,q))
     } else {
         h1 = 0
         h2 = 0

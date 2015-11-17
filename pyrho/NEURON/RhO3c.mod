@@ -5,7 +5,7 @@ NEURON  {
 	NONSPECIFIC_CURRENT i
 	RANGE i, E, v0, v1, g0 :, fphi, fv
 	RANGE k, Gd, Gr0, Gr1, p 
-	RANGE phiOn, phi, phim
+	RANGE phiOn, phi, phi_m
 }
 
 
@@ -22,7 +22,7 @@ PARAMETER {	: Initialise parameters to defaults. These may be changed through ho
 
 : Illumination constants   
 :	lambda 	= 470	    : (nm)
-    phim    = 1e16      : (photons/sec mm2) : Hill Constant
+    phi_m    = 1e16      : (photons/sec mm2) : Hill Constant
   
 : Conductance    
     E       = 0         (mV)                : Channel reversal potential
@@ -93,7 +93,7 @@ KINETIC kin {
 
 PROCEDURE rates(phi) {	: Define equations for calculating transition rates
     if (phi>0) {
-        Ga = k * 1/(1+pow(phim,p)/pow(phi,p))    : pow(phi,p)/(pow(phi,p) + pow(phim,p))
+        Ga = k * 1/(1+pow(phi_m,p)/pow(phi,p))    : pow(phi,p)/(pow(phi,p) + pow(phi_m,p))
         Gr = Gr0 + Gr1
     } else {
         Ga = 0

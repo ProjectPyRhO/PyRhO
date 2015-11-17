@@ -488,7 +488,7 @@ def calc4on(p,t,RhO,V,phi):
     # if 1:
         # # New activation function
         # RhO.p = p['p'].value
-        # RhO.phim = p['phim'].value
+        # RhO.phi_m = p['phi_m'].value
     
     # nPulses = 1
     # delD = 0
@@ -1202,7 +1202,7 @@ def plotFitOrig(I,t,onInd,offInd,phi,V,nStates,params,fitRates,index):
     
     if config.addTitles:
         if nStates == 3:
-            plt.title('Three-state model fit to data (phi={:.3g}) [Ga={:.3g}; Gd={:.3g}; Gr={:.3g}] \n[k={:.3g}; p={:.3g}; phim={:.3g}; Gd={:.3g}; Gr0={:.3g}; Gr1={:.3g}]'.format(phi,RhO.Ga,RhO.Gd,RhO.Gr,RhO.k,RhO.p,RhO.phim,RhO.Gd,RhO.Gr0,RhO.Gr1))
+            plt.title('Three-state model fit to data (phi={:.3g}) [Ga={:.3g}; Gd={:.3g}; Gr={:.3g}] \n[k={:.3g}; p={:.3g}; phi_m={:.3g}; Gd={:.3g}; Gr0={:.3g}; Gr1={:.3g}]'.format(phi,RhO.Ga,RhO.Gd,RhO.Gr,RhO.k,RhO.p,RhO.phi_m,RhO.Gd,RhO.Gr0,RhO.Gr1))
         elif nStates == 4:
             plt.title('Four-state model fit to data (phi={:.3g}) \n[Ga1={:.3g}; Ga2={:.3g}; Gf={:.3g}; Gb={:.3g}; Gd1={:.3g}; Gd2={:.3g}]'.format(phi,RhO.Ga1,RhO.Ga2,RhO.Gf,RhO.Gb,RhO.Gd1,RhO.Gd2))
         elif nStates == 6:
@@ -1405,7 +1405,7 @@ def plotFit(PC, nStates, params, fitRates=False, index=None): #I,t,onInd,offInd,
     
         if config.addTitles and p == 0:
             if nStates == 3:
-                plt.title('Three-state model fit to data (phi={:.3g}) [Ga={:.3g}; Gd={:.3g}; Gr={:.3g}] \n[k={:.3g}; p={:.3g}; phim={:.3g}; Gd={:.3g}; Gr0={:.3g}; Gr1={:.3g}]'.format(phi,RhO.Ga,RhO.Gd,RhO.Gr,RhO.k,RhO.p,RhO.phim,RhO.Gd,RhO.Gr0,RhO.Gr1))
+                plt.title('Three-state model fit to data (phi={:.3g}) [Ga={:.3g}; Gd={:.3g}; Gr={:.3g}] \n[k={:.3g}; p={:.3g}; phi_m={:.3g}; Gd={:.3g}; Gr0={:.3g}; Gr1={:.3g}]'.format(phi,RhO.Ga,RhO.Gd,RhO.Gr,RhO.k,RhO.p,RhO.phi_m,RhO.Gd,RhO.Gr0,RhO.Gr1))
             elif nStates == 4:
                 plt.title('Four-state model fit to data (phi={:.3g}) \n[Ga1={:.3g}; Ga2={:.3g}; Gf={:.3g}; Gb={:.3g}; Gd1={:.3g}; Gd2={:.3g}]'.format(phi,RhO.Ga1,RhO.Ga2,RhO.Gf,RhO.Gb,RhO.Gd1,RhO.Gd2))
             elif nStates == 6:
@@ -1694,7 +1694,7 @@ def fit3states(fluxSet, run, vInd, params, postOpt=True, method=defMethod, verbo
     
     copyParam('k',params,pOns)
     copyParam('p',params,pOns) #pOns.add('p',value=0.7,min=0.1,max=5)
-    copyParam('phim',params,pOns) #pOns.add('phim',value=1e17,min=1e15,max=1e19) #1e19
+    copyParam('phi_m',params,pOns) #pOns.add('phi_m',value=1e17,min=1e15,max=1e19) #1e19
     
     # Set parameters from general rhodopsin analysis routines
     copyParam('g',params,pOns) # pOns.add('g',value=gmax,vary=False)
@@ -1740,7 +1740,7 @@ def fit3states(fluxSet, run, vInd, params, postOpt=True, method=defMethod, verbo
     #if verbose > 1:
     #    print(fit_report(pOns)) # onPmin?
     #    print("Error bars: ",onPmin.errorbars)
-    #    print('k = {}; p = {}; phim = {}; Gr1 = {}'.format(pOns['k'].value, pOns['p'].value, pOns['phim'].value, pOns['Gr1'].value))
+    #    print('k = {}; p = {}; phi_m = {}; Gr1 = {}'.format(pOns['k'].value, pOns['p'].value, pOns['phi_m'].value, pOns['Gr1'].value))
     #if not onPmin.success:
     #    print(onPmin.success)
     #    print(onPmin.lmdif_message)
@@ -1748,7 +1748,7 @@ def fit3states(fluxSet, run, vInd, params, postOpt=True, method=defMethod, verbo
     
     reportFit(onPmin, "On-phase fit report for the 3-state model", method)
     if verbose > 0:
-        print('k = {}; p = {}; phim = {}; Gr1 = {}'.format(pOns['k'].value, pOns['p'].value, pOns['phim'].value, pOns['Gr1'].value))
+        print('k = {}; p = {}; phi_m = {}; Gr1 = {}'.format(pOns['k'].value, pOns['p'].value, pOns['phi_m'].value, pOns['Gr1'].value))
     
     
     
@@ -2016,7 +2016,7 @@ def fit4states(fluxSet, run, vInd, params, postOpt=True, method=defMethod, verbo
     # Place RhO,V,phi in onPmin?
     copyParam('p',params,pOns) #pOns.add('p',value=0.7,min=0.1,max=5)
     copyParam('q',params,pOns)
-    copyParam('phim',params,pOns) #pOns.add('phim',value=1e17,min=1e15,max=1e19) #1e19
+    copyParam('phi_m',params,pOns) #pOns.add('phi_m',value=1e17,min=1e15,max=1e19) #1e19
     
     # Set parameters from general rhodopsin analysis routines
     #Gr0,gmax
@@ -2048,7 +2048,7 @@ def fit4states(fluxSet, run, vInd, params, postOpt=True, method=defMethod, verbo
     #    print("Error bars: ",onPmin.errorbars)
     #    print('k1 = {}; k2 = {}; kf = {}; kb = {}'.format(pOns['k1'].value, pOns['k2'].value, pOns['kf'].value, pOns['kb'].value))
     #    print('gam = ', pOns['gam'].value)
-    #    print('phim = ', pOns['phim'].value)
+    #    print('phi_m = ', pOns['phi_m'].value)
     #    print('p = ', pOns['p'].value)
     #    print('q = ', pOns['q'].value)
     #if not onPmin.success:
@@ -2059,7 +2059,7 @@ def fit4states(fluxSet, run, vInd, params, postOpt=True, method=defMethod, verbo
     reportFit(onPmin, "On-phase fit report for the 4-state model", method)
     if verbose > 0:
         print('k1 = {}; k2 = {}; kf = {}; kb = {}'.format(pOns['k1'].value, pOns['k2'].value, pOns['kf'].value, pOns['kb'].value))
-        print('gam = {}; phim = {}; p = {}; q = {}'.format(pOns['gam'].value, pOns['phim'].value, pOns['p'].value, pOns['q'].value))
+        print('gam = {}; phi_m = {}; p = {}; q = {}'.format(pOns['gam'].value, pOns['phi_m'].value, pOns['p'].value, pOns['q'].value))
     
     
     # nStates = 4
@@ -2391,7 +2391,7 @@ def fit6states(fluxSet, quickSet, run, vInd, params, postOpt=True, method=defMet
     # Place RhO,V,phi in onPmin?
     copyParam('p',params,pOns) #pOns.add('p',value=0.7,min=0.1,max=5)
     copyParam('q',params,pOns)
-    copyParam('phim',params,pOns) #pOns.add('phim',value=1e17,min=1e15,max=1e19) #1e19
+    copyParam('phi_m',params,pOns) #pOns.add('phi_m',value=1e17,min=1e15,max=1e19) #1e19
     
     # Set parameters from general rhodopsin analysis routines
     #Gr0,gmax
@@ -2437,7 +2437,7 @@ def fit6states(fluxSet, quickSet, run, vInd, params, postOpt=True, method=defMet
     #    print("Error bars: ",onPmin.errorbars)
     #    print('k1 = {}; k2 = {}; kf = {}; kb = {}'.format(pOns['k1'].value, pOns['k2'].value, pOns['kf'].value, pOns['kb'].value))
     #    print('gam = ', pOns['gam'].value)
-    #    print('phim = ', pOns['phim'].value)
+    #    print('phi_m = ', pOns['phi_m'].value)
     #    print('p = ', pOns['p'].value)
     #    print('q = ', pOns['q'].value)
     #if not onPmin.success:
@@ -2448,7 +2448,7 @@ def fit6states(fluxSet, quickSet, run, vInd, params, postOpt=True, method=defMet
     reportFit(onPmin, "On-phase fit report for the 6-state model", method)
     if verbose > 0:
         print('k1 = {}; k2 = {}; kf = {}; kb = {}'.format(pOns['k1'].value, pOns['k2'].value, pOns['kf'].value, pOns['kb'].value))
-        print('gam = {}; phim = {}; p = {}; q = {}'.format(pOns['gam'].value, pOns['phim'].value, pOns['p'].value, pOns['q'].value))
+        print('gam = {}; phi_m = {}; p = {}; q = {}'.format(pOns['gam'].value, pOns['phi_m'].value, pOns['p'].value, pOns['q'].value))
     
     
     fitParams = pOns
@@ -3294,7 +3294,7 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, relaxFact=2, method
         #vIndm70 = getIndex(setPC.Vs, -70)
     
     if nPhis == 1:
-        params['phim'].vary = False
+        params['phi_m'].vary = False
         params['p'].vary = False
         # Fix other model specific parameters?
         if 'q' in params: #nStates == 4 or nStates == 6:

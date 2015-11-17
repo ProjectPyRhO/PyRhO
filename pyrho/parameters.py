@@ -78,7 +78,7 @@ modelFits = OrderedDict([   ('3', OrderedDict([('ChR2',Parameters()), ('NpHR',Pa
                             ('6', OrderedDict([('ChR2',Parameters())]))])
 
 ### Replace with defaultdict with default=key
-modelLabels = OrderedDict([('E','E'), ('g0','g_0'), ('k','k'), ('p','p'), ('phim','\phi_m'), ('Gd','G_d'), ('Gr0','G_{r0}'), ('Gr1','G_{r1}'), ('v0','v_0'), ('v1','v_1'),
+modelLabels = OrderedDict([('E','E'), ('g0','g_0'), ('k','k'), ('p','p'), ('phi_m','\phi_m'), ('Gd','G_d'), ('Gr0','G_{r0}'), ('Gr1','G_{r1}'), ('v0','v_0'), ('v1','v_1'),
                             ('gam','\gamma'), ('k1','k_1'), ('k2','k_2'), ('Gf0','G_{f0}'), ('Gb0','G_{b0}'), ('kf','k_f'), ('kb','k_b'), ('q','q'), 
                             ('Gd1','G_{d1}'), ('Gd2','G_{d2}'), ('Go1','G_{o1}'), ('Go2','G_{o2}'),
                             ('phi','\phi'), ('v','v')])
@@ -87,13 +87,13 @@ modelLabels = OrderedDict([('E','E'), ('g0','g_0'), ('k','k'), ('p','p'), ('phim
 # Replace with http://pythonhosted.org/NeuroTools/parameters.html
 from brian2.units.allunits import *
 from brian2.units.stdunits import *
-modelUnits = OrderedDict([('g0',psiemens), ('gam',1), ('phim',mm**-2*second**-1), ('k',ms**-1), ('p',1), ('Gd',ms**-1), ('Gr0',ms**-1), ('Gr1',ms**-1), 
+modelUnits = OrderedDict([('g0',psiemens), ('gam',1), ('phi_m',mm**-2*second**-1), ('k',ms**-1), ('p',1), ('Gd',ms**-1), ('Gr0',ms**-1), ('Gr1',ms**-1), 
                             ('k1',ms**-1), ('k2',ms**-1), ('Gf0',ms**-1), ('Gb0',ms**-1), ('kf',ms**-1), ('kb',ms**-1), ('q',1), 
                             ('Gd1',ms**-1), ('Gd2',ms**-1), ('Go1',ms**-1), ('Go2',ms**-1), ('E',mV), ('v0',mV), ('v1',mV), 
                             ('phi',mm**-2*second**-1), ('v',mV)])
 
 #paramUnits
-unitLabels = OrderedDict([('g0','pS'), ('gam',''), ('phim','ph./mm^2/s'), ('k','ms^-1'), ('p',''), ('Gd','ms^-1'), ('Gr0','ms^-1'), ('Gr1','ms^-1'), 
+unitLabels = OrderedDict([('g0','pS'), ('gam',''), ('phi_m','ph./mm^2/s'), ('k','ms^-1'), ('p',''), ('Gd','ms^-1'), ('Gr0','ms^-1'), ('Gr1','ms^-1'), 
                             ('k1','ms^-1'), ('k2','ms^-1'), ('Gf0','ms^-1'), ('Gb0','ms^-1'), ('kf','ms^-1'), ('kb','ms^-1'), ('q',''), 
                             ('Gd1','ms^-1'), ('Gd2','ms^-1'), ('Go1','ms^-1'), ('Go2','ms^-1'), ('E','mV'), ('v0','mV'), ('v1','mV'),
                             ('phi','ph./mm^2/s'), ('v','mV')])
@@ -101,7 +101,7 @@ unitLabels = OrderedDict([('g0','pS'), ('gam',''), ('phim','ph./mm^2/s'), ('k','
 """
 Params = OrderedDict([('model', OrderedDict()), ('protocol', OrderedDict()), ('simulator', OrderedDict())])
 # p, q: Hill coefficients
-# phim: Hill constant
+# phi_m: Hill constant
  
 class PyRhOparameter(PyRhOobject):
     def __init__(self, name, value, units, unitsLabel, latex, description):
@@ -131,7 +131,7 @@ Params['g0'] = PyRhOparameter('g0', 2.5e4, psiemens, 'pS', 'g_0', 'Biological sc
                 # ('g',     1.67e4, True, 0.0,  1e15, 'pS'),
                 # ('k',     5.5e-15,True, 0.0,  1e15, None),
                 # ('p',     0.7,    True, 0.1,  5,    None),
-                # ('phim',  1e17,   True, 1e15, 1e19, 'photons/s/mm^2'),
+                # ('phi_m',  1e17,   True, 1e15, 1e19, 'photons/s/mm^2'),
                 # ('Gd',    0.0909, True, 0.0,  None, '/ms'),
                 # ('Gr0',   1/5000, True, 0.0,  None, '/ms'),
                 # ('Gr1',   1/165,  True, 0.0,  None, '/ms'),
@@ -141,7 +141,7 @@ Params['g0'] = PyRhOparameter('g0', 2.5e4, psiemens, 'pS', 'g_0', 'Biological sc
                 
 # modelParams['3'].add_many(
                 # ('g',     1.67e4, True, 0.001,  1e15, 'pS'),
-                # ('phim',  1e17,   True, 1e15, 1e19, 'photons/s/mm^2'),
+                # ('phi_m',  1e17,   True, 1e15, 1e19, 'photons/s/mm^2'),
                 # ('k',     25,     True, 0.001,  1000, '/ms'), #('k',     5.5e-15,True, 0.0,  1e15, None),
                 # ('p',     0.7,    True, 0.1,  5,    None),
                 # ('Gd',    0.0909, True, 0.0001,  1, '/ms'),
@@ -154,7 +154,7 @@ Params['g0'] = PyRhOparameter('g0', 2.5e4, psiemens, 'pS', 'g_0', 'Biological sc
 #               (Name,    Value,  Vary, Min,  Max,  Expr=Units)                
 modelFits['3']['ChR2'].add_many( # Depolarising: passively transports Na+, H+, K+ and Ca2+ down their electrochemical gradients
                 ('g0',    1.57e5, True, 0.001,  1e6,  None),
-                ('phim',  1.32e18,True, 1e15,   1e19, None),
+                ('phi_m',  1.32e18,True, 1e15,   1e19, None),
                 ('k',     4.51,   True, 0.001,  1000, None),
                 ('p',     0.793,  True, 0.1,    5,    None),
                 ('Gd',    0.104,  True, 0.0001, 1,    None),
@@ -166,7 +166,7 @@ modelFits['3']['ChR2'].add_many( # Depolarising: passively transports Na+, H+, K
                 
 modelFits['3']['NpHR'].add_many( # Hyperpolarising: pumps chloride ions into the cell
                 ('g0',    1.57e5, True, 0.001,  1e6,  None),
-                ('phim',  1.32e18,True, 1e15,   1e19, None),
+                ('phi_m',  1.32e18,True, 1e15,   1e19, None),
                 ('k',     0.01,   True, 0.001,  1000, None),
                 ('p',     0.793,  True, 0.1,    5,    None),
                 ('Gd',    1,  True, 0.0001, 1,    None),
@@ -178,7 +178,7 @@ modelFits['3']['NpHR'].add_many( # Hyperpolarising: pumps chloride ions into the
                 
 modelFits['3']['ArchT'].add_many( # Hyperpolarising: actively extrudes Hydrogen ions
                 ('g0',    1.57e5, True, 0.001,  1e6,  None),
-                ('phim',  1.32e18,True, 1e15,   1e19, None),
+                ('phi_m',  1.32e18,True, 1e15,   1e19, None),
                 ('k',     0.01,   True, 0.001,  1000, None),
                 ('p',     0.793,  True, 0.1,    5,    None),
                 ('Gd',    0.1,  True, 0.0001, 1,    None),
@@ -190,8 +190,8 @@ modelFits['3']['ArchT'].add_many( # Hyperpolarising: actively extrudes Hydrogen 
                 
                 
 #modelLabels = OrderedDict([('3',OrderedDict()),('4',OrderedDict()),('6',OrderedDict())])
-#modelLabels['3'] = {'E':'E', 'g':'g', 'k':'k', 'p':'p', 'phim':'\phi_m', 'Gd':'G_d', 'Gr0':'G_{r0}', 'Gr1':'G_{r1}', 'v0':'v_0', 'v1':'v_1'}
-#modelLabels['3'] = [('E','E'), ('g','g'), ('k','k'), ('p','p'), ('phim','\phi_m'), ('Gd','G_d'), ('Gr0','G_{r0}'), ('Gr1','G_{r1}'), ('v0','v_0'), ('v1','v_1')]
+#modelLabels['3'] = {'E':'E', 'g':'g', 'k':'k', 'p':'p', 'phi_m':'\phi_m', 'Gd':'G_d', 'Gr0':'G_{r0}', 'Gr1':'G_{r1}', 'v0':'v_0', 'v1':'v_1'}
+#modelLabels['3'] = [('E','E'), ('g','g'), ('k','k'), ('p','p'), ('phi_m','\phi_m'), ('Gd','G_d'), ('Gr0','G_{r0}'), ('Gr1','G_{r1}'), ('v0','v_0'), ('v1','v_1')]
 #modelParams['3'] = deepcopy(modelFits['3']['ChR2'])
                 
 
@@ -209,7 +209,7 @@ modelFits['3']['ArchT'].add_many( # Hyperpolarising: actively extrudes Hydrogen 
                 # ('c1',    0.03,   True, 0.0,  None, None),
                 # ('c2',    0.0115, True, 0.0,  None, None),
                 # ('p',     0.7,    True, None, None, None),
-                # ('phim',  5e17,   True, None, None, 'photons/s/mm^2'),
+                # ('phi_m',  5e17,   True, None, None, 'photons/s/mm^2'),
                 # ('e12d',  0.01,   True, 0.0,  None, '/ms'),
                 # ('e21d',  0.015,  True, 0.0,  None, '/ms'),
                 # ('Gd1',   0.11,   True, 0.0,  None, '/ms'),
@@ -231,7 +231,7 @@ modelFits['3']['ArchT'].add_many( # Hyperpolarising: actively extrudes Hydrogen 
                 # ('c1',      0.4,   True, 0.001, 1e3,    '/ms'),
                 # ('c2',      0.2,   True, 0.001, 1e3,    '/ms'),
                 # ('q',       0.47,    True, 0.1,  5,      None),
-                # ('phim',    1e16,   True, 1e15, 1e19,   'photons/s/mm^2'),
+                # ('phi_m',    1e16,   True, 1e15, 1e19,   'photons/s/mm^2'),
                 # ('Gd1',     0.15,   True, 0.01, 1,      '/ms'),
                 # ('Gd2',     0.025,  True, 0.01, 1,      '/ms'),
                 # ('Gr',      0.0004, True, 1e-6, 1,      '/ms'),
@@ -243,7 +243,7 @@ modelFits['3']['ArchT'].add_many( # Hyperpolarising: actively extrudes Hydrogen 
 # modelParams['4'].add_many(  #('phi0',    1e14,   True, 1e12, 1e21,   'photons/s/mm^2'),### Set this to be above the max flux??? 10**ceil(log10(max(phis)))
                 # ('g',       3.5e4,  True, 0.001,1e15,   'pS'),
                 # ('gam',     0.05,   True, 0.0,  1,      None),
-                # ('phim',    1e16,   True, 1e15, 1e19,   'photons/s/mm^2'),
+                # ('phi_m',    1e16,   True, 1e15, 1e19,   'photons/s/mm^2'),
                 # ('k1',      1000,   True, 0.001,1e5,    '/ms'), #3
                 # ('k2',      500,    True, 0.001,1e5,    '/ms'), #1.5
                 # ('p',       0.7,    True, 0.1,  5,      None),
@@ -263,7 +263,7 @@ modelFits['3']['ArchT'].add_many( # Hyperpolarising: actively extrudes Hydrogen 
 modelFits['4']['ChR2'].add_many(
                 ('g0',      1.14e5, True, 0.001,1e15,   None),
                 ('gam',     0.00742,True, 0.0,  1,      None),
-                ('phim',    2.33e17,True, 1e15, 1e19,   None),
+                ('phi_m',    2.33e17,True, 1e15, 1e19,   None),
                 ('k1',      4.15,   True, 0.001,1e5,    None), #3
                 ('k2',      0.868,  True, 0.001,1e5,    None), #1.5
                 ('p',       0.833,  True, 0.1,  5,      None),
@@ -283,7 +283,7 @@ modelFits['4']['ChR2'].add_many(
 #d6sp = Parameters()
 # modelParams['6'].add_many(
                 # #('phi0',  1e14,   True, None, None, 'photons/s/mm^2'),
-                # ('phim',    1e16,   True, 1e15, 1e19,   'photons/s/mm^2'),
+                # ('phi_m',    1e16,   True, 1e15, 1e19,   'photons/s/mm^2'),
                 # ('E',     0,      True, -1000,1000, 'mV'),
                 # ('gam',   0.05,   True, 0.0,  1,  None), #1e9
                 # ('g',     75000,  True, 0.0,  1e15, 'pS'),
@@ -309,7 +309,7 @@ modelFits['4']['ChR2'].add_many(
 # modelParams['6'].add_many(                
                 # ('g',     75000,  True, 0.0,  1e15, 'pS'),
                 # ('gam',   0.05,   True, 0.0,  1,  None), # Max=1 if gO1 >= gO2
-                # ('phim',    1e16,   True, 1e15, 1e19,   'photons/s/mm^2'),
+                # ('phi_m',    1e16,   True, 1e15, 1e19,   'photons/s/mm^2'),
                 # ('k1',   5e3,    True, 0.0,  None, '/ms'), #a10 #5
                 # ('k2',   1.1e3,  True, 0.0,  None, '/ms'), #b40 #1.1
                 # ('p',     0.7,    True, 0.1,  5,    None),
@@ -332,7 +332,7 @@ modelFits['4']['ChR2'].add_many(
 modelFits['6']['ChR2'].add_many(                
                 ('g0',      2.52e4,  True, 0.0,  1e15, None),
                 ('gam',     0.0161, True, 0.0,  1,    None), # Max=1 if gO1 >= gO2
-                ('phim',    3.54e17,True, 1e15, 1e19, None),
+                ('phi_m',    3.54e17,True, 1e15, 1e19, None),
                 ('k1',      13.4,   True, 0.0,  1000, None),
                 ('k2',      2.71,   True, 0.0,  1000, None),
                 ('p',       0.985,  True, 0.1,  5,    None),

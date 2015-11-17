@@ -5,7 +5,7 @@ NEURON {
     NONSPECIFIC_CURRENT i
     RANGE i, E, gam, v0, v1, g0 :, fphi, fv
     RANGE k1, k2, kf, kb, Gf0, Gb0, Gd1, Gd2, Gr0, p, q
-    RANGE phi, phim :, lambda
+    RANGE phi, phi_m :, lambda
 }
 
 
@@ -21,7 +21,7 @@ UNITS {
 PARAMETER { : Initialise parameters to defaults. These may be changed through hoc files
 
 : Illumination constants   
-    phim    = 1e16                          : Hill Constant
+    phi_m    = 1e16                          : Hill Constant
 :   lambda  = 470   : (nm)
 
 : Conductance
@@ -103,25 +103,25 @@ PROCEDURE rates(phi) { : Define equations for calculating transition rates
 
     :p1 = pow(phi,p)
     :p2 = pow(phi,q)
-    :d1 = pow(phim,p)
-    :d2 = pow(phim,q)
+    :d1 = pow(phi_m,p)
+    :d2 = pow(phi_m,q)
     
     if (phi > 0) {
-        h1 = 1/(1 + pow(phim,p)/pow(phi,p)) : p1/(p1 + d1)
-        h2 = 1/(1 + pow(phim,q)/pow(phi,q)) : p2/(p2 + d2)
+        h1 = 1/(1 + pow(phi_m,p)/pow(phi,p)) : p1/(p1 + d1)
+        h2 = 1/(1 + pow(phi_m,q)/pow(phi,q)) : p2/(p2 + d2)
     } else {
         h1 = 0
         h2 = 0
     }
     
         :Ga1 = k1*(phi/phi0)
-    Ga1 = k1 * h1             :Ga1 = k1 * pow(phi,p)/(pow(phi,p) + pow(phim,p))
+    Ga1 = k1 * h1             :Ga1 = k1 * pow(phi,p)/(pow(phi,p) + pow(phi_m,p))
         :Ga2 = k2*(phi/phi0)
-    Ga2 = k2 * h1             :Ga2 = k2 * pow(phi,p)/(pow(phi,p) + pow(phim,p))
+    Ga2 = k2 * h1             :Ga2 = k2 * pow(phi,p)/(pow(phi,p) + pow(phi_m,p))
         :Gf = Gf0 + kf*log(1+(phi/phi0))
-    Gf = Gf0 + kf * h2      :Gf = Gf0 + kf * pow(phi,q)/(pow(phi,q) + pow(phim,q))
+    Gf = Gf0 + kf * h2      :Gf = Gf0 + kf * pow(phi,q)/(pow(phi,q) + pow(phi_m,q))
         :Gb = Gb0 + kb*log(1+(phi/phi0))
-    Gb = Gb0 + kb * h2      :Gb = Gb0 + kb * pow(phi,q)/(pow(phi,q) + pow(phim,q))
+    Gb = Gb0 + kb * h2      :Gb = Gb0 + kb * pow(phi,q)/(pow(phi,q) + pow(phi_m,q))
     
 }
 

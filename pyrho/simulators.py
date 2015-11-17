@@ -965,7 +965,7 @@ class simBrian(Simulator):
         self.stateVars = RhO.brianStateVars # ['S_'+s for s in RhO.stateVars]
         
         #if not Prot.squarePulse: ### HACK!!!
-        #    modelUnits['phim'] = 1
+        #    modelUnits['phi_m'] = 1
         
         self.namespace = self.setParams(RhO)
         self.namespace.update(netParams)
@@ -1074,8 +1074,8 @@ class simBrian(Simulator):
         phi = 0
         RhO.initStates(phi) # Reset state and time arrays from previous runs
         
-        #self.namespace.update({'phi':phi*modelUnits['phim'], 'stimulus':bool(phi>0)})
-        self.net[self.G_RhO].phi = phi * modelUnits['phim']
+        #self.namespace.update({'phi':phi*modelUnits['phi_m'], 'stimulus':bool(phi>0)})
+        self.net[self.G_RhO].phi = phi * modelUnits['phi_m']
         self.net[self.G_RhO].stimulus = False
         
         RhO.s0 = RhO.states[-1,:]   # Store initial state used
@@ -1107,8 +1107,8 @@ class simBrian(Simulator):
             onInd = int(round(elapsed/dt))
             # Turn on light and set transition rates
             phi = phiOn if (phiOn>0) else 0 # Light flux
-            #self.namespace.update({'phi':phi*modelUnits['phim'], 'stimulus':bool(phi>0)})
-            self.net[self.G_RhO].phi = phi * modelUnits['phim']
+            #self.namespace.update({'phi':phi*modelUnits['phi_m'], 'stimulus':bool(phi>0)})
+            self.net[self.G_RhO].phi = phi * modelUnits['phi_m']
             self.net[self.G_RhO].stimulus = True if (phiOn>0) else False #True
             self.net.run(duration=cycles[p,0]*ms, namespace=self.namespace, report=report)
             
@@ -1116,9 +1116,9 @@ class simBrian(Simulator):
             ### Light off phase
             # Turn off light and set transition rates
             phi = 0  # Light flux
-            self.net[self.G_RhO].phi = phi * modelUnits['phim']
+            self.net[self.G_RhO].phi = phi * modelUnits['phi_m']
             self.net[self.G_RhO].stimulus = False
-            #self.namespace.update({'phi':phi*modelUnits['phim'], 'stimulus':bool(phi>0)})
+            #self.namespace.update({'phi':phi*modelUnits['phi_m'], 'stimulus':bool(phi>0)})
             self.net.run(duration=cycles[p,1]*ms, namespace=self.namespace, report=report)
             elapsed += cycles[p,1]
             offInd = int(round(elapsed/dt))
@@ -1215,7 +1215,7 @@ class simBrian(Simulator):
         
         
         phi_tV[np.ma.where(phi_tV < 0)] = 0 # Safeguard for negative phi values # np.clip(phi_tV, 0, phiMax)?
-        phi = self.br.TimedArray(phi_tV * modelUnits['phim'], dt=dt*ms, name='phi') # 'phi_t'
+        phi = self.br.TimedArray(phi_tV * modelUnits['phi_m'], dt=dt*ms, name='phi') # 'phi_t'
         self.namespace.update({'phi':phi})
         self.net.run(duration=duration*ms, namespace=self.namespace, report=report)
         
