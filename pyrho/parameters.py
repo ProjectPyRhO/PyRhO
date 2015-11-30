@@ -154,7 +154,7 @@ Params['g0'] = PyRhOparameter('g0', 2.5e4, psiemens, 'pS', 'g_0', 'Biological sc
 #               (Name,    Value,  Vary, Min,  Max,  Expr=Units)                
 modelFits['3']['ChR2'].add_many( # Depolarising: passively transports Na+, H+, K+ and Ca2+ down their electrochemical gradients
                 ('g0',    1.57e5, True, 0.001,  1e6,  None),
-                ('phi_m',  1.32e18,True, 1e15,   1e19, None),
+                ('phi_m', 1.32e18,True, 1e15,   1e19, None),
                 ('k',     4.51,   True, 0.001,  1000, None),
                 ('p',     0.793,  True, 0.1,    5,    None),
                 ('Gd',    0.104,  True, 0.0001, 1,    None),
@@ -169,7 +169,7 @@ modelFits['3']['NpHR'].add_many( # Hyperpolarising: pumps chloride ions into the
                 ('phi_m',  1.32e18,True, 1e15,   1e19, None),
                 ('k',     0.01,   True, 0.001,  1000, None),
                 ('p',     0.793,  True, 0.1,    5,    None),
-                ('Gd',    1,  True, 0.0001, 1,    None),
+                ('Gd',    0.1,  True, 0.0001, 1,    None),
                 ('Gr0',   0.0002, True, 0.0001, 0.1,  None),
                 ('Gr1',   0.0135, True, 0.0001, 1,    None),
                 ('E',     -400,   True, -1000,  1000, None),
@@ -512,7 +512,7 @@ protParams['sinusoid'].add_many(('phis',[1e12],True,None,None,None), #'photons/s
                             ('phi0',[0],True,None,None,None), #'photons/s/mm^2'
                             ('startOn',True,False,False,True,None),
                             ('Vs',[-70],True,None,None,None), #'mV'
-                            ('fs',[0.1,0.5,1,5,10,50,100],True,None,None,None), #'Hz' #, 500, 1000
+                            ('fs',[0.1,0.5,1,5,10],True,None,None,None), #'Hz' #50, 100, 500, 1000
                             ('delD', 25, True, 0, 1e9, None), #'ms'
                             ('cycles',[[10000.,50.]],True,None,None,None)) #'ms'
 
