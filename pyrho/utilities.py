@@ -53,19 +53,19 @@ def printParams(params):
 def compareParams(origParams, newParams):
     ovd = origParams.valuesdict()
     nvd = newParams.valuesdict()
-    report = '------------------------\n'
-    report += '          Original        New    Difference\n'
-    report += '------------------------\n'
+    report  = '--------------------------------------------\n'
+    report += '          Original        New    Change     \n'
+    report += '--------------------------------------------\n'
     for k,nv in nvd.items():
         ov = ovd[k]
         if isinstance(nv, (int, float, complex)):
             if ov > 1e-4: #ov != 0:
                 report += '{:>7} = {:8.3g} --> {:8.3g} ({:+.3g}%)\n'.format(k,ov,nv,(nv-ov)*100/ov)
             else:
-                report += '{:>7} = {:8.3g} --> {:8.3g} (Diff: {:+.3g})\n'.format(k,ov,nv,nv-ov)
+                report += '{:>7} = {:8.3g} --> {:8.3g} (Abs: {:+.3g})\n'.format(k,ov,nv,nv-ov)
         else: # Check for bool?
             report += '{:>7} = {:8}\n'.format(k,str(nv))
-    report += '========================\n'
+    report += '============================================\n'
     print(report)
     
 def texIt(texString):
