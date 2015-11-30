@@ -928,8 +928,10 @@ class protSinusoid(Protocol):
                     Aabs = max(Iabs)
                     fabsLabel = '$f^*_{{res}}={}$ $\mathrm{{[Hz]}}$'.format(round_sig(fstar_abs,3))
                     self.axIss.plot(fstar_abs, Aabs, '*', markersize=10, label=fabsLabel)
-                    #axIss.legend(loc='best')
+                    self.axIss.legend(loc='best')
                     #axIss.annotate(fabsLabel, xy=(fstar_abs,Aabs), xytext=(0.7, 0.9), textcoords='axes fraction', arrowprops={'arrowstyle':'->','color':'black'})
+                    if verbose > 0:
+                        print('Resonant frequency (phi={}; V={}) = {} Hz'.format(phiOn, V, fstar_abs))
             self.axIss.set_xscale('log')
             self.axIss.set_xlabel('$f$ $\mathrm{[Hz]}$')
             self.axIss.set_ylabel('$|A|_{ss}$ $\mathrm{[nA]}$')
