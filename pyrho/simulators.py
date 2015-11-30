@@ -86,7 +86,7 @@ class Simulator(PyRhOobject): #object
                     ### Reset simulation environment...
                     self.initialise()
                     
-                    if Prot.squarePulse:
+                    if Prot.squarePulse and self.simulator is 'Python':
                         I_RhO, t, soln = self.runTrial(RhO, phiOn, V, delD, cycles, self.dt, verbose)
 
                     else: # Arbitrary functions of time: phi(t)
@@ -429,10 +429,11 @@ class simNEURON(Simulator):
         self.h.v_init = params['v_init'].value #-60
         
         ### Move into prepare() in order to insert the correct type of mechanism (continuous or discrete) according to the protocol
-        
+        for states, mod in self.mechanisms.items():
+            self.mechanisms[states] += 'c'
         self.mod = self.mechanisms[self.RhO.nStates] ### Use this to select the appropriate mod file for insertion
-        if not Prot.squarePulse:
-            self.mod += 'c'
+        #if not Prot.squarePulse:
+        #self.mod += 'c'
         
         self.buildCell(params['cell'].value)
         self.h.topology() # Print topology
@@ -508,7 +509,8 @@ class simNEURON(Simulator):
                 self.h.load_file(script)
                 '''
                 elif ext == 'py':
-                    #exec(script) # Is this safe?!
+                    with open(script, "r") as fh:
+                        exec(fh.read(), globals(), locals()) # Is this safe?!
                     #import script
                     #os.system("""python {}""".format(script))
                     subprocess.Popen(["python", script])
@@ -1076,7 +1078,7 @@ class simBrian(Simulator):
         
         #self.namespace.update({'phi':phi*modelUnits['phi_m'], 'stimulus':bool(phi>0)})
         self.net[self.G_RhO].phi = phi * modelUnits['phi_m']
-        self.net[self.G_RhO].stimulus = False
+        #self.net[self.G_RhO].stimulus = False
         
         RhO.s0 = RhO.states[-1,:]   # Store initial state used
         #start, end = RhO.t[0], RhO.t[0]+delD
@@ -1109,7 +1111,7 @@ class simBrian(Simulator):
             phi = phiOn if (phiOn>0) else 0 # Light flux
             #self.namespace.update({'phi':phi*modelUnits['phi_m'], 'stimulus':bool(phi>0)})
             self.net[self.G_RhO].phi = phi * modelUnits['phi_m']
-            self.net[self.G_RhO].stimulus = True if (phiOn>0) else False #True
+            #self.net[self.G_RhO].stimulus = True if (phiOn>0) else False #True
             self.net.run(duration=cycles[p,0]*ms, namespace=self.namespace, report=report)
             
             
@@ -1117,7 +1119,7 @@ class simBrian(Simulator):
             # Turn off light and set transition rates
             phi = 0  # Light flux
             self.net[self.G_RhO].phi = phi * modelUnits['phi_m']
-            self.net[self.G_RhO].stimulus = False
+            #self.net[self.G_RhO].stimulus = False
             #self.namespace.update({'phi':phi*modelUnits['phi_m'], 'stimulus':bool(phi>0)})
             self.net.run(duration=cycles[p,1]*ms, namespace=self.namespace, report=report)
             elapsed += cycles[p,1]
@@ -1145,6 +1147,7 @@ class simBrian(Simulator):
             self.monitors['I'].record_single_timestep()
             I_RhO = self.monitors['I'].variables[self.varIrho].get_value() * 1e9# / nA
             I_RhO = np.squeeze(I_RhO) # Replace with record indexing?
+        self.monitors['V'].record_single_timestep()
         
         times, totT = cycles2times(cycles, delD)
         #self.plotRasters(times, totT)
@@ -1237,7 +1240,10 @@ class simBrian(Simulator):
             I_RhO = self.monitors['I'].variables[self.varIrho].get_value() * 1e9# / nA
             I_RhO = np.squeeze(I_RhO) # Replace with record indexing?
         self.monitors['V'].record_single_timestep()
-
+        
+        #for mon in self.monitors:
+        #    mon.record_single_timestep()
+        
         #self.plotRasters(times, totT)
         
         return I_RhO, t, states
