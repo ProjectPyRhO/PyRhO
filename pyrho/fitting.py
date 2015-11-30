@@ -7,7 +7,7 @@
 from __future__ import print_function
 
 # import lmfit
-from lmfit import *#minimize, Parameters, fit_report
+from lmfit import minimize, Parameters, fit_report #*
 import numpy as np
 import matplotlib as mp
 import matplotlib.pyplot as plt
@@ -443,28 +443,56 @@ def fit3statesIndiv(I,t,onInd,offInd,phi,V,Gr0,gmax,Ipmax,params=None,method=def
 
 
     
+# Use Akaike and Bayesian Information Criteria to compare model fits
+
 def calcOnPhase(p,t,RhO,V,phi):
     """Simulate the on-phase from base parameters"""
-    if verbose > 2:
-        print('.', end="") # sys.stdout.write('.')
+
     RhO.initStates(0)
     RhO.updateParams(p)
     RhO.setLight(phi) # Calculate transition rates for phi
-    
-    soln = odeint(RhO.solveStates, RhO.s_0, t, Dfun=RhO.jacobian)
-    # soln,out = odeint(RhO.solveStates, RhO.s_0, t, Dfun=RhO.jacobian, full_output=True)
-    # if out['message'] != 'Integration successful.':
-        # #print(out)
-        # print(RhO.reportParams())
+
+    if verbose > 2:
+        print('.', end="") # sys.stdout.write('.')    
+        soln, out = odeint(RhO.solveStates, RhO.s_0, t, Dfun=RhO.jacobian, full_output=True)
+        if out['message'] != 'Integration successful.':
+            #print(out)
+            print(RhO.reportParams())
+    else:
+        soln = odeint(RhO.solveStates, RhO.s_0, t, Dfun=RhO.jacobian)
+        
     I_RhO = RhO.calcI(V, soln)
     return I_RhO
+
+# func(params, *args, **kws)
+
+def errPhase(p,residual,Is,ts,RhO,Vs,phis):
+    """     
+    IN:
+        p           : Model parameters
+        residual    : Function to calculate the residual
+        Is          : Set (list) of currents
+        ts          : Set (list) of corresponding time arrays
+        RhO         : Model object
+        Vs          : List of Voltage clamp potentials
+        phis        : List of flux values
+    
+    OUT:
+        Concatenated set of residual values
+    """
+    #data = zip(Is, ts, nfs, Vs, phis) # Normalise? e.g. /Ions[trial][-1] or /min(Ions[trial])
+    
+    return np.r_[ [(Is[i] - residual(p,ts[i],RhO,Vs[i],phis[i]))/Is[i][-1] for i in range(len(Is))]]
+
 
 # Normalise? e.g. /Ions[trial][-1] or /min(Ions[trial])
 def errOnPhase(p,Ions,tons,RhO,Vs,phis):
     return np.r_[ [(Ions[i] - calcOnPhase(p,tons[i],RhO,Vs[i],phis[i]))/Ions[i][-1] for i in range(len(Ions))]]
-    
+'''    
 def errSetOnPhase(p,Ions,tons,RhO,Vs,phis):
     return np.r_[ [Ions[i]/Ions[i][-1] - calcOnPhase(p,tons[i],RhO,Vs[i],phis[i])/Ions[i][-1] for i in range(len(Ions))]]
+'''
+    
     
 def calc4on(p,t,RhO,V,phi):
     """Simulate the on-phase from base parameters for the 4-state model"""
@@ -1319,6 +1347,8 @@ def reportFit(minResult, description, method):
     else:
         print("Fit for {} variables over {} points ({} d.f.) with {} function evaluations".format(minResult.nvarys, minResult.ndata, minResult.nfree, minResult.nfev))
         print("Chi^2 (reduced): {}, ({})".format(minResult.chisqr, minResult.redchi))
+        #print("Chi^2 \t rChi^2 \t AIC \t BIC")
+        #print("{} \t {} \t {} \t {}".format(minResult.chisqr, minResult.redchi, minResult.aic, minResult.bic))
     
     
     
@@ -1697,7 +1727,7 @@ def fit3states(fluxSet, run, vInd, params, postOpt=True, method=defMethod, verbo
     copyParam('phi_m',params,pOns) #pOns.add('phi_m',value=1e17,min=1e15,max=1e19) #1e19
     
     # Set parameters from general rhodopsin analysis routines
-    copyParam('g',params,pOns) # pOns.add('g',value=gmax,vary=False)
+    copyParam('g0',params,pOns) # pOns.add('g',value=gmax,vary=False)
     copyParam('Gr0',params,pOns)
     #pOns['Gr0'].set(vary=False) # Dark recovery rate
     copyParam('Gr1',params,pOns) # pOns.add('Gr',value=Gr0,vary=False)
@@ -2030,16 +2060,21 @@ def fit4states(fluxSet, run, vInd, params, postOpt=True, method=defMethod, verbo
     
     RhO = models['4']()
     
-    # Normalise? e.g. /Ions[trial][-1] or /min(Ions[trial])
-    def err4On(p,Ions,tons,RhO,Vs,phis):
-        return np.r_[ [Ions[i]/Ions[i][-1] - calc4on(p,tons[i],RhO,Vs[i],phis[i])/Ions[i][-1] for i in range(len(Ions))]]
     
     ### Trim down ton? Take 10% of data or one point every ms? ==> [0::5]
     ### Instead try looping over a coarse grid of parameter values and saving RMSE for each combination c.f. analysis_4state_on_new.m
     
     if verbose > 2:
         print('Optimising ',end='')
+    '''
+    # Normalise? e.g. /Ions[trial][-1] or /min(Ions[trial])
+    def err4On(p,Ions,tons,RhO,Vs,phis):
+        return np.r_[ [Ions[i]/Ions[i][-1] - calc4on(p,tons[i],RhO,Vs[i],phis[i])/Ions[i][-1] for i in range(len(Ions))]]
+    
     onPmin = minimize(err4On, pOns, args=(Ions,tons,RhO,Vs,phis), method=method)
+    '''
+    
+    onPmin = minimize(errOnPhase, pOns, args=(Ions,tons,RhO,Vs,phis), method=method)
     
     #print("\n>>> On-phase fitting summary: <<<")
     #print(onPmin.message)
@@ -2403,6 +2438,13 @@ def fit6states(fluxSet, quickSet, run, vInd, params, postOpt=True, method=defMet
     
     RhO = models['6']()
     
+    ### Trim down ton? Take 10% of data or one point every ms? ==> [0::5]
+    ### Instead try looping over a coarse grid of parameter values and saving RMSE for each combination c.f. analysis_4state_on_new.m
+    
+    if verbose > 2:
+        print('Optimising ',end='')
+    
+    '''
     def calc6on(p,t,RhO,V,phi):
         """Simulate the on-phase from base parameters for the 6-state model"""
         if verbose > 2:
@@ -2423,12 +2465,10 @@ def fit6states(fluxSet, quickSet, run, vInd, params, postOpt=True, method=defMet
     def err6on(p,Ions,tons,RhO,Vs,phis):
         return np.r_[ [(Ions[i] - calc6on(p,tons[i],RhO,Vs[i],phis[i]))/Ions[i][-1] for i in range(len(Ions))]]
     
-    ### Trim down ton? Take 10% of data or one point every ms? ==> [0::5]
-    ### Instead try looping over a coarse grid of parameter values and saving RMSE for each combination c.f. analysis_4state_on_new.m
-    
-    if verbose > 2:
-        print('Optimising ',end='')
     onPmin = minimize(err6on, pOns, args=(Ions,tons,RhO,Vs,phis), method=method)
+    '''
+    
+    onPmin = minimize(errOnPhase, pOns, args=(Ions,tons,RhO,Vs,phis), method=method)
     
     #print("\n>>> On-phase fitting summary: <<<")
     #print(onPmin.message)
