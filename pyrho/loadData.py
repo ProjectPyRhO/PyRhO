@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.io as sio # Use for Matlab files < v7.3
 #from lmfit import Parameters
-from lmfit import *
+from lmfit import Parameters, minimize, fit_report #*
 #from .models import * # For times2cycles and cycles2times
 from pyrho.utilities import * # For times2cycles and cycles2times, expDecay, findPlateauCurrent
 from pyrho.parameters import tFromOff
@@ -79,6 +79,7 @@ method = 'powell'
 
 class PhotoCurrent():
     """Data storage class for an individual Photocurrent and its associated properties"""
+    overlap = True                              # Periods are up to *and including* the start of the next e.g. onPhase := t[onInd] <= t <? t[offInd]
     
     def __init__(self, I, t, pulses, phi, V, label=None):
         """ I       := Photocurrent [nA]
@@ -425,14 +426,12 @@ class PhotoCurrent():
     
     def alignToPulse(self, pulse=0, alignPoint=0):
         """Set time array so that the first pulse occurs at t=0 (with negative delay period)"""
-        #print(self.pulses[pulse])
         if not self.pulseAligned or alignPoint != self.alignPoint: #and abs(self.pulses[pulse,0]) > 1e-12: # HACK!!! Write compare floats function
-            #p0 = self.delD #pulses[0,0]
-            if alignPoint == 0: # Start
-                self.p0 = self.pulses[pulse,0] #self.delDs[pulse]; print(p0)
-            elif alignPoint == 1: # Peak
+            if alignPoint == 0:         # Start
+                self.p0 = self.pulses[pulse,0]
+            elif alignPoint == 1:       # Peak
                 self.p0 = self.tpeaks_[pulse]
-            elif alignPoint == 2: # End
+            elif alignPoint == 2:       # End
                 self.p0 = self.pulses[pulse,1]
             else:
                 raise NotImplementedError
@@ -446,29 +445,36 @@ class PhotoCurrent():
             self.alignPoint = alignPoint
             
         
-    def alignToTime(self):
-        """Set time array so that it begins at t=0 (with the first pulse at t>0)"""
-        if self.pulseAligned: # and abs(self.pulses[0,0]) < 1e-12:
-            self.p0 = self.t[0] #self.delD
-            self.t -= self.p0           # Time array
-            self.pulses -= self.p0      # Pulse times
-            self.begT = self.t[0]       # Beginning Time of Trial
-            self.endT = self.t[-1]      # End Time of Trial
-            self.tpeak_ = self.t[self.peakInd_]
-            self.tpeaks_ = self.t[self.peakInds_]
-            self.pulseAligned = False
-    
+    def alignToTime(self, t=None):
+        """Set time array so that it begins at t=0 [default] (with the first pulse at t>0)"""
+        if t is None:
+            if self.pulseAligned:
+                self.p0 = self.t[0]
+            else:
+                self.p0 = 0
+        else:
+            self.p0 = t
+            
+        #if self.pulseAligned: # and abs(self.pulses[0,0]) < 1e-12:
+        #    self.p0 = self.t[0]
+        self.t -= self.p0           # Time array
+        self.pulses -= self.p0      # Pulse times
+        self.begT = self.t[0]       # Beginning Time of Trial
+        self.endT = self.t[-1]      # End Time of Trial
+        self.tpeak_ = self.t[self.peakInd_]
+        self.tpeaks_ = self.t[self.peakInds_]
+        self.pulseAligned = False
     
 
     
     def findPeakInds(self): #, pulse=0):
         """Find the indicies of the photocurrent peaks for each pulse
             OUT:    np.array([peakInd_0, peakInd_1, ..., peakInd_n])"""
-        offsetInd = len(self.getDelayPhase()[0]) - 1
+        offsetInd = len(self.getDelayPhase()[0]) - int(self.overlap) #1
         peakInds = np.zeros((self.nPulses,), dtype=np.int)
         for p in range(self.nPulses):
             peakInds[p] = np.argmax(abs(self.getCycle(p)[0])) + offsetInd
-            offsetInd += len(self.getCycle(p)[0]) - 1
+            offsetInd += len(self.getCycle(p)[0]) - int(self.overlap) #1
             
             #print(self.I[peakInds[p]])
             #print(self.getCycle(p)[0][np.argmax(abs(self.getCycle(p)[0]))])
@@ -522,7 +528,7 @@ class PhotoCurrent():
 
         elif method == 1: # Theoretical: Fit curve from peak to end of on phase
             
-            postPeak = slice(self.peakInds_[pulse], self.pulseInds[pulse, 1]+1) # t_peak : t_off+1
+            postPeak = slice(self.peakInds_[pulse], self.pulseInds[pulse, 1]+int(self.overlap)) #1 # t_peak : t_off+1
             popt = fitPeaks(self.t[postPeak], self.I[postPeak], expDecay, p0inact, '$I_{{inact}} = {:.3}e^{{-t/{:g}}} {:+.3}$','')
             #popt=fitPeaks(t[peakInds[0]:offInd+1], self.I[peakInds[0]:offInd+1], expDecay, p0inact, '$I_{{inact}} = {:.3}e^{{-t/{:g}}} {:+.3}$','')
             Iss = popt[2]
@@ -557,14 +563,14 @@ class PhotoCurrent():
     
     def getDelayPhase(self):
         """Return Idel, tdel"""
-        delSlice = slice(0, self.pulseInds[0,0]+1)
+        delSlice = slice(0, self.pulseInds[0,0]+int(self.overlap))
         #return self.I[:self.pulseInds[0,0]+1]
         return (self.I[delSlice], self.t[delSlice])
         
     def getOnPhase(self, pulse=0):
         """Return I [nA] and t [ms] arrays from the on-phase (Ion, ton) for a given pulse"""
         assert(0 <= pulse < self.nPulses)
-        onSlice = slice(self.pulseInds[pulse,0], self.pulseInds[pulse,1]+1)
+        onSlice = slice(self.pulseInds[pulse,0], self.pulseInds[pulse,1]+int(self.overlap))
         #return (self.I[self.pulseInds[pulse,0]:self.pulseInds[pulse,1]+1], self.t[self.pulseInds[pulse,0]:self.pulseInds[pulse,1]+1])
         return (self.I[onSlice], self.t[onSlice])
         
@@ -572,7 +578,7 @@ class PhotoCurrent():
         """Return I [nA] and t [ms] arrays from the off-phase (Ioff, toff) for a given pulse"""
         assert(0 <= pulse < self.nPulses)
         if 0 <= pulse < self.nPulses-1:
-            offSlice = slice(self.pulseInds[pulse,1], self.pulseInds[pulse+1,0]+1)
+            offSlice = slice(self.pulseInds[pulse,1], self.pulseInds[pulse+1,0]+int(self.overlap))
             #return self.I[self.pulseInds[pulse,1]:self.pulseInds[pulse+1,0]+1]
         elif pulse == self.nPulses-1:   # Last Pulse
             offSlice = slice(self.pulseInds[pulse,1], None)
@@ -585,7 +591,7 @@ class PhotoCurrent():
         """Return I [nA] and t [ms] arrays from the on- and off-phase (Ip, tp) for a given pulse"""
         assert(0 <= pulse < self.nPulses)
         if 0 <= pulse < self.nPulses-1:
-            cycleSlice = slice(self.pulseInds[pulse,0], self.pulseInds[pulse+1,0]+1)
+            cycleSlice = slice(self.pulseInds[pulse,0], self.pulseInds[pulse+1,0]+int(self.overlap))
             #return self.I[self.pulseInds[pulse,0]:self.pulseInds[pulse+1,0]+1] # Consider removing the +1
         elif pulse == self.nPulses-1:   # Last Pulse
             cycleSlice = slice(self.pulseInds[pulse,0], None)
@@ -597,13 +603,13 @@ class PhotoCurrent():
     def getActivation(self, pulse=0):
         """Return I [nA] and t [ms] arrays from beginning of the on-phase to the peak for a given pulse"""
         assert(0 <= pulse < self.nPulses)
-        actSlice = slice(self.pulseInds[pulse,0], self.peakInds_[pulse]+1)
+        actSlice = slice(self.pulseInds[pulse,0], self.peakInds_[pulse]+int(self.overlap))
         return (self.I[actSlice], self.t[actSlice])
         
     def getDeactivation(self, pulse=0): # Inactivation, Deactivation, Desensitisation???
         """Return I [nA] and t [ms] arrays from the peak to the end of the on-phase for a given pulse"""
         assert(0 <= pulse < self.nPulses)
-        deactSlice = slice(self.peakInds_[pulse], self.pulseInds[pulse,1]+1)
+        deactSlice = slice(self.peakInds_[pulse], self.pulseInds[pulse,1]+int(self.overlap))
         return (self.I[deactSlice], self.t[deactSlice])
     
     def plot(self, ax=None, light='shade', addFeatures=True, colour=None, linestyle=None): #colour, linestyle
