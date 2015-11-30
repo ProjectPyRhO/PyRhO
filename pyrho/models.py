@@ -392,16 +392,32 @@ class RhO_3states(RhodopsinModel):
     
     brianStateVars = ['S_C','S_O','S_D']
     
+    """
     brian = '''
-            dS_C/dt = Gr*S_D - Ga*S_C : 1
-            dS_O/dt = Ga*S_C - Gd*S_O : 1
-            dS_D/dt = Gd*S_O - Gr*S_D : 1
-            Ga = k*((phi**p)/(phi**p + phi_m**p)) : second**-1
-            Gr = Gr0 + int(stimulus)*Gr1 : second**-1
-            fv = (1-exp(-(v-E)/v0))/((v-E)/v1) : 1
-            I = g0*S_O*fv*(v-E) : amp
-            phi : metre**-2*second**-1 (shared)
-            stimulus : boolean (shared)
+            dS_C/dt = Gr*S_D - Ga*S_C               : 1
+            dS_O/dt = Ga*S_C - Gd*S_O               : 1
+            dS_D/dt = Gd*S_O - Gr*S_D               : 1
+            Ga = k*((phi**p)/(phi**p + phi_m**p))   : second**-1
+            Gr = Gr0 + int(stimulus)*Gr1           : second**-1
+            f_phi = S_O                             : 1
+            f_v = (1-exp(-(v-E)/v0))/((v-E)/v1)     : 1
+            I = g0*f_phi*f_v*(v-E)                  : amp
+            phi                                     : metre**-2*second**-1 (shared)
+            stimulus                               : boolean (shared)
+            '''
+    """
+    
+    brian = '''
+            dS_C/dt = Gr*S_D - Ga*S_C               : 1
+            dS_O/dt = Ga*S_C - Gd*S_O               : 1
+            dS_D/dt = Gd*S_O - Gr*S_D               : 1
+            Ga = k*((phi**p)/(phi**p + phi_m**p))   : second**-1
+            Gr = Gr0 + Theta*Gr1                    : second**-1
+            f_phi = S_O                             : 1
+            f_v = (1-exp(-(v-E)/v0))/((v-E)/v1)     : 1
+            I = g0*f_phi*f_v*(v-E)                  : amp
+            phi                                     : metre**-2*second**-1 (shared)
+            Theta = int(phi > 0*phi)                : 1 (shared)
             '''
     #S_D = 1 - S_C - S_O : 1 #
     #int(phi>0)
@@ -410,15 +426,15 @@ class RhO_3states(RhodopsinModel):
     #Ga = k * H : second**-1
     
     brian_phi_t = '''
-            dS_C/dt = Gr*S_D - Ga*S_C : 1
-            dS_O/dt = Ga*S_C - Gd*S_O : 1
-            dS_D/dt = Gd*S_O - Gr*S_D : 1
+            dS_C/dt = Gr*S_D - Ga*S_C                   : 1
+            dS_O/dt = Ga*S_C - Gd*S_O                   : 1
+            dS_D/dt = Gd*S_O - Gr*S_D                   : 1
             Ga = k*((phi(t)**p)/(phi(t)**p + phi_m**p)) : second**-1
-            Gr = Gr0 + Theta*Gr1 : second**-1
-            f_v = (1-exp(-(v-E)/v0))/((v-E)/v1) : 1
-            f_phi = S_O : 1
-            I = g0*f_phi*f_v*(v-E) : amp
-            Theta = int(phi(t) > 0*phi(t)) : boolean (shared)
+            Gr = Gr0 + Theta*Gr1                        : second**-1
+            f_phi = S_O                                 : 1
+            f_v = (1-exp(-(v-E)/v0))/((v-E)/v1)         : 1
+            I = g0*f_phi*f_v*(v-E)                      : amp
+            Theta = int(phi(t) > 0*phi(t))              : 1 (shared)
             '''
             #stimulus = int(ceil(clip(phi(t), 0, 1))) : boolean (shared)
             # mmetre**-2*second**-1
