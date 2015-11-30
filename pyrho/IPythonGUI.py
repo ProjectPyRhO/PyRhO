@@ -74,7 +74,7 @@ modelParamsList = OrderedDict([ (model, list(modelParams[model])) for model in m
 #sParamsK2I = OrderedDict([ (sim,OrderedDict([(p,i) for i,p in enumerate(list(simParams[sim]))])) for sim in simList ])
 #sParamsI2K = OrderedDict([ (sim,list(simParams[sim])) for sim in simList ])
 simParamsList = OrderedDict([ (sim, list(simParams[sim])) for sim in simList ]) 
-loadedSims = [sim for sim in simList if simAvailable(sim) ]
+loadedSims = [ sim for sim in simList if simAvailable(sim) ]
 
 #pParamsK2I = OrderedDict([ (prot,OrderedDict([(p,i) for i,p in enumerate(list(protParams[prot]))])) for prot in protList ])
 #pParamsI2K = OrderedDict([ (prot,list(protParams[prot])) for prot in protList ]) 
@@ -390,7 +390,7 @@ def loadGUI():
         global paramSet
         #from IPython import get_ipython # for output widgets
         #with paramOutput:
-        print('Loading: "',paramVar.value, '"...', end=' ')
+        print('Loading: "', paramVar.value, '"...', end=' ')
         
         if paramVar.value in vars():
             paramSet = vars()[paramVar.value]
@@ -413,19 +413,19 @@ def loadGUI():
             model = statesArray[mInd]
             #mInd = statesDict[' '+str(nStates)]
             #pSet = modelParams[mInd] # Default model parameters
-            setGUIparams(modelParams[model],modelParamsList[model],pValArr[mInd][:]) # setGUImodelParams(paramSet,model)
+            setGUIparams(modelParams[model], modelParamsList[model], pValArr[mInd][:]) # setGUImodelParams(paramSet,model)
             
         elif paramTabs.selected_index == TabGroups['Simulators']:
             sInd = simParamsTabs.selected_index
             simulator = simList[sInd]
-            setGUIparams(simParams[simulator],simParamsList[simulator],sim_pValArr[sInd][:])
+            setGUIparams(simParams[simulator], simParamsList[simulator], sim_pValArr[sInd][:])
             
         elif paramTabs.selected_index == TabGroups['Protocols']: # Protocols tab selected
             pInd = protParamsTabs.selected_index
             #pInd = protIndDict[protocol]
             protocol = protList[pInd]
             #pSet = protParams[protocol] # Default protocol parameters
-            setGUIparams(protParams[protocol],modelParamsList[protocol],prot_pValArr[pInd][:]) #setGUIprotParams(paramSet,protocol)
+            setGUIparams(protParams[protocol], protParamsList[protocol], prot_pValArr[pInd][:]) #setGUIprotParams(paramSet,protocol) #modelParamsList[protocol]
             
         else: 
             raise ValueError('Unknown Tab Index!')
@@ -441,19 +441,19 @@ def loadGUI():
             #mInd = statesDict[' '+str(nStates)]
             #pSet = modelParams[model] # Default model parameters
             #pSet = modelParams[statesArray[mInd]]
-            setGUIparams(modelParams[model],modelParamsList[model],pValArr[mInd][:]) #setGUImodelParams(pSet,model)
+            setGUIparams(modelParams[model], modelParamsList[model], pValArr[mInd][:]) #setGUImodelParams(pSet,model)
             
         elif paramTabs.selected_index == TabGroups['Simulators']:
             sInd = simParamsTabs.selected_index
             simulator = simList[sInd]
-            setGUIparams(simParams[simulator],simParamsList[simulator],sim_pValArr[sInd][:])
+            setGUIparams(simParams[simulator], simParamsList[simulator], sim_pValArr[sInd][:])
             
         elif paramTabs.selected_index == TabGroups['Protocols']:
             pInd = protParamsTabs.selected_index
             #pInd = protIndDict[protocol]
             protocol = protList[pInd]
             #pSet = protParams[protocol] # Default protocol parameters
-            setGUIparams(protParams[protocol],protParamsList[protocol],prot_pValArr[pInd][:]) #setGUIprotParams(pSet,protocol)
+            setGUIparams(protParams[protocol], protParamsList[protocol], prot_pValArr[pInd][:]) #setGUIprotParams(pSet,protocol)
             
         else: # Protocols tab selected
             raise ValueError('Unknown Tab Index!')
@@ -1241,7 +1241,7 @@ def loadGUI():
             elif isinstance(pSet[param].value, str):
                 sim_pValArr[sInd][i] = widgets.Text(value=str(pSet[param].value), description=param)
             elif isinstance(pSet[param].value, bool):
-                sim_pValArr[sInd][i] = widgets.Dropdown(options=boolDict,value=pSet[param].value,description=param)
+                sim_pValArr[sInd][i] = widgets.Dropdown(options=boolDict, value=pSet[param].value,description=param)
             else:
                 if (pSet[param].min == None or pSet[param].min == -np.inf) or (pSet[param].max == None or pSet[param].max == np.inf):
                     sim_pValArr[sInd][i] = widgets.FloatText(value=pSet[param].value, description=param)
@@ -1264,6 +1264,8 @@ def loadGUI():
             #i+=1
             
         simFigHTML[sInd] = widgets.HTML()
+        if sim is 'Brian': ### HACK!
+            simFigHTML[sInd].value = 'Brian has not yet been implemented in the GUI - please use the interpreter to run network level simulations. '
         #exampleProt = '{}{}6s.{}'.format(fDir,prot,'png')#saveFigFormat)
         #if os.path.isfile(exampleProt):
         #    protFigHTML[pInd].value='<img src="{}" alt=Example {} width=200px>'.format(exampleProt,prot)
@@ -1281,10 +1283,8 @@ def loadGUI():
     ##### Simulator parameters tab #####
     simParamsTabs = widgets.Tab(description='Simulator Settings', children=simBoxes)# \
     ###simParamsTabs.margin = '5px'
-    simParamsTabs.on_trait_change(onChangeSimTab,'selected_index')
-        
-        
-  
+    simParamsTabs.on_trait_change(onChangeSimTab, 'selected_index')
+    
     
     
     ##### Protocol parameters #####
@@ -1333,17 +1333,25 @@ def loadGUI():
     
     
     def custPulseGenLoad(funcName):
-        #print(globals())
-        print('tmp' in vars())
-        print('tmp' in globals())
+        #global func
+        print("Loading custom pulse generator function: '{}'... ".format(custPulseGenInput.value), end='')
+        #import pdb
+        #pdb.set_trace()
+        # Use whos to list variables in IPython interactive workspace
         if custPulseGenInput.value in vars():
             func = vars()[custPulseGenInput.value]
-            #with paramOutput:
             print('Successfully loaded from vars!')
             
+        #elif custPulseGenInput.value in dir():
+        #    func = dir()[custPulseGenInput.value]
+        #    print('Successfully loaded from dir!')
+            
+        elif custPulseGenInput.value in locals():
+            func = locals()[custPulseGenInput.value]
+            print('Successfully loaded from locals!')
+        
         elif custPulseGenInput.value in globals():
             func = globals()[custPulseGenInput.value]
-            #with paramOutput:
             print('Successfully loaded from globals!')
             
         else:
