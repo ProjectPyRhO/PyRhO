@@ -5,3 +5,6 @@ recursive-include docs *.html *.css *.png *.gif
 #include NEURON/*.hoc
 #include GUI/*.png
 #recursive-include NEURON *
+
+# Include examples
+recursive-include notebooks *.ipynb
