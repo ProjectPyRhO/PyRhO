@@ -566,7 +566,7 @@ class Protocol(PyRhOobject): #object
         pass
     
     
-    def plotStimulus(self, phi_ts, begT, pulses, endT, ax=None, light='shade'):
+    def plotStimulus(self, phi_ts, begT, pulses, endT, ax=None, light='shade', col=None, style=None):
         
         nPulses = pulses.shape[0]
         assert(nPulses == len(phi_ts))
@@ -581,10 +581,17 @@ class Protocol(PyRhOobject): #object
         else:
             #plt.figure(fig.number)
             plt.sca(ax)
-        
-        for p in range(nPulses):
-            plt.plot(t, phi_ts[p](t))
+            
+        if col is None:
+            for p in range(nPulses):
+                plt.plot(t, phi_ts[p](t))
+        else:
+            if style is None:
+                style = '-'
+            for p in range(nPulses):
+                plt.plot(t, phi_ts[p](t), color=col, linestyle=style)
 
+                
         if light == 'spectral':
             plotLight(pulses, ax=ax, light='spectral', lam=self.lam)
         else:
@@ -691,7 +698,8 @@ class protCustom(Protocol):
             for run in range(self.nRuns):
                 for phiInd in range(self.nPhis):
                     pc = self.PD.trials[run][phiInd][vInd]
-                    self.plotStimulus(phi_ts[run][phiInd],pc.begT,self.pulses,pc.endT,self.axS,light=None) #light='spectral'
+                    col, style = self.getLineProps(run, vInd, phiInd)
+                    self.plotStimulus(phi_ts[run][phiInd], pc.begT, self.pulses, pc.endT, self.axS, light=None, col=col, style=style) #light='spectral'
             plt.setp(self.axS.get_xticklabels(), visible=False)
             self.axS.set_xlabel('')
         else:
@@ -815,7 +823,8 @@ class protSinusoid(Protocol):
                 for run in range(self.nRuns):
                     for phiInd in range(self.nPhis):
                         pc = self.PD.trials[run][phiInd][vInd]
-                        self.plotStimulus(phi_ts[run][phiInd],pc.begT,pc.pulses,pc.endT,self.axS,light='spectral')
+                        col, style = self.getLineProps(run, vInd, phiInd)
+                        self.plotStimulus(phi_ts[run][phiInd], pc.begT, pc.pulses, pc.endT, self.axS, light='spectral', col=col, style=style)
                 plt.setp(self.axS.get_xticklabels(), visible=False)
                 self.axS.set_xlabel('') #plt.xlabel('')
                 self.axS.set_ylim(self.phi0[0], max(self.phis)) ### phi0[r]
@@ -1093,7 +1102,8 @@ class protChirp(Protocol):
             for run in range(self.nRuns):
                 for phiInd in range(self.nPhis):
                     pc = self.PD.trials[run][phiInd][vInd]
-                    self.plotStimulus(phi_ts[run][phiInd],pc.begT,pc.pulses,pc.endT,self.axS,light='spectral')
+                    col, style = self.getLineProps(run, vInd, phiInd)
+                    self.plotStimulus(phi_ts[run][phiInd], pc.begT, pc.pulses, pc.endT, self.axS, light='spectral', col=col, style=style)
             plt.setp(self.axS.get_xticklabels(), visible=False)
             self.axS.set_xlabel('') #plt.xlabel('')
             
@@ -1164,7 +1174,8 @@ class protRamp(Protocol):
             for run in range(self.nRuns):
                 for phiInd in range(self.nPhis):
                     pc = self.PD.trials[run][phiInd][vInd]
-                    self.plotStimulus(phi_ts[run][phiInd],pc.begT,self.pulses,pc.endT,self.axS,light=None) #light='spectral'
+                    col, style = self.getLineProps(run, vInd, phiInd)
+                    self.plotStimulus(phi_ts[run][phiInd], pc.begT, self.pulses, pc.endT, self.axS, light=None, col=col, style=style) #light='spectral'
             plt.setp(self.axS.get_xticklabels(), visible=False)
             #plt.xlabel('')
             self.axS.set_xlabel('')
@@ -1258,7 +1269,8 @@ class protDelta(Protocol):
             for run in range(self.nRuns):
                 for phiInd in range(self.nPhis):
                     pc = self.PD.trials[run][phiInd][vInd]
-                    self.plotStimulus(phi_ts[run][phiInd],pc.begT,pc.pulses,pc.endT,self.axS,light='spectral')
+                    col, style = self.getLineProps(run, vInd, phiInd)
+                    self.plotStimulus(phi_ts[run][phiInd], pc.begT, pc.pulses, pc.endT, self.axS, light='spectral', col=col, style=style)
             plt.setp(self.axS.get_xticklabels(), visible=False)
             self.axS.set_xlabel('') #plt.xlabel('')
             if max(self.phis) / min(self.phis) >= 100:
