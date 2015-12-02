@@ -209,8 +209,12 @@ class ParamWidgets(object):
     
     
 
-def loadGUI():
+def loadGUI(IPythonWorkspace=None):
     
+    if IPythonWorkspace is None:
+        pass
+    else:
+        globals().update(IPythonWorkspace)
     
     ##### Model fitting bar Functions #####
     '''
