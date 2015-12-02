@@ -1004,7 +1004,7 @@ class simBrian(Simulator):
         self.Vms = Prot.genContainer()
         # Skip last state value since this is defined as 1 - sum(states) not as an ODE
         self.net[self.G_RhO].set_states({s: o for s, o in zip(self.stateVars[:-1], self.RhO.s_0[:-1])}) # Necessary?
-        self.net.store()
+        self.net.store() # http://brian2.readthedocs.org/en/latest/user/running.html
         return # self.dt
     
     def initialise(self):
