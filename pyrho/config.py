@@ -24,14 +24,15 @@ if pyVer < (3,3):
 else:
     wallTime = time.perf_counter
 
-    
+
+home = os.environ['HOME']
 #pyrhoPath = os.path.abspath(pyrho.__file__) # http://stackoverflow.com/questions/247770/retrieving-python-module-path
 pyrhoPath = os.path.dirname(os.path.abspath(__file__)) # modulePath
 #print(pyrhoPath)
 
 
 pyrhoNEURONpath = os.path.join(pyrhoPath, 'NEURON')
-NMODLfiles = ['RhO3.mod', 'RhO4.mod', 'RhO6.mod']
+NMODLfiles = ['RhO3c.mod', 'RhO4c.mod', 'RhO6c.mod'] #['RhO3.mod', 'RhO4.mod', 'RhO6.mod']
 #HOCfiles = glob.glob("*.hoc")
 HOCfiles = [h for h in os.listdir(pyrhoNEURONpath) if h.endswith('.hoc')]
 #NMODLfilesIncPath = [os.path.join(pyrhoNEURONpath, f) for f in NMODLfiles]
@@ -99,12 +100,17 @@ def checkNEURON(test=False):
     return found
     
 def setupNEURON(path=None):
-    # Check for a working NEURON installation...
-    #checkNEURON()
     cwd = os.getcwd()
-    if not checkNEURON():
-        print('Please install NEURON and rerun!')
-        return
+    if not checkNEURON():   # Check for a working NEURON installation...
+        if sys.platform == 'win32':
+            print('Please install NEURON and rerun!')
+            return
+        else:
+            try:
+                NEURONpath = os.path.join(home, 'NEURON')
+                exitcode = subprocess.call(['install_neuron.sh', NEURONpath]) # shell=True # .check_call
+            except:
+                print('Unable to install NEURON - please install manually.')
     
     ### To load mod files:
     # Add os.environ['NRN_NMODL_PATH'] to environment variables. See $NEURONPATH/nrn/lib/python/neuron/__init__.py
