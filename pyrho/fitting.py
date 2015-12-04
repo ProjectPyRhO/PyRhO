@@ -3393,6 +3393,7 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, relaxFact=2, method
     ### Find most extreme peak current in the fluxSet: Ipmax 
     Ipmax, (rmax, pmax, vmax) = setPC.getIpmax(vIndm70)
     Vpmax = setPC.trials[rmax][pmax][vmax].V
+    peakKey = fluxKey
     
     if 'delta' in dataSet:
         if isinstance(dataSet['delta'], ProtocolData):
@@ -3412,8 +3413,9 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, relaxFact=2, method
         if abs(Ipsat) > abs(Ipmax) and np.isclose(Vsat, -70): ##### Reconsider safeguard for choosing V=-70
             Ipmax = Ipsat
             Vpmax = Vsat
+            peakKey = 'delta'
     
-    print('Estimating g0 from Ipmax = {:.3} nA: '.format(Ipmax), end='')
+    print("Estimating g0 from '{}'; Ipmax = {:.3} nA: ".format(peakKey, Ipmax), end='')
     
     ### Maximum conductance: g0
     assert(Vpmax != params['E'].value)
