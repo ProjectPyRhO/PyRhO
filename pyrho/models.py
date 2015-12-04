@@ -108,7 +108,7 @@ class RhodopsinModel(PyRhOobject):
         #fv = self.calcfv()
         
         g_RhO = self.g0 * self.calcfphi(states) * self.calcfV(V) #* fV # self.gbar * self.A # Conductance (pS * um^-2)
-        I_RhO =  g_RhO * (V - self.E) # Photocurrent: (pS * mV)
+        I_RhO = g_RhO * (V - self.E) # Photocurrent: (pS * mV)
         return I_RhO * (1e-6) # 10^-12 * 10^-3 * 10^-6 (nA)
     
     def calcfV(self, V): 
@@ -329,12 +329,12 @@ class RhO_3states(RhodopsinModel):
     # Class attributes
     nStates = 3
     useAnalyticSoln = True
-        
+    
     s_0 = np.array([1,0,0])             # Default: Initialise in dark 
     phi_0 = 0.0                         # Default flux level in dark-adapted state
     stateVars = ['C','O','D']           # stateVars[0] is the 'ground' state
     stateLabels = ['$C$','$O$','$D$']
-    photoFuncs = ['_calcGa', '_calcGr'] # {'Ga':'_calcGa', 'Gr':'_calcGr'}
+    photoFuncs = ['_calcGa', '_calcGr'] # {'Ga':'_calcGa', 'Gr':'_calcGr'} --> photoRates['Ga'](phi)
     photoRates = ['Ga', 'Gr']
     photoLabels = ['$G_a$', '$G_r$'] # {'Ga':'$G_a$', 'Gr':'$G_r$'}
     constRates = ['Gd']
@@ -389,7 +389,7 @@ class RhO_3states(RhodopsinModel):
     eqIss = """$I_{SS} = \bar{g_0} \cdot \frac{G_a \cdot G_r}{G_d \cdot (G_r + G_a) + G_a \cdot G_r} \cdot (v-E) 
     = \bar{g_0} \cdot \frac{\tau_d}{\tau_d + \tau_r + \tau_\phi} \cdot (v-E)$"""
     
-    brianStateVars = ['S_C','S_O','S_D']
+    brianStateVars = ['C','O','D'] #['S_C','S_O','S_D']
     
     """
     brian = '''
@@ -406,6 +406,7 @@ class RhO_3states(RhodopsinModel):
             '''
     """
     
+    """
     brian = '''
             dS_C/dt = Gr*S_D - Ga*S_C               : 1
             dS_O/dt = Ga*S_C - Gd*S_O               : 1
@@ -418,12 +419,26 @@ class RhO_3states(RhodopsinModel):
             phi                                     : metre**-2*second**-1 (shared)
             Theta = int(phi > 0*phi)                : 1 (shared)
             '''
+    """
+    
+    brian = '''
+            dC/dt = Gr*D - Ga*C                     : 1
+            dO/dt = Ga*C - Gd*O                     : 1
+            dD/dt = Gd*O - Gr*D                     : 1
+            Ga = k*((phi**p)/(phi**p + phi_m**p))   : second**-1
+            Gr = Gr0 + Theta*Gr1                    : second**-1
+            f_phi = O                               : 1
+            f_v = (1-exp(-(v-E)/v0))/((v-E)/v1)     : 1
+            I = g0*f_phi*f_v*(v-E)                  : amp
+            phi                                     : metre**-2*second**-1 (shared)
+            Theta = int(phi > 0*phi)                : 1 (shared)
+            '''
     #S_D = 1 - S_C - S_O : 1 #
     #int(phi>0)
     #Ga = stimulus*k*((phi**p)/(phi**p+phi_m**p)) : second**-1
     #H = stimulus*((phi**p)/(phi**p+phi_m**p)) : 1
     #Ga = k * H : second**-1
-    
+    """
     brian_phi_t = '''
             dS_C/dt = Gr*S_D - Ga*S_C                   : 1
             dS_O/dt = Ga*S_C - Gd*S_O                   : 1
@@ -438,6 +453,18 @@ class RhO_3states(RhodopsinModel):
             #stimulus = int(ceil(clip(phi(t), 0, 1))) : boolean (shared)
             # mmetre**-2*second**-1
             #S_D = 1 - S_C - S_O : 1
+    """
+    brian_phi_t = '''
+            dC/dt = Gr*D - Ga*C                         : 1
+            dO/dt = Ga*C - Gd*O                         : 1
+            dD/dt = Gd*O - Gr*D                         : 1
+            Ga = k*((phi(t)**p)/(phi(t)**p + phi_m**p)) : second**-1
+            Gr = Gr0 + Theta*Gr1                        : second**-1
+            f_phi = O                                   : 1
+            f_v = (1-exp(-(v-E)/v0))/((v-E)/v1)         : 1
+            I = g0*f_phi*f_v*(v-E)                      : amp
+            Theta = int(phi(t) > 0*phi(t))              : 1 (shared)
+            '''
             
     def reportParams(self): # Replace with local def __str__(self):
         report =  'Three-state model parameters\n'
@@ -671,7 +698,8 @@ class RhO_4states(RhodopsinModel):
                 # $$ I_{\phi} = g (O_{\\alpha}+\gamma O_{\\beta}) f(v) (v-E) $$
                 # """     
 
-    brianStateVars = ['S_C1','S_O1','S_O2','S_C2']
+    brianStateVars = ['C_1','O_1','O_2','C_2'] #['S_C1','S_O1','S_O2','S_C2']
+    """
     brian = '''
             dS_C1/dt = Gr0*S_C2 + Gd1*S_O1 - Ga1*S_C1 : 1
             dS_O1/dt = Ga1*S_C1 - (Gd1+Gf)*S_O1 + Gb*S_O2 : 1
@@ -689,6 +717,26 @@ class RhO_4states(RhodopsinModel):
             phi : metre**-2*second**-1 (shared)
             stimulus : boolean (shared)
             '''
+    """
+    
+    brian = '''
+            dC_1/dt = Gr0*C_2 + Gd1*O_1 - Ga1*C_1 : 1
+            dO_1/dt = Ga1*C_1 - (Gd1+Gf)*O_1 + Gb*O_2 : 1
+            dO_2/dt = Ga2*C_2 + Gf*O_1 - (Gd2+Gb)*O_2 : 1
+            C_2 = 1 - C_1 - O_1 - O_2 : 1
+            H_p = Theta*((phi**p)/(phi**p+phi_m**p)) : 1
+            H_q = Theta*((phi**q)/(phi**q+phi_m**q)) : 1
+            Ga1 = k1*H_p : second**-1
+            Ga2 = k2*H_p : second**-1
+            Gf = Gf0 + kf*H_q : second**-1
+            Gb = Gb0 + kb*H_q : second**-1
+            f_v = (1-exp(-(v-E)/v0))/((v-E)/v1) : 1
+            f_phi = O_1+gam*O_2 : 1
+            I = g0*f_phi*f_v*(v-E) : amp
+            phi : metre**-2*second**-1 (shared)
+            Theta = int(phi > 0*phi)                : 1 (shared)
+            '''
+            
     #phi : meter**-2*second**-1
     """
     brian_phi_t = '''
@@ -708,6 +756,7 @@ class RhO_4states(RhodopsinModel):
             Theta = int(phi(t) > 0*phi(t)) : boolean (shared)
             '''
     """
+    """
     brian_phi_t = '''
             dS_C1/dt = Gr0*S_C2 + Gd1*S_O1 - Ga1*S_C1 : 1
             dS_O1/dt = Ga1*S_C1 - (Gd1+Gf)*S_O1 + Gb*S_O2 : 1
@@ -722,6 +771,23 @@ class RhO_4states(RhodopsinModel):
             I = g0*f_phi*f_v*(v-E) : amp
             Theta = int(phi(t) > 0*phi(t)) : boolean (shared)
             '''
+    """
+    
+    brian_phi_t = '''
+            dC_1/dt = Gr0*C_2 + Gd1*O_1 - Ga1*C_1 : 1
+            dO_1/dt = Ga1*C_1 - (Gd1+Gf)*O_1 + Gb*O_2 : 1
+            dO_2/dt = Ga2*C_2 + Gf*O_1 - (Gd2+Gb)*O_2 : 1
+            C_2 = 1 - C_1 - O_1 - O_2 : 1
+            Ga1 = Theta*k1*phi(t)**p/(phi(t)**p+phi_m**p) : second**-1
+            Ga2 = Theta*k2*phi(t)**p/(phi(t)**p+phi_m**p) : second**-1
+            Gf = Gf0 + Theta*kf*phi(t)**q/(phi(t)**q+phi_m**q) : second**-1
+            Gb = Gb0 + Theta*kb*phi(t)**q/(phi(t)**q+phi_m**q) : second**-1
+            f_v = (1-exp(-(v-E)/v0))/((v-E)/v1) : 1
+            f_phi = O_1+gam*O_2 : 1
+            I = g0*f_phi*f_v*(v-E) : amp
+            Theta = int(phi(t) > 0*phi(t)) : boolean (shared)
+            '''
+    
     
     def reportParams(self): # Replace with local def __str__(self):
         report =  'Four-state model parameters\n'
@@ -894,7 +960,8 @@ class RhO_6states(RhodopsinModel):
                 $$ I_{\phi} = g_0 \cdot f_{\phi}(\phi) \cdot f_v(v) \cdot (v-E) $$
                 """    
     
-    brianStateVars = ['S_C1','S_I1','S_O1','S_O2','S_I2','S_C2']
+    brianStateVars = ['C_1','I_1','O_1','O_2','I_2','C_2'] #['S_C1','S_I1','S_O1','S_O2','S_I2','S_C2']
+    """
     brian = '''
             dS_C1/dt = Gr0*S_C2 + Gd1*S_O1 - Ga1*S_C1 : 1
             dS_I1/dt = Ga1*S_C1 - Go1*S_I1 : 1
@@ -914,7 +981,28 @@ class RhO_6states(RhodopsinModel):
             phi : metre**-2*second**-1 (shared)
             stimulus : boolean (shared) #1
             '''
-            
+    """
+    
+    brian = '''
+            dC_1/dt = Gr0*C_2 + Gd1*O_1 - Ga1*C_1 : 1
+            dI_1/dt = Ga1*C_1 - Go1*I_1 : 1
+            dO_1/dt = Go1*I_1 - (Gd1+Gf)*O_1 + Gb*O_2 : 1
+            dO_2/dt = Go2*I_2 + Gf*O_1 - (Gd2+Gb)*O_2 : 1
+            dI_2/dt = Ga2*C_2 - Go2*I_2 : 1
+            C_2 = 1 - C_1 - I_1 - O_1 - O_2 - I_2 : 1
+            H_p = Theta*((phi**p)/(phi**p+phi_m**p)) : 1
+            H_q = Theta*((phi**q)/(phi**q+phi_m**q)) : 1
+            Ga1 = k1*H_p : second**-1
+            Ga2 = k2*H_p : second**-1
+            Gf = Gf0 + kf*H_q : second**-1
+            Gb = Gb0 + kb*H_q : second**-1
+            f_v = (1-exp(-(v-E)/v0))/((v-E)/v1) : 1
+            f_phi = O_1+gam*O_2 : 1
+            I = g0*f_phi*f_v*(v-E) : amp
+            phi : metre**-2*second**-1 (shared)
+            Theta = int(phi > 0*phi)                : 1 (shared)
+            '''
+
             #'''
             #dS_C1/dt = Gr0*S_C2 + Gd1*S_O1 - Ga1*S_C1 : 1
             #dS_I1/dt = Ga1*S_C1 - Go1*S_I1 : 1
@@ -934,6 +1022,7 @@ class RhO_6states(RhodopsinModel):
             #I = g*(S_O1+gam*S_O2)*fv*(v-E) : amp
             #'''
     
+    """
     brian_phi_t = '''
             dS_C1/dt = Gr0*S_C2 + Gd1*S_O1 - Ga1*S_C1 : 1
             dS_I1/dt = Ga1*S_C1 - Go1*S_I1 : 1
@@ -952,7 +1041,26 @@ class RhO_6states(RhodopsinModel):
             I = g0*f_phi*f_v*(v-E) : amp
             Theta = int(phi(t) > 0*phi(t)) : boolean (shared)
             '''
+    """
     
+    brian_phi_t = '''
+            dC_1/dt = Gr0*C_2 + Gd1*O_1 - Ga1*C_1 : 1
+            dI_1/dt = Ga1*C_1 - Go1*I_1 : 1
+            dO_1/dt = Go1*I_1 - (Gd1+Gf)*O_1 + Gb*O_2 : 1
+            dO_2/dt = Go2*I_2 + Gf*O_1 - (Gd2+Gb)*O_2 : 1
+            dI_2/dt = Ga2*C_2 - Go2*I_2 : 1
+            C_2 = 1 - C_1 - I_1 - O_1 - O_2 - I_2 : 1
+            H_p = Theta*((phi(t)**p)/(phi(t)**p+phi_m**p)) : 1
+            H_q = Theta*((phi(t)**q)/(phi(t)**q+phi_m**q)) : 1
+            Ga1 = k1*H_p : second**-1
+            Ga2 = k2*H_p : second**-1
+            Gf = Gf0 + kf*H_q : second**-1
+            Gb = Gb0 + kb*H_q : second**-1
+            f_v = (1-exp(-(v-E)/v0))/((v-E)/v1) : 1
+            f_phi = O_1+gam*O_2 : 1
+            I = g0*f_phi*f_v*(v-E) : amp
+            Theta = int(phi(t) > 0*phi(t)) : boolean (shared)
+            '''
     
     def _calcGa1(self, phi):
         #return self.a10*(phi/self.phi0)
