@@ -3,9 +3,9 @@ TITLE Nikolic 3-state rhodopsin model
 NEURON  {
 	POINT_PROCESS RhO3c
 	NONSPECIFIC_CURRENT i
-	RANGE i, E, v0, v1, g0 :, fphi, fv
+	RANGE i, E, v0, v1, g0      :, fphi, fv
 	RANGE k, Gd, Gr0, Gr1, p 
-	RANGE phiOn, phi, phi_m
+	RANGE phi, phi_m            : phiOn, 
 }
 
 
@@ -22,7 +22,7 @@ PARAMETER {	: Initialise parameters to defaults. These may be changed through ho
 
 : Illumination constants   
 :	lambda 	= 470	    : (nm)
-    phi_m    = 1e16      : (photons/sec mm2) : Hill Constant
+    phi_m   = 1e16      : (photons/sec mm2) : Hill Constant
   
 : Conductance    
     E       = 0         (mV)                : Channel reversal potential
@@ -92,7 +92,7 @@ KINETIC kin {
 
 
 PROCEDURE rates(phi) {	: Define equations for calculating transition rates
-    if (phi>0) {
+    if (phi>0) {        : Safeguard against negative phi values
         Ga = k * 1/(1+pow(phi_m,p)/pow(phi,p))    : pow(phi,p)/(pow(phi,p) + pow(phi_m,p))
         Gr = Gr0 + Gr1
     } else {

@@ -114,13 +114,9 @@ PROCEDURE rates(phi) { : Define equations for calculating transition rates
         h2 = 0
     }
     
-        :Ga1 = k1*(phi/phi0)
     Ga1 = k1 * h1             :Ga1 = k1 * pow(phi,p)/(pow(phi,p) + pow(phi_m,p))
-        :Ga2 = k2*(phi/phi0)
     Ga2 = k2 * h1             :Ga2 = k2 * pow(phi,p)/(pow(phi,p) + pow(phi_m,p))
-        :Gf = Gf0 + kf*log(1+(phi/phi0))
     Gf = Gf0 + kf * h2      :Gf = Gf0 + kf * pow(phi,q)/(pow(phi,q) + pow(phi_m,q))
-        :Gb = Gb0 + kb*log(1+(phi/phi0))
     Gb = Gb0 + kb * h2      :Gb = Gb0 + kb * pow(phi,q)/(pow(phi,q) + pow(phi_m,q))
     
 }

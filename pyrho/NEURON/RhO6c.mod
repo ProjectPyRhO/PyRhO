@@ -109,7 +109,7 @@ KINETIC kin {
 
 
 PROCEDURE rates(phi) { : Define equations for calculating transition rates
-
+    
     if (phi>0) {
         h1 = 1/(1+pow(phi_m,p)/pow(phi,p))  : pow(phi,p)/(pow(phi,p) + pow(phi_m,p))
         h2 = 1/(1+pow(phi_m,q)/pow(phi,q))  : pow(phi,q)/(pow(phi,q) + pow(phi_m,q))
@@ -127,7 +127,7 @@ PROCEDURE rates(phi) { : Define equations for calculating transition rates
 
 
 : Add functions for calculating transition rates outside of simulations
-:FUNCTION A1(phi) {
-:    A1 = a10*(phi/phi0)
+:FUNCTION H(phi, const, coeff) {
+:    H = 1/(1+pow(const, coeff)/pow(phi, coeff))
 :}
 : ...
