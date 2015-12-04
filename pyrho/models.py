@@ -329,9 +329,11 @@ class RhO_3states(RhodopsinModel):
     # Class attributes
     nStates = 3
     useAnalyticSoln = True
+        
+    s_0 = np.array([1,0,0])             # Default: Initialise in dark 
+    phi_0 = 0.0                         # Default flux level in dark-adapted state
+    stateVars = ['C','O','D']           # stateVars[0] is the 'ground' state
     stateLabels = ['$C$','$O$','$D$']
-    stateVars = ['C','O','D'] # stateVars[0] is the 'ground' state
-    
     photoFuncs = ['_calcGa', '_calcGr'] # {'Ga':'_calcGa', 'Gr':'_calcGr'}
     photoRates = ['Ga', 'Gr']
     photoLabels = ['$G_a$', '$G_r$'] # {'Ga':'$G_a$', 'Gr':'$G_r$'}
@@ -339,9 +341,6 @@ class RhO_3states(RhodopsinModel):
     constLabels = ['$G_d$']
     
     paramsList = ['g0', 'phi_m', 'k', 'p', 'Gd', 'Gr0', 'Gr1', 'E', 'v0', 'v1'] # List of model constants    
-    
-    s_0 = np.array([1,0,0])             # Default: Initialise in dark 
-    phi_0 = 0.0                         # Default flux level in dark-adapted state
 
     connect = [[0,1,0],
                [0,0,1],
@@ -360,9 +359,9 @@ class RhO_3states(RhodopsinModel):
                 $$ G_a(\phi) = k\\frac{\phi^p}{\phi^p + \phi_m^p} $$
                 $$ G_r(\phi) = G_{r0} + \mathcal{H}(\phi) \cdot G_{r1} $$
                 $$ $$
-                $$ f(\phi) = O \qquad \qquad $$
-                $$ f(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1} $$
-                $$ I_{\phi} = g_0 \cdot f(\phi) \cdot f(v) \cdot (v-E) $$
+                $$ f_{\phi}(\phi) = O \qquad \qquad $$
+                $$ f_v(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1} $$
+                $$ I_{\phi} = g_0 \cdot f_{\phi}(\phi) \cdot f_v(v) \cdot (v-E) $$
                 """
     
     _latex =   ["$\dot{C} = G_{r}(\phi)D - G_{a}(\phi)C$", 
@@ -371,9 +370,9 @@ class RhO_3states(RhodopsinModel):
                 "$C + O + D = 1$",
                 "$G_a(\phi) = k\\frac{\phi^p}{\phi^p + \phi_m^p}$",
                 "$G_r(\phi) = G_{r0} + \mathcal{H}(\phi) \cdot G_{r1}$",
-                "$f(\phi) = O$"
-                "$f(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1}$",
-                "$I_{\phi} = g_0 \cdot f(\phi) \cdot f(v) \cdot (v-E)$"]
+                "$f_{\phi}(\phi) = O$"
+                "$f_v(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1}$",
+                "$I_{\phi} = g_0 \cdot f_{\phi}(\phi) \cdot f_v(v) \cdot (v-E)$"]
     # $$ G_r = G_{r0} + G_{r1}(\phi) $$
     #"""
     #\begin{align*}
@@ -620,8 +619,11 @@ class RhO_4states(RhodopsinModel):
     # Class attributes
     nStates = 4
     useAnalyticSoln = False
-    stateLabels = ['$C_1$','$O_1$','$O_2$','$C_2$']
-    stateVars = ['C1','O1','O2','C2'] # stateVars[0] is the 'ground' state
+    
+    phi_0 = 0.0                         # Instantaneous Light flux
+    s_0 = np.array([1,0,0,0])           # Default: Initialise in the dark    
+    stateVars = ['C1','O1','O2','C2']   # stateVars[0] is the 'ground' state
+    stateLabels = ['$C_1$','$O_1$','$O_2$','$C_2$'] # [texIt(s) for s in stateVars]
     
     photoFuncs = ['_calcGa1', '_calcGa2', '_calcGf', '_calcGb']
     photoRates = ['Ga1', 'Ga2', 'Gf', 'Gb']
@@ -631,10 +633,6 @@ class RhO_4states(RhodopsinModel):
     
     paramsList = ['g0', 'gam', 'phi_m', 'k1', 'k2', 'p', 'Gf0', 'kf', 'Gb0', 'kb', 'q', 'Gd1', 'Gd2', 'Gr0', 'E', 'v0', 'v1'] # List of model constants
     
-    s_0 = np.array([1,0,0,0])       # Default: Initialise in the dark
-    phi_0 = 0.0  # Instantaneous Light flux
-    
-    #useIR = False
     connect = [[0,1,0,0],
                [1,0,1,0],
                [0,1,0,1],
@@ -652,9 +650,9 @@ class RhO_4states(RhodopsinModel):
                 $$ G_{b}(\phi) = G_{b0} + k_{b} \\frac{\phi^q}{\phi^q + \phi_m^q} $$
                 $$ G_{a2}(\phi) = k_2\\frac{\phi^p}{\phi^p + \phi_m^p} $$
                 $$$$
-                $$ f(\phi) = O_1+\gamma O_2 $$
-                $$ f(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1} $$
-                $$ I_{\phi} = g_0 \cdot f(\phi) \cdot f(v) \cdot (v-E) $$
+                $$ f_{\phi}(\phi) = O_1+\gamma O_2 $$
+                $$ f_v(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1} $$
+                $$ I_{\phi} = g_0 \cdot f_{\phi}(\phi) \cdot f_v(v) \cdot (v-E) $$
                 """     
     
                 # """
@@ -858,9 +856,10 @@ class RhO_6states(RhodopsinModel):
     # Class attributes
     nStates = 6
     useAnalyticSoln = False
-    stateLabels = ['$C_1$','$I_1$','$O_1$','$O_2$','$I_2$','$C_2$']
+    s_0 = np.array([1,0,0,0,0,0])   # [s1_0=1, s2_0=0, s3_0=0, s4_0=0, s5_0=0, s6_0=0] # array not necessary
+    phi_0 = 0.0                     # Default initial flux
     stateVars = ['C1','I1','O1','O2','I2','C2'] # stateVars[0] is the 'ground' state
-    
+    stateLabels = ['$C_1$','$I_1$','$O_1$','$O_2$','$I_2$','$C_2$']
     photoFuncs = ['_calcGa1', '_calcGa2', '_calcGf', '_calcGb']
     photoRates = ['Ga1', 'Ga2', 'Gf', 'Gb']
     photoLabels = ['$G_{a1}$', '$G_{a2}$', '$G_{f}$', '$G_{b}$', '$G_{d1}$', '$G_{d2}$']
@@ -869,9 +868,6 @@ class RhO_6states(RhodopsinModel):
     
     paramsList = ['g0', 'gam', 'phi_m', 'k1', 'k2', 'p', 'Gf0', 'kf', 'Gb0', 'kb', 'q', 'Go1', 'Go2', 'Gd1', 'Gd2', 'Gr0', 'E', 'v0', 'v1'] # List of model constants    
     
-    s_0 = np.array([1,0,0,0,0,0])  # [s1_0=1, s2_0=0, s3_0=0, s4_0=0, s5_0=0, s6_0=0] # array not necessary
-    phi_0 = 0.0     # Default initial flux
-
     connect = [[0,1,0,0,0,0], # s_1 --> s_i=1...6
                [0,0,1,0,0,0], # s_2 -->
                [1,0,0,1,0,0],
@@ -893,9 +889,9 @@ class RhO_6states(RhodopsinModel):
                 $$ G_{b}(\phi) = G_{b0} + k_{b} \\frac{\phi^q}{\phi^q + \phi_m^q} $$
                 $$ G_{a2}(\phi) = k_{2} \\frac{\phi^p}{\phi^p + \phi_m^p} $$
                 $$$$
-                $$ f(\phi) = O_1+\gamma O_2 $$
-                $$ f(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1} $$
-                $$ I_{\phi} = g_0 \cdot f(\phi) \cdot f(v) \cdot (v-E) $$
+                $$ f_{\phi}(\phi) = O_1+\gamma O_2 $$
+                $$ f_v(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1} $$
+                $$ I_{\phi} = g_0 \cdot f_{\phi}(\phi) \cdot f_v(v) \cdot (v-E) $$
                 """    
     
     brianStateVars = ['S_C1','S_I1','S_O1','S_O2','S_I2','S_C2']
