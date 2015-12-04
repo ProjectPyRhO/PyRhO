@@ -3390,15 +3390,10 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, relaxFact=2, method
         # print('v1 = {} mV**-1'.format(v1))    
     
     
-    ### Most extreme peak current: Ipmax 
-    # Ipmax = 0
-    # for pc in PCs:
-        # if abs(pc.peak_) > abs(Ipmax):
-            # Ipmax = pc.peak_
-    # print('Ipmax = {}'.format(Ipmax))
-    
+    ### Find most extreme peak current in the fluxSet: Ipmax 
     Ipmax, (rmax, pmax, vmax) = setPC.getIpmax(vIndm70)
     Vpmax = setPC.trials[rmax][pmax][vmax].V
+    
     if 'delta' in dataSet:
         if isinstance(dataSet['delta'], ProtocolData):
             Ipsat, (rsat, psat, vsat) = dataSet['delta'].getIpmax()
@@ -3410,12 +3405,15 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, relaxFact=2, method
         elif isinstance(dataSet['delta'], PhotoCurrent):
             Ipsat = dataSet['delta'].peak_
             Vsat = dataSet['delta'].V
+        else:
+            warnings.warn("Unknown data type for 'delta'!")
         
+        ### Use peak from 'delta' instead of fluxSet
         if abs(Ipsat) > abs(Ipmax) and np.isclose(Vsat, -70): ##### Reconsider safeguard for choosing V=-70
             Ipmax = Ipsat
             Vpmax = Vsat
+    
     print('Estimating g0 from Ipmax = {:.3} nA: '.format(Ipmax), end='')
-    #print('Ipmax = {} nA'.format(Ipmax))
     
     ### Maximum conductance: g0
     assert(Vpmax != params['E'].value)
@@ -3424,9 +3422,6 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, relaxFact=2, method
     print('g0 = {} pS'.format(round_sig(g0, sig=3)))
     
     
-
-        
-        
     
     ### Peak recovery: Gr, Gr0, Gr_dark, a6 ### This currently fits to the first flux
     
