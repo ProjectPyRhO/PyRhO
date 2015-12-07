@@ -340,7 +340,7 @@ class RhO_3states(RhodopsinModel):
     constRates = ['Gd']
     constLabels = ['$G_d$']
     
-    paramsList = ['g0', 'phi_m', 'k', 'p', 'Gd', 'Gr0', 'Gr1', 'E', 'v0', 'v1'] # List of model constants    
+    paramsList = ['g0', 'phi_m', 'k_a', 'p', 'Gd', 'Gr0', 'k_r', 'q', 'E', 'v0', 'v1'] # List of model constants    
 
     connect = [[0,1,0],
                [0,0,1],
@@ -356,14 +356,14 @@ class RhO_3states(RhodopsinModel):
                 $$ \dot{D} = G_{d}O - G_{r}(\phi)D $$
                 $$ C + O + D = 1 $$
                 $$ $$
-                $$ G_a(\phi) = k\\frac{\phi^p}{\phi^p + \phi_m^p} $$
-                $$ G_r(\phi) = G_{r0} + \mathcal{H}(\phi) \cdot G_{r1} $$
+                $$ G_a(\phi) = k_a\\frac{\phi^p}{\phi^p + \phi_m^p} $$
+                $$ G_r(\phi) = G_{r0} + k_r\\frac{\phi^q}{\phi^q + \phi_m^q} $$
                 $$ $$
                 $$ f_{\phi}(\phi) = O \qquad \qquad $$
-                $$ f_v(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1} $$
+                $$ f_v(v) = v_1\\frac{1-e^{-(v-E)/v_0}}{(v-E)} $$
                 $$ I_{\phi} = g_0 \cdot f_{\phi}(\phi) \cdot f_v(v) \cdot (v-E) $$
                 """
-    
+    #$$ f_v(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1} $$
     _latex =   ["$\dot{C} = G_{r}(\phi)D - G_{a}(\phi)C$", 
                 "$\dot{O} = G_{a}(\phi)C - G_{d}O$",
                 "$\dot{D} = G_{d}O - G_{r}(\phi)D$",
@@ -425,13 +425,13 @@ class RhO_3states(RhodopsinModel):
             dC/dt = Gr*D - Ga*C                     : 1
             dO/dt = Ga*C - Gd*O                     : 1
             dD/dt = Gd*O - Gr*D                     : 1
-            Ga = k*((phi**p)/(phi**p + phi_m**p))   : second**-1
-            Gr = Gr0 + Theta*Gr1                    : second**-1
+            Ga = k_a*((phi**p)/(phi**p + phi_m**p))  : second**-1
+            Gr = Gr0 + k_r*((phi(t)**q)/(phi(t)**q + phi_m**q))  : second**-1
             f_phi = O                               : 1
             f_v = (1-exp(-(v-E)/v0))/((v-E)/v1)     : 1
             I = g0*f_phi*f_v*(v-E)                  : amp
             phi                                     : metre**-2*second**-1 (shared)
-            Theta = int(phi > 0*phi)                : 1 (shared)
+            #Theta = int(phi > 0*phi)                : 1 (shared)
             '''
     #S_D = 1 - S_C - S_O : 1 #
     #int(phi>0)
@@ -458,14 +458,15 @@ class RhO_3states(RhodopsinModel):
             dC/dt = Gr*D - Ga*C                         : 1
             dO/dt = Ga*C - Gd*O                         : 1
             dD/dt = Gd*O - Gr*D                         : 1
-            Ga = k*((phi(t)**p)/(phi(t)**p + phi_m**p)) : second**-1
-            Gr = Gr0 + Theta*Gr1                        : second**-1
+            Ga = k_a*((phi(t)**p)/(phi(t)**p + phi_m**p))        : second**-1
+            Gr = Gr0 + k_r*((phi(t)**q)/(phi(t)**q + phi_m**q))  : second**-1
             f_phi = O                                   : 1
             f_v = (1-exp(-(v-E)/v0))/((v-E)/v1)         : 1
             I = g0*f_phi*f_v*(v-E)                      : amp
-            Theta = int(phi(t) > 0*phi(t))              : 1 (shared)
+            #Theta = int(phi(t) > 0*phi(t))              : 1 (shared)
             '''
             
+    """
     def reportParams(self): # Replace with local def __str__(self):
         report =  'Three-state model parameters\n'
         report += '============================\n'
@@ -479,17 +480,19 @@ class RhO_3states(RhodopsinModel):
         report += 'g0   = {:12.3g}\n'.format(self.g0)
         report += '----------------------------'
         return report
-        
+    """
 
     
     def _calcGa(self, phi):
         #return self.k * phi
         #return 0.5 * phi * (1.2e-8 * 1e-6) / 1.1  # eps * phi * sigma_ret (mm^-2) / wloss
         #return self.k * phi #(1 - np.exp(-phi/self.phiSat))
-        return self.k * phi**self.p/(phi**self.p + self.phi_m**self.p)
+        #return self.k * phi**self.p/(phi**self.p + self.phi_m**self.p)
+        return self.k_a * phi**self.p/(phi**self.p + self.phi_m**self.p)
     
     def _calcGr(self, phi):
-        return self.Gr0 + (phi>0)*self.Gr1
+        #return self.Gr0 + (phi>0)*self.Gr1
+        return self.Gr0 + self.k_r * phi**self.q/(phi**self.q + self.phi_m**self.q)
         #return self.Gr0 + self.Gr1 * np.log(1 + phi/self.phi0) # self.Gr0 + self.Gr1
         #return self.Gr_dark + self.Gr_light * np.log(1 + phi/self.phi0) # self.Gr0 + self.Gr1
         # return 1/(taur_dark*exp(-log(1+phi/phi0))+taur_min) # Fig 6 Nikolic et al. 2009
@@ -678,10 +681,12 @@ class RhO_4states(RhodopsinModel):
                 $$ G_{a2}(\phi) = k_2\\frac{\phi^p}{\phi^p + \phi_m^p} $$
                 $$$$
                 $$ f_{\phi}(\phi) = O_1+\gamma O_2 $$
-                $$ f_v(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1} $$
+                $$ f_v(v) = v_1\\frac{1-e^{-(v-E)/v_0}}{(v-E)} $$
                 $$ I_{\phi} = g_0 \cdot f_{\phi}(\phi) \cdot f_v(v) \cdot (v-E) $$
                 """     
-    
+
+                #$$ f_v(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1} $$
+                
                 # """
                 # $$ \dot{C_{\\alpha}} = G_{r}C_{\\beta} + G_{d{\\alpha}}O_{\\alpha} - G_{a{\\alpha}}(\phi)C_{\\alpha} $$
                 # $$ \dot{O_{\\alpha}} = G_{a{\\alpha}}(\phi)C_{\\alpha} - (G_{d{\\alpha}}+G_{f}(\phi))O_{\\alpha} + G_{b}(\phi)O_{\\beta} $$
@@ -956,9 +961,10 @@ class RhO_6states(RhodopsinModel):
                 $$ G_{a2}(\phi) = k_{2} \\frac{\phi^p}{\phi^p + \phi_m^p} $$
                 $$$$
                 $$ f_{\phi}(\phi) = O_1+\gamma O_2 $$
-                $$ f_v(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1} $$
+                $$ f_v(v) = v_1\\frac{1-e^{-(v-E)/v_0}}{(v-E)} $$
                 $$ I_{\phi} = g_0 \cdot f_{\phi}(\phi) \cdot f_v(v) \cdot (v-E) $$
-                """    
+                """
+                #$$ f_v(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1} $$
     
     brianStateVars = ['C_1','I_1','O_1','O_2','I_2','C_2'] #['S_C1','S_I1','S_O1','S_O2','S_I2','S_C2']
     """

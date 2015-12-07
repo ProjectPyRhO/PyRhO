@@ -1435,7 +1435,8 @@ def plotFit(PC, nStates, params, fitRates=False, index=None): #I,t,onInd,offInd,
     
         if config.addTitles and p == 0:
             if nStates == 3:
-                plt.title('Three-state model fit to data (phi={:.3g}) [Ga={:.3g}; Gd={:.3g}; Gr={:.3g}] \n[k={:.3g}; p={:.3g}; phi_m={:.3g}; Gd={:.3g}; Gr0={:.3g}; Gr1={:.3g}]'.format(phi,RhO.Ga,RhO.Gd,RhO.Gr,RhO.k,RhO.p,RhO.phi_m,RhO.Gd,RhO.Gr0,RhO.Gr1))
+                #plt.title('Three-state model fit to data (phi={:.3g}) [Ga={:.3g}; Gd={:.3g}; Gr={:.3g}] \n[k={:.3g}; p={:.3g}; phi_m={:.3g}; Gd={:.3g}; Gr0={:.3g}; Gr1={:.3g}]'.format(phi,RhO.Ga,RhO.Gd,RhO.Gr,RhO.k,RhO.p,RhO.phi_m,RhO.Gd,RhO.Gr0,RhO.Gr1))
+                plt.title('Three-state model fit to data (phi={:.3g}) [Ga={:.3g}; Gd={:.3g}; Gr={:.3g}] \n[k_a={:.3g}; p={:.3g}; k_r={:.3g}; q={:.3g}; phi_m={:.3g}; Gd={:.3g}; Gr0={:.3g}]'.format(phi,RhO.Ga,RhO.Gd,RhO.Gr,RhO.k_a,RhO.p,RhO.k_r,RhO.q,RhO.phi_m,RhO.Gd,RhO.Gr0))
             elif nStates == 4:
                 plt.title('Four-state model fit to data (phi={:.3g}) \n[Ga1={:.3g}; Ga2={:.3g}; Gf={:.3g}; Gb={:.3g}; Gd1={:.3g}; Gd2={:.3g}]'.format(phi,RhO.Ga1,RhO.Ga2,RhO.Gf,RhO.Gb,RhO.Gd1,RhO.Gd2))
             elif nStates == 6:
@@ -1722,15 +1723,17 @@ def fit3states(fluxSet, run, vInd, params, postOpt=True, method=defMethod, verbo
     copyParam('Gd',params,pOns)
     pOns['Gd'].set(value=Gd, vary=False)
     
-    copyParam('k',params,pOns)
+    copyParam('k_a',params,pOns)
+    copyParam('k_r',params,pOns)
     copyParam('p',params,pOns) #pOns.add('p',value=0.7,min=0.1,max=5)
+    copyParam('q',params,pOns)
     copyParam('phi_m',params,pOns) #pOns.add('phi_m',value=1e17,min=1e15,max=1e19) #1e19
     
     # Set parameters from general rhodopsin analysis routines
     copyParam('g0',params,pOns) # pOns.add('g',value=gmax,vary=False)
     copyParam('Gr0',params,pOns)
     #pOns['Gr0'].set(vary=False) # Dark recovery rate
-    copyParam('Gr1',params,pOns) # pOns.add('Gr',value=Gr0,vary=False)
+    #copyParam('Gr1',params,pOns) # pOns.add('Gr',value=Gr0,vary=False)
     copyParam('E',params,pOns)
     #if params['useIR'].value==True: # Redundant?
     copyParam('v0',params,pOns)
@@ -1778,7 +1781,7 @@ def fit3states(fluxSet, run, vInd, params, postOpt=True, method=defMethod, verbo
     
     reportFit(onPmin, "On-phase fit report for the 3-state model", method)
     if verbose > 0:
-        print('k = {}; p = {}; phi_m = {}; Gr1 = {}'.format(pOns['k'].value, pOns['p'].value, pOns['phi_m'].value, pOns['Gr1'].value))
+        print('k_a = {}; p = {}; k_r = {}; q = {}; phi_m = {}'.format(pOns['k_a'].value, pOns['p'].value, pOns['k_r'].value, pOns['q'].value, pOns['phi_m'].value))
     
     
     
