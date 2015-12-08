@@ -658,7 +658,7 @@ class RhO_4states(RhodopsinModel):
     constRates = ['Gd1', 'Gd2', 'Gr0']
     constLabels = ['$G_{d1}$', '$G_{d2}$', '$G_{r0}$']
     
-    paramsList = ['g0', 'gam', 'phi_m', 'k1', 'k2', 'p', 'Gf0', 'kf', 'Gb0', 'kb', 'q', 'Gd1', 'Gd2', 'Gr0', 'E', 'v0', 'v1'] # List of model constants
+    paramsList = ['g0', 'gam', 'phi_m', 'k1', 'k2', 'p', 'Gf0', 'k_f', 'Gb0', 'k_b', 'q', 'Gd1', 'Gd2', 'Gr0', 'E', 'v0', 'v1'] # List of model constants
     
     connect = [[0,1,0,0],
                [1,0,1,0],
@@ -728,8 +728,8 @@ class RhO_4states(RhodopsinModel):
             H_q = Theta*((phi**q)/(phi**q+phi_m**q)) : 1
             Ga1 = k1*H_p : second**-1
             Ga2 = k2*H_p : second**-1
-            Gf = Gf0 + kf*H_q : second**-1
-            Gb = Gb0 + kb*H_q : second**-1
+            Gf = Gf0 + k_f*H_q : second**-1
+            Gb = Gb0 + k_b*H_q : second**-1
             f_v = (1-exp(-(v-E)/v0))/((v-E)/v1) : 1
             f_phi = O_1+gam*O_2 : 1
             I = g0*f_phi*f_v*(v-E) : amp
@@ -780,15 +780,15 @@ class RhO_4states(RhodopsinModel):
             C_2 = 1 - C_1 - O_1 - O_2 : 1
             Ga1 = Theta*k1*phi(t)**p/(phi(t)**p+phi_m**p) : second**-1
             Ga2 = Theta*k2*phi(t)**p/(phi(t)**p+phi_m**p) : second**-1
-            Gf = Gf0 + Theta*kf*phi(t)**q/(phi(t)**q+phi_m**q) : second**-1
-            Gb = Gb0 + Theta*kb*phi(t)**q/(phi(t)**q+phi_m**q) : second**-1
+            Gf = Gf0 + Theta*k_f*phi(t)**q/(phi(t)**q+phi_m**q) : second**-1
+            Gb = Gb0 + Theta*k_b*phi(t)**q/(phi(t)**q+phi_m**q) : second**-1
             f_v = (1-exp(-(v-E)/v0))/((v-E)/v1) : 1
             f_phi = O_1+gam*O_2 : 1
             I = g0*f_phi*f_v*(v-E) : amp
-            Theta = int(phi(t) > 0*phi(t)) : boolean (shared)
+            Theta = int(phi(t) > 0*phi(t)) : 1 (shared)
             '''
     
-    
+    """
     def reportParams(self): # Replace with local def __str__(self):
         report =  'Four-state model parameters\n'
         report += '===========================\n'
@@ -809,6 +809,7 @@ class RhO_4states(RhodopsinModel):
         report += 'g0   = {:12.3g}\n'.format(self.g0)
         report += '---------------------------'
         return report
+    """
     
     def _calcGa1(self, phi):
         # N.B. making Ga a function of time (as in Appendix 1) results in the Six-state model
@@ -831,11 +832,11 @@ class RhO_4states(RhodopsinModel):
     
     def _calcGf(self, phi):
         #return self.e12d + self.c1*np.log(1+(phi/self.phi0)) # e12(phi=0) = e12d
-        return self.Gf0 + self.kf * phi**self.q/(phi**self.q + self.phi_m**self.q)
+        return self.Gf0 + self.k_f * phi**self.q/(phi**self.q + self.phi_m**self.q)
 
     def _calcGb(self, phi):
         #return self.e21d + self.c2*np.log(1+(phi/self.phi0)) # e21(phi=0) = e21d
-        return self.Gb0 + self.kb * phi**self.q/(phi**self.q + self.phi_m**self.q)
+        return self.Gb0 + self.k_b * phi**self.q/(phi**self.q + self.phi_m**self.q)
 
     def setLight(self, phi):
         """Set transition rates according to the instantaneous photon flux density"""
@@ -932,7 +933,7 @@ class RhO_6states(RhodopsinModel):
     constRates = ['Go1', 'Go2', 'Gd1', 'Gd2', 'Gr0']
     constLabels = ['$G_{o1}$', '$G_{o2}$', '$G_{d1}$', '$G_{d2}$', '$G_{r0}$']
     
-    paramsList = ['g0', 'gam', 'phi_m', 'k1', 'k2', 'p', 'Gf0', 'kf', 'Gb0', 'kb', 'q', 'Go1', 'Go2', 'Gd1', 'Gd2', 'Gr0', 'E', 'v0', 'v1'] # List of model constants    
+    paramsList = ['g0', 'gam', 'phi_m', 'k1', 'k2', 'p', 'Gf0', 'k_f', 'Gb0', 'k_b', 'q', 'Go1', 'Go2', 'Gd1', 'Gd2', 'Gr0', 'E', 'v0', 'v1'] # List of model constants    
     
     connect = [[0,1,0,0,0,0], # s_1 --> s_i=1...6
                [0,0,1,0,0,0], # s_2 -->
@@ -994,8 +995,8 @@ class RhO_6states(RhodopsinModel):
             H_q = Theta*((phi**q)/(phi**q+phi_m**q)) : 1
             Ga1 = k1*H_p : second**-1
             Ga2 = k2*H_p : second**-1
-            Gf = Gf0 + kf*H_q : second**-1
-            Gb = Gb0 + kb*H_q : second**-1
+            Gf = Gf0 + k_f*H_q : second**-1
+            Gb = Gb0 + k_b*H_q : second**-1
             f_v = (1-exp(-(v-E)/v0))/((v-E)/v1) : 1
             f_phi = O_1+gam*O_2 : 1
             I = g0*f_phi*f_v*(v-E) : amp
@@ -1054,12 +1055,12 @@ class RhO_6states(RhodopsinModel):
             H_q = Theta*((phi(t)**q)/(phi(t)**q+phi_m**q)) : 1
             Ga1 = k1*H_p : second**-1
             Ga2 = k2*H_p : second**-1
-            Gf = Gf0 + kf*H_q : second**-1
-            Gb = Gb0 + kb*H_q : second**-1
+            Gf = Gf0 + k_f*H_q : second**-1
+            Gb = Gb0 + k_b*H_q : second**-1
             f_v = (1-exp(-(v-E)/v0))/((v-E)/v1) : 1
             f_phi = O_1+gam*O_2 : 1
             I = g0*f_phi*f_v*(v-E) : amp
-            Theta = int(phi(t) > 0*phi(t)) : boolean (shared)
+            Theta = int(phi(t) > 0*phi(t)) : 1 (shared)
             '''
     
     def _calcGa1(self, phi):
@@ -1068,11 +1069,11 @@ class RhO_6states(RhodopsinModel):
 
     def _calcGf(self, phi):
         #return self.a30 + self.a31*np.log(1+(phi/self.phi0))
-        return self.Gf0 + self.kf * phi**self.q/(phi**self.q + self.phi_m**self.q)
+        return self.Gf0 + self.k_f * phi**self.q/(phi**self.q + self.phi_m**self.q)
 
     def _calcGb(self, phi):
         #return self.b20 + self.b21*np.log(1+(phi/self.phi0))
-        return self.Gb0 + self.kb * phi**self.q/(phi**self.q + self.phi_m**self.q)
+        return self.Gb0 + self.k_b * phi**self.q/(phi**self.q + self.phi_m**self.q)
 
     def _calcGa2(self, phi):
         #return self.b40*(phi/self.phi0)

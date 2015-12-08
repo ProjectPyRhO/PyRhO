@@ -4,7 +4,7 @@ NEURON {
     POINT_PROCESS RhO4c
     NONSPECIFIC_CURRENT i
     RANGE i, E, gam, v0, v1, g0 :, fphi, fv
-    RANGE k1, k2, kf, kb, Gf0, Gb0, Gd1, Gd2, Gr0, p, q
+    RANGE k1, k2, k_f, k_b, Gf0, Gb0, Gd1, Gd2, Gr0, p, q
     RANGE phi, phi_m :, lambda
 }
 
@@ -36,8 +36,8 @@ PARAMETER { : Initialise parameters to defaults. These may be changed through ho
 : State transition rate parameters (/ms)
     k1      = 0.05      (/ms)
     k2      = 0.015     (/ms)
-    kf      = 0.03      (/ms)
-    kb      = 0.0115    (/ms)
+    k_f      = 0.03      (/ms)
+    k_b      = 0.0115    (/ms)
     Gf0     = 0.01      (/ms)
     Gb0     = 0.015     (/ms)
     p       = 0.7       (1)                 : Hill Coefficient Ga{1,2}
@@ -116,8 +116,8 @@ PROCEDURE rates(phi) { : Define equations for calculating transition rates
     
     Ga1 = k1 * h1             :Ga1 = k1 * pow(phi,p)/(pow(phi,p) + pow(phi_m,p))
     Ga2 = k2 * h1             :Ga2 = k2 * pow(phi,p)/(pow(phi,p) + pow(phi_m,p))
-    Gf = Gf0 + kf * h2      :Gf = Gf0 + kf * pow(phi,q)/(pow(phi,q) + pow(phi_m,q))
-    Gb = Gb0 + kb * h2      :Gb = Gb0 + kb * pow(phi,q)/(pow(phi,q) + pow(phi_m,q))
+    Gf = Gf0 + k_f * h2      :Gf = Gf0 + k_f * pow(phi,q)/(pow(phi,q) + pow(phi_m,q))
+    Gb = Gb0 + k_b * h2      :Gb = Gb0 + k_b * pow(phi,q)/(pow(phi,q) + pow(phi_m,q))
     
 }
 

@@ -778,8 +778,8 @@ def fit4statesIndiv(I,t,onInd,offInd,phi,V,Gr0,gmax,params=None,method=defMethod
         pOn.add('Gd2',value=0.02, min=0.01)
         pOn.add('Gf0',value=0.01, min=0)#, expr='(pL-(Gd1*Gd2)-(Gd1*Gb0))/Gd2')
         pOn.add('Gb0',value=0.01, min=0)
-        pOn.add('kf',value=0.05, min=0)
-        pOn.add('kb',value=0.01, min=0)
+        pOn.add('k_f',value=0.05, min=0)
+        pOn.add('k_b',value=0.01, min=0)
         # Place RhO,V,phi in onPmin?
         
         ### Trim down ton? Take 10% of data or one point every ms?
@@ -827,8 +827,8 @@ def fit4statesIndiv(I,t,onInd,offInd,phi,V,Gr0,gmax,params=None,method=defMethod
         p4s.add('k2',value=pOn['k2'].value,vary=False)
         p4s.add('Gf0',value=pOn['Gf0'].value,vary=False)
         p4s.add('Gb0',value=pOn['Gb0'].value,vary=False)
-        p4s.add('kf',value=pOn['kf'].value,vary=False)
-        p4s.add('kb',value=pOn['kb'].value,vary=False)
+        p4s.add('k_f',value=pOn['k_f'].value,vary=False)
+        p4s.add('k_b',value=pOn['k_b'].value,vary=False)
     
         # Generate Rhodopsin model
         RhO.g0 = p4s['g0'].value              # 16700     [pS]
@@ -839,8 +839,8 @@ def fit4statesIndiv(I,t,onInd,offInd,phi,V,Gr0,gmax,params=None,method=defMethod
         RhO.Gd2 = p4s['Gd2'].value          #           [ms^-1]
         RhO.Gf0 = p4s['Gf0'].value        #           [ms^-1]
         RhO.Gb0 = p4s['Gb0'].value        #           [ms^-1]
-        RhO.kf = p4s['kf'].value            #           [ms^-1 * photons^-1 * s * mm^2]
-        RhO.kb = p4s['kb'].value            #           [ms^-1 * photons^-1 * s * mm^2]
+        RhO.k_f = p4s['k_f'].value            #           [ms^-1 * photons^-1 * s * mm^2]
+        RhO.k_b = p4s['k_b'].value            #           [ms^-1 * photons^-1 * s * mm^2]
         RhO.phiFit = phi                    # Flux intensity at which the parameters were fit. 
         RhO.setLight(0)                     # Re-initialise model to dark state
 
@@ -2040,8 +2040,8 @@ def fit4states(fluxSet, run, vInd, params, postOpt=True, method=defMethod, verbo
     # phiFits[phiInd] = fit4states(I,t,onInd,offInd,phi,V,Gr0,gmax,params=pOns,method=method)
     copyParam('k1',params,pOns) #pOns.add('k1',value=3, min=0.01) #0.5 Ga1 = k1 * phi
     copyParam('k2',params,pOns) #pOns.add('k2',value=1.5, min=0.01) #0.2 Ga2 = k2 * phi
-    copyParam('kf',params,pOns) #pOns.add('kf',value=0.05, min=0.01)
-    copyParam('kb',params,pOns) #pOns.add('kb',value=0.01, min=0.01)
+    copyParam('k_f',params,pOns) #pOns.add('kf',value=0.05, min=0.01)
+    copyParam('k_b',params,pOns) #pOns.add('kb',value=0.01, min=0.01)
     copyParam('gam',params,pOns) #pOns.add('gam',value=0.05, min=0, max=1)
     # Place RhO,V,phi in onPmin?
     copyParam('p',params,pOns) #pOns.add('p',value=0.7,min=0.1,max=5)
@@ -2093,7 +2093,7 @@ def fit4states(fluxSet, run, vInd, params, postOpt=True, method=defMethod, verbo
         
     reportFit(onPmin, "On-phase fit report for the 4-state model", method)
     if verbose > 0:
-        print('k1 = {}; k2 = {}; kf = {}; kb = {}'.format(pOns['k1'].value, pOns['k2'].value, pOns['kf'].value, pOns['kb'].value))
+        print('k1 = {}; k2 = {}; k_f = {}; k_b = {}'.format(pOns['k1'].value, pOns['k2'].value, pOns['k_f'].value, pOns['k_b'].value))
         print('gam = {}; phi_m = {}; p = {}; q = {}'.format(pOns['gam'].value, pOns['phi_m'].value, pOns['p'].value, pOns['q'].value))
     
     
@@ -2420,8 +2420,8 @@ def fit6states(fluxSet, quickSet, run, vInd, params, postOpt=True, method=defMet
     # phiFits[phiInd] = fit4states(I,t,onInd,offInd,phi,V,Gr0,gmax,params=pOns,method=method)
     copyParam('k1',params,pOns) #k1 #pOns.add('k1',value=3, min=0.01) #0.5 Ga1 = k1 * phi
     copyParam('k2',params,pOns) #k2 #pOns.add('k2',value=1.5, min=0.01) #0.2 Ga2 = k2 * phi
-    copyParam('kf',params,pOns) #kf #pOns.add('kf',value=0.05, min=0.01)
-    copyParam('kb',params,pOns) #kb #pOns.add('kb',value=0.01, min=0.01)
+    copyParam('k_f',params,pOns) #kf #pOns.add('kf',value=0.05, min=0.01)
+    copyParam('k_b',params,pOns) #kb #pOns.add('kb',value=0.01, min=0.01)
     copyParam('gam',params,pOns) #pOns.add('gam',value=0.05, min=0, max=1)
     # Place RhO,V,phi in onPmin?
     copyParam('p',params,pOns) #pOns.add('p',value=0.7,min=0.1,max=5)
@@ -2487,7 +2487,7 @@ def fit6states(fluxSet, quickSet, run, vInd, params, postOpt=True, method=defMet
     
     reportFit(onPmin, "On-phase fit report for the 6-state model", method)
     if verbose > 0:
-        print('k1 = {}; k2 = {}; kf = {}; kb = {}'.format(pOns['k1'].value, pOns['k2'].value, pOns['kf'].value, pOns['kb'].value))
+        print('k1 = {}; k2 = {}; k_f = {}; k_b = {}'.format(pOns['k1'].value, pOns['k2'].value, pOns['k_f'].value, pOns['k_b'].value))
         print('gam = {}; phi_m = {}; p = {}; q = {}'.format(pOns['gam'].value, pOns['phi_m'].value, pOns['p'].value, pOns['q'].value))
     
     
@@ -3740,6 +3740,7 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, relaxFact=2, method
     
     
     else: # Original single photocurrent routines
+    ### Replace with pc.findKinetics()
         
         def aggregateFits(phis,phiFits,nStates=3):
             nTrials = len(phis)

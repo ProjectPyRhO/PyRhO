@@ -5,7 +5,7 @@ NEURON {
     POINT_PROCESS RhO6c
     NONSPECIFIC_CURRENT i :IRhO     : This could be changed to update a specific ion
     RANGE i, E, gam, v0, v1, g0 :, fphi, fv, i
-    RANGE k1, Go1, Gf0, kf, Gd2, Gr0, Gd1, Gb0, kb, Go2, k2, p, q
+    RANGE k1, Go1, Gf0, k_f, Gd2, Gr0, Gd1, Gb0, k_b, Go2, k2, p, q
     RANGE phi, phi_m :, lambda
 }
 
@@ -38,12 +38,12 @@ PARAMETER { : Initialise parameters to defaults. These may be changed through ho
     k1      = 5         (/ms)
     Go1     = 1         (/ms)
     Gf0     = 0.022     (/ms)
-    kf      = 0.0135    (/ms)
+    k_f      = 0.0135    (/ms)
     Gd2     = 0.025     (/ms)
     Gr0     = 0.00033   (/ms)
     Gd1     = 0.13      (/ms)
     Gb0     = 0.011     (/ms)
-    kb      = 0.0048    (/ms)
+    k_b      = 0.0048    (/ms)
     Go2     = 1         (/ms)
     k2      = 1.1       (/ms)
     p       = 0.7       (1)
@@ -119,9 +119,9 @@ PROCEDURE rates(phi) { : Define equations for calculating transition rates
     }
     
     Ga1 = k1 * h1
-    Gf = Gf0 + kf * h2
+    Gf = Gf0 + k_f * h2
     
-    Gb = Gb0 + kb * h2
+    Gb = Gb0 + k_b * h2
     Ga2 = k2 * h1
 }
 

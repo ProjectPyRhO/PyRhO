@@ -79,7 +79,7 @@ modelFits = OrderedDict([   ('3', OrderedDict([('ChR2',Parameters()), ('NpHR',Pa
 
 ### Replace with defaultdict with default=key
 modelLabels = OrderedDict([('E','E'), ('g0','g_0'), ('k','k'), ('p','p'), ('phi_m','\phi_m'), ('Gd','G_d'), ('Gr0','G_{r0}'), ('Gr1','G_{r1}'), ('v0','v_0'), ('v1','v_1'),
-                            ('gam','\gamma'), ('k1','k_1'), ('k2','k_2'), ('Gf0','G_{f0}'), ('Gb0','G_{b0}'), ('kf','k_f'), ('kb','k_b'), ('q','q'), 
+                            ('gam','\gamma'), ('k1','k_1'), ('k2','k_2'), ('Gf0','G_{f0}'), ('Gb0','G_{b0}'), ('k_f','k_f'), ('k_b','k_b'), ('q','q'), 
                             ('Gd1','G_{d1}'), ('Gd2','G_{d2}'), ('Go1','G_{o1}'), ('Go2','G_{o2}'),
                             ('phi','\phi'), ('v','v')])
 
@@ -88,13 +88,13 @@ modelLabels = OrderedDict([('E','E'), ('g0','g_0'), ('k','k'), ('p','p'), ('phi_
 from brian2.units.allunits import *
 from brian2.units.stdunits import *
 modelUnits = OrderedDict([('g0',psiemens), ('gam',1), ('phi_m',mm**-2*second**-1), ('k',ms**-1), ('p',1), ('Gd',ms**-1), ('Gr0',ms**-1), ('Gr1',ms**-1), 
-                            ('k1',ms**-1), ('k2',ms**-1), ('Gf0',ms**-1), ('Gb0',ms**-1), ('kf',ms**-1), ('kb',ms**-1), ('q',1), 
+                            ('k1',ms**-1), ('k2',ms**-1), ('Gf0',ms**-1), ('Gb0',ms**-1), ('k_f',ms**-1), ('k_b',ms**-1), ('q',1), 
                             ('Gd1',ms**-1), ('Gd2',ms**-1), ('Go1',ms**-1), ('Go2',ms**-1), ('E',mV), ('v0',mV), ('v1',mV), 
                             ('phi',mm**-2*second**-1), ('v',mV)])
 
 #paramUnits
 unitLabels = OrderedDict([('g0','pS'), ('gam',''), ('phi_m','ph./mm^2/s'), ('k','ms^-1'), ('p',''), ('Gd','ms^-1'), ('Gr0','ms^-1'), ('Gr1','ms^-1'), 
-                            ('k1','ms^-1'), ('k2','ms^-1'), ('Gf0','ms^-1'), ('Gb0','ms^-1'), ('kf','ms^-1'), ('kb','ms^-1'), ('q',''), 
+                            ('k1','ms^-1'), ('k2','ms^-1'), ('Gf0','ms^-1'), ('Gb0','ms^-1'), ('k_f','ms^-1'), ('k_b','ms^-1'), ('q',''), 
                             ('Gd1','ms^-1'), ('Gd2','ms^-1'), ('Go1','ms^-1'), ('Go2','ms^-1'), ('E','mV'), ('v0','mV'), ('v1','mV'),
                             ('phi','ph./mm^2/s'), ('v','mV')])
 
@@ -268,9 +268,9 @@ modelFits['4']['ChR2'].add_many(
                 ('k2',      0.868,  True, 0.001,1e5,    None), #1.5
                 ('p',       0.833,  True, 0.1,  5,      None),
                 ('Gf0',     0.0373, True, 0,    1e3,    None), #e12d
-                ('kf',      0.0581, True, 0.001, 1e3,   None), #c1
+                ('k_f',      0.0581, True, 0.001, 1e3,   None), #c1
                 ('Gb0',     0.0161, True, 0,    1e3,    None), #e21d
-                ('kb',      0.063,  True, 0.001, 1e3,   None), #c2
+                ('k_b',      0.063,  True, 0.001, 1e3,   None), #c2
                 ('q',       1.94,   True, 0.1,  5,      None),
                 ('Gd1',     0.105,  True, 0.01, 1,      None),
                 ('Gd2',     0.0138, True, 0.01, 1,      None),
@@ -337,9 +337,9 @@ modelFits['6']['ChR2'].add_many(
                 ('k2',      2.71,   True, 0.0,  1000, None),
                 ('p',       0.985,  True, 0.1,  5,    None),
                 ('Gf0',     0.0389, True, 0.0,  1000, None),
-                ('kf',      0.103,  True, 0.0,  1000, None),
+                ('k_f',      0.103,  True, 0.0,  1000, None),
                 ('Gb0',     0.0198, True, 0.0,  1000, None),
-                ('kb',      0.139,  True, 0.0,  1000, None),
+                ('k_b',      0.139,  True, 0.0,  1000, None),
                 ('q',       1.58,   True, 0.1,  5,    None),
                 ('Go1',     2,      True, 0.0,  1000, None),
                 ('Go2',     0.0567, True, 0.0,  1000, None),
