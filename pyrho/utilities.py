@@ -320,11 +320,12 @@ def cycles2times(cycles, delD):
     return (times, lapsed)
 
     
-def plotLight(times, ax=None, light='shade', lam=470, alpha=0.2): #=plt.gcf()
+def plotLight(times, ax=None, light='shade', dark=None, lam=470, alpha=0.2): #=plt.gcf()
     """Function to plot light pulse(s)
     times   = [[t_on, t_off]...]
     ax      = Axes to plot on (default: gca()
     light   = Representation type: {'shade', 'borders', 'greyscale', 'hatch', 'spectral'}. Default: 'shade'
+    dark    = Lightness of the background [0 (black), 1 (white)]
     lam     = Wavelength [nm] (default: 470)
     alpha   = Transparency (default: 0.2)"""
     
@@ -334,6 +335,14 @@ def plotLight(times, ax=None, light='shade', lam=470, alpha=0.2): #=plt.gcf()
     else:
         plt.sca(ax)
     nPulses = times.shape[0]
+    
+    if dark is None:
+        pass
+    else:
+        ax.set_axis_bgcolor(str(dark))
+        for p in range(nPulses):
+            ax.axvspan(times[p][0],times[p][1],facecolor='w')#,alpha=alpha)  
+        
     if light == 'shade':
         for p in range(nPulses):
             ax.axvspan(times[p][0],times[p][1],facecolor='y',alpha=alpha)    # plt.
@@ -342,9 +351,9 @@ def plotLight(times, ax=None, light='shade', lam=470, alpha=0.2): #=plt.gcf()
             ax.axvline(x=times[p][0],linestyle='--',color='k')
             ax.axvline(x=times[p][1],linestyle='--',color='k')
     elif light == 'greyscale':
+        # Set background to grey and illumination to white
+        ax.set_axis_bgcolor('0.6') #'0.3'
         for p in range(nPulses):
-            # Set background to grey and illumination to white
-            ax.set_axis_bgcolor('0.4') #'0.3'
             ax.axvspan(times[p][0],times[p][1],facecolor='w')#,alpha=alpha)  
     elif light == 'hatch':
         for p in range(nPulses):

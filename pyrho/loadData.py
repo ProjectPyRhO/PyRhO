@@ -612,7 +612,7 @@ class PhotoCurrent():
         deactSlice = slice(self.peakInds_[pulse], self.pulseInds[pulse,1]+int(self.overlap))
         return (self.I[deactSlice], self.t[deactSlice])
     
-    def plot(self, ax=None, light='shade', addFeatures=True, colour=None, linestyle=None): #colour, linestyle
+    def plot(self, ax=None, light='shade', dark=None, addFeatures=True, colour=None, linestyle=None): #colour, linestyle
         """Plot the photocurrent
             Optional arguments:
             ax          :=  Specify axes on which to plot
@@ -633,7 +633,7 @@ class PhotoCurrent():
         else:
             plt.plot(self.t, self.I, color=colour, linestyle=linestyle)
         
-        plotLight(self.pulses, ax=ax, light=light, lam=470, alpha=0.2)
+        plotLight(self.pulses, ax=ax, light=light, dark=dark, lam=470, alpha=0.2)
         
         #ax.set_xlabel('$\mathrm{Time\ [ms]}$', position=(0.95,0.8))
         #plt.xlabel('$\mathrm{Time\ [ms]}$') #(r'\textbf{Time} [ms]')
