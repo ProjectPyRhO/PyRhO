@@ -6,9 +6,7 @@ NEURON {
     :ELECTRODE_CURRENT i :IRhO
     NONSPECIFIC_CURRENT i :IRhO     : This could be changed to update a specific ion
     RANGE i, E, gam, v0, v1, g0 :, fphi, fv, i :IRhO :iChR   : , gbar
-    :RANGE e1, e3, b10, a2dark, a2light, b2dark, b2light, a30, a40
     RANGE k1, Go1, Gf0, kf, Gd2, Gr0, Gd1, Gb0, kb, Go2, k2, p, q
-    :RANGE Er, flux, delay, ton, toff, num
     RANGE phiOn, phi, phi_m, delD, onD, offD, nPulses :phi0,
 }
 
