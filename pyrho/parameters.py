@@ -78,8 +78,8 @@ modelFits = OrderedDict([   ('3', OrderedDict([('ChR2',Parameters()), ('NpHR',Pa
                             ('6', OrderedDict([('ChR2',Parameters())]))])
 
 ### Replace with defaultdict with default=key
-modelLabels = OrderedDict([('E','E'), ('g0','g_0'), ('k','k'), ('p','p'), ('phi_m','\phi_m'), ('Gd','G_d'), ('Gr0','G_{r0}'), ('Gr1','G_{r1}'), ('v0','v_0'), ('v1','v_1'),
-                            ('gam','\gamma'), ('k1','k_1'), ('k2','k_2'), ('Gf0','G_{f0}'), ('Gb0','G_{b0}'), ('k_f','k_f'), ('k_b','k_b'), ('q','q'), 
+modelLabels = OrderedDict([('E','E'), ('g0','g_0'), ('p','p'), ('k_a','k_a'), ('k_r','k_r'), ('phi_m','\phi_m'), ('Gd','G_d'), ('Gr0','G_{r0}'), ('v0','v_0'), ('v1','v_1'), 
+                            ('gam','\gamma'), ('k1','k_1'), ('k2','k_2'), ('Gf0','G_{f0}'), ('Gb0','G_{b0}'), ('kf','k_f'), ('kb','k_b'), ('q','q'), 
                             ('Gd1','G_{d1}'), ('Gd2','G_{d2}'), ('Go1','G_{o1}'), ('Go2','G_{o2}'),
                             ('phi','\phi'), ('v','v')])
 
@@ -87,14 +87,14 @@ modelLabels = OrderedDict([('E','E'), ('g0','g_0'), ('k','k'), ('p','p'), ('phi_
 # Replace with http://pythonhosted.org/NeuroTools/parameters.html
 from brian2.units.allunits import *
 from brian2.units.stdunits import *
-modelUnits = OrderedDict([('g0',psiemens), ('gam',1), ('phi_m',mm**-2*second**-1), ('k',ms**-1), ('p',1), ('Gd',ms**-1), ('Gr0',ms**-1), ('Gr1',ms**-1), 
-                            ('k1',ms**-1), ('k2',ms**-1), ('Gf0',ms**-1), ('Gb0',ms**-1), ('k_f',ms**-1), ('k_b',ms**-1), ('q',1), 
+modelUnits = OrderedDict([('g0',psiemens), ('gam',1), ('k_a',ms**-1), ('k_r',ms**-1), ('phi_m',mm**-2*second**-1), ('p',1), ('Gd',ms**-1), ('Gr0',ms**-1), 
+                            ('k1',ms**-1), ('k2',ms**-1), ('Gf0',ms**-1), ('Gb0',ms**-1), ('kf',ms**-1), ('kb',ms**-1), ('q',1), 
                             ('Gd1',ms**-1), ('Gd2',ms**-1), ('Go1',ms**-1), ('Go2',ms**-1), ('E',mV), ('v0',mV), ('v1',mV), 
                             ('phi',mm**-2*second**-1), ('v',mV)])
 
 #paramUnits
-unitLabels = OrderedDict([('g0','pS'), ('gam',''), ('phi_m','ph./mm^2/s'), ('k','ms^-1'), ('p',''), ('Gd','ms^-1'), ('Gr0','ms^-1'), ('Gr1','ms^-1'), 
-                            ('k1','ms^-1'), ('k2','ms^-1'), ('Gf0','ms^-1'), ('Gb0','ms^-1'), ('k_f','ms^-1'), ('k_b','ms^-1'), ('q',''), 
+unitLabels = OrderedDict([('g0','pS'), ('gam',''), ('k_a','ms^-1'), ('k_r','ms^-1'), ('phi_m','ph./mm^2/s'), ('p',''), ('Gd','ms^-1'), ('Gr0','ms^-1'), #, ('k','ms^-1'), ('Gr1','ms^-1')
+                            ('k1','ms^-1'), ('k2','ms^-1'), ('Gf0','ms^-1'), ('Gb0','ms^-1'), ('kf','ms^-1'), ('kb','ms^-1'), ('q',''), 
                             ('Gd1','ms^-1'), ('Gd2','ms^-1'), ('Go1','ms^-1'), ('Go2','ms^-1'), ('E','mV'), ('v0','mV'), ('v1','mV'),
                             ('phi','ph./mm^2/s'), ('v','mV')])
 
@@ -154,12 +154,14 @@ Params['g0'] = PyRhOparameter('g0', 2.5e4, psiemens, 'pS', 'g_0', 'Biological sc
 #               (Name,    Value,  Vary, Min,  Max,  Expr=Units)                
 modelFits['3']['ChR2'].add_many( # Depolarising: passively transports Na+, H+, K+ and Ca2+ down their electrochemical gradients
                 ('g0',    1.57e5, True, 0.001,  1e6,  None),
-                ('phi_m', 1.32e18,True, 1e15,   1e19, None),
-                ('k',     4.51,   True, 0.001,  1000, None),
-                ('p',     0.793,  True, 0.1,    5,    None),
+                ('phi_m', 5e17,True, 1e15,   1e19, None),
+                ('k_a',     5,   True, 0.001,  1000, None),
+                ('k_r',     0.1,   True, 0.001,  1000, None),
+                ('p',     0.8,  True, 0.1,    5,    None),
+                ('q',     0.25,  True, 0.1,    5,    None),
                 ('Gd',    0.104,  True, 0.0001, 1,    None),
                 ('Gr0',   0.0002, True, 0.0001, 0.1,  None),
-                ('Gr1',   0.0386, True, 0.0001, 1,    None),
+                #('Gr1',   0.0386, True, 0.0001, 1,    None),
                 ('E',     0,      True, -1000,  1000, None),
                 ('v0',    43,     True, -1e15,  1e15, None),
                 ('v1',    17.1,   True, -1e15,  1e15, None))
@@ -167,11 +169,13 @@ modelFits['3']['ChR2'].add_many( # Depolarising: passively transports Na+, H+, K
 modelFits['3']['NpHR'].add_many( # Hyperpolarising: pumps chloride ions into the cell
                 ('g0',    1.57e5, True, 0.001,  1e6,  None),
                 ('phi_m',  1.32e18,True, 1e15,   1e19, None),
-                ('k',     0.01,   True, 0.001,  1000, None),
+                ('k_a',     0.01,   True, 0.001,  1000, None),
+                ('k_r',     0.01,   True, 0.001,  1000, None),
                 ('p',     0.793,  True, 0.1,    5,    None),
+                ('q',     0.793,  True, 0.1,    5,    None),
                 ('Gd',    0.1,  True, 0.0001, 1,    None),
                 ('Gr0',   0.0002, True, 0.0001, 0.1,  None),
-                ('Gr1',   0.0135, True, 0.0001, 1,    None),
+                #('Gr1',   0.0135, True, 0.0001, 1,    None),
                 ('E',     -400,   True, -1000,  1000, None),
                 ('v0',    43,     True, -1e15,  1e15, None),
                 ('v1',    17.1,   True, -1e15,  1e15, None))
@@ -179,11 +183,13 @@ modelFits['3']['NpHR'].add_many( # Hyperpolarising: pumps chloride ions into the
 modelFits['3']['ArchT'].add_many( # Hyperpolarising: actively extrudes Hydrogen ions
                 ('g0',    1.57e5, True, 0.001,  1e6,  None),
                 ('phi_m',  1.32e18,True, 1e15,   1e19, None),
-                ('k',     0.01,   True, 0.001,  1000, None),
+                ('k_a',     0.01,   True, 0.001,  1000, None),
+                ('k_r',     0.01,   True, 0.001,  1000, None),
                 ('p',     0.793,  True, 0.1,    5,    None),
+                ('q',     0.793,  True, 0.1,    5,    None),
                 ('Gd',    0.1,  True, 0.0001, 1,    None),
                 ('Gr0',   0.001, True, 0.0001, 0.1,  None),
-                ('Gr1',   0.0, True, 0.0001, 1,    None),
+                #('Gr1',   0.0, True, 0.0001, 1,    None),
                 ('E',     0,   True, -1000,  1000, None),
                 ('v0',    43,     True, -1e15,  1e15, None),
                 ('v1',    17.1,   True, -1e15,  1e15, None))

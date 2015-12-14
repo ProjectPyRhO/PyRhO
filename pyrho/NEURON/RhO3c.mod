@@ -4,7 +4,7 @@ NEURON  {
 	POINT_PROCESS RhO3c
 	NONSPECIFIC_CURRENT i
 	RANGE i, E, v0, v1, g0      :, fphi, fv
-	RANGE k, Gd, Gr0, Gr1, p 
+	RANGE k_a, k_r, Gd, Gr0, p, q
 	RANGE phi, phi_m            : phiOn, 
 }
 
@@ -33,11 +33,12 @@ PARAMETER {	: Initialise parameters to defaults. These may be changed through ho
 	v1 		= 4.1       (mV)
     
 : State transition rate parameters (/ms)
-	k 		= 0.28      (/ms)               : Quantum efficiency * number of photons absorbed by a RhO molecule per unit time 0.5*1.2e-14 /1.1
+	k_a		= 0.28      (/ms)               : Quantum efficiency * number of photons absorbed by a RhO molecule per unit time 0.5*1.2e-14 /1.1
     p       = 0.4       (1)                 : Hill Coefficient
+    k_r		= 0.28      (/ms)               : Recovery rate scaling
+    q       = 0.4       (1)                 : Hill Coefficient
 	Gd 		= 0.0909    (/ms)   <0, 1e9>    : @ 1mW mm^-2
 	Gr0     = 0.0002	(/ms)   <0, 1e9>    : tau_r,dark = 5-10s p405 Nikolic et al. 2009
-	Gr1     = 6.06e-3	(/ms)   <0, 1e9>    : (Gr,light @ 1mW mm^-2)
 }
 
 
@@ -93,8 +94,8 @@ KINETIC kin {
 
 PROCEDURE rates(phi) {	: Define equations for calculating transition rates
     if (phi>0) {        : Safeguard against negative phi values
-        Ga = k * 1/(1+pow(phi_m,p)/pow(phi,p))    : pow(phi,p)/(pow(phi,p) + pow(phi_m,p))
-        Gr = Gr0 + Gr1
+        Ga = k_a * 1/(1+pow(phi_m,p)/pow(phi,p))    : pow(phi,p)/(pow(phi,p) + pow(phi_m,p))
+        Gr = Gr0 + k_r * 1/(1+pow(phi_m,q)/pow(phi,q))    : pow(phi,q)/(pow(phi,q) + pow(phi_m,q))
     } else {
         Ga = 0
         Gr = Gr0
