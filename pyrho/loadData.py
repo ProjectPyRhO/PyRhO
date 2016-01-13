@@ -231,8 +231,9 @@ class PhotoCurrent():
         #    self.Ipmax = self.Ipeak # Deprecate
         
         
-        self.ss_ = self.findSteadyState(pulse=0) #findPlateauCurrent(self.I) # self.findPlateaus???
+        #self.ss_ = self.findSteadyState(pulse=0) #findPlateauCurrent(self.I) # self.findPlateaus???
         self.sss_ = np.array([self.findSteadyState(p) for p in range(self.nPulses)])
+        self.ss_ = self.sss_[0]
         
         # Align t_0 to the start of the first pulse
         self.pulseAligned = False
@@ -504,12 +505,15 @@ class PhotoCurrent():
         # Calculate step change (or gradient with t[1:] - t[:-1])
         cutInd = int(round(tail*len(Ion)))
         if cutInd < 5: # On-phase is too short 
+            warnings.warn('Duration Warning: The on-phase is too short for steady-state convergence!')
             return None
+            #method = 0
         
         dI = Ion[-cutInd+1:] - Ion[-cutInd:-1]
         if abs(np.mean(dI)) > 0.01 * self.span_:
             warnings.warn('Steady-state Convergence Warning: The average step size is larger than 1% of the current span!')
             return None
+            #method = 0
         
         if method == 0: # Empirical: Calculate Steady-state as the mean of the last 5% of the On phase
 
@@ -830,7 +834,7 @@ class ProtocolData():
                 raise TypeError("Trials must be either a PhotoCurrent or a list of PhotoCurrent objects")
             photocurrents = list([photocurrents])
         
-        indicies = []
+        indices = []
         
         Vs = [pc.V for pc in photocurrents]
         phis = [pc.phi for pc in photocurrents]
@@ -864,7 +868,7 @@ class ProtocolData():
             
             if verbose > 1:
                 print("PhotoCurrent added to run={}, iPhi={}, iV={}".format(run, iPhi, iV))
-            indicies.append((run, iPhi, iV))
+            indices.append((run, iPhi, iV))
             
         return indices
     
