@@ -50,9 +50,10 @@ class RhodopsinModel(PyRhOobject):
     def __str__(self):
         #return "{} {}-state model (phi={:.3g})".format(self.rhoType, self.nStates, self.phi) # Display transition rates?
         return "{}-state {}".format(stateLabs[self.nStates], self.rhoType)   #self.__name__+
+        #return self.brian_phi_t
     
     def __repr__(self):
-        return "<PyRhO {}-state Model object>".format(self.nStates)
+        return "<PyRhO {}-state {} Model object>".format(stateLabs[self.nStates], self.rhoType)
     
     def __call__(self):
         """When a rhodopsin is called, return its internal state at that instant"""
@@ -481,7 +482,20 @@ class RhO_3states(RhodopsinModel):
         report += '----------------------------'
         return report
     """
-
+    
+    """
+    @property
+    def Ga(self):
+        return self._calcGa(self.phi)
+    
+    @Ga.setter
+    def Ga(self, value):
+        return
+    
+    @property
+    def Gr(self):
+        return self._calcGr(self.phi)
+    """
     
     def _calcGa(self, phi):
         #return self.k * phi
