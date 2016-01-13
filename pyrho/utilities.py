@@ -58,13 +58,16 @@ def compareParams(origParams, newParams):
     report += '--------------------------------------------\n'
     for k,nv in nvd.items():
         ov = ovd[k]
-        if isinstance(nv, (int, float, complex)):
-            if ov > 1e-4: #ov != 0:
-                report += '{:>7} = {:8.3g} --> {:8.3g} ({:+.3g}%)\n'.format(k,ov,nv,(nv-ov)*100/ov)
-            else:
-                report += '{:>7} = {:8.3g} --> {:8.3g} (Abs: {:+.3g})\n'.format(k,ov,nv,nv-ov)
-        else: # Check for bool?
-            report += '{:>7} = {:8}\n'.format(k,str(nv))
+        if origParams[k].vary:
+            if isinstance(nv, (int, float, complex)):
+                if ov > 1e-4: #ov != 0:
+                    report += '{:>7} = {:8.3g} --> {:8.3g} ({:+.3g}%)\n'.format(k,ov,nv,(nv-ov)*100/ov)
+                else:
+                    report += '{:>7} = {:8.3g} --> {:8.3g} (Abs: {:+.3g})\n'.format(k,ov,nv,nv-ov)
+            else: # Check for bool?
+                report += '{:>7} = {:8}\n'.format(k,str(nv))
+        else:
+            report += '{:>7} = {:8.3g} --> {:8.3g}   ~ Fixed ~\n'.format(k,ov,nv)
     report += '============================================\n'
     print(report)
     
@@ -264,19 +267,19 @@ def lam2rgb(wav, gamma=0.8, output='norm'):
 
 ### Model functions ###
 
-def irrad2flux(E,lam=470):   # E2phi
-    """Converts irradiance [mW * mm^-2] and wavelength (default: 470) [nm] to flux [photons * s^-1 * mm^-2]"""
+def irrad2flux(E, lam=470):   # E2phi
+    """Converts irradiance [mW * mm^-2] and wavelength (default: 470) [nm] to flux [photons * mm^-2 * s^-1]"""
     Ep = 1e12 * h * c/lam    # Energy per photon [mJ] (using lambda in [nm])
     return E/Ep              # Photon flux (phi) scaled to [photons * s^-1 * mm^-2]
 
 
-def flux2irrad(phi,lam=470):
-    """Converts flux [photons * s^-1 * mm^-2] and wavelength (default: 470) [nm] to irradiance [mW * mm^-2]"""
+def flux2irrad(phi, lam=470):
+    """Converts flux [photons * mm^-2 * s^-1] and wavelength (default: 470) [nm] to irradiance [mW * mm^-2]"""
     Ep = 1e12 * h * c/lam    # Energy per photon [mJ] (using lambda in [nm])
     return phi * Ep          # Irradiance (E) scaled to [mW * mm^-2]
 
 
-def calcgbar(Ip,Vclamp,A):
+def calcgbar(Ip, Vclamp, A):
     # Unused
     """Function to calculate a lower bound on the cell's maximum conductance from its peak current
     Ip      :=  Peak current [nA]
