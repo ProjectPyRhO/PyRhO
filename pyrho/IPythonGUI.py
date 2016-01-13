@@ -46,7 +46,6 @@ import ast
 #np.set_printoptions(precision=6)
 #pprint()
 
-#%run -i modProtocols.py
 #%run -i models.py
 
 # Create lists and dictionaries of titles
@@ -271,7 +270,7 @@ def loadGUI(IPythonWorkspace=None):
         pSet = modelParams[modelList[mInd]]
 
         initialParams = getGUIparams(pSet, pfValArr[mInd][:], varyList=fVaryArr[mInd][:], minList=pfMinArr[mInd][:], maxList=pfMaxArr[mInd][:], exprList=fExprArr[mInd][:])
-        fittedParams = fitModels(dataSet, nStates=int(statesToFitButtons.value), params=initialParams, postOpt=runPostOpt.value, method=methods[fitMethods.value])
+        fittedParams = fitModels(dataSet, nStates=int(statesToFitButtons.value), params=initialParams, postFitOpt=runPostOpt.value, relaxFact=relaxFactWid.value, method=methods[fitMethods.value], postFitOptMethod=methods[postOptFitMethods.value])
         
         #fitParamReport = widgets.TextareaWidget(description='Report:',value=fitRhO.reportParams())
         #fitParamsPopup = widgets.PopupWidget(children=[fitParamReport],button_text='Fitted Parameters',description='Fitted {} state model parameters from: {}'.format(int(statesToFitButtons.value),dataVar.value))
@@ -317,49 +316,7 @@ def loadGUI(IPythonWorkspace=None):
         return
     
     
-    ##### Run Bar Functions #####
 
-    def onChangeProtDropdown(name,value):
-        paramTabs.selected_index = TabGroups['Protocols'] # Set to protocol parameters
-        protParamsTabs.selected_index = protList.index(value) # Get the index of the selected protocol #protIndDict[value]
-
-
-    def onClickRunButton(b): # on_button_clicked
-        if clearOutput.value:
-            clear_output()
-        runModel(stateButtons.value, protDropdown.value, simDropdown.value, saveButton.value, verboseSlide.value) #int(stateButtons.value)
-        return        
-        
-    def onChangeModel(name,value):
-        paramTabs.selected_index = TabGroups['Models'] # Set to model parameters
-        modelParamsTabs.selected_index = statesDict[value]
-
-    def onClickParamsToggle(name, value): #paramsToggle
-        
-        if value == True: # Set to current model and protocol tabs
-            paramsControlBar.visible = True
-            paramTabs.visible = True
-            modelParamsTabs.selected_index = statesDict[stateButtons.value]
-            protParamsTabs.selected_index = protList.index(protDropdown.value) #protIndDict[protDropdown.value]
-        else:
-            paramsControlBar.visible = False
-            paramTabs.visible = False
-        return
-    
-    def onChangeSimDropdown(name,value):
-        # if value == 'NEURON':
-            # NEURONbox.visible=True
-            # Brianbox.visible=False
-        # elif value == 'Brian':
-            # Brianbox.visible=True
-            # NEURONbox.visible=False
-        # else: # Set both to invisible
-            # NEURONbox.visible=False
-            # Brianbox.visible=False
-        paramTabs.selected_index = TabGroups['Simulators'] # Set to simulator parameters
-        simParamsTabs.selected_index = simList.index(value) # Get the index of the selected protocol #protIndDict[value]
-        return
-        
     '''    
     ##### NEURON bar functions #####
     # def onHocLoad(name):
@@ -465,23 +422,10 @@ def loadGUI(IPythonWorkspace=None):
         return
     
 
-    def onChangeModelToFit(name,value):
-        #paramTabs.selected_index = TabGroups['Models'] # Set to model parameters
-        fitParamsTabs.selected_index = statesDict[value]
+
+
     
-    def onChangeFitTab(name,value):
-        statesToFitButtons.value = statesArray[value]
-    
-    
-    def onChangeModelTab(name,value):
-        stateButtons.value = statesArray[value] #' '+str(value)
-    
-    def onChangeSimTab(name,value):
-        simDropdown.value = simList[value] #simList.index(value)# simDropdown.selected_label #simParamsTabs._titles[value] #[protParamsTabs.selected_index]
-        
-    def onChangeProtTab(name,value):
-        protDropdown.value = protList[value] #protDropdown.value_name = protParamsTabs._titles[value] #[protParamsTabs.selected_index]
-    
+
     
     ### Utility functions 
     # def getGUImodelParams(model):
@@ -700,27 +644,58 @@ def loadGUI(IPythonWorkspace=None):
     
     ##### Run bar #####
     
+    ##### Run Bar Functions #####
+
+    
     ### Protocol Dropdown
-    protDropdown = widgets.Dropdown(options=protList, value='step')     ###,value='delta') #protDict
-    protDropdown.on_trait_change(onChangeProtDropdown, 'value')
+    def onChangeProtDropdown(change):#(name,value):
+        paramTabs.selected_index = TabGroups['Protocols'] # Set to protocol parameters
+        protParamsTabs.selected_index = protList.index(change['new'])#(value) # Get the index of the selected protocol #protIndDict[value]
+    
+    protDropdown = widgets.Dropdown(options=protList, value='step')
+    #protDropdown.on_trait_change(onChangeProtDropdown, 'value')
+    protDropdown.observe(onChangeProtDropdown, names='value')
+    
     
     ### Run Button
+    def onClickRunButton(b): # on_button_clicked
+        if clearOutput.value:
+            clear_output()
+        runModel(stateButtons.value, protDropdown.value, simDropdown.value, saveButton.value, verboseSlide.value) #int(stateButtons.value)
+        return
+        
     runButton = widgets.Button(description="Run!")
-    
     runButton.on_click(onClickRunButton)
     
-    ### Model states button
     
-    stateButtons = widgets.ToggleButtons(description='Model states: ',options=statesArray,) #https://github.com/ipython/ipython/issues/6469
-    stateButtons.on_trait_change(onChangeModel,'value')#stateButtons.value_name  #'_view_name'
+    ### Model states button
+    def onChangeModel(change): #(name,value):
+        paramTabs.selected_index = TabGroups['Models'] # Set to model parameters
+        modelParamsTabs.selected_index = statesDict[change['new']] #[value]
+    
+    stateButtons = widgets.ToggleButtons(description='Model states: ', options=statesArray, ) #https://github.com/ipython/ipython/issues/6469 #'Model states: '
+    #stateButtons.on_trait_change(onChangeModel, 'value')#stateButtons.value_name  #'_view_name'
+    stateButtons.observe(onChangeModel, names='value')
     
     ### Create states buttons link
     #modelParamsLink = link((stateButtons, 'value'), (statesToFitButtons, 'value'))
     #modelParamsLink = link((stateButtons, 'value'), (modelParamsTabs, 'value'))
     
+    
     ### Parameters Toggle
+    def onClickParamsToggle(change): #(name, value): #paramsToggle
+        if change['old'] is False: #value == True: # Set to current model and protocol tabs
+            paramsControlBar.visible = True
+            paramTabs.visible = True
+            modelParamsTabs.selected_index = statesDict[stateButtons.value]
+            protParamsTabs.selected_index = protList.index(protDropdown.value) #protIndDict[protDropdown.value]
+        else:
+            paramsControlBar.visible = False
+            paramTabs.visible = False
+        return
     paramsButton = widgets.ToggleButton(description='Parameters', value=False)
-    paramsButton.on_trait_change(onClickParamsToggle,'value')
+    #paramsButton.on_trait_change(onClickParamsToggle, 'value')
+    paramsButton.observe(onClickParamsToggle, names='value')
     
     # ### Load NEURON parameters
     # hocFile = widgets.Text(description='HOC file: ',placeholder='<file name>')
@@ -731,10 +706,25 @@ def loadGUI(IPythonWorkspace=None):
     # brianFile = widgets.Text(description='Brian file: ',placeholder='<file name>')
     # brianLoad = widgets.Button(description='Load')
     # brianLoad.on_click(onBrianLoad)
+
     
     ### Output format Dropdown
-    simDropdown = widgets.Dropdown(options=['Python', 'NEURON', 'Brian'],value='Python')
-    simDropdown.on_trait_change(onChangeSimDropdown,'value')
+    def onChangeSimDropdown(change): #(name,value):
+        # if value == 'NEURON':
+            # NEURONbox.visible=True
+            # Brianbox.visible=False
+        # elif value == 'Brian':
+            # Brianbox.visible=True
+            # NEURONbox.visible=False
+        # else: # Set both to invisible
+            # NEURONbox.visible=False
+            # Brianbox.visible=False
+        paramTabs.selected_index = TabGroups['Simulators'] # Set to simulator parameters
+        simParamsTabs.selected_index = simList.index(change['new']) #(value) # Get the index of the selected protocol #protIndDict[value]
+        return
+    simDropdown = widgets.Dropdown(options=['Python', 'NEURON', 'Brian'], value='Python')
+    #simDropdown.on_trait_change(onChangeSimDropdown, 'value')
+    simDropdown.observe(onChangeSimDropdown, names='value')
     
     
     
@@ -744,13 +734,14 @@ def loadGUI(IPythonWorkspace=None):
     saveButton.visible = False
 
     ### Verbosity slider
-    def verboseChange(value):
+    def verboseChange(change): #(value):
         global verbose
-        verbose = value
+        verbose = change['new'] #value
         return
     #verboseSlide = widgets.FloatProgressWidget(value=1, min=-1, max=3, step=1, description='Verbosity:')
     verboseSlide = widgets.IntSlider(value=1, min=0, max=3, description='Output:')
-    verboseSlide.on_trait_change(verboseChange, 'value')
+    #verboseSlide.on_trait_change(verboseChange, 'value')
+    verboseSlide.observe(verboseChange, names='value')
     verboseSlide.visible = True #False
 
     ### Clear ouput checkbox
@@ -789,7 +780,7 @@ def loadGUI(IPythonWorkspace=None):
     
     ##### Parameters control bar #####
     
-    paramVar = widgets.Text(description='Parameter Set: ',placeholder='<variable name>')
+    paramVar = widgets.Text(description='Parameter Set: ', placeholder='<variable name>')
     paramLoad = widgets.Button(description='Load')
     paramLoad.on_click(onClickParamsLoad)
     paramOutput = widgets.Output()
@@ -844,8 +835,12 @@ def loadGUI(IPythonWorkspace=None):
     #rArrow = widgets.Latex(value='$\\Rightarrow$')
     
     ### Create Fit Model States buttons
+    def onChangeModelToFit(change): #(name,value):
+        #paramTabs.selected_index = TabGroups['Models'] # Set to model parameters
+        fitParamsTabs.selected_index = statesDict[change['new']] #[value]
     statesToFitButtons = widgets.ToggleButtons(description='Model: ', options=statesArray) #,value=u' 3') #https://github.com/ipython/ipython/issues/6469
-    statesToFitButtons.on_trait_change(onChangeModelToFit, 'value')
+    #statesToFitButtons.on_trait_change(onChangeModelToFit, 'value')
+    statesToFitButtons.observe(onChangeModelToFit, names='value')
     
     #fitLabel = widgets.HTML(value='Models to fit: ')
     #fit3sCheck = widgets.Checkbox(description='3 state', value=True)
@@ -864,9 +859,14 @@ def loadGUI(IPythonWorkspace=None):
     ### Create Checkboxes
     runSSAcheck = widgets.Checkbox(description='Characterise', value=False)
     #useFitCheck = widgets.Checkbox(description='Use fit', value=False)
-    fitMethods = widgets.Dropdown(options=fitMethodsDict, value=fitMethodsDict[defMethod], description='Method:')
+    relaxFactWid = widgets.FloatSlider(value=2.0, min=1.0, max=10.0, step=0.1, description='Relax factor:')
+    fitMethods = widgets.Dropdown(options=fitMethodsDict, value=fitMethodsDict[defMethod]) #, description='Method:')
     #plotExpData = widgets.Checkbox(description='Plot', value=True)
+    def onTickChange(change):
+        postOptFitMethods.visible = change['new']
     runPostOpt = widgets.Checkbox(description='Post-fit opt.', value=True)
+    runPostOpt.observe(onTickChange, names='value')
+    postOptFitMethods = widgets.Dropdown(options=fitMethodsDict, value=fitMethodsDict[defMethod]) #, description='Post-fit Meth:')
     
     ### Create Run Fit Button
     runFitButton = widgets.Button(description="Fit!")
@@ -908,7 +908,9 @@ def loadGUI(IPythonWorkspace=None):
     
     #fitOutputBar = widgets.HBox(children=[runSSAcheck, plotExpData, runFitButton], align='center')
     #runSSAcheck
-    fitBar = widgets.HBox(children=[dataBox, dataLoad, statesToFitButtons, fitMethods, runPostOpt, runFitButton, characteriseButton, exportFitButton], align='center') #plotExpData #dataVar, dataLoad
+    fitBarMain = widgets.HBox(children=[dataBox, dataLoad, statesToFitButtons, runFitButton, characteriseButton, exportFitButton]) #, align='baseline')
+    fitBarMeta = widgets.HBox(children=[fitMethods, runPostOpt, postOptFitMethods, relaxFactWid]) #, align='baseline')
+    fitBar = widgets.VBox(children=[fitBarMain, fitBarMeta]) #, align='start') #align='center') #plotExpData #dataVar, dataLoad
     #fitParamsHead = widgets.VBox(children=[dataLoadBar, statesBar, hyperParams, fitOutputBar]) # Left side container
     fitParamsHead = widgets.VBox(children=[fitBar]) # , hyperParams
     #fitNotesBoxes = widgets.VBox(children=[]) # Right side container for figure and equations
@@ -1063,7 +1065,7 @@ def loadGUI(IPythonWorkspace=None):
     
     
     #fitParamsTabs = buildLayerTab(modelFitBoxes)
-    fitParamsTabs = widgets.Tab(description='Parameter Settings', children=modelFitBoxes, values=statesArray)
+    
     # fitParamsTabs.set_title(0, 'Three-state model') # Moved to loop over modelTitles
     # fitParamsTabs.set_title(1, 'Four-state model')
     # fitParamsTabs.set_title(2, 'Six-state model')
@@ -1071,12 +1073,17 @@ def loadGUI(IPythonWorkspace=None):
     
     #modelFitTitle = widgets.HTML(value='<h4>Model Specific Parameters</h4>')
     #fitBox = widgets.VBox(children=[fitParamsHead,modelFitTitle,fitParamsTabs]) #HBox
-    fitBox = widgets.VBox(children=[fitParamsHead, fitParamsTabs]) #HBox
+    
     ###fitBox.margin = '5px'
     #modelParamsTabs = widgets.Tab(description='Parameter Settings', children=modelBoxes, values=statesArray)
     #modelParamsTabs.margin = '5px'
-    fitParamsTabs.on_trait_change(onChangeFitTab,'selected_index')
-
+        
+    def onChangeFitTab(change):#(name,value):
+        statesToFitButtons.value = statesArray[change['new']] #[value]
+    fitParamsTabs = widgets.Tab(description='Parameter Settings', children=modelFitBoxes, values=statesArray)
+    #fitParamsTabs.on_trait_change(onChangeFitTab, 'selected_index')
+    fitParamsTabs.observe(onChangeFitTab, names='selected_index')
+    fitBox = widgets.VBox(children=[fitParamsHead, fitParamsTabs]) #HBox
     
     #statesToFitButtons.button_style = 'info'
     #statesToFitButtons.margin = '5px'
@@ -1212,9 +1219,16 @@ def loadGUI(IPythonWorkspace=None):
     ### Linked parameters
     #E_Link = link((stateButtons, 'value'), (statesToFitButtons, 'value'))
     
+        
+
+    
+
+    def onChangeModelTab(change): #(name,value):
+        stateButtons.value = statesArray[change['new']] #[value] #' '+str(value)
     modelParamsTabs = widgets.Tab(description='Parameter Settings', children=modelBoxes, values=statesArray)
     ###modelParamsTabs.margin = '5px'
-    modelParamsTabs.on_trait_change(onChangeModelTab,'selected_index')
+    #modelParamsTabs.on_trait_change(onChangeModelTab, 'selected_index')
+    modelParamsTabs.observe(onChangeModelTab, names='selected_index')
     #modelParamsTabs.on_displayed(setModelParamsTabs,'selected_index')
     #modelParamsTabs.on_displayed()
     #modelParamsLink = link((stateButtons, 'value'), (modelParamsTabs, 'value'))
@@ -1285,9 +1299,12 @@ def loadGUI(IPythonWorkspace=None):
         
     
     ##### Simulator parameters tab #####
+    def onChangeSimTab(change): #(name,value):
+        simDropdown.value = simList[change['new']] #[value] #simList.index(value)# simDropdown.selected_label #simParamsTabs._titles[value] #[protParamsTabs.selected_index]
     simParamsTabs = widgets.Tab(description='Simulator Settings', children=simBoxes)# \
     ###simParamsTabs.margin = '5px'
-    simParamsTabs.on_trait_change(onChangeSimTab, 'selected_index')
+    #simParamsTabs.on_trait_change(onChangeSimTab, 'selected_index')
+    simParamsTabs.observe(onChangeSimTab, names='selected_index')
     
     
     
@@ -1459,9 +1476,12 @@ def loadGUI(IPythonWorkspace=None):
         
     
     ##### Protocol parameters tab #####
+    def onChangeProtTab(change): #(name,value):
+        protDropdown.value = protList[change['new']] #[value] #protDropdown.value_name = protParamsTabs._titles[value] #[protParamsTabs.selected_index]
     protParamsTabs = widgets.Tab(description='Parameter Settings', children=protBoxesWrapper) # protBoxes)# \
     ###protParamsTabs.margin = '5px'
-    protParamsTabs.on_trait_change(onChangeProtTab, 'selected_index')
+    #protParamsTabs.on_trait_change(onChangeProtTab, 'selected_index')
+    protParamsTabs.observe(onChangeProtTab, names='selected_index')
     protBox = widgets.VBox(children=[protParamsHead, protParamsTabs]) #HBox
     
     ##### Configure tabs for abstraction layers #####
@@ -1503,6 +1523,11 @@ def loadGUI(IPythonWorkspace=None):
     
     ##### Add formatting here after display #####
     
+    ### align := ['start', 'center', 'end', 'baseline', 'stretch']
+    ### border_color := 'Valid HTML colour'
+    ### border_radius := Specify curvature in pixels
+    ### border_style := ['none', 'hidden', 'dotted', 'dashed', 'solid', 'double', 'groove', 'ridge', 'inset', 'outset', 'initial', 'inherit', '']
+    
     ### Set Button styles after displaying the runBar
     paramsButton.button_style = 'info'
     #stateButtons.button_style = 'success' ### Removed due to widgets bug
@@ -1510,12 +1535,12 @@ def loadGUI(IPythonWorkspace=None):
     simDropdown.button_style = 'success'
     simDropdown.margin = '5px'
     protDropdown.button_style = 'success'
-    protDropdown.margin = '5px'
+    #protDropdown.margin = '5px'
     #fitButton.button_style = 'success'
     runButton.button_style = 'danger'
     runButton.margin = '5px'
     runBar.align = 'center'
-    verboseSlide.width = '60px'
+    verboseSlide.width = '48px' # '60px'
     
     ### Set paramTabs formatting
     
@@ -1550,7 +1575,13 @@ def loadGUI(IPythonWorkspace=None):
     runFitButton.margin = '5px'
     #characteriseButton.margin = '5px'
     exportFitButton.margin = '5px'
-    
+    fitMethods.margin = '5px'
+    postOptFitMethods.margin = '5px'
+    fitBarMain.align = 'center'
+    fitBarMeta.align = 'center'
+    fitBar.align = 'start'
+    relaxFactWid.width = '100px'
+    relaxFactWid.margin = '5px'
     fitParamsTabs.width = '800px'
     fitBox.margin = '5px'
     
@@ -1563,8 +1594,7 @@ def loadGUI(IPythonWorkspace=None):
     
     stateButtons.tooltips = modelTitles
     statesToFitButtons.tooltips = modelTitles
-    
-        
+            
     for ind, title in enumerate(modelTitles):
         modelParamsTabs.set_title(ind, title)
         fitParamsTabs.set_title(ind, title)
