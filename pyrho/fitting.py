@@ -1359,8 +1359,55 @@ def copyParam(name, source, target):
         target[name].set(value=source[name].value, vary=source[name].vary, min=source[name].min, max=source[name].max, expr=source[name].expr)
     return #target
     
-    
 
+def plotOffPhaseFits(toffs, Ioffs, pOffs, phis, nStates, fitFunc, Exp1, Exp2, Gd=None):
+    fig = plt.figure()
+    #gs = plt.GridSpec(nTrials,1)
+    ax = fig.add_subplot(111)
+    lw = 2.5 * mp.rcParams['lines.linewidth']
+    
+    nTrials = len(Ioffs)
+    assert(len(toffs) == nTrials)
+    assert(len(phis) == nTrials)
+    
+    for trial in range(nTrials):
+        Islow = pOffs['Islow_'+str(trial)].value
+        Ifast = pOffs['Ifast_'+str(trial)].value
+        #ax = fig.add_subplot(gs[trial,:])
+        
+        ax.plot(toffs[trial], Ioffs[trial], color=colours[trial%len(colours)], linewidth=lw, markeredgecolor='None', label='Data: phi={phi:.3g}'.format(phi=phis[trial]))
+        #ax.plot(toffs[trial], Ioffs[trial], 'g', linewidth=mp.rcParams['lines.linewidth']*3, label='Data: phi={phi:.3g}'.format(phi=phis[trial])) # Experimental data
+        
+        eq = 'I(t)={Islow:.3g}*exp(-{Exp1:.3g}*t) + {Ifast:.3g}*exp(-{Exp2:.3g}*t)'.format(Islow=Islow, Ifast=Ifast, Exp1=Exp1, Exp2=Exp2)
+        ax.plot(toffs[trial], fitFunc(pOffs,toffs[trial],trial), color='k', linestyle='--', label=eq) # Fits
+        #ax.plot(toffs[trial], fit3off(pOffs,toffs[trial],trial), 'b', label=eq) # Fits
+        
+        if Gd is not None: # Plot single exponential decay too
+            ax.plot(toffs[trial], (Islow+Ifast)*np.exp(-Gd*toffs[trial]), color=colours[trial%len(colours)], linestyle=':', label='I(t)={I0:.3g}*exp(-{Gd:.3g}*t)'.format(I0=Islow+Ifast, Gd=Gd)) # Removed - coefficients
+            #ax.plot(toffs[trial], (Islow+Ifast)*np.exp(-Gd*toffs[trial]), 'r', label='I(t)={I0:.3g}*exp(-{Gd:.3g}*t)'.format(I0=Islow+Ifast, Gd=Gd)) # Removed - coefficients
+        
+        # if trial < nTrials-1:
+            # plt.setp(ax.get_xticklabels(), visible=False)
+            # plt.xlabel('')
+        #ax.set_ylim(-1,0.1) ### Reconsider!!!
+    
+    plt.legend(loc='best') #loc=4 Lower right
+    plt.xlabel('$\mathrm{Time\ [ms]}$', position=(xLabelPos,0), ha='right')
+    plt.ylabel('$\mathrm{Photocurrent\ [nA]}$')
+    
+    #ax.spines['left'].set_position('zero') # y-axis
+    ax.spines['right'].set_color('none')
+    ax.spines['bottom'].set_position('zero') # x-axis
+    ax.spines['top'].set_color('none')
+    ax.spines['left'].set_smart_bounds(True)
+    ax.spines['bottom'].set_smart_bounds(True)
+    ax.xaxis.set_ticks_position('bottom')
+    ax.yaxis.set_ticks_position('left')
+    
+    plt.tight_layout()
+    
+    fig.savefig(fDir+'OffPhaseFits'+str(nStates)+'states'+'.'+config.saveFigFormat, format=config.saveFigFormat)
+    
     
 def plotFit(PC, nStates, params, fitRates=False, index=None): #I,t,onInd,offInd,phi,V #  minObj=None,
     
@@ -1474,7 +1521,8 @@ def plotFit(PC, nStates, params, fitRates=False, index=None): #I,t,onInd,offInd,
     #    axRes.plot(tcycle, minObj.residual)
     #else:
     #plt.plot(t[onInd:],I[onInd:]-Ifit)
-    PCofSS = True
+    PCofSS = bool(PC.ss_ is not None)
+    #PCofSS = True
     if PCofSS:
         axRes.plot(t, (I-Ifit)*100/abs(PC.ss_))
         axRes.set_ylabel('$\mathrm{Error\ (\%\ I_{ss})}$')# relative error')
@@ -1532,19 +1580,21 @@ def run(RhO, t):
     
         
 #fit3states(I,t,onInd,offInd,phi,V,Gr0,gmax,Ipmax,params=None,method=methods[3])
-def fit3states(fluxSet, run, vInd, params, postOpt=True, method=defMethod, verbose=verbose): #,Ipmax #Iss=None, ### Modify to pass in p3s
+def fit3states(fluxSet, run, vInd, params, method=defMethod, verbose=verbose): #,Ipmax #Iss=None, ### Modify to pass in p3s #, postOpt=True
     """
     fluxSet := ProtocolData set (of Photocurrent objects) to fit
     run     := Index for the run within the ProtocolData set
     vInd    := Index for Voltage clamp value within the ProtocolData set
     params  := Parameters object of model parameters with initial values [and bounds, expressions]
-    postOpt := Flag to reoptimise all parameters (except nonOptParams: {Gr0, E, v0, v1}) after fitting
     method  := Fitting algorithm for the optimiser to use
-    
-    The limitations of the 3-state model are such that it only holds for a particular value of phi"""
-    
+    """
+
+    #postOpt := Flag to reoptimise all parameters (except nonOptParams: {Gr0, E, v0, v1}) after fitting
+    #The limitations of the 3-state model are such that it only holds for a particular value of phi
     
     plotResult = bool(verbose > 1)
+    
+    nStates = 3
     
     ### Prepare the data
     nRuns = fluxSet.nRuns
@@ -1632,30 +1682,54 @@ def fit3states(fluxSet, run, vInd, params, postOpt=True, method=defMethod, verbo
     
     # Create dummy parameters for each phi
     for phiInd in range(nPhis):
-        aIss = np.abs(Ioffs[phiInd][0])
-        pOffs.add('Islow_'+str(phiInd), value=0.2*aIss, vary=True, min=0)
-        pOffs.add('Ifast_'+str(phiInd), value=0.8*aIss, vary=True, min=0, expr='{} - {}'.format(aIss, 'Islow_'+str(phiInd)))
-        # pOffs.add('Islow_'+str(phiInd), value=0.1, vary=True, min=0)
-        # pOffs.add('Ifast_'+str(phiInd), value=0.5, vary=True, min=0)
+        Iss = Ioffs[phiInd][0]
+        if Iss < 0: # Excitatory
+            pOffs.add('Islow_'+str(phiInd), value=0.2*Iss, vary=True, max=0)
+            pOffs.add('Ifast_'+str(phiInd), value=0.8*Iss, vary=True, max=0, expr='{} - {}'.format(Iss, 'Islow_'+str(phiInd)))
+        else:
+            pOffs.add('Islow_'+str(phiInd), value=0.2*Iss, vary=True, min=0)
+            pOffs.add('Ifast_'+str(phiInd), value=0.8*Iss, vary=True, min=0, expr='{} - {}'.format(Iss, 'Islow_'+str(phiInd)))
     
-    ### Initialise to 0.5*Gd and 2*Gd
-    #pOffs.add('A', value=-1) # Islow
-    pOffs.add('Gd1', value=params['Gd'].value/5, min=params['Gd'].min, max=params['Gd'].max) #0)#, min=0))
-    #pOffs.add('B', value=-1) # Ifast
-    pOffs.add('Gd2', value=params['Gd'].value*5, min=params['Gd'].min, max=params['Gd'].max) #100)#, min=0))
-    #pOffs.add('C', value=0)
-    #offPmin = minimize(resid3off,pOffs,args=(Ioff[0:100],toff[0:100]),method=meth)
+    pOffs.add('Gd1', value=params['Gd'].value/5, min=params['Gd'].min, max=params['Gd'].max)
+    pOffs.add('Gd2', value=params['Gd'].value*5, min=params['Gd'].min, max=params['Gd'].max)
     
     def fit3off(p,t,trial):
-        #v = p.valuesdict()
-        #A = p['A'].value
-        #B = p['B'].value
-        #C = p['C'].value
         Islow = p['Islow_'+str(trial)].value
         Ifast = p['Ifast_'+str(trial)].value
         Gd1 = p['Gd1'].value
         Gd2 = p['Gd2'].value
-        return -(Islow * np.exp(-Gd1*t) + Ifast * np.exp(-Gd2*t))#+C)
+        return Islow * np.exp(-Gd1*t) + Ifast * np.exp(-Gd2*t)
+
+    
+    # if True:
+        
+    # else:        
+        # # Create dummy parameters for each phi
+        # for phiInd in range(nPhis):
+            # aIss = np.abs(Ioffs[phiInd][0])
+            # pOffs.add('Islow_'+str(phiInd), value=0.2*aIss, vary=True, min=0)
+            # pOffs.add('Ifast_'+str(phiInd), value=0.8*aIss, vary=True, min=0, expr='{} - {}'.format(aIss, 'Islow_'+str(phiInd)))
+            # # pOffs.add('Islow_'+str(phiInd), value=0.1, vary=True, min=0)
+            # # pOffs.add('Ifast_'+str(phiInd), value=0.5, vary=True, min=0)
+    
+        # ### Initialise to 0.5*Gd and 2*Gd
+        # #pOffs.add('A', value=-1) # Islow
+        # pOffs.add('Gd1', value=params['Gd'].value/5, min=params['Gd'].min, max=params['Gd'].max) #0)#, min=0))
+        # #pOffs.add('B', value=-1) # Ifast
+        # pOffs.add('Gd2', value=params['Gd'].value*5, min=params['Gd'].min, max=params['Gd'].max) #100)#, min=0))
+        # #pOffs.add('C', value=0)
+        # #offPmin = minimize(resid3off,pOffs,args=(Ioff[0:100],toff[0:100]),method=meth)
+        
+        # def fit3off(p,t,trial):
+            # #v = p.valuesdict()
+            # #A = p['A'].value
+            # #B = p['B'].value
+            # #C = p['C'].value
+            # Islow = p['Islow_'+str(trial)].value
+            # Ifast = p['Ifast_'+str(trial)].value
+            # Gd1 = p['Gd1'].value
+            # Gd2 = p['Gd2'].value
+            # return -(Islow * np.exp(-Gd1*t) + Ifast * np.exp(-Gd2*t))#+C)
     
     #err3off = lambda p,I,t: I - fit3off(p,t)
     def err3off(p,Ioffs,toffs):
@@ -1683,23 +1757,63 @@ def fit3states(fluxSet, run, vInd, params, postOpt=True, method=defMethod, verbo
     Gd = np.mean(Gds)
     
     
+    # if plotResult:
+        # fig = plt.figure()
+        # gs = plt.GridSpec(nTrials,1)
+        # for trial in range(nTrials):
+            # Islow = pOffs['Islow_'+str(trial)].value
+            # Ifast = pOffs['Ifast_'+str(trial)].value
+            # eq = 'I(t)={Islow:.3g}*exp(-{Gd1:.3g}*t) + {Ifast:.3g}*exp(-{Gd2:.3g}*t)'.format(Islow=Islow, Ifast=Ifast, Gd1=v['Gd1'], Gd2=v['Gd2']) # Removed -()
+            # ax = fig.add_subplot(gs[trial,:])
+            # ax.plot(toffs[trial], Ioffs[trial], 'g', linewidth=mp.rcParams['lines.linewidth']*3, label='Data: phi={phi:.3g}'.format(phi=phis[trial])) # Experimental data
+            # ax.plot(toffs[trial], fit3off(pOffs,toffs[trial],trial), 'b', label=eq) # Fits
+            # ax.plot(toffs[trial], (Islow+Ifast)*np.exp(-Gd*toffs[trial]), 'r', label='I(t)={I0:.3g}*exp(-{Gd:.3g}*t)'.format(I0=Islow+Ifast, Gd=Gd)) # Removed - coefficients
+            # plt.legend(loc=4) # Lower right
+            # if trial < nTrials-1:
+                # plt.setp(ax.get_xticklabels(), visible=False)
+                # plt.xlabel('')
+            # #ax.set_ylim(-1,0.1) ### Reconsider!!!
+    
+
     if plotResult:
-        fig = plt.figure()
-        gs = plt.GridSpec(nTrials,1)
-        for trial in range(nTrials):
-            Islow = pOffs['Islow_'+str(trial)].value
-            Ifast = pOffs['Ifast_'+str(trial)].value
-            eq = 'I(t)=-({Islow:.3g}*exp(-{Gd1:.3g}*t) + {Ifast:.3g}*exp(-{Gd2:.3g}*t))'.format(Islow=Islow, Ifast=Ifast, Gd1=v['Gd1'], Gd2=v['Gd2'])
-            ax = fig.add_subplot(gs[trial,:])
-            ax.plot(toffs[trial], Ioffs[trial], 'g', linewidth=mp.rcParams['lines.linewidth']*3, label='Data: phi={phi:.3g}'.format(phi=phis[trial])) # Experimental data
-            ax.plot(toffs[trial], fit3off(pOffs,toffs[trial],trial), 'b', label=eq) # Fits
-            ax.plot(toffs[trial], -(Islow+Ifast)*np.exp(-Gd*toffs[trial]), 'r', label='I(t)=-{I0:.3g}*exp(-{Gd:.3g}*t)'.format(I0=Islow+Ifast, Gd=Gd))
-            plt.legend(loc=4) # Lower right
-            if trial < nTrials-1:
-                plt.setp(ax.get_xticklabels(), visible=False)
-                plt.xlabel('')
-            ax.set_ylim(-1,0.1) ### Reconsider!!!
+        plotOffPhaseFits(toffs, Ioffs, pOffs, phis, nStates, fit3off, v['Gd1'], v['Gd2'], Gd=Gd)
         
+        # fig = plt.figure()
+        # #gs = plt.GridSpec(nTrials,1)
+        # ax = fig.add_subplot(111)
+        # lw = 2.5 * mp.rcParams['lines.linewidth']
+        # for trial in range(nTrials):
+            # Islow = pOffs['Islow_'+str(trial)].value
+            # Ifast = pOffs['Ifast_'+str(trial)].value
+            # eq = 'I(t)={Islow:.3g}*exp(-{Gd1:.3g}*t) + {Ifast:.3g}*exp(-{Gd2:.3g}*t)'.format(Islow=Islow, Ifast=Ifast, Gd1=v['Gd1'], Gd2=v['Gd2']) # Removed -()
+            # #ax = fig.add_subplot(gs[trial,:])
+            # ax.plot(toffs[trial], Ioffs[trial], color=colours[trial%len(colours)], linewidth=lw, markeredgecolor='None', label='Data: phi={phi:.3g}'.format(phi=phis[trial]))
+            # #ax.plot(toffs[trial], Ioffs[trial], 'g', linewidth=mp.rcParams['lines.linewidth']*3, label='Data: phi={phi:.3g}'.format(phi=phis[trial])) # Experimental data
+            # ax.plot(toffs[trial], fit3off(pOffs,toffs[trial],trial), color='k', linestyle='--', label=eq) # Fits
+            # #ax.plot(toffs[trial], fit3off(pOffs,toffs[trial],trial), 'b', label=eq) # Fits
+            # ax.plot(toffs[trial], (Islow+Ifast)*np.exp(-Gd*toffs[trial]), color=colours[trial%len(colours)], linestyle=':', label='I(t)={I0:.3g}*exp(-{Gd:.3g}*t)'.format(I0=Islow+Ifast, Gd=Gd)) # Removed - coefficients
+            # #ax.plot(toffs[trial], (Islow+Ifast)*np.exp(-Gd*toffs[trial]), 'r', label='I(t)={I0:.3g}*exp(-{Gd:.3g}*t)'.format(I0=Islow+Ifast, Gd=Gd)) # Removed - coefficients
+        # plt.legend(loc=4) # Lower right
+            # # if trial < nTrials-1:
+                # # plt.setp(ax.get_xticklabels(), visible=False)
+                # # plt.xlabel('')
+            # #ax.set_ylim(-1,0.1) ### Reconsider!!!
+        # plt.xlabel('$\mathrm{Time\ [ms]}$', position=(xLabelPos,0), ha='right')
+        # plt.ylabel('$\mathrm{Photocurrent\ [nA]}$')
+        
+        # #ax.spines['left'].set_position('zero') # y-axis
+        # ax.spines['right'].set_color('none')
+        # ax.spines['bottom'].set_position('zero') # x-axis
+        # ax.spines['top'].set_color('none')
+        # ax.spines['left'].set_smart_bounds(True)
+        # ax.spines['bottom'].set_smart_bounds(True)
+        # ax.xaxis.set_ticks_position('bottom')
+        # ax.yaxis.set_ticks_position('left')
+        
+        # plt.tight_layout()
+        
+        # fig.savefig(fDir+'OffPhaseFits'+str(nStates)+'states'+'.'+config.saveFigFormat, format=config.saveFigFormat)
+            
     #print(">>> Off-phase fitting summary: <<<")
     #print(offPmin.message)
     #if verbose > 1:
@@ -1849,17 +1963,19 @@ def fit3states(fluxSet, run, vInd, params, postOpt=True, method=defMethod, verbo
     
     
 
-def fit4states(fluxSet, run, vInd, params, postOpt=True, method=defMethod, verbose=verbose): #fit4states(Is,ts,onInds,offInds,phis,V,Gr,gmax,params=None,method=methods[3]):#,Iss): # ,Ipeak
+def fit4states(fluxSet, run, vInd, params, method=defMethod, verbose=verbose): #, postOpt=True #fit4states(Is,ts,onInds,offInds,phis,V,Gr,gmax,params=None,method=methods[3]):#,Iss): # ,Ipeak
     """
     fluxSet := ProtocolData set (of Photocurrent objects) to fit
     run     := Index for the run within the ProtocolData set
     vInd    := Index for Voltage clamp value within the ProtocolData set
     params  := Parameters object of model parameters with initial values [and bounds, expressions]
-    postOpt := Flag to reoptimise all parameters (except nonOptParams: {Gr0, E, v0, v1}) after fitting
     method  := Fitting algorithm for the optimiser to use
     """
+    #    postOpt := Flag to reoptimise all parameters (except nonOptParams: {Gr0, E, v0, v1}) after fitting
     
     plotResult = bool(verbose > 1)
+    
+    nStates = 4
     
     # Specify initial values (and bounds) for dummy parameters for each phi
     #for phiInd in range(nPhis):
@@ -1922,8 +2038,7 @@ def fit4states(fluxSet, run, vInd, params, postOpt=True, method=defMethod, verbo
     
     ### OFF PHASE
     ### 3a. OFF CURVE: Fit biexponential to off curve to find lambdas
-    ### Fit off curve - if initial conditions can be calculated, it might be better to use an analytic solution relating directly to model parameters c.f. analysis_4state_off_new.m
-
+    
     pOffs = Parameters() # Create parameter dictionary
     # pOffs.add_many(('Gd1',0.15,True,0.01,1,None), #('Gd1',0.11,False,0.01,1,None)
                     # ('Gd2',0.025,True,0.01,1,None), #('Gd2',0.023,False,0.01,1,None)
@@ -1936,15 +2051,17 @@ def fit4states(fluxSet, run, vInd, params, postOpt=True, method=defMethod, verbo
     
     # Create dummy parameters for each phi
     for phiInd in range(nPhis):
-        #pOffs.add('a0_'+str(phiInd), value=0, vary=False)
-        aIss = np.abs(Ioffs[phiInd][0])
-        pOffs.add('Islow_'+str(phiInd), value=0.2*aIss, vary=True, min=0)
-        pOffs.add('Ifast_'+str(phiInd), value=0.8*aIss, vary=True, min=0, expr='{} - {}'.format(aIss, 'Islow_'+str(phiInd)))
-    
-    
+        Iss = Ioffs[phiInd][0]
+        if Iss < 0:
+            pOffs.add('Islow_'+str(phiInd), value=0.2*Iss, vary=True, max=0)
+            pOffs.add('Ifast_'+str(phiInd), value=0.8*Iss, vary=True, max=0, expr='{} - {}'.format(Iss, 'Islow_'+str(phiInd)))
+        else:
+            pOffs.add('Islow_'+str(phiInd), value=0.2*Iss, vary=True, min=0)
+            pOffs.add('Ifast_'+str(phiInd), value=0.8*Iss, vary=True, min=0, expr='{} - {}'.format(Iss, 'Islow_'+str(phiInd)))
+        
     # lam1 + lam2 == Gd1 + Gd2 + Gf0 + Gb0
     # lam1 * lam2 == Gd1*Gd2 + Gd1*Gb0 + Gd2*Gf0
-        
+    
     calcB = lambda Gd1, Gd2, Gf0, Gb0: (Gd1 + Gd2 + Gf0 + Gb0)/2
     calcC = lambda b, Gd1, Gd2, Gf0, Gb0: np.sqrt(b**2 - (Gd1*Gd2 + Gd1*Gb0 + Gd2*Gf0))
     
@@ -1957,12 +2074,28 @@ def fit4states(fluxSet, run, vInd, params, postOpt=True, method=defMethod, verbo
         b = calcB(Gd1, Gd2, Gf0, Gb0)
         c = calcC(b, Gd1, Gd2, Gf0, Gb0)
         return (b-c, b+c)
-    
+        
     def fit4off(p,t,trial):
         Islow = p['Islow_'+str(trial)].value
         Ifast = p['Ifast_'+str(trial)].value
         lam1, lam2 = lams(p)
-        return -(Islow*np.exp(-lam1*t) + Ifast*np.exp(-lam2*t))
+        return Islow*np.exp(-lam1*t) + Ifast*np.exp(-lam2*t)
+
+    # if True:
+        
+    # else:
+        # # Create dummy parameters for each phi
+        # for phiInd in range(nPhis):
+            # #pOffs.add('a0_'+str(phiInd), value=0, vary=False)
+            # aIss = np.abs(Ioffs[phiInd][0])
+            # pOffs.add('Islow_'+str(phiInd), value=0.2*aIss, vary=True, min=0)
+            # pOffs.add('Ifast_'+str(phiInd), value=0.8*aIss, vary=True, min=0, expr='{} - {}'.format(aIss, 'Islow_'+str(phiInd)))
+        
+        # def fit4off(p,t,trial):
+            # Islow = p['Islow_'+str(trial)].value
+            # Ifast = p['Ifast_'+str(trial)].value
+            # lam1, lam2 = lams(p)
+            # return -(Islow*np.exp(-lam1*t) + Ifast*np.exp(-lam2*t))
         
     def err4off(p,Ioffs,toffs):
         """Normalise by the first element of the off-curve""" # [-1]
@@ -1997,27 +2130,31 @@ def fit4states(fluxSet, run, vInd, params, postOpt=True, method=defMethod, verbo
     
     
     if plotResult:
-        nTrials = nPhis
-        fig = plt.figure()
-        gs = plt.GridSpec(nTrials,1)
-        #axf = axS.twinx()
-        #axf.set_yscale('log')
-        #axf.set_ylabel('$f\ \mathrm{[Hz]}$')
-        for trial in range(nTrials):
-            #a0 = pOffs['a0_'+str(trial)].value
-            Islow = pOffs['Islow_'+str(trial)].value
-            Ifast = pOffs['Ifast_'+str(trial)].value
-            lam1,lam2 = lams(pOffs)
-            #eq = '-({a0:.3g} + {a1:.3g}*exp(-{lam1:.3g}*t) + {a2:.3g}*exp(-{lam2:.3g}*t))'.format(a0=a0, a1=a1, a2=a2, lam1=lam1, lam2=lam2)
-            eq = 'I(t)=-({Islow:.3g}*exp(-{lam1:.3g}*t) + {Ifast:.3g}*exp(-{lam2:.3g}*t))'.format(Islow=Islow, Ifast=Ifast, lam1=lam1, lam2=lam2)
-            ax = fig.add_subplot(gs[trial,:])
-            ax.plot(toffs[trial], Ioffs[trial], 'g', linewidth=mp.rcParams['lines.linewidth']*3, label='Data: phi={phi:.3g}'.format(phi=phis[trial])) # Experimental data
-            ax.plot(toffs[trial], fit4off(pOffs,toffs[trial],trial), 'b', label=eq) # Fits
-            plt.legend(loc=4) # Lower right
-            if trial < nTrials-1:
-                plt.setp(ax.get_xticklabels(), visible=False)
-                plt.xlabel('')
-            ax.set_ylim(-1,0.1)
+        lam1, lam2 = lams(pOffs)
+        plotOffPhaseFits(toffs, Ioffs, pOffs, phis, nStates, fit4off, lam1, lam2, Gd=None)
+        
+        # nTrials = nPhis
+        # fig = plt.figure()
+        # gs = plt.GridSpec(nTrials,1)
+        # #axf = axS.twinx()
+        # #axf.set_yscale('log')
+        # #axf.set_ylabel('$f\ \mathrm{[Hz]}$')
+        # for trial in range(nTrials):
+            # #a0 = pOffs['a0_'+str(trial)].value
+            # Islow = pOffs['Islow_'+str(trial)].value
+            # Ifast = pOffs['Ifast_'+str(trial)].value
+            # lam1,lam2 = lams(pOffs)
+            # #eq = '-({a0:.3g} + {a1:.3g}*exp(-{lam1:.3g}*t) + {a2:.3g}*exp(-{lam2:.3g}*t))'.format(a0=a0, a1=a1, a2=a2, lam1=lam1, lam2=lam2)
+            # #eq = 'I(t)=-({Islow:.3g}*exp(-{lam1:.3g}*t) + {Ifast:.3g}*exp(-{lam2:.3g}*t))'.format(Islow=Islow, Ifast=Ifast, lam1=lam1, lam2=lam2)
+            # eq = 'I(t)={Islow:.3g}*exp(-{lam1:.3g}*t) + {Ifast:.3g}*exp(-{lam2:.3g}*t)'.format(Islow=Islow, Ifast=Ifast, lam1=lam1, lam2=lam2)
+            # ax = fig.add_subplot(gs[trial,:])
+            # ax.plot(toffs[trial], Ioffs[trial], 'g', linewidth=mp.rcParams['lines.linewidth']*3, label='Data: phi={phi:.3g}'.format(phi=phis[trial])) # Experimental data
+            # ax.plot(toffs[trial], fit4off(pOffs,toffs[trial],trial), 'b', label=eq) # Fits
+            # plt.legend(loc=4) # Lower right
+            # if trial < nTrials-1:
+                # plt.setp(ax.get_xticklabels(), visible=False)
+                # plt.xlabel('')
+            # ax.set_ylim(-1,0.1)
     
     
     pOffs['Gd1'].vary = False
@@ -2149,18 +2286,20 @@ def fit4states(fluxSet, run, vInd, params, postOpt=True, method=defMethod, verbo
 
 
 
-def fit6states(fluxSet, quickSet, run, vInd, params, postOpt=True, method=defMethod, verbose=verbose): #shortPulseSet #fit4states(Is,ts,onInds,offInds,phis,V,Gr0,gmax,params=None,method=methods[3]):#,Iss): # ,Ipeak
+def fit6states(fluxSet, quickSet, run, vInd, params, method=defMethod, verbose=verbose): #, postOpt=True #shortPulseSet #fit4states(Is,ts,onInds,offInds,phis,V,Gr0,gmax,params=None,method=methods[3]):#,Iss): # ,Ipeak
     """
     fluxSet := ProtocolData set (of Photocurrent objects) to fit
     quickSet:= ProtocolData set (of Photocurrent objects) with short pulses to fit opsin activation rates
     run     := Index for the run within the ProtocolData set
     vInd    := Index for Voltage clamp value within the ProtocolData set
     params  := Parameters object of model parameters with initial values [and bounds, expressions]
-    postOpt := Flag to reoptimise all parameters (except nonOptParams: {Gr0, E, v0, v1}) after fitting
     method  := Fitting algorithm for the optimiser to use
     """
+    #    postOpt := Flag to reoptimise all parameters (except nonOptParams: {Gr0, E, v0, v1}) after fitting
     
     plotResult = bool(verbose > 1)
+    
+    nStates = 6
     
     ### Prepare the data
     nRuns = fluxSet.nRuns
@@ -2228,16 +2367,9 @@ def fit6states(fluxSet, quickSet, run, vInd, params, postOpt=True, method=defMet
     
     ### Trim the first 10% of the off curve to allow I1 and I2 to empty?
     
-    # Create dummy parameters for each phi
-    for phiInd in range(nPhis):
-        aIss = np.abs(Ioffs[phiInd][0])
-        pOffs.add('Islow_'+str(phiInd), value=0.2*aIss, vary=True, min=0)
-        pOffs.add('Ifast_'+str(phiInd), value=0.8*aIss, vary=True, min=0, expr='{} - {}'.format(aIss, 'Islow_'+str(phiInd)))
-        #pOffs.add('a0_'+str(phiInd), value=0, vary=False)
-        #pOffs.add('Islow_'+str(phiInd), value=0.1, vary=True, min=0)
-        #pOffs.add('Ifast_'+str(phiInd), value=0.5, vary=True, min=0, expr='{} - {}'.format(-Ioffs[phiInd][0], 'Islow_'+str(phiInd)))
     
-    
+            
+        
     ### This is an approximation based on the 4-state model which ignores the effects of Go1 and Go2 after light off. 
     
     # lam1 + lam2 == Gd1 + Gd2 + Gf0 + Gb0
@@ -2255,12 +2387,59 @@ def fit6states(fluxSet, quickSet, run, vInd, params, postOpt=True, method=defMet
         b = calcB(Gd1, Gd2, Gf0, Gb0)
         c = calcC(b, Gd1, Gd2, Gf0, Gb0)
         return (b-c, b+c)
+        
+    if True:
+        # Create dummy parameters for each phi
+        for phiInd in range(nPhis):
+            Iss = Ioffs[phiInd][0]
+            if Iss < 0:
+                pOffs.add('Islow_'+str(phiInd), value=0.2*Iss, vary=True, max=0)
+                pOffs.add('Ifast_'+str(phiInd), value=0.8*Iss, vary=True, max=0, expr='{} - {}'.format(Iss, 'Islow_'+str(phiInd)))
+            else:
+                pOffs.add('Islow_'+str(phiInd), value=0.2*Iss, vary=True, min=0)
+                pOffs.add('Ifast_'+str(phiInd), value=0.8*Iss, vary=True, min=0, expr='{} - {}'.format(Iss, 'Islow_'+str(phiInd)))
+        
+        def fit6off(p,t,trial):
+            Islow = p['Islow_'+str(trial)].value
+            Ifast = p['Ifast_'+str(trial)].value
+            lam1, lam2 = lams(p)
+            return Islow*np.exp(-lam1*t) + Ifast*np.exp(-lam2*t)
     
-    def fit6off(p,t,trial):
-        Islow = p['Islow_'+str(trial)].value
-        Ifast = p['Ifast_'+str(trial)].value
-        lam1, lam2 = lams(p)
-        return -(Islow*np.exp(-lam1*t) + Ifast*np.exp(-lam2*t))
+    else:
+        # Create dummy parameters for each phi
+        for phiInd in range(nPhis):
+            aIss = np.abs(Ioffs[phiInd][0])
+            pOffs.add('Islow_'+str(phiInd), value=0.2*aIss, vary=True, min=0)
+            pOffs.add('Ifast_'+str(phiInd), value=0.8*aIss, vary=True, min=0, expr='{} - {}'.format(aIss, 'Islow_'+str(phiInd)))
+            #pOffs.add('a0_'+str(phiInd), value=0, vary=False)
+            #pOffs.add('Islow_'+str(phiInd), value=0.1, vary=True, min=0)
+            #pOffs.add('Ifast_'+str(phiInd), value=0.5, vary=True, min=0, expr='{} - {}'.format(-Ioffs[phiInd][0], 'Islow_'+str(phiInd)))
+        
+        
+        # ### This is an approximation based on the 4-state model which ignores the effects of Go1 and Go2 after light off. 
+        
+        # # lam1 + lam2 == Gd1 + Gd2 + Gf0 + Gb0
+        # # lam1 * lam2 == Gd1*Gd2 + Gd1*Gb0 + Gd2*Gf0
+        
+        # calcB = lambda Gd1, Gd2, Gf0, Gb0: (Gd1 + Gd2 + Gf0 + Gb0)/2 #Gd1, Gd2, Gf0, Gb0: (Gd1 + Gd2 + Gf0 + Gb0)/2
+        # calcC = lambda b, Gd1, Gd2, Gf0, Gb0: np.sqrt(b**2 - (Gd1*Gd2 + Gd1*Gb0 + Gd2*Gf0)) #b, Gd1, Gd2, Gf0, Gb0: np.sqrt(b**2 - (Gd1*Gd2 + Gd1*Gb0 + Gd2*Gf0))
+        
+        # def lams(p): #(Gd1, Gd2, Gf0, Gb0):
+            # Gd1 = p['Gd1'].value
+            # Gd2 = p['Gd2'].value
+            # Gf0 = p['Gf0'].value
+            # Gb0 = p['Gb0'].value
+            # #v = p.valuesdict()
+            # b = calcB(Gd1, Gd2, Gf0, Gb0)
+            # c = calcC(b, Gd1, Gd2, Gf0, Gb0)
+            # return (b-c, b+c)
+        
+        def fit6off(p,t,trial):
+            Islow = p['Islow_'+str(trial)].value
+            Ifast = p['Ifast_'+str(trial)].value
+            lam1, lam2 = lams(p)
+            return -(Islow*np.exp(-lam1*t) + Ifast*np.exp(-lam2*t))
+        
         
     def err6off(p,Ioffs,toffs):
         """Normalise by the first element of the off-curve""" # [-1]
@@ -2294,27 +2473,30 @@ def fit6states(fluxSet, quickSet, run, vInd, params, postOpt=True, method=defMet
     
     
     if plotResult:
-        nTrials = nPhis
-        fig = plt.figure()
-        gs = plt.GridSpec(nTrials,1)
-        #axf = axS.twinx()
-        #axf.set_yscale('log')
-        #axf.set_ylabel('$f\ \mathrm{[Hz]}$')
-        for trial in range(nTrials):
-            #a0 = pOffs['a0_'+str(trial)].value
-            Islow = pOffs['Islow_'+str(trial)].value
-            Ifast = pOffs['Ifast_'+str(trial)].value
-            lam1,lam2 = lams(pOffs)
-            #eq = '-({a0:.3g} + {a1:.3g}*exp(-{lam1:.3g}*t) + {a2:.3g}*exp(-{lam2:.3g}*t))'.format(a0=a0, a1=a1, a2=a2, lam1=lam1, lam2=lam2)
-            eq = 'I(t)=-({Islow:.3g}*exp(-{lam1:.3g}*t) + {Ifast:.3g}*exp(-{lam2:.3g}*t))'.format(Islow=Islow, Ifast=Ifast, lam1=lam1, lam2=lam2)
-            ax = fig.add_subplot(gs[trial,:])
-            ax.plot(toffs[trial], Ioffs[trial], 'g', linewidth=mp.rcParams['lines.linewidth']*3, label='Data: phi={phi:.3g}'.format(phi=phis[trial])) # Experimental data
-            ax.plot(toffs[trial], fit6off(pOffs,toffs[trial],trial), 'b', label=eq) # Fits
-            plt.legend(loc=4) # Lower right
-            if trial < nTrials-1:
-                plt.setp(ax.get_xticklabels(), visible=False)
-                plt.xlabel('')
-            ax.set_ylim(-1,0.1)
+        lam1, lam2 = lams(pOffs)
+        plotOffPhaseFits(toffs, Ioffs, pOffs, phis, nStates, fit6off, lam1, lam2, Gd=None)
+        
+        # nTrials = nPhis
+        # fig = plt.figure()
+        # gs = plt.GridSpec(nTrials,1)
+        # #axf = axS.twinx()
+        # #axf.set_yscale('log')
+        # #axf.set_ylabel('$f\ \mathrm{[Hz]}$')
+        # for trial in range(nTrials):
+            # #a0 = pOffs['a0_'+str(trial)].value
+            # Islow = pOffs['Islow_'+str(trial)].value
+            # Ifast = pOffs['Ifast_'+str(trial)].value
+            # lam1,lam2 = lams(pOffs)
+            # #eq = '-({a0:.3g} + {a1:.3g}*exp(-{lam1:.3g}*t) + {a2:.3g}*exp(-{lam2:.3g}*t))'.format(a0=a0, a1=a1, a2=a2, lam1=lam1, lam2=lam2)
+            # eq = 'I(t)=-({Islow:.3g}*exp(-{lam1:.3g}*t) + {Ifast:.3g}*exp(-{lam2:.3g}*t))'.format(Islow=Islow, Ifast=Ifast, lam1=lam1, lam2=lam2)
+            # ax = fig.add_subplot(gs[trial,:])
+            # ax.plot(toffs[trial], Ioffs[trial], 'g', linewidth=mp.rcParams['lines.linewidth']*3, label='Data: phi={phi:.3g}'.format(phi=phis[trial])) # Experimental data
+            # ax.plot(toffs[trial], fit6off(pOffs,toffs[trial],trial), 'b', label=eq) # Fits
+            # plt.legend(loc=4) # Lower right
+            # if trial < nTrials-1:
+                # plt.setp(ax.get_xticklabels(), visible=False)
+                # plt.xlabel('')
+            # ax.set_ylim(-1,0.1)
     
     
     # Fix off-curve parameters
@@ -3252,15 +3434,15 @@ def errCycle(p,Is,tons,toffs,nfs,RhO,Vs,phis):
 
     
     
-    
-### Define non-optimised parameters to exclude in post-fit optimisation
-nonOptParams = ['Gr0', 'E', 'v0', 'v1']
 
 
-
-
-def fitModels(dataSet, nStates=3, params=None, postOpt=True, relaxFact=2, method=defMethod, verbose=verbose): #, params, #fit3s=True, fit4s=False, fit6s=False):
+def fitModels(dataSet, nStates=3, params=None, postFitOpt=True, relaxFact=2, method=defMethod, postFitOptMethod=None, verbose=verbose): #, params, #fit3s=True, fit4s=False, fit6s=False):
     """Routine to fit as many models as possible and select between them according to some parsimony criterion"""
+    
+        
+    ### Define non-optimised parameters to exclude in post-fit optimisation
+    nonOptParams = ['Gr0', 'E', 'v0', 'v1']
+    
     
     # .lower()
     nStates = int(nStates)
@@ -3287,36 +3469,54 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, relaxFact=2, method
     if params is None:
         params = modelParams[str(nStates)]
     
-
-    if 'step' in dataSet:
-        fluxKey = 'step'
-    elif 'custom' in dataSet:
-        fluxKey = 'custom'
+    if isinstance(dataSet, dict):
+        if 'step' in dataSet:
+            fluxKey = 'step'
+        elif 'custom' in dataSet:
+            fluxKey = 'custom'
+        else:
+            raise KeyError("Flux set not found: Expected 'step' or 'custom'. ")
     else:
-        raise KeyError("Flux set not found: Expected 'step' or 'custom'. ")
+        fluxKey = 'step'
+    
     
     # Determine the data type passed
     if isinstance(dataSet, PhotoCurrent): # Single photocurrent
         nRuns = 1
         nPhis = 1
         nVs = 1
-        setPC = ProtocolData(fluxKey, nRuns, [dataSet.phi], [dataSet.V])
-        setPC.trials[0][0][0] = dataSet
+        pc = copy.deepcopy(dataSet)
+        setPC = ProtocolData(fluxKey, nRuns, [pc.phi], [pc.V])
+        setPC.trials[0][0][0] = pc
         dataSet = {fluxKey:setPC}
-    elif isinstance(dataSet[fluxKey], ProtocolData): # Set of photocurrents
+    elif isinstance(dataSet, ProtocolData): # Set of photocurrents
+        setPC = copy.deepcopy(dataSet)
+        nRuns = setPC.nRuns
+        nPhis = setPC.nPhis
+        nVs = setPC.nVs
+        dataSet = {fluxKey:setPC}
+    elif isinstance(dataSet[fluxKey], PhotoCurrent): # Single photocurrent in dictionary
+        nRuns = 1
+        nPhis = 1
+        nVs = 1
+        pc = copy.deepcopy(dataSet[fluxKey])
+        setPC = ProtocolData(fluxKey, nRuns, [pc.phi], [pc.V])
+        setPC.trials[0][0][0] = pc
+        dataSet = {fluxKey:setPC}
+    elif isinstance(dataSet[fluxKey], ProtocolData): # Set of photocurrents in dictionary
         setPC = dataSet[fluxKey]
         nRuns = setPC.nRuns
         nPhis = setPC.nPhis
         nVs = setPC.nVs
         #if (setPC.nPhis * setPC.nVs) > 1:
-    elif isinstance(dataSet[fluxKey], PhotoCurrent): # Single photocurrent within ProtocolData
-        #targetPC = dataSet['custom']
-        nRuns = 1
-        nPhis = 1
-        nVs = 1
-        #setPC = [[[dataSet['custom']]]]
-        setPC = ProtocolData(fluxKey, nRuns, [dataSet[fluxKey].phi], [dataSet[fluxKey].V])
-        setPC.trials[0][0][0] = dataSet[fluxKey]
+    # elif isinstance(dataSet[fluxKey], PhotoCurrent): # Single photocurrent within ProtocolData
+        # #targetPC = dataSet['custom']
+        # nRuns = 1
+        # nPhis = 1
+        # nVs = 1
+        # #setPC = [[[dataSet['custom']]]]
+        # setPC = ProtocolData(fluxKey, nRuns, [dataSet[fluxKey].phi], [dataSet[fluxKey].V])
+        # setPC.trials[0][0][0] = dataSet[fluxKey]
     else:
         print(type(dataSet[fluxKey]))
         print(dataSet[fluxKey])
@@ -3344,7 +3544,14 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, relaxFact=2, method
             params['q'].vary = False
         # if verbose > 0:
             # print("Only one flux value found [{}] - fixing parameters of light-sensitive transitions. ".format(setPC.phis[0]))
-    
+        ### Consider this...
+        nonOptParams.append('phi_m')
+        nonOptParams.append('p')
+        nonOptParams.append('q')
+        # if nStates == 4 or nStates == 6:
+            # nonOptParams.append('Gf0')
+            # nonOptParams.append('Gb0')
+        ### Allow these to vary to *effectively* fit Gf and Gb
     
     PCs = [setPC.trials[runInd][phiInd][vIndm70] for phiInd in range(nPhis)]
     Vs = [pc.V for pc in PCs]
@@ -3605,11 +3812,11 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, relaxFact=2, method
         q = 0
         onD = dataSet[fluxKey].trials[q][0][0].onDs[0]
         qI = dataSet[fluxKey].trials[q][0][0]
-        for run in range(setPC.nRuns):
+        for run in range(1, setPC.nRuns): # Skip the first run
             if setPC.trials[q][0][0].onDs[0] < onD:
                 q = run
                 qI = setPC.trials[q][0][0]
-        quickSet = ProtocolData(setPC.trials[q][0][0], nRuns=1, phis=[qI.phi], Vs=[qI.Vs])
+        quickSet = ProtocolData(setPC.trials[q][0][0], nRuns=1, phis=[qI.phi], Vs=[qI.V])
     
 
     
@@ -3665,7 +3872,7 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, relaxFact=2, method
             print('\nFitting over {} flux values [{:.3g}, {:.3g}] at {} mV (run {}) '.format(nPhis, min(phis), max(phis), setPC.trials[runInd][0][vIndm70].V, runInd), end='')
             print("{{nRuns={}, nPhis={}, nVs={}}}".format(nRuns, nPhis, nVs))
         else:
-            print("\nOnly one flux value found [{}] at {} mV - fixing parameters of light-sensitive transitions. ".format(setPC.phis[0]), setPC.trials[runInd][0][vIndm70].V)
+            print("\nOnly one flux value found [{}] at {} mV - fixing parameters of light-sensitive transitions. ".format(setPC.phis[0], setPC.trials[runInd][0][vIndm70].V))
     
     
     
@@ -3673,14 +3880,15 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, relaxFact=2, method
     
         if nStates==3:
             #phiFits[phiInd] = fit3states(I,t,onInd,offInd,phi,V,Gr0,gmax,Ipmax,params=pOns,method=method)#,Iss)
-            fittedParams = fit3states(setPC, runInd, vIndm70, fitParams, postOpt, method, verbose)
+            #fittedParams = fit3states(setPC, runInd, vIndm70, fitParams, postOpt, method, verbose)
+            fittedParams = fit3states(setPC, runInd, vIndm70, fitParams, method, verbose)
             constrainedParams = ['Gd']
         elif nStates==4:
             #phiFits[phiInd] = fit4states(I,t,onInd,offInd,phi,V,Gr0,gmax,params=pOns,method=method)
-            fittedParams = fit4states(setPC, runInd, vIndm70, fitParams, postOpt, method, verbose)
+            fittedParams = fit4states(setPC, runInd, vIndm70, fitParams, method, verbose)
             constrainedParams = ['Gd1', 'Gd2', 'Gf0', 'Gb0']
         elif nStates==6:
-            fittedParams = fit6states(setPC, quickSet, runInd, vIndm70, fitParams, postOpt, method, verbose)
+            fittedParams = fit6states(setPC, quickSet, runInd, vIndm70, fitParams, method, verbose)
             constrainedParams = ['Gd1', 'Gd2', 'Gf0', 'Gb0', 'Go1', 'Go2']
             #constrainedParams = ['Go1', 'Go2', 'Gf0', 'Gb0']
             #nonOptParams.append(['Gd1', 'Gd2'])
@@ -3688,15 +3896,10 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, relaxFact=2, method
             raise Exception('Invalid choice for nStates: {}!'.format(nStates))
         
         
-        assert(relaxFact > 0)
-        
-        for p in constrainedParams:
-            setBounds(fittedParams[p], relaxFact)
-            #fittedParams[p].min = round_sig(fittedParams[p].value / relaxFact, sig=3)
-            #fittedParams[p].max = round_sig(fittedParams[p].value * relaxFact, sig=3)
+
         
             
-        if postOpt: # Relax all parameters (except nonOptParams) and reoptimise
+        if postFitOpt: # Relax all parameters (except nonOptParams) and reoptimise
             PCs = [setPC.trials[runInd][phiInd][vIndm70] for phiInd in range(setPC.nPhis)]
             Icycles = [pc.getCycle()[0] for pc in PCs]
             nfs = [pc.I[pc.pulseInds[0,1]] for pc in PCs]
@@ -3704,9 +3907,20 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, relaxFact=2, method
             toffs = [pc.getOffPhase()[1] for pc in PCs]
             Vs = [pc.V for pc in PCs]
             phis = [pc.phi for pc in PCs]
-                
-            #if verbose > 0:
-            #    print('\nPerforming post-fit optimisation!')
+            
+            if postFitOptMethod is None:
+                postFitOptMethod = method
+            
+            if verbose > 1:
+                print("\n\nPerforming post-fit optimisation with the '{}' algorithm [relaxFact={}]!".format(postFitOptMethod, relaxFact))
+            
+            #assert(relaxFact > 0)
+            assert(relaxFact >= 1)
+            
+            for p in constrainedParams:
+                setBounds(fittedParams[p], relaxFact)
+                #fittedParams[p].min = round_sig(fittedParams[p].value / relaxFact, sig=3)
+                #fittedParams[p].max = round_sig(fittedParams[p].value * relaxFact, sig=3)
             
             # postParams = Parameters()
             # # for p,v in pOffs.items():
@@ -3724,10 +3938,10 @@ def fitModels(dataSet, nStates=3, params=None, postOpt=True, relaxFact=2, method
                     fittedParams[p].vary = True
                 
             RhO = models[str(nStates)]()
-            postPmin = minimize(errCycle, fittedParams, args=(Icycles,tons,toffs,nfs,RhO,Vs,phis), method=method)
+            postPmin = minimize(errCycle, fittedParams, args=(Icycles,tons,toffs,nfs,RhO,Vs,phis), method=postFitOptMethod)
             #fitParams = postParams
             if verbose > 0:
-                reportFit(postPmin, "Post-fit optimisation report for the {}-state model".format(nStates), method)
+                reportFit(postPmin, "Post-fit optimisation report for the {}-state model".format(nStates), postFitOptMethod)
             #fittedParams = postPmin.params # Change for lmfit 0.9
             
         for trial in range(len(PCs)):
@@ -3968,7 +4182,7 @@ def plotFluxSetFits(fluxSet, nStates, params, runInd=0, vInd=0):
         PC.alignToTime()
         phi = PC.phi
         #setAx.plot(PC.t, PC.I, color=colours[phiInd%len(colours)], ls='None', marker='o', markeredgecolor='None', label='$\phi={:.3g}$'.format(phi)) # linestyle=':', 
-        setAx.plot(PC.t, PC.I, color=colours[phiInd%len(colours)], linewidth=2.5*mp.rcParams['lines.linewidth'], markeredgecolor='None', label="$\phi = {:.3g}\ \mathrm{{[ph. \cdot s^{{-1}} \cdot mm^{{-2}}]}}$".format(phi)) # linestyle=':', 
+        setAx.plot(PC.t, PC.I, color=colours[phiInd%len(colours)], linewidth=2.5*mp.rcParams['lines.linewidth'], markeredgecolor='None', label="$\phi = {:.3g}\ \mathrm{{[ph. \cdot mm^{{-2}} \cdot s^{{-1}}]}}$".format(phi)) # linestyle=':', 
     
     # Assume square light pulses, all of the same duration
     
@@ -3977,80 +4191,88 @@ def plotFluxSetFits(fluxSet, nStates, params, runInd=0, vInd=0):
     
     
     
-    RhO = models[str(nStates)]()
-    RhO.updateParams(params)
-    #RhO.phiFit = PC.phi             # Flux intensity at which the parameters were fit. 
+    if not isinstance(nStates, (list, tuple)):
+        nStates = [nStates]
     
-    # see ProtocolData.plot()
+    if not isinstance(params, (list, tuple)):
+        params = [params]
+    
+    for mInd, (s, pSet) in enumerate(zip(nStates, params)):
+        
+        RhO = models[str(s)]()
+        RhO.updateParams(pSet)
+        #RhO.phiFit = PC.phi             # Flux intensity at which the parameters were fit. 
+        
+        # see ProtocolData.plot()
+        
+        for phiInd in range(fluxSet.nPhis):
+            PC = fluxSet.trials[runInd][phiInd][vInd]
+            phi = PC.phi
+            V = PC.V
 
-    
-    
-    for phiInd in range(fluxSet.nPhis):
-        PC = fluxSet.trials[runInd][phiInd][vInd]
-        phi = PC.phi
-        V = PC.V
-        
-        # Plot experimental data
-        #PC.alignToTime()
-        #setAx.plot(PC.t, PC.I, color=colours[phiInd%len(colours)], label='$\phi={:.3g}$'.format(phi)) # linestyle=':', 
-        
-        #I_RhO, t, soln = Sim.runTrial(RhO, phi, V, delD, cycles, self.dt, verbose) #self.totT, 
-            
-        ## Delay phase
-        Idel, tdel  = PC.getDelayPhase()#;   tdel -= tdel[0]
-        RhO.setLight(RhO.phi_0)            
-        if RhO.useAnalyticSoln:
-            soln = RhO.calcSoln(tdel, RhO.s_0)
-        else:
-            soln = odeint(RhO.solveStates, RhO.s_0, tdel, Dfun=RhO.jacobian)
-        RhO.storeStates(soln[1:], tdel[1:])
-        
-        
-        for p in range(PC.nPulses):
-            
-            Ion, ton    = PC.getOnPhase(p)#;     ton -= ton[0]
-            Ioff, toff  = PC.getOffPhase(p)#;    toff -= toff[0]
-            
-            
-            ## On phase
-            RhO.setLight(phi) # Calculate transition rates for phi
-            # if fitRates: # Override light-sensitive transition rates
-                # RhO.updateParams(params)
-            
-            RhO.s_on = soln[-1,:]
+            # Plot experimental data
+            #PC.alignToTime()
+            #setAx.plot(PC.t, PC.I, color=colours[phiInd%len(colours)], label='$\phi={:.3g}$'.format(phi)) # linestyle=':', 
+
+            #I_RhO, t, soln = Sim.runTrial(RhO, phi, V, delD, cycles, self.dt, verbose) #self.totT, 
+
+            ## Delay phase
+            Idel, tdel  = PC.getDelayPhase()#;   tdel -= tdel[0]
+            RhO.setLight(RhO.phi_0)            
             if RhO.useAnalyticSoln:
-                soln = RhO.calcSoln(ton, RhO.s_on)
+                soln = RhO.calcSoln(tdel, RhO.s_0)
             else:
-                soln = odeint(RhO.solveStates, RhO.s_on, ton, Dfun=RhO.jacobian)
-            RhO.storeStates(soln[1:], ton[1:])
-        
-        
-            if config.addTitles and p == 0:
-                #stateLabs = {3:'Three', '3':'Three', 4:'Four', '4':'Four', 6:'Six', '6':'Six'}
-                plt.title('{}-state model fit to {} light intensities [{:.3g}, {:.3g}]'.format(stateLabs[nStates], fluxSet.nPhis, min(fluxSet.phis), max(fluxSet.phis)))
-                
-        
-            ## Off phase
-            RhO.setLight(0)
-            #if fitRates: # Override light-sensitive transition rates
-            #    RhO.updateParams(params)
+                soln = odeint(RhO.solveStates, RhO.s_0, tdel, Dfun=RhO.jacobian)
+            RhO.storeStates(soln[1:], tdel[1:])
+
+
+            for p in range(PC.nPulses):
+
+                Ion, ton    = PC.getOnPhase(p)#;     ton -= ton[0]
+                Ioff, toff  = PC.getOffPhase(p)#;    toff -= toff[0]
+
+
+                ## On phase
+                RhO.setLight(phi) # Calculate transition rates for phi
+                # if fitRates: # Override light-sensitive transition rates
+                    # RhO.updateParams(params)
+
+                RhO.s_on = soln[-1,:]
+                if RhO.useAnalyticSoln:
+                    soln = RhO.calcSoln(ton, RhO.s_on)
+                else:
+                    soln = odeint(RhO.solveStates, RhO.s_on, ton, Dfun=RhO.jacobian)
+                RhO.storeStates(soln[1:], ton[1:])
+
+
+                if config.addTitles and p == 0:
+                    #stateLabs = {3:'Three', '3':'Three', 4:'Four', '4':'Four', 6:'Six', '6':'Six'}
+                    plt.title('{}-state model fit to {} light intensities [{:.3g}, {:.3g}]'.format(stateLabs[s], fluxSet.nPhis, min(fluxSet.phis), max(fluxSet.phis)))
+
+
+                ## Off phase
+                RhO.setLight(0)
+                #if fitRates: # Override light-sensitive transition rates
+                #    RhO.updateParams(params)
+
+                RhO.s_off = soln[-1,:]
+                if RhO.useAnalyticSoln:
+                    soln = RhO.calcSoln(toff, RhO.s_off)
+                else:
+                    soln = odeint(RhO.solveStates, RhO.s_off, toff, Dfun=RhO.jacobian)
+                RhO.storeStates(soln[1:], toff[1:])
+
+            states, tfit = RhO.getStates()
+            Ifit = RhO.calcI(V, states)
             
-            RhO.s_off = soln[-1,:]
-            if RhO.useAnalyticSoln:
-                soln = RhO.calcSoln(toff, RhO.s_off)
+            # Plot model fit curve
+            #style = ':' + colours[phiInd % len(colours)]
+            if len(nStates) > 1 and phiInd == fluxSet.nPhis-1:
+                plt.plot(tfit, Ifit, color='k', ls=styles[mInd % len(styles)], label='$\mathrm{{Model\ fit\ ({}-states)}}$'.format(stateLabs[s]))
             else:
-                soln = odeint(RhO.solveStates, RhO.s_off, toff, Dfun=RhO.jacobian)
-            RhO.storeStates(soln[1:], toff[1:])
-        
-        states, tfit = RhO.getStates()
-        Ifit = RhO.calcI(V, states)
-    
-        # Plot model fit curve
-        style = ':' + colours[phiInd % len(colours)]
-        
-        #print(style)
-        plt.plot(tfit, Ifit, color='k')#, ls=':')#c=colours[phiInd % len(colours)]) #,  label='$\phi={:.3g}$'.format(phi), label='$\mathrm{{Model\ fit\ ({}-states)}}$'.format(nStates)) #t[onInd:]
-    
+                #print(style)
+                plt.plot(tfit, Ifit, color='k', ls=styles[mInd % len(styles)])#c=colours[phiInd % len(colours)]) #,  label='$\phi={:.3g}$'.format(phi), label='$\mathrm{{Model\ fit\ ({}-states)}}$'.format(nStates)) #t[onInd:]
+            
     
     
     plt.legend(loc='best')
@@ -4075,7 +4297,7 @@ def plotFluxSetFits(fluxSet, nStates, params, runInd=0, vInd=0):
     
     plt.tight_layout()
     
-    setFig.savefig(fDir+'fluxSetFit'+str(nStates)+'states'+'.'+config.saveFigFormat, format=config.saveFigFormat)
+    setFig.savefig(fDir+'fluxSetFit'+'-'.join(str(s) for s in nStates)+'states'+'.'+config.saveFigFormat, format=config.saveFigFormat)
     
     return #setFig
     
