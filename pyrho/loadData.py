@@ -506,8 +506,8 @@ class PhotoCurrent():
         cutInd = int(round(tail*len(Ion)))
         if cutInd < 5: # On-phase is too short 
             warnings.warn('Duration Warning: The on-phase is too short for steady-state convergence!')
-            return None
-            #method = 0
+            #return None
+            method = 0
         
         dI = Ion[-cutInd+1:] - Ion[-cutInd:-1]
         if abs(np.mean(dI)) > 0.01 * self.span_:

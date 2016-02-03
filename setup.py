@@ -118,7 +118,7 @@ setup(
     # project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['sphinx>=1.3', 'numpy>=1.8', 'scipy>=0.15', 'matplotlib>=1.3', 'lmfit<0.9', 'jupyter>=4'], #, 'brian2'], 
+    install_requires=['sphinx>=1.3', 'numpy>=1.8', 'scipy>=0.15', 'matplotlib>=1.3', 'lmfit>=0.9', 'jupyter>=4'], #, 'brian2'], 
     #install_requires=['sphinx', 'numpy', 'scipy', 'matplotlib', 'lmfit', 'jupyter'],
     #install_requires=['sphinx', 'numpy>=1.9', 'scipy>=0.16', 'matplotlib>=1.4', 'lmfit>=0.8', 'jupyter>=4'],
     # Developed with: Python 3.4.2_1 IPython 2.3.0_1 Numpy 1.9.1_0 Scipy 0.14.0_0 Matplotlib 1.4.2_0
