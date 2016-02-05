@@ -26,17 +26,14 @@ else:
 
 
 home = os.environ['HOME']
-#pyrhoPath = os.path.abspath(pyrho.__file__) # http://stackoverflow.com/questions/247770/retrieving-python-module-path
 pyrhoPath = os.path.dirname(os.path.abspath(__file__)) # modulePath
-#print(pyrhoPath)
-
 
 pyrhoNEURONpath = os.path.join(pyrhoPath, 'NEURON')
 NMODLfiles = ['RhO3c.mod', 'RhO4c.mod', 'RhO6c.mod'] #['RhO3.mod', 'RhO4.mod', 'RhO6.mod']
 #HOCfiles = glob.glob("*.hoc")
 HOCfiles = [h for h in os.listdir(pyrhoNEURONpath) if h.endswith('.hoc')]
 #NMODLfilesIncPath = [os.path.join(pyrhoNEURONpath, f) for f in NMODLfiles]
-#print(NMODLfilesIncPath)
+
 
 ##### Output level settings #####
 global verbose
@@ -57,12 +54,10 @@ def createDir(path):
 ### Set data and figure directories to defaults
 if 'dDir' not in vars() or 'dDir' not in globals() or dDir is None:
     dDir = 'data/'
-#if not os.path.isdir(dDir):
     createDir(dDir)
     
 if 'fDir' not in vars() or 'fDir' not in globals() or fDir is None:
     fDir = 'figs/'
-#if not os.path.isdir(fDir):
     createDir(fDir)
 
 def setupGUI(path=None):
@@ -74,11 +69,11 @@ def setupGUI(path=None):
     
 def simAvailable(sim):
     sim = sim.lower()
-    if sim is 'python': #sim is 'Python' or sim is 'python':
+    if sim is 'python':
         return True
-    elif sim is 'neuron': #sim is 'NEURON' or sim is 'Neuron' or sim is 'neuron':
+    elif sim is 'neuron':
         return checkNEURON()
-    elif sim is 'brian' or sim is 'brian2': #sim is 'Brian' or sim is 'brian' or sim is 'Brian2' or sim is 'brian2':
+    elif sim is 'brian' or sim is 'brian2':
         return checkBrian()
     else:
         return False
@@ -107,8 +102,9 @@ def setupNEURON(path=None):
             return
         else:
             try:
-                NEURONpath = os.path.join(home, 'NEURON')
-                exitcode = subprocess.call(['install_neuron.sh', NEURONpath]) # shell=True # .check_call
+                #NEURONscriptPath = os.path.join(home, 'NEURON')
+                NEURONscriptPath = pyrhoNEURONpath
+                exitcode = subprocess.call(['install_neuron.sh', NEURONscriptPath]) # shell=True # .check_call
             except:
                 print('Unable to install NEURON - please install manually.')
     
@@ -186,6 +182,9 @@ def checkBrian(test=False):
     return found
     
 def setupBrian():
+    if not checkBrian():
+        import pip
+        pip.main(['install', 'brian2']) # pip install brian2
     return
     
 
@@ -272,14 +271,8 @@ def setFigOutput(figDisplay='screen', width=None):
     mp.rcParams['font.size'] = eqSize
     #mp.rcParams['figure.autolayout'] = True
     
-    
     #return saveFigFormat, addTitles, addStimulus, eqSize
 
-# plotPeakRecovery = False
-# plotStateVars = False
-# plotKinetics = False
-
-#saveFigFormat, addTitles, addStimulus, eqSize = setFigOutput(display)
 setFigOutput(figDisplay)
 
 fancyPlots = False #True
