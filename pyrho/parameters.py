@@ -361,11 +361,11 @@ modelFits['6']['ChR2'].add_many(
 #modelParamsDict = {'3':d3sp, '4':d4sp, '6':d6sp} # Rename these to be consistent with protParams
 
 #defModelParams = modelFits['ChR2']
-defaultRhodopsinType = 'ChR2'
-rhoType = defaultRhodopsinType # Set this when selecting 
-modelParams['3'] = modelFits['3'][defaultRhodopsinType]
-modelParams['4'] = modelFits['4'][defaultRhodopsinType]
-modelParams['6'] = modelFits['6'][defaultRhodopsinType]
+defaultOpsinType = 'ChR2'
+rhoType = defaultOpsinType # Set this when selecting 
+modelParams['3'] = modelFits['3'][defaultOpsinType]
+modelParams['4'] = modelFits['4'][defaultOpsinType]
+modelParams['6'] = modelFits['6'][defaultOpsinType]
 
 unitPrefixes = {} ### Use a units library to convert between different prefixes
 
