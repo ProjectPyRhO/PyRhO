@@ -41,7 +41,7 @@ defMethod = methods[3]
 # scikit-learn
 
 
-
+'''
 def fitfV_orig(Vs, Iss, curveFunc, p0, RhO, fig=None):#, eqString): =plt.gcf()
     from scipy.optimize import curve_fit
     if fig==None:
@@ -75,9 +75,10 @@ def fitfV_orig(Vs, Iss, curveFunc, p0, RhO, fig=None):#, eqString): =plt.gcf()
     if verbose > 1:
         print(peakEq)
     return popt, pcov, peakEq
+'''
 
 
-    
+'''    
 def calcG(photocurrent, E):
     """Function to calculate a lower bound on the cell's maximum conductance from its peak current
     Ipmax :=  Peak current [nA]
@@ -105,10 +106,10 @@ def calcGr0(dataset):
         print("Extract the peaks and fit an exponential...")
         
     return Gr0
-    
+'''
 
     
-    
+'''
 def fit3statesIndiv(I,t,onInd,offInd,phi,V,Gr0,gmax,Ipmax,params=None,method=defMethod): #Iss=None, ### Modify to pass in p3s
     """
     I       := Photocurrent to fit [nA]
@@ -421,7 +422,7 @@ def fit3statesIndiv(I,t,onInd,offInd,phi,V,Gr0,gmax,Ipmax,params=None,method=def
     print("Parameters have been fit for the three-state model at a flux of {:.3g} [photons * s^-1 * mm^-2]".format(phi))
     
     return p3s # RhO
-
+'''
 
     
 # Use Akaike and Bayesian Information Criteria to compare model fits
@@ -474,7 +475,7 @@ def errSetOnPhase(p,Ions,tons,RhO,Vs,phis):
     return np.r_[ [Ions[i]/Ions[i][-1] - calcOnPhase(p,tons[i],RhO,Vs[i],phis[i])/Ions[i][-1] for i in range(len(Ions))]]
 '''
     
-    
+'''
 def calc4on(p,t,RhO,V,phi):
     """Simulate the on-phase from base parameters for the 4-state model"""
     if verbose > 2:
@@ -896,7 +897,7 @@ def fit4statesIndiv(I,t,onInd,offInd,phi,V,Gr0,gmax,params=None,method=defMethod
     print("Parameters have been fit for the four-state model")# at a flux of {} [photons * s^-1 * mm^-2]".format(phi))
     
     return p4s #RhO
-
+'''
 
     
 #def runSSA(RhO):
@@ -910,7 +911,7 @@ def fit4statesIndiv(I,t,onInd,offInd,phi,V,Gr0,gmax,params=None,method=defMethod
 #        P.plotProtocol()
 
 
-        
+'''
 def fitCurve(dataSet, nStates=3, params=None):
     """Fit a single photocurrent to flux-dependent transition rates"""
     # E.g.  Ga, Gr0 [Gd]
@@ -1131,11 +1132,10 @@ def fitCurve(dataSet, nStates=3, params=None):
     
     
     return fitParams #RhO #Models # # [RhO3,RhO4,RhO6]
-
+'''
     
 
-
-    
+'''
 def plotFitOrig(I,t,onInd,offInd,phi,V,nStates,params,fitRates,index):
     
     RhO = models[str(nStates)]()
@@ -1274,7 +1274,7 @@ def plotFitOrig(I,t,onInd,offInd,phi,V,nStates,params,fitRates,index):
     if verbose > 1:
         print("Fit has been plotted for the {}-state model".format(nStates))# at a flux of {} [photons * s^-1 * mm^-2]".format(phi))
         
-    
+'''
     
     
     
@@ -2356,7 +2356,7 @@ def plotData(Is,ts,t_on,t_off,phis): ##### Replace with onInds and offInds...
 
     
 
-
+'''
 def fitRecovery_orig(t_peaks, I_peaks, totT, curveFunc, p0, eqString, ax=None):
 
     
@@ -2406,7 +2406,7 @@ def fitRecovery_orig(t_peaks, I_peaks, totT, curveFunc, p0, eqString, ax=None):
         else:
             print("Covariance: {}".format(pcov))
     return popt, pcov, peakEq
-
+'''
 
 # Found in fitCurve
 def calcIssfromfV(V,v0,v1,E):#,G): # Added E as another parameter to fit # ==> Fv() := fv()*(V-E)
@@ -2640,6 +2640,7 @@ def errfV(pfV, V, fVs=None):
     # return FVs - FV
     
 def errFV(pfV, V, FVs=None):
+    """F(v) := f(v)*(v-E)"""
     v = pfV.valuesdict()
     v0 = v['v0']
     v1 = v['v1']
@@ -3032,7 +3033,40 @@ def fitFV(Vs, Iss, p0, ax=None):#, eqString): =plt.gcf()
         #print(peakEq)
     return popt, poptrel #, pcov#, peakEq
 
+
+def getNormGs(Vs, Iss, E, v=-70):
     
+    
+    try:
+        vIndm70 = Vs.index(-70)
+    except:
+        cl = np.isclose(Vs, np.ones_like(Vs)*-70)
+        vIndm70 = np.searchsorted(cl, True)
+        #vIndm70 = np.searchsorted(Vs, -70)
+    #vIndm70 = getIndex(Vs, -70)
+    if verbose > 1:
+        print('V=-70 at element {} ({})'.format(vIndm70, Vs[vIndm70]))
+    
+    gs = Iss / (np.asarray(Vs) - E) # 1e6 * 
+    gm70 = Iss[vIndm70] / (-70 - E)# * -70 # 1e6 * 
+    if verbose > 1:
+        print('g(v=-70) = ', gm70)
+    #gs[(Vs - E)==0] = None #(v1/v0)
+    gNorm = gs / gm70 # Normalised conductance relative to V=-70
+    '''
+    #vInd = np.searchsorted(Vs, (-70 - E))
+    #sf = Iss[vInd]
+    Im70 = Iss[Vs.index(-70)]# * -70
+    gs = Iss / (Vs - E)
+    
+    #g0[(Vs - E)==0] = None #(v1/v0)
+    gNorm = gs / (Im70 / (-70 - E))
+    '''
+    #zeroErrs = np.isclose(Vs, np.ones_like(Vs)*E)
+    #gNorm[zeroErrs] = v1/v0
+    return gNorm
+
+
 def calcCycle(p,ton,toff,RhO,V,phi,fitRates=False): #,fitDelay=False
     """Simulate the on and off-phase from base parameters"""
     if verbose > 1:

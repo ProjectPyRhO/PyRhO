@@ -1333,6 +1333,7 @@ class protRectifier(Protocol):
 
         
     def plotExtras(self):
+        # TODO: Refactor!!!
         #plt.figure(Ifig.number) #IssVfig = plt.figure()
         ax = self.axVI #IssVfig.add_subplot(111)
         
@@ -1350,10 +1351,16 @@ class protRectifier(Protocol):
                 
                 ### Original routines
                 ##popt, pcov, eqString = fitFV(self.Vs, Iss, p0FV, ax=ax)
-                p0FV = (35, 15, 0)
-                poptI, poptg = fitFV(Vs, Iss, p0FV, ax=ax)
+                #p0FV = (35, 15, 0)
+                E_i = 0
+                v0_i = 35
+                g0 = 25000 ### Rethink...
+                pseudoV1 = calcV1(E_i, v0_i) * (g0 * 1e-6 * 0.5) # g0*f(phi)*v1 (assuming I in nA and f(phi)=0.5)
+                p0FV = (v0_i, pseudoV1, E_i)
                 
+                poptI, poptg = fitFV(Vs, Iss, p0FV) #, ax=ax)
                 '''
+                ### From fitfV() and fitFV() --> poptI
                 def calcRect(V, v0, v1, E): #, gpsi):
                     if type(V) != np.ndarray:
                         V = np.array(V)
@@ -1366,7 +1373,7 @@ class protRectifier(Protocol):
                 ### New routines
                 pfV = Parameters()
                 pfV.add_many(
-                ('E',   0,           True, -100, 100, None),
+                ('E',   0,           True, -100 , 100,  None),
                 ('v0',  50,          True, -1e12, 1e12, None),
                 ('v1',  calcV1(0,50),True, -1e9 , 1e9,  None))
                 
@@ -1389,12 +1396,46 @@ class protRectifier(Protocol):
                 
                 pfV['E'].value = E
                 pfV['v0'].value = poptI[0] #v0
+                pfV['v1'].expr = ''
                 pfV['v1'].value = poptI[1] #v1 # poptg[1]?
                 
-                #FVsmooth = errFV(pfV, Vsmooth)
-                #ax.plot(Vsmooth, FVsmooth) #*(Vsmooth-E)) #,label=peakEq)#,linestyle=':', color='#aaaaaa')
-                FVsmooth = errfV(pfV, Vsmooth)
-                ax.plot(Vsmooth, FVsmooth*(Vsmooth-E))
+                FVsmooth = errFV(pfV, Vsmooth)
+                
+                '''
+                pFV = Parameters()
+                copyParam(['E', 'v0', 'v1'], pfV, pFV)
+                pFV['v1'].expr = ''
+                pFV['v0'].value, pFV['v1'].value, pFV['E'].value = poptI
+                FVsmooth = errFV(pFV, Vsmooth)
+                '''
+                
+                '''
+                gNorm = getNormGs(Vs, Iss, E, v=-70)
+                
+                fVmin = minimize(errfV, pfV, args=(Vs, gNorm), method=method)#, tol=1e-12)
+                pfVfinal = fVmin.params
+                v0 = pfVfinal['v0'].value
+                v1 = pfVfinal['v1'].value
+                
+                zeroErrs = np.isclose(Vs, np.ones_like(Vs)*E)
+                gNorm[zeroErrs] = v1/v0
+                
+                ### From fitFV() --> poptg
+                def calcScale(V, v0, v1): #, gpsi):
+                    if type(V) != np.ndarray:
+                        V = np.array(V)
+                    fV = (1-np.exp(-(V-E)/v0))/((V-E)/v1) # Dimensionless #fV = abs((1 - exp(-v/v0))/v1) # Prevent signs cancelling
+                    fV[np.isnan(fV)] = v1/v0 # Fix the error when dividing by zero
+                    return fV
+                
+                poptg, pcov = curve_fit(calcScale, Vs, gNorm, p0=(v0, v1))
+                '''
+                
+
+                
+                ax.plot(Vsmooth, FVsmooth) #*(Vsmooth-E)) #,label=peakEq)#,linestyle=':', color='#aaaaaa')
+                #FVsmooth = errfV(pfV, Vsmooth)
+                #ax.plot(Vsmooth, FVsmooth*(Vsmooth-E))
                 
                 #col, = getLineProps(Prot, 0, 0, 0) #Prot, run, vInd, phiInd
                 #plt.plot(Vs,Iss,linestyle='',marker='x',color=col)
