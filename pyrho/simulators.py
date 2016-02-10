@@ -40,6 +40,8 @@ class Simulator(PyRhOobject): #object
         Prot.prepare()
         dt = Prot.getShortestPeriod()
         Prot.dt = self.checkDt(dt)
+        assert(self.dt > 0)
+        assert(Prot.dt > 0)
         return # self.dt
         
     def initialise(self):
