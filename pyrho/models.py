@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl # For plotStates
 from pyrho.utilities import plotLight, calcV1
-from scipy.signal import * #for argrelextrema
+#from scipy.signal import * #for argrelextrema
 from scipy.integrate import odeint
 import warnings
 import itertools
@@ -129,10 +129,19 @@ class RhodopsinModel(PyRhOobject):
         #    fV=1 ### Extend to vector
         return fV
     
+    '''
+    @proterty
+    def T(self):
+        return self._T
+    @T.setter
+    def T(self, T):
+        self._T = T
+    '''
+    
     def calcfT(self, T):
         raise NotImplementedError
     
-    def calcfpH(self, T):
+    def calcfpH(self, pH):
         raise NotImplementedError
     
     def calcSoln(self, t, s0=None):
