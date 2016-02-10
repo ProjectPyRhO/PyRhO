@@ -25,6 +25,7 @@ import time
 from collections import OrderedDict
 import os.path
 import ast
+import copy
 
 
 # LaTeX in widget descriptions/labels
@@ -244,11 +245,10 @@ def loadGUI(IPythonWorkspace=None):
             print('Successfully loaded from globals!')
         else:
             # Try treating it as a file name instead?
-            fh = open(dDir+dataVar.value,"rb") #dDir+'expData'+".pkl"
+            fh = open(path.join(dDir, dataVar.value), "rb") #dDir+'expData'+".pkl"
             dataSet = pickle.load(fh)
-            #EDS['params']['g'].value *= (1.3/1.5)
             fh.close()
-            print('Successfully loaded "{}"!'.format(dDir+dataVar.value))
+            print('Successfully loaded "{}"!'.format(path.join(dDir, dataVar.value)))
             #dataSet = None
             #useFitCheck.value = False
             #warnings.warn('Warning! Variable: {} not found!'.format(dataVar.value))
@@ -264,7 +264,6 @@ def loadGUI(IPythonWorkspace=None):
             #if 'fitParamsPopup' in vars() or 'fitParamsPopup' in globals():
             #    fitParamsPopup.close()
         
-
         model = str(statesToFitButtons.value)
         mInd = statesDict[model] #statesDict[' '+str(nStates)]
         pSet = modelParams[modelList[mInd]]
@@ -275,8 +274,6 @@ def loadGUI(IPythonWorkspace=None):
         #fitParamReport = widgets.TextareaWidget(description='Report:',value=fitRhO.reportParams())
         #fitParamsPopup = widgets.PopupWidget(children=[fitParamReport],button_text='Fitted Parameters',description='Fitted {} state model parameters from: {}'.format(int(statesToFitButtons.value),dataVar.value))
         #display(fitParamsPopup)
-        
-        
         
         #[:]???
         setGUIparams(fittedParams, modelParamsList[model], pfValArr[mInd], varyList=fVaryArr[mInd], minList=pfMinArr[mInd], maxList=pfMaxArr[mInd], exprList=fExprArr[mInd])
@@ -289,7 +286,6 @@ def loadGUI(IPythonWorkspace=None):
             fitRhO.updateParams(fittedParams)
             fitRhO.plotRates()
             characterise(fitRhO)
-        
         
         return
     
@@ -509,12 +505,17 @@ def loadGUI(IPythonWorkspace=None):
     
     def getGUIparams(pSet, valueList, varyList=None, minList=None, maxList=None, exprList=None):
         # pSet must be the default parameters used to build the GUI
-        userParams = Parameters()
-        for i, param in enumerate(pSet):
-            if isinstance(pSet[param].value, list): ################################## Change to not number!!!
-                userParams.add(param, value=ast.literal_eval(valueList[i].value)) # or http://stackoverflow.com/questions/5387208/convert-a-string-to-an-array
+        userParams = copy.deepcopy(pSet) #Parameters()
+        #print(userParams)
+        #if isinstance(userParams, PyRhOparameters):
+        for i, param in enumerate(userParams): #enumerate(pSet):
+            #print(i, param)
+            if isinstance(userParams[param].value, (list, tuple)): ################################## Change to not number!!!
+                #userParams.add(param, value=ast.literal_eval(valueList[i].value)) # or http://stackoverflow.com/questions/5387208/convert-a-string-to-an-array
+                userParams[param].set(value=ast.literal_eval(valueList[i].value))
             else:
-                userParams.add(param, value=valueList[i].value)
+                #userParams.add(param, value=valueList[i].value)
+                userParams[param].set(value=valueList[i].value)
             if varyList is not None:
                 userParams[param].set(vary=varyList[i].value) #userParams[param].vary = varyList[i].value
             if minList is not None:
@@ -532,7 +533,7 @@ def loadGUI(IPythonWorkspace=None):
             if param in paramList:
                 i = paramList.index(param)
                 
-                if isinstance(pSet[param].value, list): ################################## Change to not number!!!
+                if isinstance(pSet[param].value, (list, tuple)): ################################## Change to not number!!!
                     valueList[i].value = str(pSet[param].value)
                 else:
                     valueList[i].value = pSet[param].value
@@ -575,7 +576,7 @@ def loadGUI(IPythonWorkspace=None):
         RhO.setParams(userModelParams)
         
         ### Get Protocol Parameters
-        userProtParams = Parameters()
+        userProtParams = PyRhOparameters()
         pInd = protList.index(protocol) #protIndDict[protocol]
         userProtParams = getGUIparams(protParams[protocol], prot_pValArr[pInd][:])
         Prot = protocols[protocol](userProtParams)
@@ -584,7 +585,7 @@ def loadGUI(IPythonWorkspace=None):
             Prot.phi_ft = custPulseGenLoad(custPulseGenInput.value)
         
         ### Get Simulator Parameters
-        userSimParams = Parameters()
+        userSimParams = PyRhOparameters()
         sInd = simList.index(simulator)
         userSimParams = getGUIparams(simParams[simulator], sim_pValArr[sInd][:])
         Sim = simulators[simulator](Prot, RhO, userSimParams)
@@ -1259,7 +1260,7 @@ def loadGUI(IPythonWorkspace=None):
             elif isinstance(pSet[param].value, str):
                 sim_pValArr[sInd][i] = widgets.Text(value=str(pSet[param].value), description=param)
             elif isinstance(pSet[param].value, bool):
-                sim_pValArr[sInd][i] = widgets.Dropdown(options=boolDict, value=pSet[param].value,description=param)
+                sim_pValArr[sInd][i] = widgets.Dropdown(options=boolDict, value=pSet[param].value, description=param)
             else:
                 if (pSet[param].min == None or pSet[param].min == -np.inf) or (pSet[param].max == None or pSet[param].max == np.inf):
                     sim_pValArr[sInd][i] = widgets.FloatText(value=pSet[param].value, description=param)
@@ -1391,7 +1392,7 @@ def loadGUI(IPythonWorkspace=None):
             protHeaders[pInd] = widgets.HBox(children = [custPulseGenInput, widgets.HTML(value=protParamNotes[prot]['phi_ft'])])
         else:
             protHeaders[pInd] = widgets.HTML(value='')
-        for i, param in enumerate(pSet): #param in pSet:#.keys(): #, value in pSet.items():
+        for i, param in enumerate(pSet):
             label = '$' + protParamLabels[param] + '$'
             if isinstance(pSet[param].value, list): # or isinstance(pSet[param].value, str):
                 prot_pValArr[pInd][i] = widgets.Text(value=str(pSet[param].value), description=label) # np.asarray #param
