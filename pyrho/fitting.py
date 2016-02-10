@@ -1,9 +1,3 @@
-# Call this script in IPython
-# %run fitStates.py
-# import (as a module)
-# %import
-# %load
-
 from __future__ import print_function
 
 # import lmfit
@@ -12,26 +6,17 @@ import numpy as np
 import matplotlib as mp
 import matplotlib.pyplot as plt
 from pyrho.parameters import *
-from pyrho.loadData import * #import loadData
-#from .protocols import * # for SSA and numerical solution
-#import models # for calculating analytic solution
-#global phi0
+from pyrho.loadData import *
 from pyrho.utilities import * # plotLight, round_sig, findPeaks, findPlateauCurrent
 from pyrho.models import * # for fitPeaks
 from pyrho.config import * #verbose, saveFigFormat, addTitles, fDir, dDir, eqSize
-#from . import config
 from pyrho import config
-#from .config import verbose, saveFigFormat, eqSize, addTitles, addStimulus, colours, styles, dDir, fDir
 import os
 import pickle
-#import time
 from copy import deepcopy
 import warnings
-
 from scipy.optimize import curve_fit
 
-
-#import protocols
 
 #relaxFact = 2 #1.5 #1.1#1.2 # constraintMargin
 
@@ -54,10 +39,6 @@ defMethod = methods[3]
 # OpenOpt
 # Optimizer
 # scikit-learn
-
-
-
-
 
 
 
