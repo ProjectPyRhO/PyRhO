@@ -503,7 +503,7 @@ class PhotoCurrent():
         Ion, ton = self.getOnPhase(pulse)
         
         # Calculate step change (or gradient with t[1:] - t[:-1])
-        cutInd = int(round(tail*len(Ion)))
+        cutInd = max(2, int(round(tail*len(Ion)))) # Need at least 2 points to calculate the difference
         if cutInd < 5: # On-phase is too short 
             warnings.warn('Duration Warning: The on-phase is too short for steady-state convergence!')
             #return None

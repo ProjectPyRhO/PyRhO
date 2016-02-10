@@ -59,15 +59,15 @@ def runAll():
     for model in modelList: #models: #nStates in [3,4,6]:
         ### Select generative model
         RhO = models[model]()
-        for sim in ['Python']:#simulators:
-            Sim = simulators[sim](RhO)            
-            for prot in protocols: #protocol, init in protParams.items():
+        for prot in protocols: #protocol, init in protParams.items():
+            ### Select simulation protocol
+            Prot = protocols[prot]()
+            for sim in ['Python']:#simulators:
+                Sim = simulators[sim](Prot, RhO)            
                 print("\nRunning Protocol '{}' on the {}-state model...".format(prot, model))
                 print('--------------------------------------------------------------------------------\n')
-                ### Select simulation protocol
-                Prot = protocols[prot]()
-                Prot.run(Sim, RhO)                
-                Prot.plot(Sim, RhO)
+                Sim.run()                
+                Sim.plot()
                 print("\nFinished!")
                 print('================================================================================\n\n')
 
