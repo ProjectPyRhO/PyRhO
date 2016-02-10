@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl # for tick locators
-from scipy.interpolate import *
+from scipy.interpolate import InterpolatedUnivariateSpline #*
 from scipy.optimize import curve_fit
 from pyrho.parameters import *
 from pyrho.utilities import * # times2cycles, cycles2times, plotLight, round_sig, expDecay, biExpDecay, findPeaks
@@ -75,8 +75,11 @@ class Protocol(PyRhOobject): #object
         
         if np.isscalar(self.cycles): #self.cycles.shape[1] == 1: # Only on duration specified
             onD = self.cycles
-            offD = self.totT - onD - self.delD
-            self.cycles = np.asarray([self.cycles, offD]) #self.cycles[0]
+            if hasattr(self, 'totT'):
+                offD = self.totT - onD - self.delD
+            else:
+                offD = 0
+            self.cycles = np.asarray([[onD, offD]]) #self.cycles[0]
         
         self.cycles = np.asarray(self.cycles)
         self.nPulses = self.cycles.shape[0]
@@ -86,12 +89,12 @@ class Protocol(PyRhOobject): #object
         self.offDs = np.array(self.cycles[:,1]) #self.offDs = np.array([cycle[1] for cycle in self.cycles])
         
         if np.isscalar(self.phis):
-            self.phis = np.asarray([self.phis])
+            self.phis = [self.phis] #np.asarray([self.phis])
         self.phis.sort(reverse=True)
         self.nPhis = len(self.phis)
         
         if np.isscalar(self.Vs):
-            self.Vs = np.asarray([self.Vs])
+            self.Vs = [self.Vs] #np.asarray([self.Vs])
         self.Vs.sort(reverse=True)
         self.nVs = len(self.Vs)
         
@@ -105,7 +108,7 @@ class Protocol(PyRhOobject): #object
         return [[[None for v in range(self.nVs)] for p in range(self.nPhis)] for r in range(self.nRuns)]
     
     def getShortestPeriod(self):
-        return np.amin(self.cycles) #min(self.delD, min(min(self.cycles)))
+        return np.amin(self.cycles[self.cycles.nonzero()]) #min(self.delD, min(min(self.cycles)))
     
     def finish(self, PC, RhO):
         pass
@@ -1349,7 +1352,17 @@ class protRectifier(Protocol):
                 ##popt, pcov, eqString = fitFV(self.Vs, Iss, p0FV, ax=ax)
                 p0FV = (35, 15, 0)
                 poptI, poptg = fitFV(Vs, Iss, p0FV, ax=ax)
-
+                
+                '''
+                def calcRect(V, v0, v1, E): #, gpsi):
+                    if type(V) != np.ndarray:
+                        V = np.array(V)
+                    fV = (1-np.exp(-(V-E)/v0))/((V-E)/v1) # Dimensionless #fV = abs((1 - exp(-v/v0))/v1) # Prevent signs cancelling
+                    fV[np.isnan(fV)] = v1/v0 # Fix the error when dividing by zero
+                    return fV * (V - E) # * gpsi
+                poptI, pcov = curve_fit(calcRect, Vs, Iss, p0FV)
+                '''
+                
                 ### New routines
                 pfV = Parameters()
                 pfV.add_many(
@@ -1376,10 +1389,13 @@ class protRectifier(Protocol):
                 
                 pfV['E'].value = E
                 pfV['v0'].value = poptI[0] #v0
-                pfV['v1'].value = poptI[1] #v1
-                fVsmooth = errfV(pfV, Vsmooth)
+                pfV['v1'].value = poptI[1] #v1 # poptg[1]?
                 
-                ax.plot(Vsmooth, fVsmooth*(Vsmooth-E))#,label=peakEq)#,linestyle=':', color='#aaaaaa')
+                #FVsmooth = errFV(pfV, Vsmooth)
+                #ax.plot(Vsmooth, FVsmooth) #*(Vsmooth-E)) #,label=peakEq)#,linestyle=':', color='#aaaaaa')
+                FVsmooth = errfV(pfV, Vsmooth)
+                ax.plot(Vsmooth, FVsmooth*(Vsmooth-E))
+                
                 #col, = getLineProps(Prot, 0, 0, 0) #Prot, run, vInd, phiInd
                 #plt.plot(Vs,Iss,linestyle='',marker='x',color=col)
                 markerSize=40
@@ -1828,7 +1844,6 @@ def characterise(RhO):
     """Run small signal analysis on Rhodopsin"""
     for protocol in smallSignalAnalysis:
         RhO.setLight(0.0)
-        #Prot = selectProtocol(protocol)
         Prot = protocols[protocol]()
         Sim = simulators['Python'](Prot, RhO)
         Sim.run()
