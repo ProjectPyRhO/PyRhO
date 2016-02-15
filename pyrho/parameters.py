@@ -93,13 +93,13 @@ sec = second
                                     #           nS, uS
 
 modelUnits = OrderedDict([('g0',pS), ('gam',1), ('k_a',ms**-1), ('k_r',ms**-1), ('phi_m',mm**-2*second**-1), ('p',1), ('Gd',ms**-1), ('Gr0',ms**-1), 
-                            ('k1',ms**-1), ('k2',ms**-1), ('Gf0',ms**-1), ('Gb0',ms**-1), ('kf',ms**-1), ('kb',ms**-1), ('q',1), 
+                            ('k1',ms**-1), ('k2',ms**-1), ('Gf0',ms**-1), ('Gb0',ms**-1), ('k_f',ms**-1), ('k_b',ms**-1), ('q',1), 
                             ('Gd1',ms**-1), ('Gd2',ms**-1), ('Go1',ms**-1), ('Go2',ms**-1), ('E',mV), ('v0',mV), ('v1',mV), 
                             ('phi',mm**-2*second**-1), ('v',mV)])
 
 #paramUnits
 unitLabels = OrderedDict([('g0','pS'), ('gam',''), ('k_a','ms^-1'), ('k_r','ms^-1'), ('phi_m','ph./mm^2/s'), ('p',''), ('Gd','ms^-1'), ('Gr0','ms^-1'), #, ('k','ms^-1'), ('Gr1','ms^-1')
-                            ('k1','ms^-1'), ('k2','ms^-1'), ('Gf0','ms^-1'), ('Gb0','ms^-1'), ('kf','ms^-1'), ('kb','ms^-1'), ('q',''), 
+                            ('k1','ms^-1'), ('k2','ms^-1'), ('Gf0','ms^-1'), ('Gb0','ms^-1'), ('k_f','ms^-1'), ('k_b','ms^-1'), ('q',''), 
                             ('Gd1','ms^-1'), ('Gd2','ms^-1'), ('Go1','ms^-1'), ('Go2','ms^-1'), ('E','mV'), ('v0','mV'), ('v1','mV'),
                             ('phi','ph./mm^2/s'), ('v','mV')])
 
