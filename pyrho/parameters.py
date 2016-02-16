@@ -18,9 +18,6 @@ from copy import deepcopy
 
 ### Hyperparameters
 
-#fittingParams = Parameters()
-#methods=('leastsq','nelder','lbfgsb','powell','cg','newton','cobyla','tnc','trust-ncg','dogleg','slsqp')
-
 tFromOff = 50  # Time [ms] to start the sample window before the end of the pulse for Iss
 
 # Optimisation initialisation values
@@ -68,7 +65,6 @@ pOffDoub.add('Gd2', value=0.01)#, vary=True) #, expr='Gd1')#, min=1e-9)
 
 ### Default model parameters
 
-
 modelParams = OrderedDict([('3',Parameters()),('4',Parameters()),('6',Parameters())])
 modelList = list(modelParams) # List of keys: list(modelParams.keys()) #This could be removed
 stateLabs = {3:'Three', '3':'Three', 4:'Four', '4':'Four', 6:'Six', '6':'Six'}
@@ -103,42 +99,8 @@ unitLabels = OrderedDict([('g0','pS'), ('gam',''), ('k_a','ms^-1'), ('k_r','ms^-
                             ('Gd1','ms^-1'), ('Gd2','ms^-1'), ('Go1','ms^-1'), ('Go2','ms^-1'), ('E','mV'), ('v0','mV'), ('v1','mV'),
                             ('phi','ph./mm^2/s'), ('v','mV')])
 
-
-
-
-#'$\mathrm{[ph. / mm^{2} / s]}$'
-#'ph./mm^2/s'
                             
 ####|###10####|###20####|###30####|###40####|###50####|###60####|###70####|###80
-
-#d3sp = Parameters()
-#                       (Name,    Value,  Vary, Min,  Max,  Expr=Units)
-# modelParams['3'].add_many(
-                # #('phi0',  1e15,   True, None, None, None),
-                # #('phiSat',1e20,   True, None, None, None),
-                # ('E',     0,      True, -1000,1000, 'mV'),
-                # ('g',     1.67e4, True, 0.0,  1e15, 'pS'),
-                # ('k',     5.5e-15,True, 0.0,  1e15, None),
-                # ('p',     0.7,    True, 0.1,  5,    None),
-                # ('phi_m',  1e17,   True, 1e15, 1e19, 'photons/s/mm^2'),
-                # ('Gd',    0.0909, True, 0.0,  None, '/ms'),
-                # ('Gr0',   1/5000, True, 0.0,  None, '/ms'),
-                # ('Gr1',   1/165,  True, 0.0,  None, '/ms'),
-                # ('useIR', False,  True, False,True, None),
-                # ('v0',    43,     True, None, None, 'mV'),
-                # ('v1',    4.1,    True, None, None, 'mV'))
-                
-# modelParams['3'].add_many(
-                # ('g',     1.67e4, True, 0.001,  1e15, 'pS'),
-                # ('phi_m',  1e17,   True, 1e15, 1e19, 'photons/s/mm^2'),
-                # ('k',     25,     True, 0.001,  1000, '/ms'), #('k',     5.5e-15,True, 0.0,  1e15, None),
-                # ('p',     0.7,    True, 0.1,  5,    None),
-                # ('Gd',    0.0909, True, 0.0001,  1, '/ms'),
-                # ('Gr0',   1/5000, True, 0.0001,  0.1, '/ms'),
-                # ('Gr1',   1/165,  True, 0.0001,  1, '/ms'),
-                # ('E',     0,      True, -1000,1000, 'mV'),
-                # ('v0',    43,     True, -1e15, 1e15, 'mV'),
-                # ('v1',    4.1,    True, -1e15, 1e15, 'mV'))
 
 #               (Name,    Value,  Vary, Min,  Max,  Expr=Units)                
 modelFits['3']['ChR2'].add_many( # Depolarising: passively transports Na+, H+, K+ and Ca2+ down their electrochemical gradients
@@ -150,7 +112,6 @@ modelFits['3']['ChR2'].add_many( # Depolarising: passively transports Na+, H+, K
                 ('q',     0.25,   True, 0.1,    5,    None),
                 ('Gd',    0.104,  True, 0.0001, 1,    None),
                 ('Gr0',   0.0002, True, 0.0001, 0.1,  None),
-                #('Gr1',   0.0386, True, 0.0001, 1,    None),
                 ('E',     0,      True, -1000,  1000, None),
                 ('v0',    43,     True, -1e15,  1e15, None),
                 ('v1',    17.1,   True, -1e15,  1e15, None))
@@ -164,7 +125,6 @@ modelFits['3']['NpHR'].add_many( # Hyperpolarising: pumps chloride ions into the
                 ('q',     0.793,  True, 0.1,    5,    None),
                 ('Gd',    0.1,  True, 0.0001, 1,    None),
                 ('Gr0',   0.0002, True, 0.0001, 0.1,  None),
-                #('Gr1',   0.0135, True, 0.0001, 1,    None),
                 ('E',     -400,   True, -1000,  1000, None),
                 ('v0',    43,     True, -1e15,  1e15, None),
                 ('v1',    17.1,   True, -1e15,  1e15, None))
@@ -178,83 +138,11 @@ modelFits['3']['ArchT'].add_many( # Hyperpolarising: actively extrudes Hydrogen 
                 ('q',     0.793,  True, 0.1,    5,    None),
                 ('Gd',    0.1,  True, 0.0001, 1,    None),
                 ('Gr0',   0.001, True, 0.0001, 0.1,  None),
-                #('Gr1',   0.0, True, 0.0001, 1,    None),
                 ('E',     0,   True, -1000,  1000, None),
                 ('v0',    43,     True, -1e15,  1e15, None),
                 ('v1',    17.1,   True, -1e15,  1e15, None))
                 
-                
-#modelLabels = OrderedDict([('3',OrderedDict()),('4',OrderedDict()),('6',OrderedDict())])
-#modelLabels['3'] = {'E':'E', 'g':'g', 'k':'k', 'p':'p', 'phi_m':'\phi_m', 'Gd':'G_d', 'Gr0':'G_{r0}', 'Gr1':'G_{r1}', 'v0':'v_0', 'v1':'v_1'}
-#modelLabels['3'] = [('E','E'), ('g','g'), ('k','k'), ('p','p'), ('phi_m','\phi_m'), ('Gd','G_d'), ('Gr0','G_{r0}'), ('Gr1','G_{r1}'), ('v0','v_0'), ('v1','v_1')]
-#modelParams['3'] = deepcopy(modelFits['3']['ChR2'])
-                
-
-### Alternatively add another field
-#d3sp['g'].units = 'pS'
-#print(d3sp['g'].units)
-#d4sp = Parameters()
-# modelParams['4'].add_many(
-                # ('phi0',  1e14,   True, None, None, 'photons/s/mm^2'),
-                # ('E',     0,      True, -1000,1000, 'mV'),
-                # ('gam',   0.05,   True, 0.0,  1e9,  None),
-                # ('g',     1.67e4, True, 0.0,  1e15, 'pS'),
-                # ('k1',    0.05,   True, 0.0,  1e3,  None), ### Add bounds checking?
-                # ('k2',    0.015,  True, 0.0,  1e3,  None),
-                # ('c1',    0.03,   True, 0.0,  None, None),
-                # ('c2',    0.0115, True, 0.0,  None, None),
-                # ('p',     0.7,    True, None, None, None),
-                # ('phi_m',  5e17,   True, None, None, 'photons/s/mm^2'),
-                # ('e12d',  0.01,   True, 0.0,  None, '/ms'),
-                # ('e21d',  0.015,  True, 0.0,  None, '/ms'),
-                # ('Gd1',   0.11,   True, 0.0,  None, '/ms'),
-                # ('Gd2',   0.025,  True, 0.0,  None, '/ms'),
-                # ('Gr',    0.0004, True, 0.0,  None, '/ms'),
-                # ('useIR', False,  True, False,True, None),
-                # ('v0',    43,     True, None, None, 'mV'),
-                # ('v1',    4.1,    True, None, None, 'mV'))
-              
-# modelParams['4'].add_many(  #('phi0',    1e14,   True, 1e12, 1e21,   'photons/s/mm^2'),### Set this to be above the max flux??? 10**ceil(log10(max(phis)))
-                # ('E',       0,      True, -1000,1000,   'mV'),
-                # ('gam',     0.05,   True, 0.0,  1,      None),
-                # ('g',       3.5e4,  True, 0.001,1e15,   'pS'),
-                # ('k1',      1000,   True, 0.001,1e5,    '/ms'), #3
-                # ('k2',      500,    True, 0.001,1e5,    '/ms'), #1.5
-                # ('p',       0.7,    True, 0.1,  5,      None),
-                # ('e12d',    0.01,   True, 0,    1e3,    '/ms'),
-                # ('e21d',    0.01,   True, 0,    1e3,    '/ms'),
-                # ('c1',      0.4,   True, 0.001, 1e3,    '/ms'),
-                # ('c2',      0.2,   True, 0.001, 1e3,    '/ms'),
-                # ('q',       0.47,    True, 0.1,  5,      None),
-                # ('phi_m',    1e16,   True, 1e15, 1e19,   'photons/s/mm^2'),
-                # ('Gd1',     0.15,   True, 0.01, 1,      '/ms'),
-                # ('Gd2',     0.025,  True, 0.01, 1,      '/ms'),
-                # ('Gr',      0.0004, True, 1e-6, 1,      '/ms'),
-                # #('useIR',   False,  True, False,True,   None),
-                # ('v0',      43,     True, -1e15, 1e15,   'mV'),
-                # ('v1',      4.1,    True, -1e15, 1e15,   'mV'))
-
-
-# modelParams['4'].add_many(  #('phi0',    1e14,   True, 1e12, 1e21,   'photons/s/mm^2'),### Set this to be above the max flux??? 10**ceil(log10(max(phis)))
-                # ('g',       3.5e4,  True, 0.001,1e15,   'pS'),
-                # ('gam',     0.05,   True, 0.0,  1,      None),
-                # ('phi_m',    1e16,   True, 1e15, 1e19,   'photons/s/mm^2'),
-                # ('k1',      1000,   True, 0.001,1e5,    '/ms'), #3
-                # ('k2',      500,    True, 0.001,1e5,    '/ms'), #1.5
-                # ('p',       0.7,    True, 0.1,  5,      None),
-                # ('Gf0',    0.01,   True, 0,    1e3,    '/ms'), #e12d
-                # ('kf',      0.4,   True, 0.001, 1e3,    '/ms'), #c1
-                # ('Gb0',    0.01,   True, 0,    1e3,    '/ms'), #e21d
-                # ('kb',      0.2,   True, 0.001, 1e3,    '/ms'), #c2
-                # ('q',       0.47,    True, 0.1,  5,      None),
-                # ('Gd1',     0.15,   True, 0.01, 1,      '/ms'),
-                # ('Gd2',     0.025,  True, 0.01, 1,      '/ms'),
-                # ('Gr0',      0.00033, True, 1e-6, 1,      '/ms'), #Gr #0.0004
-                # ('E',       0,      True, -1000,1000,   'mV'),
-                # ('v0',      43,     True, -1e15, 1e15,   'mV'),
-                # ('v1',      4.1,    True, -1e15, 1e15,   'mV'))    
     
-#modelFits['ChR2']['4'].add_many(
 modelFits['4']['ChR2'].add_many(
                 ('g0',      1.14e5, True, 0.001,1e15,   None),
                 ('gam',     0.00742,True, 0.0,  1,      None),
@@ -274,56 +162,7 @@ modelFits['4']['ChR2'].add_many(
                 ('v0',      43,     True, -1e15,1e15,   None),
                 ('v1',      17.1,   True, -1e15,1e15,   None))    
               
-#modelParams['4'] = deepcopy(modelFits['4']['ChR2'])
-#d6sp = Parameters()
-# modelParams['6'].add_many(
-                # #('phi0',  1e14,   True, None, None, 'photons/s/mm^2'),
-                # ('phi_m',    1e16,   True, 1e15, 1e19,   'photons/s/mm^2'),
-                # ('E',     0,      True, -1000,1000, 'mV'),
-                # ('gam',   0.05,   True, 0.0,  1,  None), #1e9
-                # ('g',     75000,  True, 0.0,  1e15, 'pS'),
-                # #('A',     31192,  True, 0.0,  1e15, 'um^2'),
-                # #('gbar',  2.4,    True, 0.0,  1e15, 'pS/um^2'),
-                # ('a10',   5e3,    True, 0.0,  None, '/ms'), #5
-                # ('a2',    1,      True, 0.0,  None, '/ms'),
-                # ('a30',   0.022,  True, 0.0,  None, '/ms'),
-                # ('a31',   0.0135, True, 0.0,  None, '/ms'),
-                # ('a4',    0.025,  True, 0.0,  None, '/ms'),
-                # ('a6',    0.00033,True, 0.0,  None, '/ms'),
-                # ('b1',    0.13,   True, 0.0,  None, '/ms'),
-                # ('b20',   0.011,  True, 0.0,  None, '/ms'),
-                # ('b21',   0.0048, True, 0.0,  None, '/ms'),
-                # ('b3',    1,      True, 0.0,  None, '/ms'),
-                # ('b40',   1.1e3,  True, 0.0,  None, '/ms'), #1.1
-                # ('p',     0.7,    True, 0.1,  5,    None),
-                # ('q',     0.47,   True, 0.1,  5,    None),
-                # #('useIR', True,   True, False,True, None),
-                # ('v0',    43,     True, -1e15, 1e15, 'mV'),
-                # ('v1',    4.1,    True, -1e15, 1e15, 'mV'))
 
-# modelParams['6'].add_many(                
-                # ('g',     75000,  True, 0.0,  1e15, 'pS'),
-                # ('gam',   0.05,   True, 0.0,  1,  None), # Max=1 if gO1 >= gO2
-                # ('phi_m',    1e16,   True, 1e15, 1e19,   'photons/s/mm^2'),
-                # ('k1',   5e3,    True, 0.0,  None, '/ms'), #a10 #5
-                # ('k2',   1.1e3,  True, 0.0,  None, '/ms'), #b40 #1.1
-                # ('p',     0.7,    True, 0.1,  5,    None),
-                # ('Gf0',   0.022,  True, 0.0,  None, '/ms'), #a30
-                # ('kf',   0.0135, True, 0.0,  None, '/ms'), #a31
-                # ('Gb0',   0.011,  True, 0.0,  None, '/ms'), #b20
-                # ('kb',   0.0048, True, 0.0,  None, '/ms'), #b21
-                # ('q',     0.47,   True, 0.1,  5,    None),
-                # ('Go1',    1,      True, 0.0,  None, '/ms'), #a2
-                # ('Go2',    1,      True, 0.0,  None, '/ms'), #b3
-                # ('Gd1',    0.13,   True, 0.0,  None, '/ms'), #b1
-                # ('Gd2',    0.025,  True, 0.0,  None, '/ms'), #a4
-                # ('Gr0',    0.00033,True, 0.0,  None, '/ms'), #Gr
-                # ('E',     0,      True, -1000,1000, 'mV'),
-                # ('v0',    43,     True, -1e15, 1e15, 'mV'),
-                # ('v1',    17.1,    True, -1e15, 1e15, 'mV'))
-
-
-#modelFits['ChR2']['6'].add_many(
 modelFits['6']['ChR2'].add_many(                
                 ('g0',      2.52e4, True, 0.0,  1e15, None),
                 ('gam',     0.0161, True, 0.0,  1,    None), # Max=1 if gO1 >= gO2
@@ -345,11 +184,7 @@ modelFits['6']['ChR2'].add_many(
                 ('v0',      43,     True, -1e15, 1e15,None),
                 ('v1',      17.1,   True, -1e15, 1e15,None))
 
-#modelParams['6'] = deepcopy(modelFits['6']['ChR2'])
-#modelParams = [d3sp,d4sp,d6sp]
-#modelParamsDict = {'3':d3sp, '4':d4sp, '6':d6sp} # Rename these to be consistent with protParams
 
-#defModelParams = modelFits['ChR2']
 defaultOpsinType = 'ChR2'
 rhoType = defaultOpsinType # Set this when selecting 
 modelParams['3'] = modelFits['3'][defaultOpsinType]
@@ -357,8 +192,6 @@ modelParams['4'] = modelFits['4'][defaultOpsinType]
 modelParams['6'] = modelFits['6'][defaultOpsinType]
 
 unitPrefixes = {} ### Use a units library to convert between different prefixes
-
-
 
 
 #Params = OrderedDict([('model', OrderedDict()), ('protocol', OrderedDict()), ('simulator', OrderedDict())])
@@ -618,22 +451,6 @@ class PyRhOparameter(object):
 ####|###10####|###20####|###30####|###40####|###50####|###60####|###70####|###80
 
 
-                             
-### Select simulation protocol
-#protocols = ['custom', 'delta', 'rectifier', 'shortPulse', 'recovery']
-#protocol = protocols[2] #'recovery'#'shortPulse' # Set this interactively with radio buttons?
-#Prot = selectProtocol(protocol)
-#Prot = protocols['custom']([1e13,1e14,1e15], [-70,-40,-10,10,40], [[10.,160.]], 200., 1, 0.1)
-#Prot = protocols['step']([1e14], [-70], [[25.,275.]], 300., 1, 0.1) # Unfinished
-##Prot = protocols['sinusoid']([1e9,1e10,1e11,1e12,1e13,1e14,1e15], [1e9], [-70], np.logspace(0,2,num=15), [[25.,5000.]], 5050., 0.1)
-#Prot = protocols['sinusoid']([1e11,1e12,1e13,1e14,1e15], [1e13], [-70], np.logspace(0,2,num=50), [[25.,5000.]], 5050., 0.1)
-#Prot = protocols['ramp']() # Unfinished
-#Prot = protocols['delta']([irrad2flux(1000,470)], [-70], [[5.,5+1e-3]], 20., 1, 1e-3)
-#Prot = protocols['rectifier']([irrad2flux(1,470),irrad2flux(10,470)], [-100,-80,-60,-40,-20,0,20,40,60,80], [[50.,300.]], 400., 1, 0.1)
-#Prot = protocols['shortPulse']([1e12], [-70], 25, [1,2,3,5,8,10,20], 100, 0.1)
-#Prot = protocols['recovery']([1e14], [-70], 100, 200, [500,1000,1500,2500,5000,7500,10000], 0.1)
-
-
 ### Protocols to be included in the next version:
 ### - Temperature (Q10)
 ### - pH (intracellular and extracellular)
@@ -772,80 +589,8 @@ protParams['recovery'].add_many(('phis',[1e17],             None,   None,   mole
                             ('IPIs',[500,1000,1500,2500,5000,7500,10000],None,None,ms,  '\mathbf{\Delta t_{off}}', 'List of pulse off-phase durations'), # 'ms' 
                             #('IPIs',[0.5,1,1.5,2.5,5,7.5,10],None,None,seconds), # 'ms' 
                             ('totT',    12000,              0,      None,   ms, 'T_{total}',        'Total simulation duration')) # 'ms'
-                            
-'''
-#                           (Name,    Value,  Vary, Min,  Max,  Expr=Units)         
-protParams['custom'].add_many(('phis',[1e16,1e17],True,None,None,None), #'photons/s/mm^2'
-                            ('Vs',[-70,-20,10],True,None,None,None), #'mV'
-                            ('delD', 25, True, 0, 1e9, None), #'ms'
-                            ('cycles',[[150.,50.]],True,None,None,None))#, #'ms'#,
-                            #('phi_ft', None, None, None, None))
 
 
-protParams['step'].add_many(('phis',[1e16,1e17],True,None,None,None), #'photons/s/mm^2'
-                            ('Vs',[-70,-40,-10,10,40,70],True,None,None,None), #'mV'
-                            ('delD', 25, True, 0, 1e9, None), #'ms'
-                            ('cycles',[[150.,100.]],True,None,None,None))#, #'ms'#,
-
-
-protParams['sinusoid'].add_many(('phis',[1e12],True,None,None,None), #'photons/s/mm^2'
-                            ('phi0',[0],True,None,None,None), #'photons/s/mm^2'
-                            ('startOn',True,False,False,True,None),
-                            ('Vs',[-70],True,None,None,None), #'mV'
-                            ('fs',[0.1,0.5,1,5,10],True,None,None,None), #'Hz' #50, 100, 500, 1000
-                            ('delD', 25, True, 0, 1e9, None), #'ms'
-                            ('cycles',[[10000.,50.]],True,None,None,None)) #'ms'
-
-                            
-protParams['chirp'].add_many(('phis',[1e12],True,None,None,None), # 'photons/s/mm^2'
-                            ('phi0',[0],True,None,None,None), # 'photons/s/mm^2'
-                            ('linear',True,True,False,True,None), # False := exponential
-                            ('startOn',False,True,False,True,None),
-                            ('Vs',[-70],True,None,None,None), # 'mV'
-                            ('delD', 100, True, 0, 1e9, None), # 'ms'
-                            ('cycles',[[10000.,100.]],True,None,None,None), # 'ms'
-                            ('f0',0.1,True,None,None,None), # 'Hz'
-                            ('fT',1000,True,None,None,None)) # 'Hz'
-
-                            
-protParams['ramp'].add_many(('phis',[1e16,1e17,1e18],True,None,None,None), # 'photons/s/mm^2' #1e12,1e13,1e14,1e15,
-                            #('phi_ton',0,True,None,None,None), # 'photons/s/mm^2'
-                            ('phi0',0,True,None,None,None), # 'photons/s/mm^2'
-                            ('Vs',[-70],True,None,None,None), # 'mV'
-                            ('delD', 25, True, 0, 1e9, None), # 'ms'
-                            ('cycles',[[250.,25.]],True,None,None,None)) # 'ms'#,
-
-                            
-protParams['delta'].add_many(('phis',[1e20],True,None,None,None), # 'photons/s/mm^2'
-                            ('Vs',[-70],True,None,None,None), # 'mV'
-                            ('delD', 5, True, 0, 1e9, None), # 'ms'
-                            ('onD', 1e-3, True, 0, 1e9, None), # 'ms'
-                            ('totT', 25.,True,0,None,None)) # 'ms'
-
-                            
-protParams['rectifier'].add_many(('phis',[1e16],True,None,None,None), # 'photons/s/mm^2' # Change to 1e17?
-                            ('Vs',[-100,-70,-40,-10,20,50,80],True,None,None,None), # 'mV' #[-100,-80,-60,-40,-20,0,20,40,60,80]
-                            ('delD', 50, True, 0, 1e9, None), # 'ms'
-                            ('cycles',[[250.,100.]],True,None,None,None)) # 'ms' #,
-
-                            
-protParams['shortPulse'].add_many(('phis',[1.5e15],True,None,None,None), # 'photons/s/mm^2' #1e12 # original
-                            ('Vs',[-70],True,None,None,None), # 'mV'
-                            ('delD',25,True,0,None,None), # 'ms'
-                            ('pDs',[1,2,3,5,8,10,20],True,None,None,None), # 'ms' # [0.1, 0.2, 0.5, 1, 2, 5, 10]
-                            ('totT', 100.,True,0,None,None)) # 'ms'
-
-                            
-protParams['recovery'].add_many(('phis',[1e17],True,None,None,None), # 'photons/s/mm^2'
-                            ('Vs',[-70],True,None,None,None), # 'mV'
-                            ('delD',100,True,0,None,None), # 'ms'
-                            ('onD',100,True,0,None,None), # 'ms'
-                            ('IPIs',[500,1000,1500,2500,5000,7500,10000],True,None,None,None), # 'ms' 
-                            ('totT', 12000, True, 0, None, None)) # 'ms'
-'''
-
-#simUnitLabels = OrderedDict([('dt','ms'), ('v_init','mV')])
-#simUnitLabels = defaultdict(str)
 simUnitLabels = defaultdict(lambda: '')
 simUnitLabels['dt'] = 'ms'
 simUnitLabels['v_init'] = 'mV'
@@ -863,18 +608,9 @@ simParamNotes['dt'] = 'Numerical integration timestep'
 simParams = OrderedDict([('Python',PyRhOparameters()), ('NEURON',PyRhOparameters()), ('Brian',PyRhOparameters())])
 simList = list(simParams)
 
-#simParams['Python'].add_many(('dt',0.1,True,None,None,None)) #'ms'
+
 simParams['Python'].add_many(('dt', 0.1, 0, None)) #'ms'
 
-#simParams['NEURON'].add_many(('cell',   ['minimal.hoc'],True,None,None, None), #'morphology'
-#                             ('Vclamp', False,   True,   False,  True,   None), # Changed to False by default
-#                             ('Vcomp',  'soma', True,   None,   None,   None),
-#                             ('expProb',1.0,    True,   0.,     1.,     None),
-#                             ('v_init', -65,    True,   None,   None,   None), # 'mV'
-#                             ('CVode',  False,  True,   False,  True,   None),
-#                             ('dt',     0.1,    True,   None,   None,   None)) # 'ms' #, 0.025
-                             #('nseg',3,True,1,1e9,None),
-                             #('Vhold',-70,True,-200,200,'mV')) # Set by runTrial
 # atol
 simParams['NEURON'].add_many(('cell',   ['minimal.hoc'], None, None), #'morphology'
                              ('Vclamp', False,     False,  True), # Changed to False by default
@@ -884,18 +620,8 @@ simParams['NEURON'].add_many(('cell',   ['minimal.hoc'], None, None), #'morpholo
                              ('CVode',  False,     False,  True),
                              ('dt',     0.1,       0,   None)) # 'ms' #, 0.025
 
-#simParams['Brian'].add_many(('dt', 0.1, True, None, None, None), # 'ms'
-#                            )#('method_choice', )
 simParams['Brian'].add_many(('dt', 0.1, 0, None)) #, # 'ms'
                             
-
-# Lists and Dicts
-#protDict={'custom':'custom', 'step':'step', 'sinusoid':'sinusoid', 'chirp':'chirp', 'ramp':'ramp', 'delta':'delta', 'rectifier':'rectifier', 'shortPulse':'shortPulse', 'recovery':'recovery'}
-#OrderedDict([('custom':'custom'), ('step':'step'), ('sinusoid':'sinusoid'), ('ramp':'ramp'), ('delta':'delta'), ('rectifier':'rectifier'), ('shortPulse':'shortPulse'), ('recovery':'recovery')])
-#protIndDict={'custom':0, 'step':1, 'sinusoid':2, 'chirp':3, 'ramp':4, 'delta':5, 'rectifier':6, 'shortPulse':7, 'recovery':8} # This must match tabs ordering
-#{key:i for key in protInDict, i++}
-
-#protList = ['custom', 'step', 'sinusoid', 'chirp', 'ramp', 'delta', 'rectifier', 'shortPulse', 'recovery']
 
 ### Move somewhere else e.g. base.py
 class PyRhOobject(object):
