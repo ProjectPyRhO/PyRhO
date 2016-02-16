@@ -526,49 +526,7 @@ def loadGUI(IPythonWorkspace=None):
         
         return #Prot, RhO
     
-    
-    
-    
-    
-    
-    ##### Fit Bar #####
-    
-    # ### Create Fit Bar toggle
-    # fitButton = widgets.ToggleButton(description='Fit data', value=False)
-    # fitButton.on_trait_change(fitToggle,'value') #paramsButton.get_state()
 
-    # ### Create Data set entry
-    # dataVar = widgets.Text(description='Data Set: ',placeholder='<variable name>')
-    # dataLoad = widgets.Button(description='Load')
-    # dataLoad.on_click(onDataLoad)
-    
-    # ### Create Fit Model States buttons
-    # statesToFitButtons = widgets.ToggleButtons(description='Highest model to fit: ',options=statesArray)#,value=u' 3') #https://github.com/ipython/ipython/issues/6469
-    # #fit3sCheck = widgets.Checkbox(description='Fit 3 state model', value=True)
-    # #fit4sCheck = widgets.Checkbox(description='Fit 4 state model', value=False)
-    # #fit6sCheck = widgets.Checkbox(description='Fit 6 state model', value=False)
-    
-    # ### Create Checkboxes
-    # runSSAcheck = widgets.Checkbox(description='Characterise', value=True)
-    # useFitCheck = widgets.Checkbox(description='Use fit', value=False)
-    # plotExpData = widgets.Checkbox(description='Plot data: ', value=True)
-    
-    # ### Create Run Button
-    # runFitButton = widgets.Button(description="Fit!")
-    # runFitButton.on_click(onClickFitButton)
-    
-    # ### Create Fit Bar
-    # fitBar = widgets.HBox(children=[dataVar, dataLoad, statesToFitButtons, runSSAcheck, useFitCheck, plotExpData, runFitButton]) #fit3sCheck, fit4sCheck, fit6sCheck
-    # display(fitBar)
-    # fitBar.visible=False
-    
-    # ### Set formatting
-    # dataVar.width = '150px' #set_css({'width': '150px'})
-    # dataLoad.button_style = 'warning' #add_class('btn-warning')
-    # runFitButton.button_style = 'danger' #add_class('btn-danger')
-    # # Set Fit Bar formating after display
-    # fitBar.align = 'center'
-    
     
     ##### Run bar #####
     
