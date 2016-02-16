@@ -420,82 +420,9 @@ def loadGUI(IPythonWorkspace=None):
     
 
 
-
-    
-
     
     ### Utility functions 
-    # def getGUImodelParams(model):
-        # userParams = Parameters()
-        # mInd = statesDict[model] #statesDict[' '+str(nStates)]
-        # pSet = modelParams[modelList[mInd]]           
-        # i=0
-        # for key in pSet:  # Set of n-state model pararmeters
-            # userParams.add(key, value=pValArr[mInd][i].value)
-            # i+=1
-        # return userParams
 
-    # def setGUImodelParams(pSet,model):
-        # mInd = statesDict[model] #statesDict[' '+str(nStates)]
-        # i=0
-        # for key in pSet: #, value in pSet.items():
-            # pValArr[mInd][i].value = pSet[key].value
-            # i+=1
-        # return
-    
-    
-    # def getGUIsimParams(simulator):
-        # userParams = Parameters()
-        # sInd = simList.index(simulator) #simIndDict[simulator]
-        # pSet = simParams[simulator]
-        # #pluginInd = paramGroup.keys().index(plugin)
-        # i=0
-        # for param in pSet: #.keys():
-            # if isinstance(pSet[param].value, list): ################################## Change to not number!!!
-                # userParams.add(param, value=ast.literal_eval(sim_pValArr[sInd][i].value)) # or http://stackoverflow.com/questions/5387208/convert-a-string-to-an-array
-            # else:
-                # userParams.add(param, value=sim_pValArr[sInd][i].value)
-            # i+=1
-        # return userParams
-        
-    # def setGUIsimParams(pSet,simulator):
-        # sInd = simList.index(simulator) #simIndDict[simulator]
-        # i=0
-        # for param in pSet: #.keys(): #, value in pSet.items():
-            # if isinstance(pSet[param].value, list): ################################## Change to not number!!!
-                # sim_pValArr[sInd][i].value = str(pSet[param].value)
-            # else:
-                # sim_pValArr[sInd][i].value = pSet[param].value
-            # i+=1
-        # return
-        
-    
-    # def getGUIprotParams(protocol):
-        # userParams = Parameters()
-        # pInd = protList.index(protocol) #protIndDict[protocol]
-        # pSet = protParams[protocol]
-        # i=0
-        # for param in pSet: #.keys():
-            # if isinstance(pSet[param].value, list): ################################## Change to not number!!!
-                # userParams.add(param, value=ast.literal_eval(prot_pValArr[pInd][i].value)) # or http://stackoverflow.com/questions/5387208/convert-a-string-to-an-array
-            # else:
-                # userParams.add(param, value=prot_pValArr[pInd][i].value)
-            # i+=1
-        # return userParams
-        
-    # def setGUIprotParams(pSet,protocol):
-        # pInd = protList.index(protocol) #protIndDict[protocol]
-        # i=0
-        # for param in pSet: #.keys(): #, value in pSet.items():
-            # if isinstance(pSet[param].value, list): ################################## Change to not number!!!
-                # prot_pValArr[pInd][i].value = str(pSet[param].value)
-            # else:
-                # prot_pValArr[pInd][i].value = pSet[param].value
-            # i+=1
-        # return
-    
-
-    
     #getGUIparams(modelParams[model],pValArr[modelParams.keys().index(model)][:])
     #getGUIparams(simParams[simulator],sim_pValArr[simParams.keys().index(simulator)][:])
     #getGUIparams(protParams[protocol],prot_pValArr[protParams.keys().index(protocol)][:])
