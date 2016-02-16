@@ -5,7 +5,7 @@
 from __future__ import division # a/b -> float
 from __future__ import absolute_import, print_function, unicode_literals 
 
-
+#TODO
 #__all__ = ['config', 'utilities', 'parameters', 'loadData', 'models', 'protocols', 'simulators', 'fitting', 'IPythonGUI']
 
 __doc__ = """A Python module for fitting, characterising and simulating rhodopsin photocurrents"""
@@ -16,7 +16,7 @@ __project__ = 'pyrho'
 try:
     import os
     _dist = get_distribution(__project__)
-    distLoc = os.path.normcase(_dist.location) # Normalize case for Windows systems
+    distLoc = os.path.normcase(_dist.location) # Normalise case for Windows systems
     here = os.path.normcase(__file__)
     if not here.startswith(os.path.join(distLoc, __project__)): # not installed, but there is another version that *is*
         raise DistributionNotFound
@@ -53,13 +53,20 @@ if __name__ == '__main__':
         loadGUI()
 
         
-def runAll():
-    """Run all protocols with all simulators on all models!"""
+def runAll(listOfModels=[6]):
+    """Run all protocols with the Python simulator on a list of models with default parameters!
+    listOfModels    := individual or list of integers or strings 
+                        e.g. [3,4,6], 3, '4', ['4','6'], modelList
+    """
     
-    for model in modelList: #models: #nStates in [3,4,6]:
+    if not isinstance(listOfModels, (list, tuple)):
+        listOfModels = [listOfModels] # ints or strs
+    listOfModels = [str(m) for m in listOfModels]
+    
+    for model in listOfModels:
         ### Select generative model
         RhO = models[model]()
-        for prot in protocols: #protocol, init in protParams.items():
+        for prot in protocols:
             ### Select simulation protocol
             Prot = protocols[prot]()
             for sim in ['Python']:#simulators:
@@ -73,7 +80,7 @@ def runAll():
 
                 
 def printVersions():
-    ### Display version information
+    """Display version information for PyRhO and its dependencies"""
 
     import platform
     print("Python version: ", platform.python_version())
