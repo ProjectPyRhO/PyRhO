@@ -51,24 +51,7 @@ class Protocol(PyRhOobject): #object
         self.run += 1
         if self.run > self.nRuns:
             raise StopIteration
-        return self.getRunCycles(self.run - 1) #self.pulses#[self.run]
-    
-    '''
-    def setCycles(self, cycles, delD=None):
-        if delD is None:
-            delD = self.delD
-        else:
-            self.delD = delD
-        self.cycles = np.asarray(cycles, copy=True)
-        #self.cycles = np.asarray([[self.onD, self.totT-self.delD]])
-        self.nPulses = self.cycles.shape[0]
-        self.pulses, self.totT = cycles2times(self.cycles, self.delD)
-        self.delDs = np.array([row[0] for row in self.pulses], copy=True) # pulses[:,0]    # Delay Durations
-        #self.onDs = [row[1]-row[0] for row in self.pulses] # pulses[:,1] - pulses[:,0]   # Pulse Durations
-        #self.offDs = np.append(self.pulses[1:,0], self.totT) - self.pulses[:,1]
-        self.onDs = np.array(self.cycles[:,0])
-        self.offDs = np.array(self.cycles[:,1])
-    '''
+        return self.getRunCycles(self.run - 1)
     
     def prepare(self):
         """Function to set-up additional variables and make parameters consistent after any changes"""
@@ -114,108 +97,7 @@ class Protocol(PyRhOobject): #object
         pass
     
     def getRunCycles(self, run):
-        #return times2cycles(self.pulses, self.totT)
-        return (self.cycles, self.delD) #self.delDs[run]
-    
-    '''    
-    def run(self, Sim, RhO, verbose=verbose): 
-        """Main routine to run the simulation protocol"""
-        
-        t0 = wallTime() #time.perf_counter()
-        self.prepare()
-        self.dt = Sim.prepare(self.getShortestPeriod())
-        
-        if verbose > 0:
-            print("\n================================================================================")
-            print("Running '{}' protocol with {} for the {}-state model... ".format(self.protocol, Sim.simulator, RhO.nStates))
-            print("================================================================================\n")
-            print("{{nRuns={}, nPhis={}, nVs={}}}".format(self.nRuns, self.nPhis, self.nVs))
-        
-        
-        #Sim.prepare(min(self.onDs)/10)
-        self.RhO = RhO
-        self.Sim = Sim
-
-        self.PD = ProtocolData(self.protocol, self.nRuns, self.phis, self.Vs)
-        self.PD.peak_ = [[[None for v in range(self.nVs)] for p in range(self.nPhis)] for r in range(self.nRuns)]
-        self.PD.ss_ = [[[None for v in range(self.nVs)] for p in range(self.nPhis)] for r in range(self.nRuns)]
-        if hasattr(self, 'runLabels'):
-            self.PD.runLabels = self.runLabels
-        
-        if verbose > 1: 
-            self.printParams()
-        
-        # Loop over the number of runs...             ### Place within V & phi loops to test protocols at different V & phi?
-        for run in range(self.nRuns):
-            
-            cycles, delD = self.getRunCycles(run)
-            pulses, totT = cycles2times(cycles, delD)
-            
-            # Loop over light intensity...
-            for phiInd, phiOn in enumerate(self.phis): 
-                
-                if verbose > 1 and (self.nPhis > 1 or (run == 0 and phiInd == 0)): # len(phis)>0
-                    #print(RhO.phi); print(type(RhO.phi))
-                    RhO.dispRates()
-                
-                # Loop over clamp voltage ### N.B. solution variables are not currently dependent on V
-                for vInd, V in enumerate(self.Vs): 
-                    
-                    if self.squarePulse: #protocol in squarePulses: ##### Change after changing 'custom'
-                        #phi_t = InterpolatedUnivariateSpline([pStart,pEnd],[phiOn,phiOn], k=1, ext=1) 
-                        #I_RhO,t,soln = Sim.runTrial(RhO, self.nPulses, V,phiOn,delD,onD,offD,padD,dt,verbose)
-                        #cycles, delD = self.getRunCycles(run)
-                        #cycles, delD = times2cycles(self.pulses,self.totT)
-                        I_RhO, t, soln = Sim.runTrial(RhO, phiOn, V, delD, cycles, self.dt, verbose) #self.totT, 
-                        
-                    else: # Arbitrary functions of time: phi(t)
-                        
-                        #phi_t = self.genPulse(run, phiOn, delD, onD)
-                        phi_ts = self.phi_ts[run][phiInd][:]
-                        #I_RhO,t,soln = Sim.runTrialPhi_t(RhO, V, phi_t, delD, onD, self.totT, dt, verbose)
-                        #runTrialPhi_t_new(self, RhO, phi_ts, V, delD, cycles, endT, dt, verbose=verbose):
-                        I_RhO, t, soln = Sim.runTrialPhi_t(RhO, phi_ts, V, delD, cycles, self.totT, self.dt, verbose)
-                        
-                    # Save simulation results
-                        # Change: Prot.pulses[run] := [[t_on1, t_off1],...]
-                    #pulses = np.array([[delD+(p*(onD+offD)),delD+(p*(onD+offD))+onD] for p in range(self.nPulses)]) #np.array([[delD,onD]])
-                    
-                    PC = PhotoCurrent(I_RhO, t, pulses, phiOn, V, self.protocol)
-                    #PC.alignToTime()
-
-                    PC.states = soln
-                    #self.data[run][phiInd][vInd] = PC
-                    #PD.trials.append(PC)
-                    self.PD.trials[run][phiInd][vInd] = PC
-                    self.PD.peak_[run][phiInd][vInd] = PC.peak_
-                    self.PD.ss_[run][phiInd][vInd] = PC.ss_
-                    
-                    # self.labels[run][phiInd][vInd] = label
-                    # label = ""
-                    if verbose > 1:
-                        #print('Run=#{}/{}; phiInd=#{}/{}; vInd=#{}/{}; Irange=[{:.3g},{:.3g}]; label=<{}>'.format(run,nRuns,phiInd,len(phis),vInd,len(Vs),PC.range_[0],PC.range_[1],label))
-                        print('Run=#{}/{}; phiInd=#{}/{}; vInd=#{}/{}; Irange=[{:.3g},{:.3g}]'.format(run,self.nRuns,phiInd,len(self.phis),vInd,len(self.Vs),PC.range_[0],PC.range_[1]))
-        
-        self.finish(PC, RhO) # Sim
-        
-        if self.saveData:
-            #from os import path
-            self.dataTag = str(RhO.nStates)+"s"
-            #pklFile = path.join(dDir, self.protocol+self.dataTag+".pkl")
-            #fh = open(pklFile,"wb")
-            #pickle.dump(self.PD, fh)
-            #fh.close()
-            saveData(self.PD, self.protocol+self.dataTag)
-            #if verbose > 0:
-            #    print("Protocol data saved to disk: {}".format(pklFile))
-        
-        self.runTime = wallTime() - t0 #time.perf_counter() - t0
-        if verbose > 0:
-            print("\nFinished '{}' protocol with {} for the {}-state model in {:.3g}s".format(self.protocol, Sim.simulator, RhO.nStates, self.runTime))
-            print("--------------------------------------------------------------------------------\n")
-            
-        return self.PD
-    '''
+        return (self.cycles, self.delD)
     
     def genPulseSet(self, genPulse=None):
         """Function to generate a set of spline functions to phi(t) simulations"""
@@ -227,9 +109,8 @@ class Protocol(PyRhOobject): #object
             pulses, totT = cycles2times(cycles, delD)
             for phiInd, phi in enumerate(self.phis):
                 for pInd, pulse in enumerate(pulses):
-                #for pulse, onD in enumerate(self.onDs):
-                    #onD, offD = cycles[pulse]
-                    phi_ts[run][phiInd][pInd] = genPulse(run, phi, pulse) #(run, phiOn, self.delDs[pulse], onD)
+
+                    phi_ts[run][phiInd][pInd] = genPulse(run, phi, pulse)
         self.phi_ts = phi_ts
         return phi_ts
     
@@ -242,10 +123,7 @@ class Protocol(PyRhOobject): #object
     
     ### Move fitPeaks and fitfV to fitting.py ###
     def fitPeaks(self, t_peaks, I_peaks, curveFunc, p0, eqString, fig=None):
-        #print(p0)
         shift = t_peaks[0] # ~ delD
-    #     if protocol == 'recovery':
-    #         plt.ylim(ax.get_ylim()) # Prevent automatic rescaling of y-axis
         popt, pcov = curve_fit(curveFunc, t_peaks-shift, I_peaks, p0=p0) #Needs ball-park guesses (0.3, 125, 0.5)
         peakEq = eqString.format(*[round_sig(p,3) for p in popt]) # *popt rounded to 3s.f.
         
@@ -279,94 +157,15 @@ class Protocol(PyRhOobject): #object
             else:
                 print("Covariance: {}".format(pcov))
         return popt, pcov, peakEq
-    
-    
-    # def calcIssfromfV(V,v0,v1,E):#,G): # Added E as another parameter to fit
-        # ##[s1s, s2s, s3s, s4s, s5s, s6s] = RhO.calcSteadyState(RhO.phiOn)
-        # ##psi = s3s + (RhO.gam * s4s) # Dimensionless
-        
-        # #E = RhO.E
-        # if type(V) != np.ndarray:
-            # V = np.array(V)
-        # fV = (1-np.exp(-(V-E)/v0))/((V-E)/v1) # Dimensionless #fV = abs((1 - exp(-v/v0))/v1) # Prevent signs cancelling
-        # fV[np.isnan(fV)] = v1/v0 # Fix the error when dividing by zero
-        # ##psi = RhO.calcPsi(RhO.steadyStates) ### This is not necessary for fitting!!!
-        # ##g_RhO = RhO.gbar * psi * fV # Conductance (pS * mu m^-2)
-        # ##I_ss = RhO.A * g_RhO * (V - E) # Photocurrent: (pS * mV)
-        # #I_ss = G * fV * (V-E)
-        # ##return I_ss * (1e-6) # 10^-12 * 10^-3 * 10^-6 (nA)
-        # return fV * (V - E)
-    
-    # def fitfV(self, Vs, Iss, curveFunc, p0, RhO, fig=None):#, eqString): =plt.gcf()
-        # if fig==None:
-            # fig=plt.gcf()
-        # markerSize=40
-        # eqString = r'$f(V) = \frac{{{v1:.3}}}{{V-{E:+.2f}}} \cdot \left[1-\exp\left({{-\frac{{V-{E:+.2f}}}{{{v0:.3}}}}}\right)\right]$'
-        # psi = RhO.calcPsi(RhO.steadyStates)
-        ##sf = RhO.A * RhO.gbar * psi * 1e-6 # Six-state only
-        # sf = RhO.g * psi * 1e-6 
-        # fVs = np.asarray(Iss)/sf # np.asarray is not needed for the six-state model!!!
-        # popt, pcov = curve_fit(curveFunc, Vs, fVs, p0=p0) # (curveFunc, Vs, Iss, p0=p0)
-        # pFit = [round_sig(p,3) for p in popt]
-        ##peakEq = eqString.format(pFit[0],pFit[2],pFit[2],pFit[1])
-        # peakEq = eqString.format(v1=pFit[0],E=pFit[2],v0=pFit[1])
-        
-        # Vrange = max(Vs)-min(Vs)
-        # xfit=np.linspace(min(Vs),max(Vs),Vrange/.1) #Prot.dt
-        # yfit=curveFunc(xfit,*popt)*sf
-        
-        ##peakEq = eqString.format(*[round_sig(p,3) for p in popt])
-        
-        # fig.plot(xfit,yfit)#,label=peakEq)#,linestyle=':', color='#aaaaaa')
-        ##col, = getLineProps(Prot, 0, 0, 0) #Prot, run, vInd, phiInd
-        ##plt.plot(Vs,Iss,linestyle='',marker='x',color=col)
-        # fig.scatter(Vs,Iss,marker='x',color=colours,s=markerSize)#,linestyle=''
-        
-        ##x = 1 #0.8*max(Vs)
-        ##y = 1.2*yfit[-1]#max(IssVals[run][phiInd][:])
-        ##plt.text(-0.8*min(Vs),y,peakEq,ha='right',va='bottom',fontsize=eqSize)#,transform=ax.transAxes)
-        
-        # if verbose > 1:
-            # print(peakEq)
-        # return popt, pcov, peakEq
-    
-    
-    
 
-
+        
+        
 
     def plot(self, plotStateVars=False):
         
-        Ifig = plt.figure() #plt.figure(figsize=(figWidth, figHeight))
+        Ifig = plt.figure()
         self.createLayout(Ifig)
-        #self.genLabels()
-        self.PD.plot(self.axI) #self.labels... #baseline, = axI.plot(t, I_RhO, color=col, linestyle=style, label=label)
-        ### Add legend    
-        # if label:
-            # if protocol == 'custom' or protocol == 'step' or protocol == 'rectifier':
-                # if len(self.Vs) == 1:
-                    # ncol = 1
-                # else:
-                    # ncol = len(self.phis)
-                # lgd = plt.legend(loc='best', borderaxespad=0, ncol=ncol, fancybox=True) #, shadow=True , bbox_to_anchor=(1.02, 1)
-            # else:
-                # lgd = plt.legend(loc='best')
-        #protPulses = self.getProtPulses()
-        
-        # if self.squarePulse:
-            # self.addStimulus = False
-        # if self.addStimulus:
-            # plotLight(protPulses, self.axI)
-            # for run in range(self.nRuns):
-                # for phiInd in range(self.nPhis):
-                    # self.plotStimulus(self.phi_ts[run][phiInd], protPulses, self.totT, self.axS, None) #if protocol == 'delta':
-        # else: # Create a separate stimulus figure
-            # for run in range(self.nRuns):
-                # for phiInd in range(self.nPhis):
-                    # stimFig = self.plotStimulus(self.phi_ts[run][phiInd], protPulses, self.totT, ax=None, light='spectral')
-            # if max(self.phis) / min(self.phis) >= 100:
-                # plt.yscale('log')
-        
+        self.PD.plot(self.axI)
         self.addAnnotations()
         self.plotExtras()
         
@@ -403,9 +202,7 @@ class Protocol(PyRhOobject): #object
         plt.tight_layout()
         
         externalLegend = False
-        #from os import path
         figName = os.path.join(fDir, self.protocol+self.dataTag+"."+config.saveFigFormat)
-        #plt.figure(Ifig.number)
         if externalLegend:
             Ifig.savefig(figName, bbox_extra_artists=(lgd,), bbox_inches='tight', format=config.saveFigFormat) # Use this to save figures when legend is beside the plot
         else:
@@ -453,82 +250,7 @@ class Protocol(PyRhOobject): #object
         plt.sca(self.axI)
         #plotLight(self.pulses, self.axI)
     
-    '''
-    def genLabels(self):
-        
-        self.labels = [[[None for v in range(self.nVs)] for p in range(self.nPhis)] for r in range(self.nRuns)]
-        figTitle = "Photocurrent through time "
-        if self.protocol == "shortPulse":
-            figTitle += "for varying pulse length "
-        elif self.protocol == "recovery":
-            figTitle += "for varying inter-pulse-interval "
-        else:
-            figTitle += "\n "
-        
-        if len(self.phis) == 1:
-            figTitle += "$\phi = {:.3g}\ \mathrm{{photons \cdot s^{{-1}} \cdot mm^{{-2}}}}$ ".format(phiOn)
-        if len(self.Vs) == 1:
-            figTitle += "$\mathrm{{V}} = {:+}\ \mathrm{{mV}}$ ".format(V) # v=Vclamp
-            
-        for run in range(self.nRuns): 
-            
-            cycles, delD = self.getRunCycles(run)
-            onD, offD = cycles[0]
-            pulses, totT = cycles2times(cycles, delD)
-            
-            for phiInd, phiOn in enumerate(self.phis):
-
-                for vInd, V in enumerate(self.Vs):
-                    if verbose > 1:
-                        print('Run=#{}/{}; phiInd=#{}/{}; vInd=#{}/{}'.format(run,self.nRuns,phiInd,len(self.phis),vInd,len(self.Vs)))
-                    
-                    #label = self.labels[run][phiInd][vInd]
-                    #label = ""
-                    
-                    if self.protocol == "shortPulse":
-                        label = "$\mathrm{{Pulse}}={}\mathrm{{ms}}$ ".format(cycles[0][0]) #onD
-                        #figTitle += "for varying pulse length "
-                    elif self.protocol == "recovery":
-                        label = "$\mathrm{{IPI}}={}\mathrm{{ms}}$ ".format(self.IPIs[run])
-                        #figTitle += "for varying inter-pulse-interval "
-                    elif self.protocol == 'sinusoid':
-                        label = "$f={}\mathrm{{Hz}}$ ".format(round_sig(self.fs[run],3))
-                    else:
-                        label = ""                        
-                        #figTitle += "\n "
-                        
-                    if len(self.phis) > 1:
-                        label += "$\phi = {:.3g}\ \mathrm{{photons \cdot s^{{-1}} \cdot mm^{{-2}}}}$ ".format(phiOn)
-                    #else:                    
-                        #figTitle += "$\phi = {:.3g}\ \mathrm{{photons \cdot s^{{-1}} \cdot mm^{{-2}}}}$ ".format(phiOn)
-                    
-                    if len(self.Vs) > 1:
-                        label += "$\mathrm{{V}} = {:+}\ \mathrm{{mV}}$ ".format(V) # v=Vclamp
-                    #else:
-                        #figTitle += "$\mathrm{{V}} = {:+}\ \mathrm{{mV}}$ ".format(V)
-                    
-                    self.labels[run][phiInd][vInd] = label
-                    
-        return figTitle    
     
-    
-    def genTitle(self):
-        figTitle = "Photocurrent through time "
-        if self.protocol == "shortPulse":
-            figTitle += "for varying pulse length \n"
-        elif self.protocol == "recovery":
-            figTitle += "for varying inter-pulse-interval "
-        else:
-            figTitle += "\n "
-        
-        if len(self.phis) == 1:
-            figTitle += "$\phi = {:.3g}\ \mathrm{{photons \cdot s^{{-1}} \cdot mm^{{-2}}}}$ ".format(self.phis[0])
-        if len(self.Vs) == 1:
-            figTitle += "$\mathrm{{v}} = {:+}\ \mathrm{{mV}}$ ".format(self.Vs[0])
-        
-        return figTitle
-    '''
-
     def getLineProps(self, run, vInd, phiInd):
         
         if verbose > 1 and (self.nRuns>len(colours) or len(self.phis)>len(colours) or len(self.Vs)>len(colours)):
@@ -573,10 +295,8 @@ class Protocol(PyRhOobject): #object
         
         nPulses = pulses.shape[0]
         assert(nPulses == len(phi_ts))
-        #t = np.linspace(0,totT,10*int(round(totT/self.dt))+1) #10001) # 
-        #t = np.linspace(begT,endT,10*int(round(endT-begT/self.dt))+1)
         nPoints = 10*int(round(endT-begT/self.dt))+1
-        t = np.linspace(begT, endT, nPoints) #100001
+        t = np.linspace(begT, endT, nPoints)
         
         if ax == None:
             #fig = plt.figure()    
@@ -594,16 +314,13 @@ class Protocol(PyRhOobject): #object
             for p in range(nPulses):
                 plt.plot(t, phi_ts[p](t), color=col, linestyle=style)
 
-                
         if light == 'spectral':
             plotLight(pulses, ax=ax, light='spectral', lam=self.lam)
         else:
             plotLight(pulses, ax=ax, light=light)
         
         plt.xlabel('$\mathrm{Time\ [ms]}$') #(r'\textbf{Time} [ms]')
-        #plt.xlim((0,totT))
         plt.xlim((begT,endT))
-        #plt.ylabel('$\mathrm{\phi\ [photons \cdot mm^{-2} \cdot s^{-1}]}$')
         plt.ylabel('$\mathrm{\phi\ [ph./mm^{2}/s]}$')
         
         return ax
@@ -673,7 +390,7 @@ class protCustom(Protocol):
     phi_ft = None
     
     def extraPrep(self):
-        'Function to set-up additional variables and make parameters consistent after any changes'
+        '''Function to set-up additional variables and make parameters consistent after any changes'''
         self.nRuns = 1 #nRuns ### Reconsider this...
         
         #self.custPulseGenerator = self.phi_ft
@@ -713,13 +430,13 @@ class protCustom(Protocol):
     
     def plotExtras(self):
         pass
-        
+
+
 class protStep(Protocol):
     # Heaviside Pulse
     protocol = 'step'
     squarePulse = True
     nRuns = 1
-    
 
     def extraPrep(self):
         'Function to set-up additional variables and make parameters consistent after any changes'
@@ -728,14 +445,6 @@ class protStep(Protocol):
         
         self.phi_ts = self.genPulseSet()
         #self.genPulseSet()
-   
-   # def phi_t(t):
-        # for row in self.nPulses:
-            # if t > self.pulses[0] and t < self.pulses[1]:
-                # return 1
-            # else:
-                # return 0
-                
     
     def addAnnotations(self):
         self.axI.get_xaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
@@ -788,18 +497,6 @@ class protSinusoid(Protocol):
             phi_t = InterpolatedUnivariateSpline(pStart + t, self.phi0[run] + 0.5*phi*(1-np.cos(self.ws[run]*t)), ext=1, k=5) # phi0[r]
         
         return phi_t
-    
-    '''
-    def getPhiFunc_orig(self, run, phiOn, delD, onD):
-        pStart, pEnd = delD, (delD+onD)
-        t = np.linspace(0.0, onD, (onD*self.sr/1000)+1, endpoint=True) # Create smooth series of time points to interpolate between
-        if self.startOn:
-            phi_t = InterpolatedUnivariateSpline(pStart + t, self.phi0[0] + 0.5*phiOn*(1+np.cos(self.ws[run]*t)), ext=1) # phi0[r]
-        else:
-            phi_t = InterpolatedUnivariateSpline(pStart + t, self.phi0[0] + 0.5*phiOn*(1-np.cos(self.ws[run]*t)), ext=1) # phi0[r]
-        
-        return phi_t
-    '''    
     
     def createLayout(self, Ifig=None, vInd=0):
     
@@ -968,8 +665,9 @@ class protSinusoid(Protocol):
                 plt.ylabel('$f^*\ \mathrm{[Hz]}$')
                 if config.addTitles:
                     plt.title('$f^*\ vs.\ \phi_1(t).\ \mathrm{{Background\ illumination:}}\ \phi_0(t)={:.3g}$'.format(self.phi0[0]))
-            
-        
+
+#TODO: Finish Dual Tone protocol
+'''        
 class protDualTone(Protocol):
     # http://uk.mathworks.com/products/demos/signaltlbx/dtmf/dtmfdemo.html
     # http://dspguru.com/sites/dspguru/files/Sum_of_Two_Sinusoids.pdf
@@ -1011,7 +709,7 @@ class protDualTone(Protocol):
         self.phi_ts = self.genPulseSet()
 
         self.runLabels = ["$\omega={}\mathrm{{rads/ms}}$ ".format(round_sig(w,3)) for w in self.ws]
-        
+'''        
 
 
 class protChirp(Protocol):
@@ -1021,26 +719,14 @@ class protChirp(Protocol):
     
     def extraPrep(self):
         'Function to set-up additional variables and make parameters consistent after any changes'
-    
-        #self.fs = np.sort(np.array(self.fs)) # Frequencies [Hz] 
-        #self.ws = 2 * np.pi * self.fs / (1000) # Frequencies [rads/ms] (scaled from /s to /ms
-        #self.sr = min([1000/(10*max(self.fs)), self.dt]) # Nyquist frequency - sampling rate (10*f) >= 2*f
-        #self.sr = min([(1000)/(100*self.fT), self.dt]) # Nyquist frequency - sampling rate (10*f) >= 2*f
-        #self.dt = Sim.prepare(self.getShortestPeriod())
         
-        #self.sr = max([(10)*max(self.f0,self.fT), 1000/self.dt]) # Nyquist frequency - sampling rate (10*f) >= 2*f
         self.sr = max(10000, int(round(10 * max(self.f0, self.fT)))) # Nyquist frequency - sampling rate (10*f) >= 2*f
-        #self.dt = 1000/self.sr # Set by simulator but used for plotting
-        #print(self.sr,self.dt)
         self.nRuns = 1 #len(self.ws)
         self.cycles = np.column_stack((self.onDs,self.offDs))
-        #self.padDs = np.zeros(self.nRuns)
-        
         #ws = 2 * np.pi * np.logspace(-4,10,num=7) # Frequencies [rads/s]
-        #self.nRuns = len(freqs)
+        
         if (1000)/self.f0 > min(self.onDs): #1/10**self.fs[0] > self.totT:
             warnings.warn('Warning: The period of the lowest frequency is longer than the stimulation time!')
-            #print('Warning: The period of the lowest frequency is longer than the total simulation time!')
         
         if isinstance(self.phi0, (int, float, complex)):
             self.phi0 = np.ones(self.nRuns) * self.phi0
@@ -1071,23 +757,6 @@ class protChirp(Protocol):
         else:
             phi_t = InterpolatedUnivariateSpline(pStart + t, self.phi0[run] + 0.5*phi*(1-np.cos(ft*t)), ext=1, k=5)
         return phi_t
-    
-    '''    
-    def getPhiFunc_orig(self, run, phiOn, delD, onD):
-        pStart, pEnd = delD, (delD+onD)
-        t = np.linspace(0.0, onD, (onD*self.sr/1000)+1, endpoint=True) # Create smooth series of time points to interpolate between
-        if self.linear:
-            ft = self.f0 + (self.fT-self.f0)*(t/pEnd)
-        else: # Exponential sweep
-            ft = self.f0 * (self.fT/self.f0)**(t/pEnd)
-        ft /= 1000 # Convert to frequency in ms
-        if self.startOn:
-            phi_t = InterpolatedUnivariateSpline(pStart + t, self.phi0[0] + 0.5*phiOn*(1+np.cos(ft*t)), ext=1)
-        else:
-            phi_t = InterpolatedUnivariateSpline(pStart + t, self.phi0[0] + 0.5*phiOn*(1-np.cos(ft*t)), ext=1)
-        
-        return phi_t        
-    '''
     
     def createLayout(self, Ifig=None, vInd=0):
     
@@ -1122,8 +791,6 @@ class protChirp(Protocol):
             pc = self.PD.trials[0][0][0]
             for p in range(self.nPulses):
                 pStart, pEnd = self.PD.trials[0][0][0].pulses[p]
-                #pEnd = self.onDs[p]
-                #delD = self.delDs[p]
                 onD = pEnd - pStart
                 nPoints = 10*int(round(onD/self.dt))+1 # 10001
                 tsmooth = np.linspace(0, onD, nPoints)
@@ -1132,7 +799,6 @@ class protChirp(Protocol):
                     ft = self.f0 + (self.fT-self.f0)*(tsmooth/onD)
                 else: # Exponential
                     ft = self.f0 * (self.fT/self.f0)**(tsmooth/onD)
-                #print(ft)
                 self.axF.plot(tsmooth+pStart, ft, 'g')
             self.axF.set_ylabel('$f\ \mathrm{[Hz]}$')
         else:
@@ -1152,11 +818,7 @@ class protRamp(Protocol):
         'Function to set-up additional variables and make parameters consistent after any changes'
         self.nRuns = 1 #nRuns # Make len(phi_ton)?
         self.cycles = np.column_stack((self.onDs,self.offDs))
-        #self.cycles=np.tile(np.column_stack((self.onDs,self.offDs)),(self.nRuns,1))
-        #self.padDs = np.zeros(self.nRuns)
-        
-        self.phi_ts = self.genPulseSet()# [[[None for pulse in range(self.nPulses)] for phi in range(self.nPhis)] for run in range(self.nRuns)]
-        
+        self.phi_ts = self.genPulseSet()
     
     def createLayout(self, Ifig=None, vInd=0):
     
@@ -1194,14 +856,7 @@ class protRamp(Protocol):
         pStart, pEnd = pulse
         phi_t = InterpolatedUnivariateSpline([pStart, pEnd], [self.phi0, self.phi0+phi], k=1, ext=1) #self.phi_ton
         return phi_t
-    
-    """
-    def getPhiFunc_orig(self, run, phiOn, delD, onD):
-        pStart, pEnd = delD, (delD+onD)
-        phi_t = InterpolatedUnivariateSpline([pStart,pEnd], [self.phi_ton,phiOn], k=1, ext=1) #[start,delD,end,totT], [0,self.phi_ton,phiOn,0] 
-        #phi_t = InterpolatedUnivariateSpline(pStart + t, self.phi_ton + phiOn*(t/onD), k=1, ext=1) #[start,delD,end,totT], [0,self.phi_ton,phiOn,0] 
-        return phi_t
-    """
+
         
 class protDelta(Protocol): 
     # One very short, saturation intensity pulse e.g. 10 ns @ 100 mW*mm^-2 for wild type ChR
@@ -1555,8 +1210,6 @@ class protRectifier(Protocol):
         #plt.xlim((min(Vs),max(Vs)))
         #ax.set_ylabel('$I_{ss}$ $\mathrm{[nA]}$', position=(0.55,0.05)) # Shared axis
         
-        
-        
         self.axI.grid(b=True, which='minor', axis='both', linewidth=.2)
         self.axI.grid(b=True, which='major', axis='both', linewidth=1)
         
@@ -1681,7 +1334,8 @@ class protShortPulse(Protocol):
         self.axPeak.set_xlim(0,tmax)
         self.axPeak.set_xlabel('$\mathrm{Pulse\ duration\ [ms]}$')
         self.axPeak.set_ylabel('$\mathrm{Photocurrent\ peak\ [nA]}$')
-        
+
+
 class protRecovery(Protocol):
     # Vary Inter-Pulse-Interval
     protocol = 'recovery'
@@ -1701,27 +1355,20 @@ class protRecovery(Protocol):
         self.delDs = np.ones(self.nRuns)*self.delD
         self.onDs = np.ones(self.nRuns)*self.onD
         self.offDs = self.IPIs
-        ##cycles=np.column_stack((onD*np.ones(len(IPIs)),[IPI-onD for IPI in IPIs])) # [:,0] = on phase duration; [:,1] = off phase duration
-        #cycles=np.column_stack((onD*np.ones(len(IPIs)),[IPI for IPI in IPIs]))
-        self.cycles = np.column_stack((self.onDs, self.offDs))
+        self.cycles = np.column_stack((self.onDs, self.offDs)) # [:,0] = on phase duration; [:,1] = off phase duration
         
         self.pulses, _ = cycles2times(self.cycles, self.delD)
         self.runCycles = np.zeros((self.nPulses, 2, self.nRuns))
         for run in range(self.nRuns):
             self.runCycles[:,:,run] = np.asarray([[self.onDs[run],self.offDs[run]],[self.onDs[run],self.offDs[run]]])
-        #padDs = [totT-((onD+pOff)*nPulses)-delD for pOff in cycles[:,1]] # Not necessary
         
-        #self.padDs = np.zeros(self.nRuns); self.padDs[-1] = -0.8*max(self.cycles[:,1])
-        #self.totT = self.delD+self.nPulses*max(self.IPIs) -0.8*max(self.cycles[:,1]) # Total simulation time per run [ms] ### Should IPI be one pulse cycle or time between end/start of two pulses?
         self.begT = 0
         self.endT = self.totT
         IPIminD = max(self.delDs) + (2*max(self.onDs)) + max(self.IPIs)
         if self.endT < IPIminD:
             warnings.warn("Insufficient run time for all stimulation periods!")
         else:
-            #self.cycles[:,1] = self.totT - IPIminD
             self.runCycles[-1,1,:] = self.totT - IPIminD
-            
         
         self.IpIPI = np.zeros(self.nRuns) #peaks
         self.tpIPI = np.zeros(self.nRuns) #tPeaks
@@ -1736,16 +1383,11 @@ class protRecovery(Protocol):
         self.Vs.sort(reverse=True)
         self.nVs = len(self.Vs)
         
-        #self.protPulses = self.getProtPulses()
-        
         self.phi_ts = self.genPulseSet()
-
         self.runLabels = ["$\mathrm{{IPI}}={}\mathrm{{ms}}$ ".format(IPI) for IPI in self.IPIs]
         
 
     def getRunCycles(self, run):
-        #return np.asarray([[self.onDs[run],self.offDs[run]],[self.onDs[run],self.offDs[run]-self.padDs[run]]]), self.delDs[run]
-        #return np.asarray([[self.onDs[run],self.offDs[run]],[self.onDs[run],self.offDs[run]]]), self.delDs[run]
         return self.runCycles[:,:,run], self.delDs[run]
     
     def finish(self, PC, RhO):
@@ -1777,24 +1419,9 @@ class protRecovery(Protocol):
             #popt = fitPeaks(tPeaks, peaks, expDecay, p0IPI, '$I_{{peaks}} = {:.3}e^{{-t/{:g}}} {:+.3}$')
             #print("tau_R = {} ==> rate_R = {}".format(popt[1],1/popt[1]))
 
-    '''
-    def createLayout(self, Ifig=None, vInd=0):
-    
-        if Ifig == None:
-            Ifig = plt.figure()
-        
-        self.addStimulus = config.addStimulus
-        #phi_ts = self.genPlottingStimuli()
-        
-        # Default layout
-        self.axI = Ifig.add_subplot(111)
-        #plt.sca(self.axI)
-        #plotLight(self.pulses, self.axI)
-    '''
-        
-    def addAnnotations(self):
-    
 
+    def addAnnotations(self):
+        
         # Freeze axis limits
         ymin, ymax = plt.ylim()
         pos = 0.02 * abs(ymax-ymin)
@@ -1872,7 +1499,6 @@ def selectProtocol(protocol, params=None, saveData=True):
             return protocols[protocol](params=protParams[protocol], saveData=saveData)
     else:
         raise NotImplementedError(protocol)
-        #print("Error in selecting protocol - please choose from 'custom', 'delta', 'rectifier', 'shortPulse' or 'recovery'")
         
 
 ### Protocols to be included in the next version:
