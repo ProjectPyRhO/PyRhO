@@ -1,3 +1,5 @@
+#TODO: Refactor the whole GUI! 
+
 #from IPython.html.widgets import interact
 #from IPython.html import widgets # IPython < 4
 
@@ -47,7 +49,6 @@ import copy
 #np.set_printoptions(precision=6)
 #pprint()
 
-#%run -i models.py
 
 # Create lists and dictionaries of titles
 modelTitles = ['Three-state model', 'Four-state model', 'Six-state model']
@@ -84,7 +85,7 @@ boolDict = OrderedDict([('True',True), ('False',False)])
 
 
 
-### To Do: Replace GUI with object oriented code...
+### TODO: Replace GUI with object oriented code...
 class ParamWidgets(object):
     """Common base class for all sets of parameter widgets"""
     
@@ -556,7 +557,6 @@ def loadGUI(IPythonWorkspace=None):
     def runModel(model, protocol, simulator='Python', saveData=True, verbose=1): #verboseSlide.value
         """Main GUI function to create protocol, simulator and rhdopsin objects, set parameters, run and plot"""
         
-        
         #verbose = verbose
         #nStates = int(model)
         # print("\nRunning Protocol '{}' on the {}-state model...".format(protocol,nStates))
@@ -598,11 +598,11 @@ def loadGUI(IPythonWorkspace=None):
         # print('================================================================================\n\n')
         
         return #Prot, RhO
-        
-        
-        
-
-        
+    
+    
+    
+    
+    
     
     ##### Fit Bar #####
     
@@ -993,59 +993,6 @@ def loadGUI(IPythonWorkspace=None):
                 pfBoxArr[m][i] = widgets.HBox(children=[pfLabArr[m][i],fVaryArr[m][i],pfMinArr[m][i],pfValArr[m][i],pfMaxArr[m][i],spacer,fExprArr[m][i]], align='center')
             i+=1
         
-        # figHTML[m] = widgets.HTML()
-        # eqBox[m] = widgets.Latex()
-        # if int(statesArray[m]) == 3: # m==0
-            # figHTML[m].value = '<img src="3-state-model.png" alt="Three state model" width=150>'
-            # eqBox[m].value = """
-                    # $$\\dot{C} = G_rD - \\epsilon F C$$
-                    # $$\\dot{O} = \epsilon FC -G_{d}O$$
-                    # $$\\dot{D} = G_{d}O-G_{r}D$$
-                    # $$C+O+D=1$$
-                    # $$\\epsilon F = \\phi\\frac{\\epsilon \\sigma_{ret}}{w_{loss}} = k\\phi$$
-                    # $$G_r = G_{r0} + G_{r1}(\\phi)$$
-                    # $$I_{\\phi} = g O (v-E)$$
-                    # """ #$$ $$
-                    # #G_r = G_{r,d} + \\mathcal{H}(\\phi) \\cdot G_{r,l}
-                    # #I_{\\phi} = \\bar{g} O \\cdot (v-E)
-        # elif int(statesArray[m]) == 4: # m==1
-            # figHTML[m].value = '<img src="4-state-model.png" alt="Four state model" width=180>' #width=200>'
-            # eqBox[m].value = """
-                    # $$\\dot{C_1} = G_rC_2 + G_{d1}O_1 - G_{a1}(\\phi)C_1$$
-                    # $$\\dot{O_1} = G_{a1}(\\phi)C_1 - (G_{d1}+e_{12}(\\phi))O_1 + e_{21}(\\phi)O_2$$
-                    # $$\\dot{O_2} = G_{a2}(\\phi)C_2 + e_{12}(\\phi)O_1 - (G_{d2}+e_{21}(\\phi))O_2$$
-                    # $$\\dot{C_2} = G_{d2}O_2 - (G_{a2}(\\phi)+G_r)C_2$$
-                    # $$C_1+O_1+O_2+C_2=1$$
-                    # $$$$
-                    # $$G_{a1}(\\phi) = k_1\\frac{\\phi^p}{\\phi^p + \\phi_m^p}$$
-                    # $$G_{a2}(\\phi) = k_2\\frac{\\phi^p}{\\phi^p + \\phi_m^p}$$
-                    # $$e_{12}(\\phi) = e_{12, d} + c_1 log(1+\\phi / \\phi_0)$$
-                    # $$e_{21}(\\phi) = e_{21, d} + c_2 log(1+\\phi / \\phi_0)$$
-                    # $$$$
-                    # $$I_{\\phi} = g (O_1+\\gamma O_2) (v-E)$$
-                    # """ #\\frac{\\phi}{\\phi_0}
-                    # #$$G_{a1}(\\phi) = \\phi\\frac{\\epsilon_1 \\sigma_{ret}}{w_{loss}} = k_1\\phi$$
-                    # #$$G_{a2}(\\phi) = \\phi\\frac{\\epsilon_2 \\sigma_{ret}}{w_{loss}} = k_2\\phi$$
-        # else: #int(statesArray[m]) == 6:
-            # #figHTML[m].value = '<img src="http://link.springer.com/static-content/images/46/art%253A10.1007%252Fs10827-012-0431-7/MediaObjects/10827_2012_431_Fig1_HTML.gif" width=220>'
-            # figHTML[m].value = '<img src="6-state-model.gif" alt="Six state model" width=220>'
-            # eqBox[m].value = """
-                    # $$\\dot{C_1} = -a_1(\\phi)C_1 + b_1O_1 + a_6C_2$$
-                    # $$\dot{I_1} = a_1(\\phi)C_1 - a_2I_1$$
-                    # $$\\dot{O_1} = a_2I_1 - (b_1 + a_3(\\phi))O_1 + b_2(\\phi)O_2$$
-                    # $$\\dot{O_2} = a_3(\\phi)O_1 - (b_2(\\phi) + a_4)O_2 + b_3I_2$$
-                    # $$\dot{I_2} = -b_3I_2 + b_4(\\phi)C_2$$
-                    # $$\\dot{C_2} = a_4O_2 - (b_4(\\phi)+a_6)C_2$$
-                    # $$C_1+I_1+O_1+O_2+I_2+C_2=1$$
-                    # $$$$
-                    # $$a_1(\\phi) = a_{10}(\\phi / \\phi_0)$$
-                    # $$a_3(\\phi) = a_{30} + a_{31} \\ln(1 + \\phi / \\phi_0)$$
-                    # $$b_2(\\phi) = b_{20} + b_{21} \\ln(1 + \\phi / \\phi_0)$$
-                    # $$b_4(\\phi) = b_{40} (\\phi / \\phi_0)$$
-                    # $$$$
-                    # $$f(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1}$$
-                    # $$I_{\\phi} = g (O_1+\\gamma O_2) f(v)(v-E)$$
-                    # """
         modelFitParamBoxes[m] = widgets.VBox(children=pfBoxArr[m]) #Box
         #modelFitNotesBoxes[m] = widgets.HBox(children=[])#[figHTML[m],eqBox[m]])
         
@@ -1147,69 +1094,18 @@ def loadGUI(IPythonWorkspace=None):
             #figHTML[m].value = '<img src="3state_model.png" alt="Three state model" width=150>'
             figHTML[m].value = '<img src="{}{}state_model.png" alt="{}-state model" width=150>'.format(guiFigDir, statesArray[m], stateLabs[statesArray[m]])
             eqBox[m].value = models[model].equations
-                    #"""
-                    #$$\\dot{C} = G_{r}(\\phi)D - P(\\phi)C$$
-                    #$$\\dot{O} = P(\\phi)C - G_{d}O$$
-                    #$$\\dot{D} = G_{d}O - G_{r}(\\phi)D$$
-                    #$$C+O+D=1$$
-                    #$$P(\\phi) = k\\frac{\\phi^p}{\\phi^p + \\phi_m^p}$$
-                    #$$G_r = G_{r0} + G_{r1}(\\phi)$$
-                    #$$f(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1}$$
-                    #$$I_{\\phi} = g O f(v) (v-E)$$
-                    #""" #$$ $$
-                    #G_r = G_{r,d} + \\mathcal{H}(\\phi) \\cdot G_{r,l}
-                    #I_{\\phi} = \\bar{g} O \\cdot (v-E)
-                    #\\epsilon F
-                    #$$P = \\phi\\frac{\\epsilon \\sigma_{ret}}{w_{loss}} = k\\phi$$
+            
         elif int(statesArray[m]) == 4: # m==1
             #figHTML[m].value = '<img src="4state_model.png" alt="Four state model" width=180>' #width=200>'
             figHTML[m].value = '<img src="{}{}state_model.png" alt="{}-state model" width=180>'.format(guiFigDir, statesArray[m], stateLabs[statesArray[m]])
             eqBox[m].value = models[model].equations
-                    #"""
-                    #$$\\dot{C_1} = G_rC_2 + G_{d1}O_1 - G_{a1}(\\phi)C_1$$
-                    #$$\\dot{O_1} = G_{a1}(\\phi)C_1 - (G_{d1}+e_{12}(\\phi))O_1 + e_{21}(\\phi)O_2$$
-                    #$$\\dot{O_2} = G_{a2}(\\phi)C_2 + e_{12}(\\phi)O_1 - (G_{d2}+e_{21}(\\phi))O_2$$
-                    #$$\\dot{C_2} = G_{d2}O_2 - (G_{a2}(\\phi)+G_r)C_2$$
-                    #$$C_1+O_1+O_2+C_2=1$$
-                    #$$$$
-                    #$$G_{a1}(\\phi) = k_1\\frac{\\phi^p}{\\phi^p + \\phi_m^p}$$
-                    #$$G_{a2}(\\phi) = k_2\\frac{\\phi^p}{\\phi^p + \\phi_m^p}$$
-                    #$$e_{12}(\\phi) = e_{12, d} + c_1 \\frac{\\phi^q}{\\phi^q + \\phi_m^q}$$
-                    #$$e_{21}(\\phi) = e_{21, d} + c_2 \\frac{\\phi^q}{\\phi^q + \\phi_m^q}$$
-                    #$$$$
-                    #$$f(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1}$$
-                    #$$I_{\\phi} = g (O_1+\\gamma O_2) f(v) (v-E)$$
-                    #""" #\\frac{\\phi}{\\phi_0}
-                    #$$G_{a1}(\\phi) = \\phi\\frac{\\epsilon_1 \\sigma_{ret}}{w_{loss}} = k_1\\phi$$
-                    #$$G_{a2}(\\phi) = \\phi\\frac{\\epsilon_2 \\sigma_{ret}}{w_{loss}} = k_2\\phi$$
-                    #$$e_{12}(\\phi) = e_{12, d} + c_1 log(1+\\phi / \\phi_0)$$
-                    #$$e_{21}(\\phi) = e_{21, d} + c_2 log(1+\\phi / \\phi_0)$$
+            
         else: #int(statesArray[m]) == 6:
             #figHTML[m].value = '<img src="http://link.springer.com/static-content/images/46/art%253A10.1007%252Fs10827-012-0431-7/MediaObjects/10827_2012_431_Fig1_HTML.gif" width=220>'
             #figHTML[m].value = '<img src="6state_model.png" alt="Six state model" width=210>'
             figHTML[m].value = '<img src="{}{}state_model.png" alt="{}-state model" width=210>'.format(guiFigDir, statesArray[m], stateLabs[statesArray[m]])
             eqBox[m].value = models[model].equations
-                    #"""
-                    #$$\\dot{C_1} = -a_1(\\phi)C_1 + b_1O_1 + a_6C_2$$
-                    #$$\dot{I_1} = a_1(\\phi)C_1 - a_2I_1$$
-                    #$$\\dot{O_1} = a_2I_1 - (b_1 + a_3(\\phi))O_1 + b_2(\\phi)O_2$$
-                    #$$\\dot{O_2} = a_3(\\phi)O_1 - (b_2(\\phi) + a_4)O_2 + b_3I_2$$
-                    #$$\dot{I_2} = -b_3I_2 + b_4(\\phi)C_2$$
-                    #$$\\dot{C_2} = a_4O_2 - (b_4(\\phi)+a_6)C_2$$
-                    #$$C_1+I_1+O_1+O_2+I_2+C_2=1$$
-                    #$$$$
-                    #$$a_1(\\phi) = a_{10} \\frac{\\phi^p}{\\phi^p + \\phi_m^p}$$
-                    #$$a_3(\\phi) = a_{30} + a_{31} \\frac{\\phi^q}{\\phi^q + \\phi_m^q}$$
-                    #$$b_2(\\phi) = b_{20} + b_{21} \\frac{\\phi^q}{\\phi^q + \\phi_m^q}$$
-                    #$$b_4(\\phi) = b_{40} \\frac{\\phi^p}{\\phi^p + \\phi_m^p}$$
-                    #$$$$
-                    #$$f(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1}$$
-                    #$$I_{\\phi} = g (O_1+\\gamma O_2) f(v)(v-E)$$
-                    #"""
-                    #$$a_1(\\phi) = a_{10}(\\phi / \\phi_0)$$
-                    #$$a_3(\\phi) = a_{30} + a_{31} \\ln(1 + \\phi / \\phi_0)$$
-                    #$$b_2(\\phi) = b_{20} + b_{21} \\ln(1 + \\phi / \\phi_0)$$
-                    #$$b_4(\\phi) = b_{40} (\\phi / \\phi_0)$$
+            
         modelParamBoxes[m] = widgets.Box(children=pBoxArr[m])
         modelNotesBoxes[m] = widgets.HBox(children=[figHTML[m],eqBox[m]])
         #modelNotesBoxes[m].add_class('box-flex1')
@@ -1220,10 +1116,10 @@ def loadGUI(IPythonWorkspace=None):
     ### Linked parameters
     #E_Link = link((stateButtons, 'value'), (statesToFitButtons, 'value'))
     
-        
-
     
-
+    
+    
+    
     def onChangeModelTab(change): #(name,value):
         stateButtons.value = statesArray[change['new']] #[value] #' '+str(value)
     modelParamsTabs = widgets.Tab(description='Parameter Settings', children=modelBoxes, values=statesArray)
