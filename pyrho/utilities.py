@@ -386,58 +386,6 @@ def round_sig(x, sig=3):
     else:
         return round(x, sig-int(np.floor(np.log10(abs(x))))-1)
 
-
-# def calcIssfromfV(V,v0,v1,E):#,G): # Added E as another parameter to fit # ==> Fv() := fv()*(V-E)
-    # ##[s1s, s2s, s3s, s4s, s5s, s6s] = RhO.calcSteadyState(RhO.phiOn)
-    # ##psi = s3s + (RhO.gam * s4s) # Dimensionless
-    
-    # #E = RhO.E
-    # if type(V) != np.ndarray:
-        # V = np.array(V)
-    # fV = (1-np.exp(-(V-E)/v0))/((V-E)/v1) # Dimensionless #fV = abs((1 - exp(-v/v0))/v1) # Prevent signs cancelling
-    # fV[np.isnan(fV)] = v1/v0 # Fix the error when dividing by zero
-    # ##psi = RhO.calcPsi(RhO.steadyStates) ### This is not necessary for fitting!!!
-    # ##g_RhO = RhO.gbar * psi * fV # Conductance (pS * mu m^-2)
-    # ##I_ss = RhO.A * g_RhO * (V - E) # Photocurrent: (pS * mV)
-    # #I_ss = G * fV * (V-E)
-    # ##return I_ss * (1e-6) # 10^-12 * 10^-3 * 10^-6 (nA)
-    # return fV * (V - E)
-    
-# def fitfV(Vs, Iss, curveFunc, p0, RhO, fig=None):#, eqString): =plt.gcf()
-    # if fig==None:
-        # fig=plt.gcf()
-    # markerSize=40
-    # eqString = r'$f(V) = \frac{{{:.3}}}{{V-{:+.2f}}} \cdot \left[1-\exp\left({{-\frac{{V-{:+.2f}}}{{{:.3}}}}}\right)\right]$'
-    # psi = RhO.calcPsi(RhO.steadyStates)
-    # #sf = RhO.A * RhO.gbar * psi * 1e-6 # Six-state only
-    # sf = RhO.g * psi * 1e-6 
-    # fVs = np.asarray(Iss)/sf # np.asarray is not needed for the six-state model!!!
-    # popt, pcov = curve_fit(curveFunc, Vs, fVs, p0=p0) # (curveFunc, Vs, Iss, p0=p0)
-    # pFit = [round_sig(p,3) for p in popt]
-    # peakEq = eqString.format(pFit[0],pFit[2],pFit[2],pFit[1])
-    
-    # Vrange = max(Vs)-min(Vs)
-    # xfit=np.linspace(min(Vs),max(Vs),Vrange/.1) #Prot.dt
-    # yfit=curveFunc(xfit,*popt)*sf
-    
-    # #peakEq = eqString.format(*[round_sig(p,3) for p in popt])
-    
-    # fig.plot(xfit,yfit)#,label=peakEq)#,linestyle=':', color='#aaaaaa')
-    # #col, = getLineProps(Prot, 0, 0, 0) #Prot, run, vInd, phiInd
-    # #plt.plot(Vs,Iss,linestyle='',marker='x',color=col)
-    # fig.scatter(Vs,Iss,marker='x',color=colours,s=markerSize)#,linestyle=''
-    
-    # # x = 1 #0.8*max(Vs)
-    # # y = 1.2*yfit[-1]#max(IssVals[run][phiInd][:])
-    # # plt.text(-0.8*min(Vs),y,peakEq,ha='right',va='bottom',fontsize=eqSize)#,transform=ax.transAxes)
-    
-    # if verbose:
-        # print(peakEq)
-    # return popt, pcov, peakEq
-
-
-
-
 def expDecay(t, a, b, c):
     return a * np.exp(-t/b) + c
 
@@ -446,46 +394,6 @@ def biExpDecay(t, a1, tau1, a2, tau2, I_ss):
 
 def biExpSum(t, a1, tau1, a2, tau2, I_ss):
     return a0 + a1*(1-np.exp(-t/tau_act)) + a2*np.exp(-t/tau_deact)
-    
-# def fitPeaks(t_peaks, I_peaks, curveFunc, p0, eqString, fig=None):
-    
-    # shift = t_peaks[0] # ~ delD
-# #     if protocol == 'recovery':
-# #         plt.ylim(ax.get_ylim()) # Prevent automatic rescaling of y-axis
-    # popt, pcov = curve_fit(curveFunc, t_peaks-shift, I_peaks, p0=p0) #Needs ball-park guesses (0.3, 125, 0.5)
-    # peakEq = eqString.format(*[round_sig(p,3) for p in popt]) # *popt rounded to 3s.f.
-    
-    # if fig:
-        # plt.figure(fig.number) # Select figure
-# #     ext = 10 # Extend for ext ms either side
-# #     xspan = t_peaks[-1] - t_peaks[0] + 2*ext 
-# #     xfit=np.linspace(t_peaks[0]-ext-shift,t_peaks[-1]+ext-shift,xspan/dt)
-        # plt.plot(t_peaks, I_peaks, linestyle='', color='r', marker='*')
-        # xfit=np.linspace(-shift,Prot.totT-shift,Prot.totT/Prot.dt) #totT
-        # yfit=curveFunc(xfit,*popt)
-        
-        # plt.plot(xfit+shift,yfit,linestyle=':',color='#aaaaaa')#,label="$v={:+} \mathrm{{mV}}$, $\phi={:.3g}$".format(V,phiOn))
-        # #ylower = copysign(1.0,I_peaks.min())*ceil(abs((I_peaks.min()*10**ceil(abs(log10(abs(I_peaks.min())))))))/10**ceil(abs(log10(abs(I_peaks.min()))))
-        # #yupper = copysign(1.0,I_peaks.max())*ceil(abs((I_peaks.max()*10**ceil(abs(log10(abs(I_peaks.max())))))))/10**ceil(abs(log10(abs(I_peaks.max()))))
-    # #     if (len(Vs) == 1) and (len(phis) == 1) and (nRuns == 1):
-    # #         x, y = 0.8, 0.9
-    # #     else:
-        # x = 0.8
-        # y = yfit[-1] #popt[2]
-        
-        # plt.text(x*Prot.totT,y,peakEq,ha='center',va='bottom',fontsize=eqSize) #, transform=ax.transAxes)
-    
-    # print(peakEq)
-    # if verbose > 1:
-        # print("Parameters: {}".format(popt))
-        # if type(pcov) in (tuple, list):
-            # print("$\sigma$: {}".format(np.sqrt(pcov.diagonal())))
-        # else:
-            # print("Covariance: {}".format(pcov))
-    # return popt, pcov, peakEq
-
-
-
 
 def findPeaks(I_phi,startInd=0,extOrder=5): # Revise this to take care of V<>E 
 # findPeaks(I_phi,minmax,startInd=0,extOrder=5)
