@@ -8,11 +8,9 @@ from pyrho.config import * #verbose
 from pyrho import config
 import numpy as np
 import warnings
-#from os import path
 import os
 import copy
 
-#from brian2 import *
 
 class Simulator(PyRhOobject): #object
     """Common base class for all simulators"""
@@ -127,53 +125,7 @@ class Simulator(PyRhOobject): #object
     def plot(self):
         self.Prot.plot()
         self.plotExtras()
-    
-    """
-    def plot(self, plotStateVars=False):
-        
-        Prot = self.Prot
-        Ifig = plt.figure() #plt.figure(figsize=(figWidth, figHeight))
-        Prot.createLayout(Ifig)
-        #self.genLabels()
-        Prot.PD.plot(Prot.axI) #self.labels... #baseline, = axI.plot(t, I_RhO, color=col, linestyle=style, label=label)
 
-        protPulses = Prot.getProtPulses()
-        
-        Prot.addAnnotations()
-        Prot.plotExtras()
-        
-        Prot.plotStateVars = plotStateVars
-        
-        #animateStates = True # https://jakevdp.github.io/blog/2013/05/28/a-simple-animation-the-magic-triangle/
-        if Prot.plotStateVars: 
-            RhO = self.RhO
-            for run in range(Prot.nRuns):
-                #cycles, delD = self.getRunCycles(run)
-                #pulses, totT = cycles2times(cycles, delD)
-                for phiInd, phi in enumerate(Prot.phis):
-                    for vInd in range(Prot.nVs):
-                        pc = self.PD.trials[run][phiInd][vInd]
-                        fileName = '{}States{}s-{}-{}-{}'.format(self.protocol,RhO.nStates,run,phiInd,vInd)#; print(fileName)
-                        RhO.plotStates(pc.t, pc.states, pc.pulses, RhO.stateLabels, phi, pc.peakInds_, fileName)
-        
-        plt.figure(Ifig.number)
-        plt.sca(Prot.axI)
-        Prot.axI.set_xlim(Prot.PD.begT, Prot.PD.endT)
-
-        #plt.show()
-        plt.tight_layout()
-        
-        externalLegend = False
-        figName = os.path.join(fDir, self.protocol+self.dataTag+"."+config.saveFigFormat)
-        #plt.figure(Ifig.number)
-        if externalLegend:
-            Ifig.savefig(figName, bbox_extra_artists=(lgd,), bbox_inches='tight', format=config.saveFigFormat) # Use this to save figures when legend is beside the plot
-        else:
-            Ifig.savefig(figName, format=config.saveFigFormat)
-        
-        return #Ifig.number
-    """
-        
     def plotExtras(self):
         pass
         
@@ -424,7 +376,8 @@ class simNEURON(Simulator):
             self.dt = self.h.dt
         
         if verbose > 0:
-            print('Integrator tolerances: absolute=',self.h.cvode.atol(),' relative=',self.h.cvode.rtol()) ### Set as parameters
+            print('Integrator tolerances: absolute=',self.h.cvode.atol(),
+                                        ' relative=',self.h.cvode.rtol()) ### Set as parameters
         #self.h.cvode.atol(0.000001)
         #self.h.cvode.rtol(0.000001)
         
@@ -459,7 +412,6 @@ class simNEURON(Simulator):
         #unref all the cell objects
         self.h("forall delete_section()")
         for sec in self.h.allsec():
-            #self.h("%s{delete_section()}"%sec.name())
             self.h("{}{{delete_section()}}".format(sec.name()))
         #self.h('objectref compList')
         #self.h('objectref rhoList')
@@ -470,8 +422,7 @@ class simNEURON(Simulator):
         #pc.done()
         return
 
-    # self.dt should point to self.h.dt
-    
+
     def prepare(self, Prot):
         """Function to prepare the simulator according to the protocol and rhodopsin"""
         Prot.prepare()
@@ -1284,12 +1235,10 @@ class simBrian(Simulator):
     def plotVm(self, Vmonitor, times=None, totT=None, offset=0, figName=None): ### REVISE!!!
         Prot = self.Prot
         RhO = self.RhO
-        #delD = Prot.delD
-        #if not self.Vclamp:
         Vfig = plt.figure()
         axV = Vfig.add_subplot(111)
         Vm = Vmonitor.variables[self.varV].get_value() * 1000 # Convert to mV ### HACK #self.monitors['V']
-        t = Vmonitor.t/ms - offset #delD
+        t = Vmonitor.t/ms - offset
         #times -= offset # Do not edit in place or it causes errors in subsequent functions!
         plt.plot(t, Vm, 'g')
         plotLight(times - offset, axV)
@@ -1407,9 +1356,6 @@ class simBrian(Simulator):
             
             if times is not None:
                 plotLight(times - offset, axes[lay])
-                #for pulse in times:
-                #    print(pulse)
-                #    axes[lay].axvspan(pulse[0], pulse[1], facecolor='y', alpha=0.2)
             
             axes[lay].set_ylim((0, len(spikeMonitors[gInd].spike_trains())))
             axes[lay].set_xlim((-offset, totT - offset))
