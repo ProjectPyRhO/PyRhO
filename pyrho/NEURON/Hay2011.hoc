@@ -1,7 +1,0 @@
-
-load_file("nrngui.hoc")
-load_file("import3d.hoc")
-load_file("models/L5PCbiophys3.hoc")
-load_file("models/L5PCtemplate.hoc")
-objref cell //L5PC
-cell = new L5PCtemplate("morphologies/cell1.asc")
