@@ -10,5 +10,16 @@ Optogenetics has become a key tool for understanding the function of neural circ
 If you use PyRhO please cite our paper: "PyRhO: A Multiscale Optogenetics Simulation Platform"
 
 
-# https://github.com/pypa/sampleproject
-# https://python-packaging-user-guide.readthedocs.org/en/latest/distributing.html
+Installation
+------------
+
+To install PyRhO from Github (including the GUI) use the command:
+```bash
+pip install git+https://github.com/ProjectPyRhO/PyRhO.git#egg=PyRhO[full]
+```
+
+If you wish to use NEURON as a simulator, this has to be compiled from source to work with Python 3. A shell script is provided which may be called after importing PyRhO with the following function:
+```python
+from pyrho import *
+setupNEURON('/installation/path/for/NEURON/')
+```
