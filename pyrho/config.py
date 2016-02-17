@@ -60,11 +60,17 @@ if 'fDir' not in vars() or 'fDir' not in globals() or fDir is None:
     fDir = 'figs/'
     createDir(fDir)
 
+GUIdir = 'gui'
 def setupGUI(path=None):
     if path is None: # Copy image folders to home directory
-        path = os.getcwd()
-    createDir('gui')
-    # ...
+        path = os.path.join(os.getcwd(), GUIdir)
+        
+    createDir(path)
+    pyrhoGUIpath = os.path.join(pyrhoPath, GUIdir)
+    pngFiles = [f for f in os.listdir(pyrhoGUIpath) if f.endswith('.png')]
+    for f in pngFiles:
+        shutil.copy2(os.path.join(pyrhoGUIpath, f), path)
+    
     return
     
 def simAvailable(sim):

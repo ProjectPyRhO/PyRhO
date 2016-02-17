@@ -20,12 +20,13 @@ from pyrho.simulators import *
 from pyrho.protocols import *
 from pyrho.loadData import *
 from pyrho.fitting import *
-from pyrho.config import dDir # For dataSet loading
+from pyrho.config import GUIdir, setupGUI, dDir # For dataSet loading
 from pyrho.utilities import *
 import warnings
 import time
 from collections import OrderedDict
 import os.path
+import os
 import ast
 import copy
 
@@ -211,6 +212,10 @@ class ParamWidgets(object):
     
 
 def loadGUI(IPythonWorkspace=None):
+    
+    path = os.path.join(os.getcwd(), GUIdir)
+    if not os.path.isdir(path):
+        setupGUI(path)
     
     if IPythonWorkspace is None:
         pass
