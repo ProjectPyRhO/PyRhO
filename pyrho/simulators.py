@@ -349,7 +349,7 @@ class simNEURON(Simulator):
         self.Prot = Prot
         self.RhO = RhO
         
-        
+        import copy
         from neuron import h
         #self.neuron = neuron
         self.h = h
@@ -393,7 +393,9 @@ class simNEURON(Simulator):
         self.buildCell(params['cell'].value)
         self.h.topology() # Print topology
         self.transduce(self.RhO, expProb=params['expProb'].value)
-        self.setRhodopsinParams(self.rhoList, self.RhO, modelParams[str(self.RhO.nStates)])
+        self.rhoParams = copy.deepcopy(modelParams[str(self.RhO.nStates)])
+        self.RhO.exportParams(self.rhoParams)
+        self.setOpsinParams(self.rhoList, self.rhoParams) #self.RhO, modelParams[str(self.RhO.nStates)])
         
         self.rhoRec = self.rhoList[recInd] # Choose a rhodopsin to record
         self.setRecords(self.rhoRec, params['Vcomp'].value, self.RhO)
@@ -496,12 +498,12 @@ class simNEURON(Simulator):
                 self.rhoList.append(self.h.rho)
     
     ### Set Rhodopsin parameters
-    def setRhodopsinParams(self, rhoList, RhO, pSet): #compList
+    def setOpsinParams(self, rhoList, pSet): #compList
         for rho in rhoList:     # not self.rhoList so that subsets can be passed
             for p in pSet:
                 setattr(rho, p, pSet[p].value)
         
-    def getRhodopsinParams():
+    def getOpsinParams(self):
         # Use nrnpython to set Python variables from within hoc?
         pass
     
