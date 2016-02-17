@@ -169,7 +169,7 @@ def setupNEURON(path=None, NEURONpath=None):
             print("NMODL compilation returned", retcode) #, file=sys.stderr)
     except OSError as e:
         print('NMODL Compilation failed: ', e, file=sys.stderr)
-        print('Try setting the NEURON directory as an environment variable or passing it as the NEURONpath argument.'
+        print('Try setting the NEURON directory as an environment variable or passing it as the NEURONpath argument.')
     return
     
 def checkBrian(test=False):
