@@ -94,7 +94,11 @@ def checkNEURON(test=False):
             print('NEURON module not found!')
     return found
     
-def setupNEURON(path=None):
+def setupNEURON(path=None, NEURONpath=None):
+    """Setup the NEURON simulator to work with PyRhO
+        path        := Path to working directory containing hoc and mod files (default=pwd)
+        NEURONpath  := Path to NEURON directory containing nrn (and iv)"""
+        
     cwd = os.getcwd()
     if not checkNEURON():   # Check for a working NEURON installation...
         if sys.platform == 'win32':
@@ -143,10 +147,15 @@ def setupNEURON(path=None):
         #for f in HOCfiles:
         #    shutil.copy2(pyrhoNEURONpath, path, f)
     
+    
     nrnivmodl = shutil.which('nrnivmodl')
     if nrnivmodl is None:
         arch = platform.machine()
-        nrnivmodl = os.path.join(path, "nrn", arch, "bin", "nrnivmodl") # Should this be another variable?
+        if NEURONpath is not None:
+            nrnivmodl = os.path.join(NEURONpath, "nrn", arch, "bin", "nrnivmodl")
+        else:
+            nrnivmodl = os.path.join(path, "nrn", arch, "bin", "nrnivmodl") # Try the hoc/mod path
+    
     print('Compiling mod files with ', nrnivmodl)
     try:
         cwd = os.getcwd()
@@ -160,6 +169,7 @@ def setupNEURON(path=None):
             print("NMODL compilation returned", retcode) #, file=sys.stderr)
     except OSError as e:
         print('NMODL Compilation failed: ', e, file=sys.stderr)
+        print('Try setting the NEURON directory as an environment variable or passing it as the NEURONpath argument.'
     return
     
 def checkBrian(test=False):
