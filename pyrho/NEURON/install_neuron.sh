@@ -75,6 +75,7 @@ case $OS in # if [[ "OS" == "Linux" ]]; then
 		# See here for more details on linear algebra libraries: http://docs.scipy.org/doc/numpy-1.10.1/user/install.html
 		# http://docs.scipy.org/doc/scipy/reference/tutorial/linalg.html
 		# Alternative Fortran compiler: g77. Do not mix compilers! Check compiler with ldd /usr/lib/{libblas.so.3,liblapack.so.3}
+		# TODO: Add option to compile LA library from source for optimal performance
 
 		# NEURON requires Python 2.7 (3 will not work)
 		sudo apt-get install python3-setuptools python3-pip
