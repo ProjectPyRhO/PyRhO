@@ -420,82 +420,9 @@ def loadGUI(IPythonWorkspace=None):
     
 
 
-
-    
-
     
     ### Utility functions 
-    # def getGUImodelParams(model):
-        # userParams = Parameters()
-        # mInd = statesDict[model] #statesDict[' '+str(nStates)]
-        # pSet = modelParams[modelList[mInd]]           
-        # i=0
-        # for key in pSet:  # Set of n-state model pararmeters
-            # userParams.add(key, value=pValArr[mInd][i].value)
-            # i+=1
-        # return userParams
 
-    # def setGUImodelParams(pSet,model):
-        # mInd = statesDict[model] #statesDict[' '+str(nStates)]
-        # i=0
-        # for key in pSet: #, value in pSet.items():
-            # pValArr[mInd][i].value = pSet[key].value
-            # i+=1
-        # return
-    
-    
-    # def getGUIsimParams(simulator):
-        # userParams = Parameters()
-        # sInd = simList.index(simulator) #simIndDict[simulator]
-        # pSet = simParams[simulator]
-        # #pluginInd = paramGroup.keys().index(plugin)
-        # i=0
-        # for param in pSet: #.keys():
-            # if isinstance(pSet[param].value, list): ################################## Change to not number!!!
-                # userParams.add(param, value=ast.literal_eval(sim_pValArr[sInd][i].value)) # or http://stackoverflow.com/questions/5387208/convert-a-string-to-an-array
-            # else:
-                # userParams.add(param, value=sim_pValArr[sInd][i].value)
-            # i+=1
-        # return userParams
-        
-    # def setGUIsimParams(pSet,simulator):
-        # sInd = simList.index(simulator) #simIndDict[simulator]
-        # i=0
-        # for param in pSet: #.keys(): #, value in pSet.items():
-            # if isinstance(pSet[param].value, list): ################################## Change to not number!!!
-                # sim_pValArr[sInd][i].value = str(pSet[param].value)
-            # else:
-                # sim_pValArr[sInd][i].value = pSet[param].value
-            # i+=1
-        # return
-        
-    
-    # def getGUIprotParams(protocol):
-        # userParams = Parameters()
-        # pInd = protList.index(protocol) #protIndDict[protocol]
-        # pSet = protParams[protocol]
-        # i=0
-        # for param in pSet: #.keys():
-            # if isinstance(pSet[param].value, list): ################################## Change to not number!!!
-                # userParams.add(param, value=ast.literal_eval(prot_pValArr[pInd][i].value)) # or http://stackoverflow.com/questions/5387208/convert-a-string-to-an-array
-            # else:
-                # userParams.add(param, value=prot_pValArr[pInd][i].value)
-            # i+=1
-        # return userParams
-        
-    # def setGUIprotParams(pSet,protocol):
-        # pInd = protList.index(protocol) #protIndDict[protocol]
-        # i=0
-        # for param in pSet: #.keys(): #, value in pSet.items():
-            # if isinstance(pSet[param].value, list): ################################## Change to not number!!!
-                # prot_pValArr[pInd][i].value = str(pSet[param].value)
-            # else:
-                # prot_pValArr[pInd][i].value = pSet[param].value
-            # i+=1
-        # return
-    
-
-    
     #getGUIparams(modelParams[model],pValArr[modelParams.keys().index(model)][:])
     #getGUIparams(simParams[simulator],sim_pValArr[simParams.keys().index(simulator)][:])
     #getGUIparams(protParams[protocol],prot_pValArr[protParams.keys().index(protocol)][:])
@@ -599,49 +526,7 @@ def loadGUI(IPythonWorkspace=None):
         
         return #Prot, RhO
     
-    
-    
-    
-    
-    
-    ##### Fit Bar #####
-    
-    # ### Create Fit Bar toggle
-    # fitButton = widgets.ToggleButton(description='Fit data', value=False)
-    # fitButton.on_trait_change(fitToggle,'value') #paramsButton.get_state()
 
-    # ### Create Data set entry
-    # dataVar = widgets.Text(description='Data Set: ',placeholder='<variable name>')
-    # dataLoad = widgets.Button(description='Load')
-    # dataLoad.on_click(onDataLoad)
-    
-    # ### Create Fit Model States buttons
-    # statesToFitButtons = widgets.ToggleButtons(description='Highest model to fit: ',options=statesArray)#,value=u' 3') #https://github.com/ipython/ipython/issues/6469
-    # #fit3sCheck = widgets.Checkbox(description='Fit 3 state model', value=True)
-    # #fit4sCheck = widgets.Checkbox(description='Fit 4 state model', value=False)
-    # #fit6sCheck = widgets.Checkbox(description='Fit 6 state model', value=False)
-    
-    # ### Create Checkboxes
-    # runSSAcheck = widgets.Checkbox(description='Characterise', value=True)
-    # useFitCheck = widgets.Checkbox(description='Use fit', value=False)
-    # plotExpData = widgets.Checkbox(description='Plot data: ', value=True)
-    
-    # ### Create Run Button
-    # runFitButton = widgets.Button(description="Fit!")
-    # runFitButton.on_click(onClickFitButton)
-    
-    # ### Create Fit Bar
-    # fitBar = widgets.HBox(children=[dataVar, dataLoad, statesToFitButtons, runSSAcheck, useFitCheck, plotExpData, runFitButton]) #fit3sCheck, fit4sCheck, fit6sCheck
-    # display(fitBar)
-    # fitBar.visible=False
-    
-    # ### Set formatting
-    # dataVar.width = '150px' #set_css({'width': '150px'})
-    # dataLoad.button_style = 'warning' #add_class('btn-warning')
-    # runFitButton.button_style = 'danger' #add_class('btn-danger')
-    # # Set Fit Bar formating after display
-    # fitBar.align = 'center'
-    
     
     ##### Run bar #####
     
