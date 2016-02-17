@@ -1,16 +1,10 @@
 """The PyRhO package setup script"""
 
-# See: 
-# https://github.com/pypa/sampleproject
-# https://python-packaging-user-guide.readthedocs.org/en/latest/distributing.html
-
-
-from __future__ import print_function       # Added for Python 2.x support
+from __future__ import print_function       # Added for (eventual) Python 2.x support
 from setuptools import setup, find_packages  # Always prefer setuptools over distutils
 from codecs import open  # To use a consistent encoding
 #from os import path
 import os
-
 
 
 # Download and install setuptools if not installed
@@ -30,7 +24,6 @@ prwd = os.path.join(home, 'pyrho') # pyrho working directory
 with open(os.path.join(here, 'DESCRIPTION.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
-    
 #cwd=os.getcwd()
 
 # Directories
@@ -59,7 +52,7 @@ setup(
     long_description=long_description,
 
     # The project's main homepage.
-    url='https://github.com/bdevans/pyrho', 
+    url='https://github.com/ProjectPyRhO/PyRhO', 
 
     # Author details
     author='Benjamin D. Evans',
@@ -90,7 +83,7 @@ setup(
 
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
-        'Programming Language :: Python',                                           ### Necessary?
+        'Programming Language :: Python',
         #'Programming Language :: Python :: 2',
         #'Programming Language :: Python :: 2.6',
         #'Programming Language :: Python :: 2.7',
@@ -100,7 +93,7 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         
-        'Framework :: IPython',                                                     ### Appropriate?
+        'Framework :: IPython',
         'Natural Language :: English',
         'Operating System :: OS Independent',
     ],
@@ -119,11 +112,7 @@ setup(
     # project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['sphinx>=1.3', 'numpy>=1.8', 'scipy>=0.15', 'matplotlib>=1.3', 'lmfit>=0.9', 'ipython>=4.1', 'brian2'], 
-    #install_requires=['sphinx', 'numpy', 'scipy', 'matplotlib', 'lmfit', 'jupyter'],
-    #install_requires=['sphinx', 'numpy>=1.9', 'scipy>=0.16', 'matplotlib>=1.4', 'lmfit>=0.8', 'jupyter>=4'],
-    # Developed with: Python 3.4.2_1 IPython 2.3.0_1 Numpy 1.9.1_0 Scipy 0.14.0_0 Matplotlib 1.4.2_0
-    
+    install_requires=['numpy>=1.8', 'scipy>=0.15', 'matplotlib>=1.3', 'lmfit>=0.9', 'ipython>=4.1', 'brian2'], #'sphinx>=1.3', 
     
     # List additional groups of dependencies here (e.g. development dependencies).
     # You can install these using the following syntax, for example:
