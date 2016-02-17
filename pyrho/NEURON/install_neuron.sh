@@ -3,21 +3,20 @@ set -e # exit on any error
 
 ##### NEURON installation script for Debian Linux (Ubuntu) / OSX #####
 
-# To Do
+# TODO
 # Add exports to profile
 # Ascertain correct version of xorg-server
 
-useRepo=true #true
-freshTar=true #false
-Ndir=${1:-"$HOME/NEURON"} #"/home/bevans/NEURON" 
-#pyVer=${2:-"3"}
-NRNver=${2:-"nrn-7.4"} #"nrn-7.3"
-IVver=${3:-"iv-19"} #"iv-18"
+useRepo=true
+freshTar=true
+Ndir=${1:-"$HOME/NEURON"} # e.g. "/home/username/NEURON" 
+NRNver=${2:-"nrn-7.4"}
+IVver=${3:-"iv-19"}
 NRNv="v7.4"
-
 IVdir="iv"
 NRNdir="nrn"
 pyVer="python3" #"dynamic" # http://www.neuron.yale.edu/phpbb/viewtopic.php?f=6&t=3386
+#pyVer=${2:-"3"} # Allow choice of Python version when backported
 
 if [[ -L $0 ]] ; then
 	setupDir=$(dirname $(readlink -f $0)) ;
@@ -33,25 +32,6 @@ if [[ ! -d "${Ndir}" ]]; then
 	mkdir ${Ndir}
 	#cp $setupDir/mk_hocusr_h.py ${Ndir}
 fi
-
-
-# sudo chmod a+rx /usr/local/lib/python3.4/dist-packages/pyrho/NEURON/*
-# sudo chown brain:brain NEURON
-
-# sudo pip3 install host/PyRhO
-# sudo ipython kernelspec install-self
-# sudo ipython3 kernelspec install-self
-# sudo pip3 install --pre brian2
-# sudo pip3 install --no-deps --ignore-installed host/PyRhO
-
-# sudo apt-get remove nrn
-
-# Run after script
-# sudo chown -R brain:brain NEURON
-
-# sudo chmod -R a+rx /usr/local/lib/python3.4/dist-packages/pyrho/NEURON # For setupNEURON()
-# sudo chmod -R a+rx /usr/local/lib/python3.4/dist-packages/pyrho/gui
-
 
 
 # Linux (Ubuntu) notes
@@ -91,7 +71,10 @@ case $OS in # if [[ "OS" == "Linux" ]]; then
 		fi
 		#sudo apt-get install git git-man git-doc git-gui gitweb
 		#sudo apt-get install python-setuptools python-setuptools-doc python-virtualenv python-pip 
-		sudo apt-get install gfortran liblapack-dev libblas-dev libatlas-dev # Fortran compiler for scientific stack i.e. building scipy with pip3. Alternatively just install scipy, numpy and matplotlib
+		sudo apt-get install gcc gfortran liblapack-dev libblas-dev libatlas-dev # Fortran compiler for scientific stack i.e. building scipy with pip3. Alternatively just install scipy, numpy and matplotlib
+		# See here for more details on linear algebra libraries: http://docs.scipy.org/doc/numpy-1.10.1/user/install.html
+		# http://docs.scipy.org/doc/scipy/reference/tutorial/linalg.html
+		# Alternative Fortran compiler: g77. Do not mix compilers! Check compiler with ldd /usr/lib/{libblas.so.3,liblapack.so.3}
 
 		# NEURON requires Python 2.7 (3 will not work)
 		sudo apt-get install python3-setuptools python3-pip
@@ -191,7 +174,6 @@ case $OS in
 		hg clone http://www.neuron.yale.edu/hg/neuron/iv
 		# Change the prefixes for configure when building from hg repo
 	else
-		
 		if [[ ! -a $IVver.tar.gz ]]; then
 			wget http://www.neuron.yale.edu/ftp/neuron/versions/$NRNv/$IVver.tar.gz
 		fi
@@ -286,7 +268,6 @@ if [[ "${useRepo}" == false ]] ; then #[[ ! -d "${NRNdir}" || "${freshTar}" == t
 		mv $NRNver $NRNdir
 	fi	
 fi
-
 
 
 # mv $NRNver.tar.gz iv # Rerun with this change carried through
@@ -385,6 +366,3 @@ cd $Ndir
 
 ### Download and Compile mod files ###
 # nrnivmodl
-
-
-
