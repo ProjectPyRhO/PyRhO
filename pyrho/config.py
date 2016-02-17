@@ -33,7 +33,7 @@ NMODLfiles = ['RhO3c.mod', 'RhO4c.mod', 'RhO6c.mod'] #['RhO3.mod', 'RhO4.mod', '
 #HOCfiles = glob.glob("*.hoc")
 HOCfiles = [h for h in os.listdir(pyrhoNEURONpath) if h.endswith('.hoc')]
 #NMODLfilesIncPath = [os.path.join(pyrhoNEURONpath, f) for f in NMODLfiles]
-
+NEURONinstallScript = 'install_neuron.sh'
 
 ##### Output level settings #####
 global verbose
@@ -112,11 +112,16 @@ def setupNEURON(path=None, NEURONpath=None):
             return
         else:
             try:
+                if NEURONpath is None:
+                    print("Please specify an installation path for NEURON with 'NEURONpath' and run again")
+                    return
                 #NEURONscriptPath = os.path.join(home, 'NEURON')
-                NEURONscriptPath = pyrhoNEURONpath
-                exitcode = subprocess.call(['install_neuron.sh', NEURONscriptPath]) # shell=True # .check_call
+                #NEURONscriptPath = pyrhoNEURONpath
+                NEURONscriptIncPath = os.path.join(pyrhoNEURONpath, NEURONinstallScript)
+                exitcode = subprocess.call([NEURONscriptIncPath, NEURONpath]) # shell=True # .check_call
             except:
-                print('Unable to install NEURON - please install manually.')
+                shutil.copy2(os.path.join(NEURONscriptPath, NEURONinstallScript), cwd)
+                print('Unable to install NEURON - please install manually with the script copied to {}.'.format(cwd))
     
     ### To load mod files:
     # Add os.environ['NRN_NMODL_PATH'] to environment variables. See $NEURONPATH/nrn/lib/python/neuron/__init__.py
