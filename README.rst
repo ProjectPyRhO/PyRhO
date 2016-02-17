@@ -15,11 +15,11 @@ To install PyRhO from Github (including the GUI) use the command:
 ::
     pip install git+https://github.com/ProjectPyRhO/PyRhO.git#egg=PyRhO[full]
 
-
 Currently PyRhO only supports Python 3. To use PyRhO with the `NEURON simulator <http://www.neuron.yale.edu/neuron/>`_, NEURON must be compiled from its source code so that it works with Python 3. An installation script is provided for doing this on Mac OS X or Linux.  
 The shell script may be called after importing PyRhO with the following function:
 ::
     from pyrho import *
     setupNEURON('/installation/path/for/NEURON/')
+This will attempt to compile NEURON from source, copy the supplied hoc and mod files into place (the working directory by default) and then compile the rhodopsin mod files ready for inclusion in simulations. 
 
 The `Brian simulator <http://briansimulator.org/>`_ is included with the PyRhO installation for modelling networks of optogenetically transfected spiking neurons. 
