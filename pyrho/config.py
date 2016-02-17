@@ -128,14 +128,14 @@ def setupNEURON(path=None, NEURONpath=None):
     if path is None:
         try:
             path = os.environ['NRN_NMODL_PATH']
-            print("Using path from 'NRN_NMODL_PATH' for hoc & nmodl files: ")
+            print("Using path from 'NRN_NMODL_PATH' for hoc & nmodl files: ", end='')
         except KeyError:
             path = cwd
             os.environ['NRN_NMODL_PATH'] = path
             #os.putenv(key, value) # Direct assignment is preferable
-            print('Using current directory for hoc & nmodl files: ')
+            print('Using current directory for hoc & nmodl files: ', end='')
     else:
-        print("Using suplied path for hoc & nmodl files: ")
+        print("Using suplied path for hoc & nmodl files: ", end='')
     print(path)
         
     # mod files should be compiled in the working directory for NEURON to find them
