@@ -973,7 +973,7 @@ def loadGUI(IPythonWorkspace=None):
                 pBoxArr[m][i] = widgets.HBox(children=[pValArr[m][i]])
             i+=1
         
-        guiFigDir = 'gui/'
+        guiFigDir = GUIdir + '/' #'gui/'
         
         figHTML[m] = widgets.HTML()
         eqBox[m] = widgets.Latex()
@@ -986,13 +986,10 @@ def loadGUI(IPythonWorkspace=None):
             eqBox[m].value = models[model].equations
             
         elif int(statesArray[m]) == 4: # m==1
-            #figHTML[m].value = '<img src="4state_model.png" alt="Four state model" width=180>' #width=200>'
             figHTML[m].value = '<img src="{}{}state_model.png" alt="{}-state model" width=180>'.format(guiFigDir, statesArray[m], stateLabs[statesArray[m]])
             eqBox[m].value = models[model].equations
             
         else: #int(statesArray[m]) == 6:
-            #figHTML[m].value = '<img src="http://link.springer.com/static-content/images/46/art%253A10.1007%252Fs10827-012-0431-7/MediaObjects/10827_2012_431_Fig1_HTML.gif" width=220>'
-            #figHTML[m].value = '<img src="6state_model.png" alt="Six state model" width=210>'
             figHTML[m].value = '<img src="{}{}state_model.png" alt="{}-state model" width=210>'.format(guiFigDir, statesArray[m], stateLabs[statesArray[m]])
             eqBox[m].value = models[model].equations
             
