@@ -4,6 +4,7 @@ PyRhO - A Virtual Optogenetics Laboratory
 A Python module to fit and characterise rhodopsin photocurrents
 
 Optogenetics has become a key tool for understanding the function of neural circuits and controlling their behaviour. An array of directly light driven opsins have been genetically isolated from several families of organisms, with a wide range of temporal and spectral properties. In order to characterize, understand and apply these rhodopsins, we present an integrated suite of open-source, multi-scale computational tools called PyRhO. 
+
 The purpose of developing PyRhO is threefold: 
 
 (i) to characterize new (and existing) rhodopsins by automatically fitting a minimal set of experimental data to three, four or six-state kinetic models, 
