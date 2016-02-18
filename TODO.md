@@ -5,12 +5,12 @@ Priority
 --------
 - [ ] Finish docstrings (rST) and generate more documentation with [Sphinx](http://sphinx-doc.org/tutorial.html)
 - [ ] Add more tutorial notebooks
-- [ ] Make more functions and variables private and use __all__ to clear namespace
+- [ ] Make more functions and variables private and use `__all__` to clear namespace
 
 Mid-Term
 --------
 - [ ] Change flux units to mW/mm^2
-- [ ] Write unit tests
+- [ ] Add more asserts, warnings and write unit tests
 - [ ] Standardise testing with tox
 - [ ] Add Continuous Integration with Travis
 - [ ] Move GUI to submodule
