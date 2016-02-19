@@ -15,7 +15,7 @@ The module is written in Python with an additional IPython/Jupyter notebook base
 
 If you use PyRhO please cite our paper: "PyRhO: A Multiscale Optogenetics Simulation Platform"
 
-The PyRhO project website with additional documentation may be found here: www.imperial.ac.uk/bio-modelling/pyrho
+The PyRhO project website with additional documentation may be found here: www.imperial.ac.uk/a-z-research/bio-modelling/pyrho
 
 Installation
 ------------
