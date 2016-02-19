@@ -1,6 +1,8 @@
 #include COPYING.txt
 include LICENSE.txt
-recursive-include docs *.html *.css *.png *.gif
+
+#recursive-include docs *.html *.css *.png *.gif
+
 #include NEURON/*.mod
 #include NEURON/*.hoc
 #include GUI/*.png
