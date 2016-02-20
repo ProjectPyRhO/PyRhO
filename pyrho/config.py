@@ -25,7 +25,7 @@ else:
     wallTime = time.perf_counter
 
 
-home = os.environ['HOME']
+home = os.path.expanduser('~')
 pyrhoPath = os.path.dirname(os.path.abspath(__file__)) # modulePath
 
 pyrhoNEURONpath = os.path.join(pyrhoPath, 'NEURON')
