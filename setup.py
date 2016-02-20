@@ -130,7 +130,7 @@ setup(
     # installed, specify them here.  If using Python 2.6 or less, then these
     # have to be included in MANIFEST.in as well.
     package_data={
-        '': ['NEURON/*.mod', 'NEURON/*.hoc', 'gui/*.png'], # 'NEURON', 
+        '': ['NEURON/*.mod', 'NEURON/*.hoc', 'gui/*.png', 'datasets/*.pkl'], # 'NEURON', 
         #'sample': ['package_data.dat'],
     },
     
