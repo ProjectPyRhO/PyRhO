@@ -99,6 +99,11 @@ def checkNEURON(test=False):
             #        print(file)
             print("MOD files found: ", modList)
             print("HOC files found: ", hocList)
+            if not set(NMODLfiles).issubset(set(modList)):
+                warnings.warn('Missing mod files in {}: {}'.format(nmodlPath, set(NMODLfiles) - set(modList)))
+            if not set(HOCfiles).issubset(set(hocList)):
+                warnings.warn('Missing hoc files in {}: {}'.format(nmodlPath, set(HOCfiles) - set(hocList)))
+            
     else:
         warnings.warn("'NRN_NMODL_PATH' is not set - add e.g. 'export NRN_NMODL_PATH=/path/to/NEURON' to your bash profile.")
     
