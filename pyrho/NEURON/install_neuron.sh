@@ -348,7 +348,11 @@ fi
 
 echo -e "\n *** Setting up nrnpython... ***"
 cd src/nrnpython
-sudo python setup.py install # Look at installoption
+if [[ -x "$(command -v python3)" ]]; then # Explictly use Python 3
+	sudo python3 setup.py install
+else # Assume python already points to python3
+	sudo python setup.py install # Look at installoption
+fi
 
 #export PYTHONPATH=$Ndir/lib/python:$PYTHONPATH
 # Create environment variables so python can import the NEURON module
