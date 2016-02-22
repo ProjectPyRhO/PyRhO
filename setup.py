@@ -56,7 +56,7 @@ setup(
 
     # Author details
     author='Benjamin D. Evans',
-    author_email='benjamin.evans@imperial.ac.uk',
+    author_email='ben.d.evans@gmail.com',
 
     # Choose your license
     license='BSD',
