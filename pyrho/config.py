@@ -86,6 +86,22 @@ def simAvailable(sim):
     
     
 def checkNEURON(test=False):
+    """Check for NEURON installation and optionally run tests"""
+    
+    if 'NRN_NMODL_PATH' in os.environ:
+        nmodlPath = os.environ['NRN_NMODL_PATH']
+        if verbose > 1:
+            print("'NRN_NMODL_PATH' environment variable is set: {}".format(nmodlPath))
+            modList = [file for file in os.listdir(nmodlPath) if file.endswith(".mod")]
+            hocList = [file for file in os.listdir(nmodlPath) if file.endswith(".hoc")]
+            #for file in os.listdir(nmodlPath):
+            #    if file.endswith(".hoc"):
+            #        print(file)
+            print("MOD files found: ", modList)
+            print("HOC files found: ", hocList)
+    else:
+        warnings.warn("'NRN_NMODL_PATH' is not set - add e.g. 'export NRN_NMODL_PATH=/path/to/NEURON' to your bash profile.")
+    
     try:
         import neuron as nrn
         found = True
@@ -99,6 +115,7 @@ def checkNEURON(test=False):
         if verbose > 1:
             print('NEURON module not found!')
     return found
+    
     
 def setupNEURON(path=None, NEURONpath=None):
     """Setup the NEURON simulator to work with PyRhO
