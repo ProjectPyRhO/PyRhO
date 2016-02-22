@@ -297,7 +297,7 @@ sudo chown -R $USER . #$Ndir
 # Replace the following hacks with: 2to3 -w mk_hocusr.h
 # https://www.neuron.yale.edu/phpBB/viewtopic.php?f=6&t=3386&p=14346#p14346
 #cp mk_hocusr_h.py $NRNdir/src/oc/. # Changed print commands
-2to3 -w $NRNdir/src/oc/mk_hocusr.h
+2to3 -w $NRNdir/src/oc/mk_hocusr_h.py
 
 #cp configure $NRNdir/. # Changed print statement on line 6599
 if [[ "$OS" == "Darwin" ]]; then
