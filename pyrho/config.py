@@ -106,6 +106,12 @@ def setupNEURON(path=None, NEURONpath=None):
         NEURONpath  := Path to NEURON installation directory containing nrn (and iv)"""
         
     cwd = os.getcwd()
+    # Boiler plates to expand '~'
+    if path is not None:
+        path = os.path.expanduser(path)
+    if NEURONpath is not None:
+        NEURONpath = os.path.expanduser(NEURONpath)
+        
     if not checkNEURON():   # Check for a working NEURON installation...
         if sys.platform == 'win32':
             # TODO: Create cmd script for compiling on Windows
