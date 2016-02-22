@@ -102,13 +102,14 @@ def checkNEURON(test=False):
     
 def setupNEURON(path=None, NEURONpath=None):
     """Setup the NEURON simulator to work with PyRhO
-        path        := Path to working directory containing hoc and mod files (default=pwd)
-        NEURONpath  := Path to NEURON directory containing nrn (and iv)"""
+        path        := Path to PyRhO's working directory containing hoc and mod files (default=pwd)
+        NEURONpath  := Path to NEURON installation directory containing nrn (and iv)"""
         
     cwd = os.getcwd()
     if not checkNEURON():   # Check for a working NEURON installation...
         if sys.platform == 'win32':
-            print('Please install NEURON and rerun!')
+            # TODO: Create cmd script for compiling on Windows
+            warnings.warn('Compilation on Windows is not yet supported - please install NEURON manually and rerun!')
             return
         else:
             try:
