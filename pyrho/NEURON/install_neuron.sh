@@ -71,11 +71,15 @@ case $OS in # if [[ "OS" == "Linux" ]]; then
 		fi
 		#sudo apt-get install git git-man git-doc git-gui gitweb
 		#sudo apt-get install python-setuptools python-setuptools-doc python-virtualenv python-pip 
-		sudo apt-get install gcc gfortran liblapack-dev libblas-dev libatlas-dev # Fortran compiler for scientific stack i.e. building scipy with pip3. Alternatively just install scipy, numpy and matplotlib
+		#sudo apt-get remove g77 # Remove g77 to avoid conflicts with gfortran
+		sudo apt-get install gcc gfortran liblapack-dev libblas-dev libatlas-base-dev libatlas-dev # Fortran compiler for scientific stack i.e. building scipy with pip3. Alternatively just install scipy, numpy and matplotlib
 		# See here for more details on linear algebra libraries: http://docs.scipy.org/doc/numpy-1.10.1/user/install.html
 		# http://docs.scipy.org/doc/scipy/reference/tutorial/linalg.html
 		# Alternative Fortran compiler: g77. Do not mix compilers! Check compiler with ldd /usr/lib/{libblas.so.3,liblapack.so.3}
 		# TODO: Add option to compile LA library from source for optimal performance
+		# export BLAS=/usr/lib/libblas.so
+		# export LAPACK=/usr/lib/liblapack.so.3
+		# export ATLAS=/usr/lib/libatlas.so
 
 		# NEURON requires Python 2.7 (3 will not work)
 		sudo apt-get install python3-setuptools python3-pip
