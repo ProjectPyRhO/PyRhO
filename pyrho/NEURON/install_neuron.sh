@@ -294,18 +294,17 @@ echo -e "\n\n ***** Hacking broken files!!! *****\n\n"
 cd $Ndir
 sudo chown -R $USER . #$Ndir
 
-# Replace the following hacks with:
-# 2to3 -w mk_hocusr.h
+# Replace the following hacks with: 2to3 -w mk_hocusr.h
 # https://www.neuron.yale.edu/phpBB/viewtopic.php?f=6&t=3386&p=14346#p14346
-
-cp mk_hocusr_h.py $NRNdir/src/oc/. # Changed print commands
+#cp mk_hocusr_h.py $NRNdir/src/oc/. # Changed print commands
+2to3 -w $NRNdir/src/oc/mk_hocusr.h
 
 #cp configure $NRNdir/. # Changed print statement on line 6599
 if [[ "$OS" == "Darwin" ]]; then
 	sudo sed -i .bak -e "s/print sys.api_version,/from __future__ import print_function; print(sys.api_version)/" $NRNdir/configure
 else # different syntax for -i on linux
-    #sudo sed -i.bak -e "s/print sys.api_version,/print(sys.api_version)/" $NRNdir/configure
-    sudo sed -i.bak -e "s/print sys.api_version,/from __future__ import print_function; print(sys.api_version)/" $NRNdir/configure
+	#sudo sed -i.bak -e "s/print sys.api_version,/print(sys.api_version)/" $NRNdir/configure
+	sudo sed -i.bak -e "s/print sys.api_version,/from __future__ import print_function; print(sys.api_version)/" $NRNdir/configure
 fi
 
 cd $NRNdir
