@@ -53,11 +53,11 @@ def createDir(path):
     
 ### Set data and figure directories to defaults
 if 'dDir' not in vars() or 'dDir' not in globals() or dDir is None:
-    dDir = 'data/'
+    dDir = 'data' + os.sep
     createDir(dDir)
     
 if 'fDir' not in vars() or 'fDir' not in globals() or fDir is None:
-    fDir = 'figs/'
+    fDir = 'figs' + os.sep
     createDir(fDir)
 
 GUIdir = 'gui'
