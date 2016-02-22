@@ -125,7 +125,7 @@ def setupNEURON(path=None, NEURONpath=None):
                 #NEURONscriptPath = os.path.join(home, 'NEURON')
                 #NEURONscriptPath = pyrhoNEURONpath
                 NEURONscriptIncPath = os.path.join(pyrhoNEURONpath, NEURONinstallScript)
-                exitcode = subprocess.call([NEURONscriptIncPath, NEURONpath]) # shell=True # .check_call
+                exitcode = subprocess.call([NEURONscriptIncPath, NEURONpath], shell=True) # .check_call
             except:
                 shutil.copy2(os.path.join(NEURONscriptPath, NEURONinstallScript), cwd)
                 print('Unable to install NEURON - please install manually with the script copied to {}.'.format(cwd))
