@@ -25,7 +25,7 @@ else:
     wallTime = time.perf_counter
 
 
-home = os.environ['HOME']
+home = os.path.expanduser('~')
 pyrhoPath = os.path.dirname(os.path.abspath(__file__)) # modulePath
 
 pyrhoNEURONpath = os.path.join(pyrhoPath, 'NEURON')
@@ -53,11 +53,11 @@ def createDir(path):
     
 ### Set data and figure directories to defaults
 if 'dDir' not in vars() or 'dDir' not in globals() or dDir is None:
-    dDir = 'data/'
+    dDir = 'data' + os.sep
     createDir(dDir)
     
 if 'fDir' not in vars() or 'fDir' not in globals() or fDir is None:
-    fDir = 'figs/'
+    fDir = 'figs' + os.sep
     createDir(fDir)
 
 GUIdir = 'gui'
@@ -102,13 +102,14 @@ def checkNEURON(test=False):
     
 def setupNEURON(path=None, NEURONpath=None):
     """Setup the NEURON simulator to work with PyRhO
-        path        := Path to working directory containing hoc and mod files (default=pwd)
-        NEURONpath  := Path to NEURON directory containing nrn (and iv)"""
+        path        := Path to PyRhO's working directory containing hoc and mod files (default=pwd)
+        NEURONpath  := Path to NEURON installation directory containing nrn (and iv)"""
         
     cwd = os.getcwd()
     if not checkNEURON():   # Check for a working NEURON installation...
         if sys.platform == 'win32':
-            print('Please install NEURON and rerun!')
+            # TODO: Create cmd script for compiling on Windows
+            warnings.warn('Compilation on Windows is not yet supported - please install NEURON manually and rerun!')
             return
         else:
             try:
