@@ -10,6 +10,7 @@ set -e # exit on any error
 useRepo=true
 freshTar=true
 Ndir=${1:-"$HOME/NEURON"} # e.g. "/home/username/NEURON" 
+Ndir=$(echo $Ndir | sed 's:/*$::') # Remove trailing forward-slashes
 NRNver=${2:-"nrn-7.4"}
 IVver=${3:-"iv-19"}
 NRNv="v7.4"
