@@ -62,18 +62,22 @@ case $OS in # if [[ "OS" == "Linux" ]]; then
 	xPath="/usr"
 	if [[ -f /etc/debian_version ]]; then
 		sudo apt-get update
+		# Use \ continuation character for fewer calls to apt-get
 		sudo apt-get install autotools-dev autoconf automake libtool bison flex
-		# bison and flex are needed if useRepo
+		# bison and flex (and autoconf automake libtool?) are needed if useRepo
+		# build-essential python-dev
+		
 		sudo apt-get install xfonts-100dpi libncurses5-dev libxext-dev libreadline-dev
-		sudo apt-get install libopenmpi-dev openmpi-bin openmpi-doc openmpi-common #python-mpi4py # openmpipython
-		#sudo apt-get install python3-mpi4py
-		if [[ "$useRepo" == true ]] ; then
-			sudo apt-get install mercurial mercurial-common
-		fi
+		
+		sudo apt-get install libopenmpi-dev openmpi-bin openmpi-doc openmpi-common
+		#sudo apt-get install python3-mpi4py #python-mpi4py # openmpipython
+
 		#sudo apt-get install git git-man git-doc git-gui gitweb
 		#sudo apt-get install python-setuptools python-setuptools-doc python-virtualenv python-pip 
+		
+		# Fortran compiler for scientific stack i.e. building scipy with pip3. Alternatively just install scipy, numpy and matplotlib
 		#sudo apt-get remove g77 # Remove g77 to avoid conflicts with gfortran
-		sudo apt-get install gcc gfortran liblapack-dev libblas-dev libatlas-base-dev libatlas-dev # Fortran compiler for scientific stack i.e. building scipy with pip3. Alternatively just install scipy, numpy and matplotlib
+		sudo apt-get install gcc gfortran liblapack-dev libblas-dev libatlas-base-dev libatlas-dev
 		# See here for more details on linear algebra libraries: http://docs.scipy.org/doc/numpy-1.10.1/user/install.html
 		# http://docs.scipy.org/doc/scipy/reference/tutorial/linalg.html
 		# Alternative Fortran compiler: g77. Do not mix compilers! Check compiler with ldd /usr/lib/{libblas.so.3,liblapack.so.3}
@@ -81,12 +85,15 @@ case $OS in # if [[ "OS" == "Linux" ]]; then
 		# export BLAS=/usr/lib/libblas.so
 		# export LAPACK=/usr/lib/liblapack.so.3
 		# export ATLAS=/usr/lib/libatlas.so
-
+		
+		sudo apt-get install libfreetype6-dev libxft-dev # Fix a bug in upgrading matplotlib with pip3
+		#sudo apt-get build-dep matplotlib
+		#sudo pip3 install matplotlib
+		
 		# NEURON requires Python 2.7 (3 will not work)
 		sudo apt-get install python3-setuptools python3-pip
 		sudo apt-get install python3-numpy python3-scipy python3-matplotlib
 		sudo pip3 install -U pip
-		
 		
 		# Install IPython
 		# http://ipython.org/ipython-doc/2/install/install.html
@@ -94,9 +101,9 @@ case $OS in # if [[ "OS" == "Linux" ]]; then
 		#pip install ipython[all]
 		#pip3 install jupyter # Installed in pip setup.py
 		
-		sudo apt-get install libfreetype6-dev libxft-dev # Fix a bug in upgrading matplotlib with pip3
-		#sudo apt-get build-dep matplotlib
-		#sudo pip3 install matplotlib
+		if [[ "$useRepo" == true ]] ; then
+			sudo apt-get install mercurial mercurial-common
+		fi
 		
 		# Install pandoc - a dependency of nbconvert
 		# sudo apt-get install pandoc
