@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl # for tick locators
-from scipy.interpolate import InterpolatedUnivariateSpline #*
+from scipy.interpolate import InterpolatedUnivariateSpline as spline
 from scipy.optimize import curve_fit
 from pyrho.parameters import *
 from pyrho.utilities import * # times2cycles, cycles2times, plotLight, round_sig, expDecay, biExpDecay, findPeaks
@@ -15,7 +15,7 @@ import warnings
 import os
 
 
-class Protocol(PyRhOobject): #object
+class Protocol(PyRhOobject):
     """Common base class for all protocols"""
     
     def __init__(self, params=None, saveData=True):
@@ -117,7 +117,7 @@ class Protocol(PyRhOobject): #object
     def genPulse(self, run, phi, pulse):
         """Default interpolation function for square pulses"""
         pStart, pEnd = pulse
-        phi_t = InterpolatedUnivariateSpline([pStart,pEnd], [phi,phi], k=1, ext=1)
+        phi_t = spline([pStart,pEnd], [phi,phi], k=1, ext=1)
         return phi_t
     
     
@@ -325,8 +325,8 @@ class Protocol(PyRhOobject): #object
         
         return ax
     
-    
-    def plotKinetics(self):
+    # TODO: Incorporate into Photocurrent class
+    def _plotKinetics(self):
         ### Segment the photocurrent into ON, INACT and OFF phases (Williams et al., 2013)
         # I_p := maximum (absolute) current
         # I_ss := mean(I[400ms:450ms])
@@ -492,9 +492,9 @@ class protSinusoid(Protocol):
         onD = pEnd - pStart
         t = np.linspace(0.0, onD, int(round((onD*self.sr/1000))+1), endpoint=True) # Create smooth series of time points to interpolate between
         if self.startOn: # Generalise to phase offset
-            phi_t = InterpolatedUnivariateSpline(pStart + t, self.phi0[run] + 0.5*phi*(1+np.cos(self.ws[run]*t)), ext=1, k=5) # phi0[r]
+            phi_t = spline(pStart + t, self.phi0[run] + 0.5*phi*(1+np.cos(self.ws[run]*t)), ext=1, k=5)
         else:
-            phi_t = InterpolatedUnivariateSpline(pStart + t, self.phi0[run] + 0.5*phi*(1-np.cos(self.ws[run]*t)), ext=1, k=5) # phi0[r]
+            phi_t = spline(pStart + t, self.phi0[run] + 0.5*phi*(1-np.cos(self.ws[run]*t)), ext=1, k=5)
         
         return phi_t
     
@@ -559,7 +559,7 @@ class protSinusoid(Protocol):
                     col, style = self.getLineProps(run, vInd, phiInd)
                     self.axIp.plot(self.fs, Ipeaks, 'x', color=col)
                     try:
-                        intIp = InterpolatedUnivariateSpline(self.fs, Ipeaks, k=splineOrder)
+                        intIp = spline(self.fs, Ipeaks, k=splineOrder)
                         #nPoints = 10*int(round(abs(np.log10(self.fs[-1])-np.log10(self.fs[0]))+1))
                         fsmooth = np.logspace(np.log10(self.fs[0]), np.log10(self.fs[-1]), num=1001)
                         self.axIp.plot(fsmooth, intIp(fsmooth))
@@ -626,7 +626,7 @@ class protSinusoid(Protocol):
                     col, style = self.getLineProps(run, vInd, phiInd) ### Modify to match colours correctly
                     self.axIss.plot(self.fs, Iabs, 'x', color=col)
                     try:
-                        intIss = InterpolatedUnivariateSpline(self.fs, Iabs, k=splineOrder)
+                        intIss = spline(self.fs, Iabs, k=splineOrder)
                         #fsmooth = np.logspace(self.fs[0], self.fs[-1], 100)
                         self.axIss.plot(fsmooth, intIss(fsmooth))
                     except:
@@ -753,9 +753,9 @@ class protChirp(Protocol):
             ft = self.f0 * (self.fT/self.f0)**(t/onD)
         ft /= 1000 # Convert to frequency in ms
         if self.startOn:
-            phi_t = InterpolatedUnivariateSpline(pStart + t, self.phi0[run] + 0.5*phi*(1+np.cos(ft*t)), ext=1, k=5)
+            phi_t = spline(pStart + t, self.phi0[run] + 0.5*phi*(1+np.cos(ft*t)), ext=1, k=5)
         else:
-            phi_t = InterpolatedUnivariateSpline(pStart + t, self.phi0[run] + 0.5*phi*(1-np.cos(ft*t)), ext=1, k=5)
+            phi_t = spline(pStart + t, self.phi0[run] + 0.5*phi*(1-np.cos(ft*t)), ext=1, k=5)
         return phi_t
     
     def createLayout(self, Ifig=None, vInd=0):
@@ -854,7 +854,7 @@ class protRamp(Protocol):
     def genPulse(self, run, phi, pulse):
         """Generate spline for a particular pulse. phi0 is the offset so decreasing ramps can be created with negative phi values. """
         pStart, pEnd = pulse
-        phi_t = InterpolatedUnivariateSpline([pStart, pEnd], [self.phi0, self.phi0+phi], k=1, ext=1) #self.phi_ton
+        phi_t = spline([pStart, pEnd], [self.phi0, self.phi0+phi], k=1, ext=1)
         return phi_t
 
         
