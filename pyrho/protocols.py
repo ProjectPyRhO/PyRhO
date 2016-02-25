@@ -6,7 +6,7 @@ from scipy.optimize import curve_fit
 from pyrho.parameters import *
 from pyrho.utilities import * # times2cycles, cycles2times, plotLight, round_sig, expDecay, biExpDecay, findPeaks
 from pyrho.loadData import * #import loadData
-from pyrho.fitting import * #fitFV, errFV, fitfV, errfV, getRecoveryPeaks, fitRecovery  #calcIssfromfV and fitPeaks...
+from pyrho.fitting import fitFV, errFV, fitfV, errfV, getRecoveryPeaks, fitRecovery
 from pyrho.models import *
 from pyrho.simulators import * # For characterise()
 from pyrho.config import * #verbose, saveFigFormat, eqSize, addTitles, addStimulus, colours, styles, dDir, fDir
