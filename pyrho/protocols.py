@@ -1348,8 +1348,8 @@ class protRecovery(Protocol):
         # return np.asarray[self.pulses[self.run]]
         
     def prepare(self):
-        'Function to set-up additional variables and make parameters consistent after any changes'
-        self.IPIs = np.sort(np.asarray(self.IPIs)) #np.sort(np.array(IPIs))
+        '''Function to set-up additional variables and make parameters consistent after any changes'''
+        self.IPIs = np.sort(np.asarray(self.IPIs))
         
         self.nRuns = len(self.IPIs)
         self.delDs = np.ones(self.nRuns)*self.delD
@@ -1370,8 +1370,8 @@ class protRecovery(Protocol):
         else:
             self.runCycles[-1,1,:] = self.totT - IPIminD
         
-        self.IpIPI = np.zeros(self.nRuns) #peaks
-        self.tpIPI = np.zeros(self.nRuns) #tPeaks
+        self.IpIPI = np.zeros(self.nRuns)
+        self.tpIPI = np.zeros(self.nRuns)
         
         if np.isscalar(self.phis):
             self.phis = np.asarray([self.phis])
@@ -1390,6 +1390,7 @@ class protRecovery(Protocol):
     def getRunCycles(self, run):
         return self.runCycles[:,:,run], self.delDs[run]
     
+    
     def finish(self, PC, RhO):
         ### Build array of second peaks
         self.PD.IPIpeaks_ = np.zeros((self.nRuns, self.nPhis, self.nVs)) #[[[None for v in range(len(Vs))] for p in range(len(phis))] for r in range(nRuns)]
@@ -1397,27 +1398,14 @@ class protRecovery(Protocol):
         for run in range(self.nRuns):
             for phiInd in range(self.nPhis):
                 for vInd in range(self.nVs):
-            #for phiInd, phiOn in enumerate(self.phis): 
-                #for vInd, V in enumerate(self.Vs): 
                     PC = self.PD.trials[run][phiInd][vInd]
                     PC.alignToPulse(pulse=0, alignPoint=2) # End of the first pulse
                     self.PD.IPIpeaks_[run][phiInd][vInd] = PC.peaks_[1]
                     self.PD.tIPIpeaks_[run][phiInd][vInd] = PC.tpeaks_[1]
-                    ### Search only within the on phase of the second pulse
-                    # startInd = self.PulseInds[run][phiInd][vInd][1,0]
-                    # endInd = self.PulseInds[run][phiInd][vInd][1,1]
-                    # extOrder = int(1+endInd-startInd) #100#int(round(len(I_RhO)/5))
-                    # #peakInds = findPeaks(I_RhO[:endInd+extOrder+1],minmax,startInd,extOrder)
-                    # peakInds = findPeaks(I_RhO[:endInd+extOrder+1],startInd,extOrder)
-                    # if len(peakInds) > 0: # Collect data at the (second) peak
-                        # self.IpIPI[run] = I_RhO[peakInds[0]] #-1 peaks
-                        # self.tpIPI[run] = t[peakInds[0]] # tPeaks
-
+                    
         if verbose > 1:
-            print(self.PD.tIPIpeaks_) # tPeaks
-            print(self.PD.IPIpeaks_) # peaks
-            #popt = fitPeaks(tPeaks, peaks, expDecay, p0IPI, '$I_{{peaks}} = {:.3}e^{{-t/{:g}}} {:+.3}$')
-            #print("tau_R = {} ==> rate_R = {}".format(popt[1],1/popt[1]))
+            print(self.PD.tIPIpeaks_)
+            print(self.PD.IPIpeaks_)
 
 
     def addAnnotations(self):
@@ -1425,10 +1413,7 @@ class protRecovery(Protocol):
         # Freeze axis limits
         ymin, ymax = plt.ylim()
         pos = 0.02 * abs(ymax-ymin)
-        #plt.ylim(ymin, ymax)
         plt.ylim(ymin, pos*self.nRuns)
-        #plt.ylim(ax.get_ylim())
-        
         xmin, xmax = plt.xlim()
         plt.xlim(xmin, xmax)
         
@@ -1437,45 +1422,26 @@ class protRecovery(Protocol):
                 delD = self.delDs[run]
                 onD = self.cycles[run,0]
                 offD = self.cycles[run,1]
-                #padD = self.padDs[run]
             else:
                 delD = self.delD
-                #...
-            # Loop over light intensity...
-            for phiInd, phiOn in enumerate(self.phis): #for phiInd in range(0, len(phis)):
-                # Loop over clamp voltage ### N.B. solution variables are not currently dependent on V
-                for vInd, V in enumerate(self.Vs): #range(0, len(Vs)):
+                            
+            for phiInd in range(self.nPhis):
+                for vInd in range(self.nVs):
                     col, style = self.getLineProps(run, vInd, phiInd)
-                    #plt.figure(Ifig.number)
-                    #plt.annotate('', (delD, (run+1)*pos), (delD+onD+offD, (run+1)*pos), arrowprops={'arrowstyle':'<->','color':col})
-                    #plt.annotate('', (delD+onD, (run+1)*pos), (delD+onD+offD, (run+1)*pos), arrowprops={'arrowstyle':'<->','color':col,'shrinkA':0,'shrinkB':0})
-                    
-                    #plt.annotate('', (delD+onD, (run+1)*pos), (delD+onD+offD, (run+1)*pos), arrowprops={'arrowstyle':'<->','color':col,'shrinkA':0,'shrinkB':0})
-                    
                     pulses = self.PD.trials[run][phiInd][vInd].pulses
                     plt.annotate('', (pulses[0,1], (run+1)*pos), (pulses[1,0], (run+1)*pos), arrowprops={'arrowstyle':'<->','color':col,'shrinkA':0,'shrinkB':0})
-                    if run == 0:
-                        
-                        ### Fitting
-                        #popt, _, _ = fitRecovery(self.PD.tIPIpeaks_[:,phiInd,vInd], self.PD.IPIpeaks_[:,phiInd,vInd], self.endT, expDecay, p0IPI, '$I_{{peaks}} = {:.3}e^{{-t/{:g}}} {:+.3}$',self.axI) # tPeaks peaks
-                        
-                        # Prepend t_off0 and Iss0
-                        # tss0 = self.PD.trials[run][phiInd][vInd].pulses[0,1]
-                        # Iss0 = self.PD.trials[run][phiInd][vInd].sss_[0]
-                        # Ipeak0 = self.PD.trials[run][phiInd][vInd].peaks_[0]
-                        # t_peaks = np.r_[tss0, self.PD.tIPIpeaks_[:,phiInd,vInd]]
-                        # I_peaks = np.r_[Iss0, self.PD.IPIpeaks_[:,phiInd,vInd]]
+                    
+                    if run == 0:    ### Fit peak recovery                   
                         t_peaks, I_peaks, Ipeak0, Iss0 = getRecoveryPeaks(self.PD, phiInd, vInd, usePeakTime=True)
                         params = Parameters()
                         params.add('Gr0', value=0.002, min=0.0001, max=0.1)
-                        #self.RhO.exportParams(params)
                         params = fitRecovery(t_peaks, I_peaks, params, Ipeak0, Iss0, self.axI)
                         if verbose > 0:
-                            #print("tau_R = {} ==> rate_R = {}".format(popt[1],1/popt[1]))
                             print("tau_r0 = {} ==> G_r0 = {}".format(1/params['Gr0'].value, params['Gr0'].value))
-        
-        #plt.legend(loc='upper right')
-            
+        return
+
+
+
 from collections import OrderedDict
 protocols = OrderedDict([('step', protStep), ('delta', protDelta), ('sinusoid', protSinusoid), ('chirp', protChirp), ('ramp', protRamp), ('recovery', protRecovery), ('rectifier', protRectifier), ('shortPulse', protShortPulse), ('custom', protCustom)])
 
