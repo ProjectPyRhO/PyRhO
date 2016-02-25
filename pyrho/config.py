@@ -1,6 +1,6 @@
 # config.py
 
-import matplotlib as mp
+import matplotlib as mpl
 import numpy as np
 import warnings
 import os
@@ -256,8 +256,8 @@ latexInstalled = False # Change this!
 # http://nipunbatra.github.io/2014/08/latexify/
 # http://www.tex.ac.uk/ctan/macros/latex/contrib/pythontex/pythontex_install.py
 if latexInstalled:
-    mp.rcParams['text.usetex'] = True
-#mp.rcParams.update(rcdef) # Set back to defaults
+    mpl.rcParams['text.usetex'] = True
+#mpl.rcParams.update(rcdef) # Set back to defaults
 
 xLabelPos = 0.98
 
@@ -270,7 +270,7 @@ def setFigOutput(figDisplay='screen', width=None):
     
     # http://matplotlib.org/users/customizing.html
     if figDisplay == 'screen':
-        dpi = 300 #mp.rcParams['savefig.dpi'] #300
+        dpi = 300 #mpl.rcParams['savefig.dpi'] #300
         #figFormat = 'retina'
         saveFigFormat = 'png'    
         if width is None:
@@ -309,25 +309,25 @@ def setFigOutput(figDisplay='screen', width=None):
         addTitles = False
         addStimulus = True
 
-        mp.rcParams['savefig.dpi'] = dpi        # http://nbviewer.ipython.org/gist/minrk/3301035
+        mpl.rcParams['savefig.dpi'] = dpi        # http://nbviewer.ipython.org/gist/minrk/3301035
                                                 # http://wiki.scipy.org/Cookbook/Matplotlib/AdjustingImageSize
         
     else:
         warnings.warn('Warning: Unknown display type selected - using matplotlib defaults!')
     
     # http://matplotlib.org/users/customizing.html
-    mp.rcParams['figure.figsize'] = (figWidth, figHeight) #pylab.rcParams
-    mp.rcParams['figure.dpi'] = dpi
-    #mp.rcParams['savefig.dpi'] = dpi           # http://nbviewer.ipython.org/gist/minrk/3301035
-    mp.rcParams['axes.labelsize'] = labelSize
-    mp.rcParams['ytick.labelsize'] = tickSize
-    mp.rcParams['xtick.labelsize'] = tickSize
-    mp.rcParams['legend.fontsize'] = legendSize
-    mp.rcParams['axes.titlesize'] = titleSize
-    mp.rcParams['lines.linewidth'] = linewidth
-    mp.rcParams['lines.markersize'] = markerSize
-    mp.rcParams['font.size'] = eqSize
-    #mp.rcParams['figure.autolayout'] = True
+    mpl.rcParams['figure.figsize'] = (figWidth, figHeight) #pylab.rcParams
+    mpl.rcParams['figure.dpi'] = dpi
+    #mpl.rcParams['savefig.dpi'] = dpi           # http://nbviewer.ipython.org/gist/minrk/3301035
+    mpl.rcParams['axes.labelsize'] = labelSize
+    mpl.rcParams['ytick.labelsize'] = tickSize
+    mpl.rcParams['xtick.labelsize'] = tickSize
+    mpl.rcParams['legend.fontsize'] = legendSize
+    mpl.rcParams['axes.titlesize'] = titleSize
+    mpl.rcParams['lines.linewidth'] = linewidth
+    mpl.rcParams['lines.markersize'] = markerSize
+    mpl.rcParams['font.size'] = eqSize
+    #mpl.rcParams['figure.autolayout'] = True
     
     #return saveFigFormat, addTitles, addStimulus, eqSize
 

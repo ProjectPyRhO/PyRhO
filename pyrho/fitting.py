@@ -4,7 +4,7 @@ from __future__ import print_function
 
 from lmfit import minimize, Parameters, fit_report
 import numpy as np
-import matplotlib as mp
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from pyrho.parameters import *
 from pyrho.loadData import *
@@ -170,7 +170,7 @@ def plotOffPhaseFits(toffs, Ioffs, pOffs, phis, nStates, fitFunc, Exp1, Exp2, Gd
     fig = plt.figure()
     #gs = plt.GridSpec(nTrials,1)
     ax = fig.add_subplot(111)
-    lw = 2.5 * mp.rcParams['lines.linewidth']
+    lw = 2.5 * mpl.rcParams['lines.linewidth']
     
     nTrials = len(Ioffs)
     assert(len(toffs) == nTrials)
@@ -182,7 +182,7 @@ def plotOffPhaseFits(toffs, Ioffs, pOffs, phis, nStates, fitFunc, Exp1, Exp2, Gd
         #ax = fig.add_subplot(gs[trial,:])
         
         ax.plot(toffs[trial], Ioffs[trial], color=colours[trial%len(colours)], linewidth=lw, markeredgecolor='None', label='Data: phi={phi:.3g}'.format(phi=phis[trial]))
-        #ax.plot(toffs[trial], Ioffs[trial], 'g', linewidth=mp.rcParams['lines.linewidth']*3, label='Data: phi={phi:.3g}'.format(phi=phis[trial])) # Experimental data
+        #ax.plot(toffs[trial], Ioffs[trial], 'g', linewidth=mpl.rcParams['lines.linewidth']*3, label='Data: phi={phi:.3g}'.format(phi=phis[trial])) # Experimental data
         
         eq = 'I(t)={Islow:.3g}*exp(-{Exp1:.3g}*t) + {Ifast:.3g}*exp(-{Exp2:.3g}*t)'.format(Islow=Islow, Ifast=Ifast, Exp1=Exp1, Exp2=Exp2)
         ax.plot(toffs[trial], fitFunc(pOffs,toffs[trial],trial), color='k', linestyle='--', label=eq) # Fits
@@ -1087,7 +1087,7 @@ def fitRecovery(t_peaks, I_peaks, params, Ipeak0, Iss0, ax=None, method=defMetho
     tsmooth = np.linspace(xmin, xmax, nPoints)#1+(xmax-xmin)*10) #totT
     Ismooth = errExpRec(pRec, tsmooth) #curveFunc(tsmooth,*popt)
     
-    #ax.plot(tsmooth+shift, Ismooth, linestyle=':', color='r')#, linewidth=1.5*mp.rcParams['lines.linewidth'])
+    #ax.plot(tsmooth+shift, Ismooth, linestyle=':', color='r')#, linewidth=1.5*mpl.rcParams['lines.linewidth'])
     ax.plot(tsmooth, Ismooth, linestyle=':', color='r')
     ax.axhline(y=Iss0, linestyle=':', color='#aaaaaa')
     ax.axhline(y=Ipeak0, linestyle=':', color='#aaaaaa')
@@ -1967,14 +1967,15 @@ def plotFluxSetFits(fluxSet, nStates, params, runInd=0, vInd=0):
     
     setFig = plt.figure()
     setAx = setFig.add_subplot(111)
+    lineWidth = 2.5 * mpl.rcParams['lines.linewidth']
     
     # Plot experimental data
     for phiInd in range(fluxSet.nPhis):
         PC = fluxSet.trials[runInd][phiInd][vInd]
         PC.alignToTime()
         phi = PC.phi
-        setAx.plot(PC.t, PC.I, color=colours[phiInd%len(colours)], linewidth=2.5*mp.rcParams['lines.linewidth'], 
-        markeredgecolor='None', label="$\phi = {:.3g}\ \mathrm{{[ph. \cdot mm^{{-2}} \cdot s^{{-1}}]}}$".format(phi))
+        setAx.plot(PC.t, PC.I, color=colours[phiInd%len(colours)], lw=lineWidth, markeredgecolor='None', 
+        label="$\phi = {:.3g}\ \mathrm{{[ph. \cdot mm^{{-2}} \cdot s^{{-1}}]}}$".format(phi))
     
     if not isinstance(nStates, (list, tuple)):
         nStates = [nStates]

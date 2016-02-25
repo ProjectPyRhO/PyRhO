@@ -28,7 +28,8 @@ else:
 
 from pyrho.config import *
 
-import matplotlib as mp    
+# Necessary?
+import matplotlib as mpl   
 import matplotlib.pyplot as plt
 import numpy as np
 

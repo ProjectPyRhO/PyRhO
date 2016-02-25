@@ -138,7 +138,7 @@ class Protocol(PyRhOobject):
             xfit=np.linspace(-shift, self.totT-shift, nPoints) #totT
             yfit=curveFunc(xfit,*popt)
             
-            plt.plot(xfit+shift,yfit,linestyle=':',color='#aaaaaa',linewidth=1.5*mp.rcParams['lines.linewidth'])#,label="$v={:+} \mathrm{{mV}}$, $\phi={:.3g}$".format(V,phiOn)) # color='#aaaaaa' 
+            plt.plot(xfit+shift,yfit,linestyle=':',color='#aaaaaa',linewidth=1.5*mpl.rcParams['lines.linewidth'])#,label="$v={:+} \mathrm{{mV}}$, $\phi={:.3g}$".format(V,phiOn)) # color='#aaaaaa' 
             #ylower = copysign(1.0,I_peaks.min())*ceil(abs((I_peaks.min()*10**ceil(abs(log10(abs(I_peaks.min())))))))/10**ceil(abs(log10(abs(I_peaks.min()))))
             #yupper = copysign(1.0,I_peaks.max())*ceil(abs((I_peaks.max()*10**ceil(abs(log10(abs(I_peaks.max())))))))/10**ceil(abs(log10(abs(I_peaks.max()))))
         #     if (len(Vs) == 1) and (len(phis) == 1) and (nRuns == 1):
@@ -1166,8 +1166,8 @@ class protRectifier(Protocol):
         ax.spines['bottom'].set_smart_bounds(True)
         ax.xaxis.set_ticks_position('bottom')
         ax.yaxis.set_ticks_position('left')
-        #ax.yaxis.set_major_formatter(mp.ticker.ScalarFormatter(useMathText=True))
-        #ax.yaxis.set_minor_formatter(mp.ticker.ScalarFormatter(useMathText=True))
+        #ax.yaxis.set_major_formatter(mpl.ticker.ScalarFormatter(useMathText=True))
+        #ax.yaxis.set_minor_formatter(mpl.ticker.ScalarFormatter(useMathText=True))
         ax.set_xlim(min(Vs), max(Vs))
         
         ax.set_ylabel('$I_{ss}$ $\mathrm{[nA]}$')#, position=(0.95,0.8)) #plt.xlabel
@@ -1190,7 +1190,7 @@ class protRectifier(Protocol):
         
         useLegend = True
         if useLegend:
-            #ax.legend(legLabels, bbox_to_anchor=(0., 1.01, 1., .101), loc=3, mode="expand", borderaxespad=0., prop={'size':mp.rcParams['font.size']})
+            #ax.legend(legLabels, bbox_to_anchor=(0., 1.01, 1., .101), loc=3, mode="expand", borderaxespad=0., prop={'size':mpl.rcParams['font.size']})
             ax.legend(legLabels, loc='best')
         else:
             ymin, ymax = ax.get_ylim()
