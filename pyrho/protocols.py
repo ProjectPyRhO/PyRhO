@@ -1220,10 +1220,9 @@ class protRectifier(Protocol):
         
 class protShortPulse(Protocol):
     # Vary pulse length - See Nikolic+++++2009, Fig. 2 & 9
-    #def __init__(self, phis=[1e12], Vs=[-70], delD=25, pulses=[[1,74],[2,73],[3,72],[5,70],[8,67],[10,65],[20,55]], nRuns=1, dt=0.1):
     protocol = 'shortPulse'
     squarePulse = True
-    nPulses = 1 #Fixed at 1
+    nPulses = 1 # Fixed at 1
     
     # def __next__(self):
         # if self.run >= self.nRuns:
@@ -1240,14 +1239,11 @@ class protShortPulse(Protocol):
         self.onDs = self.pDs
         self.offDs = (np.ones(self.nRuns)*self.totT) - self.delDs - self.onDs
         self.cycles = np.column_stack((self.onDs,self.offDs))
-        #self.padDs = np.zeros(self.nRuns)
         self.phis.sort(reverse=True)
         self.Vs.sort(reverse=True)
         self.nPhis = len(self.phis)
         self.nVs = len(self.Vs)
-        
         self.phi_ts = self.genPulseSet()
-        
         self.runLabels = ["$\mathrm{{Pulse}}={}\mathrm{{ms}}$ ".format(pD) for pD in self.pDs]
             
 
@@ -1261,7 +1257,6 @@ class protShortPulse(Protocol):
             Ifig = plt.figure()
         
         self.addStimulus = config.addStimulus
-        #phi_ts = self.genPlottingStimuli()
         
         gsPL = plt.GridSpec(2,3)
         self.axLag = Ifig.add_subplot(gsPL[0,-1])
@@ -1272,65 +1267,38 @@ class protShortPulse(Protocol):
     def addAnnotations(self):
         # Freeze axis limits
         ymin, ymax = plt.ylim()
-        #plt.ylim(ymin, ymax)
         pos = 0.02 * abs(ymax-ymin)
-        #plt.ylim(ax.get_ylim())
         plt.ylim(ymin, pos*(self.nRuns+1)) # Allow extra space for thick lines
+        lightBarWidth = 2 * mpl.rcParams['lines.linewidth']
+        peakMarkerSize = 1.5 * mpl.rcParams['lines.markersize']
+        
         for run in range(self.nRuns): 
-            
-            # Loop over light intensity...
-            for phiInd, phiOn in enumerate(self.phis): #for phiInd in range(0, len(phis)):
-                # Loop over clamp voltage ### N.B. solution variables are not currently dependent on V
-                for vInd, V in enumerate(self.Vs): #range(0, len(Vs)):
-                    col, style = self.getLineProps(run, vInd, phiInd)
-                    #peakInds = IpInds[run][phiInd][vInd]
-                    
+            for phiInd in range(self.nPhis):
+                for vInd in range(self.nVs):
+                    colour, style = self.getLineProps(run, vInd, phiInd)
                     PC = self.PD.trials[run][phiInd][vInd]
                     t_on, t_off = PC.pulses[0,:]
                     
-                    # self.axI.hlines(y=(run+1)*pos,xmin=delD,xmax=delD+onD,linewidth=4,color=col)
-                    # self.axI.axvline(x=delD,linestyle=':',color='k')
-                    # self.axI.axvline(x=delD+onD,linestyle=':',color=col)
+                    self.axI.hlines(y=(run+1)*pos, xmin=t_on, xmax=t_off, lw=lightBarWidth, color=colour)
+                    self.axI.axvline(x=t_on, linestyle=':', c='k')
+                    self.axI.axvline(x=t_off, linestyle=':', c=colour)
                     
-                    self.axI.hlines(y=(run+1)*pos, xmin=t_on, xmax=t_off, linewidth=4, color=col)
-                    self.axI.axvline(x=t_on, linestyle=':', color='k')
-                    self.axI.axvline(x=t_off, linestyle=':', color=col)
+                    self.axI.plot(PC.tpeaks_, PC.peaks_, marker='*', ms=peakMarkerSize, c=colour)
                     
+                    ### Plot figure to show time of Ipeak vs time of light off c.f. Nikolic et al. 2009 Fig 2b
+                    self.axLag.plot(self.pDs[run], PC.lags_[0], marker='*', ms=peakMarkerSize, c=colour)
                     
-                    #plt.figure(Ifig.number)
-                    # ymin, ymax = plt.ylim()
-                    # pos = 0.02 * abs(ymax-ymin)
-    
-                    # axI.hlines(y=(run+1)*pos,xmin=delD,xmax=delD+onD,linewidth=4,color=col)#'b')  #colours[c]
-                    #axI.plot(t[peakInds],I_RhO[peakInds],marker='*',color=col)
-                    #axLag.plot(pDs[run],(t[IpInds[run][phiInd][vInd]] - delD),marker='*',markersize=10,color=col)
-                    #axPeak.plot(pDs[run],I_RhO[peakInds],marker='*',markersize=10,color=col)
-                    self.axI.plot(PC.tpeaks_, PC.peaks_, marker='*', color=col)
-                    #self.axLag.plot(self.pDs[run], (PC.tpeaks_ - delD), marker='*', markersize=10, color=col)
-                    self.axLag.plot(self.pDs[run], PC.lags_[0], marker='*', markersize=10, color=col)
-                    self.axPeak.plot(self.pDs[run], PC.peaks_, marker='*', markersize=10, color=col)
-    
-                    #peakInds = IpInds[run][phiInd][vInd]
-                    #axI.hlines(y=(run+1)*pos,xmin=delD,xmax=delD+onD,linewidth=4,color=col)
-        ### Plot figure to show time of Ipeak vs time of light off c.f. Nikolic et al. 2009 Fig 2b
-    #     axLag = Ifig.add_subplot(gsPL[0,-1])
-    #     tpeaks = [(t[IpInds[p][0][0]] - delD) for p in range(nRuns)]
-    #     toffs = [(t[PulseInds[p][0][0][0][1]-1] - delD) for p in range(nRuns)] # pDs
-    #     plot(toffs,tpeaks,marker='x',linestyle='')
+                    ### Plot figure to show current peak vs time of light off c.f. Nikolic et al. 2009 Fig 2c
+                    self.axPeak.plot(self.pDs[run], PC.peaks_, marker='*', ms=peakMarkerSize, c=colour)
         
-    #     axLag.axis('equal')
+        # axLag.axis('equal')
         tmax = max(self.pDs)*1.25
         self.axLag.plot([0,tmax], [0,tmax], ls="--", c=".3")
         self.axLag.set_xlim(0,tmax)
         self.axLag.set_ylim(0,tmax)
         self.axLag.set_ylabel('$\mathrm{Time\ of\ peak\ [ms]}$')
-    #     plt.tight_layout()
         self.axLag.set_aspect('auto')
-    #     print(axLag.get_xlim())
-    #     diag_line, = axLag.plot(axLag.get_xlim(), axLag.get_ylim(), ls="--", c=".3")
         
-        
-        ### Plot figure to show current peak vs time of light off c.f. Nikolic et al. 2009 Fig 2c
         self.axPeak.set_xlim(0,tmax)
         self.axPeak.set_xlabel('$\mathrm{Pulse\ duration\ [ms]}$')
         self.axPeak.set_ylabel('$\mathrm{Photocurrent\ peak\ [nA]}$')

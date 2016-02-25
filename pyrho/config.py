@@ -283,6 +283,7 @@ def setFigOutput(figDisplay='screen', width=None):
         titleSize = 'small' #'x-large'
         eqSize = 18
         linewidth = 1.5
+        markerSize = 6 # Default: 6
         addTitles = True
         addStimulus = True
 
@@ -304,6 +305,7 @@ def setFigOutput(figDisplay='screen', width=None):
         titleSize = 'medium'
         eqSize = 10
         linewidth = 2
+        markerSize = 6
         addTitles = False
         addStimulus = True
 
@@ -323,6 +325,7 @@ def setFigOutput(figDisplay='screen', width=None):
     mp.rcParams['legend.fontsize'] = legendSize
     mp.rcParams['axes.titlesize'] = titleSize
     mp.rcParams['lines.linewidth'] = linewidth
+    mp.rcParams['lines.markersize'] = markerSize
     mp.rcParams['font.size'] = eqSize
     #mp.rcParams['figure.autolayout'] = True
     
