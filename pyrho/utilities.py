@@ -7,6 +7,7 @@ import os
 import shutil # for file copying
 import subprocess # for running system commands
 import copy
+from string import Template
 
 from pyrho.config import * #verbose, dDir, fDir
 
@@ -50,6 +51,7 @@ def printParams(params):
     report += '========================\n'
     print(report)
     
+    
 def compareParams(origParams, newParams):
     ovd = origParams.valuesdict()
     nvd = newParams.valuesdict()
@@ -71,11 +73,12 @@ def compareParams(origParams, newParams):
     report += '============================================\n'
     print(report)
     
+    
 def texIt(texString):
     """Function to add '$' signs around a (La)TeX string"""
-    from string import Template
     texTemplate = Template('${content}$')
     return texTemplate.substitute(content=texString)
+    
     
 def saveData(data, pkl, path=None):
     # if pkl is None:
@@ -88,6 +91,7 @@ def saveData(data, pkl, path=None):
     if verbose > 0: #config.verbose?!
         print("Data saved to disk: {}".format(pklFile))
     return pklFile
+    
     
 def loadData(pkl, path=None):
     if pkl.lower().endswith('.pkl'):
@@ -105,6 +109,7 @@ def loadData(pkl, path=None):
         dataSet = pickle.load(fh)
     return dataSet
     
+    
 def getExt(vector, ext='max'):
     if ext == 'max':
         mVal = max(vector)
@@ -112,6 +117,7 @@ def getExt(vector, ext='max'):
         mVal = min(vector)
     mInd = np.searchsorted(vector, mVal)
     return mVal, mInd
+    
     
 def getIndex(valList, val):
     """Return the index of val in valList.
@@ -167,7 +173,6 @@ def getIndex(valList, val):
             ind = None
     return ind
     
-
 
 def calcV1(E, v0):
     """Since f(V=-70):= 1, if v0 or E are changed, v1 must be recalculated to rescale correctly for simulations"""
@@ -289,7 +294,6 @@ def calcgbar(Ip, Vclamp, A):
     Gmax = Ip/Vclamp  # Maximum conductance for the whole cell
     gbar = Gmax/A     # Maximum conductance pS / um^2
     return gbar * (1e6) # 1e-12 S / (1e-6 m)^2 = (1e-6)*(1e-9 A / 1e-3 V)/(1e-6 m)^2 # Check the conversion factor
-
     
     
 def times2cycles(times, totT):       # REVISE to handle negative delay times
@@ -386,6 +390,8 @@ def round_sig(x, sig=3):
     else:
         return round(x, sig-int(np.floor(np.log10(abs(x))))-1)
 
+
+### Used in analysing kinetics (protocols) and steady-state (loadData)
 def expDecay(t, a, b, c):
     return a * np.exp(-t/b) + c
 
@@ -395,60 +401,4 @@ def biExpDecay(t, a1, tau1, a2, tau2, I_ss):
 def biExpSum(t, a1, tau1, a2, tau2, I_ss):
     return a0 + a1*(1-np.exp(-t/tau_act)) + a2*np.exp(-t/tau_deact)
 
-def findPeaks(I_phi,startInd=0,extOrder=5): # Revise this to take care of V<>E 
-# findPeaks(I_phi,minmax,startInd=0,extOrder=5)
-    from scipy.signal import argrelextrema #for argrelextrema
-    
-    if verbose > 1:
-        print("findPeaks(): extOrder = ",extOrder)
-    if np.isnan(I_phi).all() or len(I_phi)==0: # Not necessary
-        warning.warn("Warning: No photocurrent for run[{}]phi[{}]v[{}]!".format(run,phiInd,vInd))
-        #print("Warning: No photocurrent for run[{}]phi[{}]v[{}]!".format(run,phiInd,vInd))
-        return []
-    else:
-        if abs(min(I_phi)) > abs(max(I_phi)): # Find Minima
-            minmax = np.less #Ipmax = min(photocurrent.I_phi)
-        else:       # Find Maxima
-            minmax = np.greater #Ipmax = max(photocurrent.I_phi)
-#         if (extOrder < 1):
-#             if (V < E): # Find Minima
-#                 Ip = min(I_phi)
-#                 peakInds = [np.argmin(I_phi) + startInd]
-#             else:       # Find Maxima
-#                 Ip = max(I_phi)
-#                 peakInds = [np.argmax(I_phi) + startInd]
-#         else:
-        # if (V < E): # Find Minima
-            # peakInds = argrelextrema(I_phi[startInd:], np.less, order=extOrder)
-        # else:       # Find Maxima
-            # peakInds = argrelextrema(I_phi[startInd:], np.greater, order=extOrder)
-        peakInds = argrelextrema(I_phi[startInd:], minmax, order=extOrder)
-        peakInds = peakInds[0] + startInd # Remove tuple and transform into original co-ordinates
-        peakInds = peakInds.astype(int)
-#         Ip = I_phi[peakInds]
 
-        ### Alternatively loop over pulses taking the min() or max() within each region
-
-        if peakInds.any() and verbose > 1:
-            print(peakInds)
-            print("I[p-2]={}; I[p-1]={}; I[p]={}; I[p+1]={}; I[p+2]={};".format(*I_phi[peakInds-2:peakInds+3]))
-        return peakInds #, Ip        
-
-        
-def findPlateauCurrent(I_phi,p=0.1): ### c.f. findPlateaus() in loadData.py
-    """Trim the off-phase of I_phi. Optionally pass the proportion of data for the averaging window, p. """
-    # Move a sliding window over the data and look for abs(dI/dt) < eps
-    # Take the mean of the last p*t ms before t_off
-    # Take the mean of the last n ms before t_off
-    #onEndInd = np.searchsorted(t,onD+delD,side="left")
-    windowInd = int(round(p*len(I_phi))) #np.searchsorted(t,t[onEndInd]-100,side="left") # Generalise
-    I_ss = np.mean(I_phi[-windowInd:]) #:onEndInd+1
-    # Fit an exponential from the t_peak to t_off
-    # searchSlice = slice(peakInds[0], offInd+1)
-    # popt = fitPeaks(t[peakInds[0]:offInd+1], I_phi[peakInds[0]:offInd+1], expDecay, p0inact, '$I_{{inact}} = {:.3}e^{{-t/{:g}}} {:+.3}$','')
-    # Iss = popt[2]
-    
-    # Alternatively use a gradient-based approach
-    #if abs(np.gradient(I_phi)) < tol:
-    
-    return I_ss
