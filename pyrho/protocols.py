@@ -1254,10 +1254,8 @@ class protShortPulse(Protocol):
     def createLayout(self, Ifig=None, vInd=0):
     
         if Ifig == None:
-            Ifig = plt.figure()
-        
+            Ifig = plt.figure()        
         self.addStimulus = config.addStimulus
-        
         gsPL = plt.GridSpec(2,3)
         self.axLag = Ifig.add_subplot(gsPL[0,-1])
         self.axPeak = Ifig.add_subplot(gsPL[1,-1], sharex=self.axLag)
@@ -1305,6 +1303,7 @@ class protShortPulse(Protocol):
 
 
 class protRecovery(Protocol):
+    '''Two pulse stimulation protocol with varying inter-pulse interval to determine the dark recovery rate'''
     # Vary Inter-Pulse-Interval
     protocol = 'recovery'
     squarePulse = True
