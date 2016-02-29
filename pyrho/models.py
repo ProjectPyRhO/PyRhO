@@ -379,13 +379,13 @@ class RhO_3states(RhodopsinModel):
             dC/dt = Gr*D - Ga*C                     : 1
             dO/dt = Ga*C - Gd*O                     : 1
             dD/dt = Gd*O - Gr*D                     : 1
-            Ga = k_a*((phi**p)/(phi**p + phi_m**p))  : second**-1
-            Gr = Gr0 + k_r*((phi(t)**q)/(phi(t)**q + phi_m**q))  : second**-1
+            Ga = Theta*k_a*((phi**p)/(phi**p + phi_m**p))               : second**-1
+            Gr = Gr0 + Theta*k_r*((phi(t)**q)/(phi(t)**q + phi_m**q))   : second**-1
             f_phi = O                               : 1
             f_v = (1-exp(-(v-E)/v0))/((v-E)/v1)     : 1
             I = g0*f_phi*f_v*(v-E)                  : amp
             phi                                     : metre**-2*second**-1 (shared)
-            #Theta = int(phi > 0*phi)                : 1 (shared)
+            Theta = int(phi > 0*phi)                : 1 (shared)
             '''
     #S_D = 1 - S_C - S_O : 1 #
     #int(phi>0)
@@ -398,12 +398,12 @@ class RhO_3states(RhodopsinModel):
             dC/dt = Gr*D - Ga*C                         : 1
             dO/dt = Ga*C - Gd*O                         : 1
             dD/dt = Gd*O - Gr*D                         : 1
-            Ga = k_a*((phi(t)**p)/(phi(t)**p + phi_m**p))        : second**-1
-            Gr = Gr0 + k_r*((phi(t)**q)/(phi(t)**q + phi_m**q))  : second**-1
+            Ga = Theta*k_a*((phi(t)**p)/(phi(t)**p + phi_m**p))        : second**-1
+            Gr = Gr0 + Theta*k_r*((phi(t)**q)/(phi(t)**q + phi_m**q))  : second**-1
             f_phi = O                                   : 1
             f_v = (1-exp(-(v-E)/v0))/((v-E)/v1)         : 1
             I = g0*f_phi*f_v*(v-E)                      : amp
-            #Theta = int(phi(t) > 0*phi(t))              : 1 (shared)
+            Theta = int(phi(t) > 0*phi(t))              : 1 (shared)
             '''
             
     """
