@@ -510,11 +510,11 @@ class RhO_3states(RhodopsinModel):
     def calcSteadyState(self, phi):
         self.setLight(phi)
         denom3 = self.Gd * (self.Gr + self.Ga) + self.Ga * self.Gr
-        Cs = self.Gd*self.Gr/denom3
-        Os = self.Ga*self.Gr/denom3
-        Ds = self.Ga*self.Gd/denom3
-        self.steadyStates = np.array([Cs, Os, Ds])
-        return np.array([Cs, Os, Ds])
+        Css = self.Gd*self.Gr #/denom3
+        Oss = self.Ga*self.Gr #/denom3
+        Dss = self.Ga*self.Gd #/denom3
+        self.steadyStates = np.array([Css, Oss, Dss]) / denom3
+        return self.steadyStates
     
     def calcSoln(self, t, s0=[1,0,0]): #RhO_3states.s_0
         [C_0, O_0, D_0] = s0
@@ -707,12 +707,12 @@ class RhO_4states(RhodopsinModel):
         Gf = self.Gf
         Gb = self.Gb
         denom4 = Ga1 * (Gf * (Gr0 + Gd2 + Ga2) + Gb * (Gr0 + Ga2) + Gd2 * Gr0) + Gd1 * (Gb * (Gr0 + Ga2) + Gd2 * Gr0) + Gf * Gd2 * Gr0
-        C1s = (Gd1 * (Gb * (Gr0 + Ga2) + Gd2 * Gr0) + Gf * Gd2 * Gr0) / denom4
-        O1s = (Ga1 * (Gb * (Gr0 + Ga2) + Gd2 * Gr0)) / denom4
-        O2s = (Gf * Ga1 * (Gr0 + Ga2)) / denom4
-        C2s = (Gf * Ga1 * Gd2) / denom4
-        self.steadyStates = np.array([C1s, O1s, O2s, C2s])
-        return np.array([C1s, O1s, O2s, C2s])
+        C1ss = (Gd1 * (Gb * (Gr0 + Ga2) + Gd2 * Gr0) + Gf * Gd2 * Gr0) # / denom4
+        O1ss = (Ga1 * (Gb * (Gr0 + Ga2) + Gd2 * Gr0)) # / denom4
+        O2ss = (Gf * Ga1 * (Gr0 + Ga2)) # / denom4
+        C2ss = (Gf * Ga1 * Gd2) # / denom4
+        self.steadyStates = np.array([C1ss, O1ss, O2ss, C2ss]) / denom4
+        return self.steadyStates
 
     def calcSoln(self, t, s0=[1,0,0,0]):
         raise NotImplementedError(self.nStates)
@@ -876,14 +876,14 @@ class RhO_6states(RhodopsinModel):
         Go2 = self.Go2
         Ga2 = self.Ga2
         denom6 = (Ga1*Go1*(Gf*(Go2*(Ga2+Gd2)+Gd2*Ga2)+Gb*Go2*Ga2)+Gd1*(Go1*Gb*Go2*Ga2+Ga1*Gb*Go2*Ga2+Gr0*(Go1*(Gb*Go2+Gd2*Go2)+Ga1*(Gb*Go2+Gd2*Go2)))+Gr0*(Ga1*(Go1*(Gb*Go2+Gd2*Go2+Gf*Go2)+Gf*Gd2*Go2)+Go1*Gf*Gd2*Go2))
-        C1s = (Gd1*(Go1*Gb*Go2*Ga2 + Go1*Gr0*(Gb*Go2 + Gd2*Go2)) + Go1*Gf*Gd2*Gr0*Go2)/denom6
-        I1s = (Gd1*(Ga1*Gb*Go2*Ga2 + Ga1*Gr0*(Gb*Go2 + Gd2*Go2)) + Ga1*Gf*Gd2*Gr0*Go2)/denom6
-        O1s = (Ga1*Go1*Gb*Go2*Ga2 + Ga1*Go1*Gr0*(Gb*Go2 + Gd2*Go2))/denom6
-        O2s = (Ga1*Go1*Gf*Go2*Ga2 + Ga1*Go1*Gf*Gr0*Go2)/denom6
-        I2s = (Ga1*Go1*Gf*Gd2*Ga2)/denom6
-        C2s = (Ga1*Go1*Gf*Gd2*Go2)/denom6
-        self.steadyStates = np.array([C1s, I1s, O1s, O2s, I2s, C2s])
-        return self.steadyStates #np.array([C1s, I1s, O1s, O2s, I2s, C2s])
+        C1ss = (Gd1*(Go1*Gb*Go2*Ga2 + Go1*Gr0*(Gb*Go2 + Gd2*Go2)) + Go1*Gf*Gd2*Gr0*Go2) #/denom6
+        I1ss = (Gd1*(Ga1*Gb*Go2*Ga2 + Ga1*Gr0*(Gb*Go2 + Gd2*Go2)) + Ga1*Gf*Gd2*Gr0*Go2) #/denom6
+        O1ss = (Ga1*Go1*Gb*Go2*Ga2 + Ga1*Go1*Gr0*(Gb*Go2 + Gd2*Go2)) #/denom6
+        O2ss = (Ga1*Go1*Gf*Go2*Ga2 + Ga1*Go1*Gf*Gr0*Go2) #/denom6
+        I2ss = (Ga1*Go1*Gf*Gd2*Ga2) #/denom6
+        C2ss = (Ga1*Go1*Gf*Gd2*Go2) #/denom6
+        self.steadyStates = np.array([C1ss, I1ss, O1ss, O2ss, I2ss, C2ss]) / denom6
+        return self.steadyStates
     
     def calcfphi(self, states=None):
         """Function to calculate the conductance scalar from the photocycle"""
