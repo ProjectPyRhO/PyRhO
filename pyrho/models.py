@@ -116,6 +116,12 @@ class RhodopsinModel(PyRhOobject):
         #    fV=1 ### Extend to vector
         return fV
     
+    #@property
+    def calcIss(self, V):
+        """Calculate the steady-state current for a given voltage (and model parameters)"""
+        return self.calcI(V, states=self.calcSteadyState())
+        
+    
     '''
     @proterty
     def T(self):
@@ -405,7 +411,7 @@ class RhO_3states(RhodopsinModel):
             I = g0*f_phi*f_v*(v-E)                      : amp
             Theta = int(phi(t) > 0*phi(t))              : 1 (shared)
             '''
-            
+    
     """
     @property
     def Ga(self):
