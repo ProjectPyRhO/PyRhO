@@ -1,11 +1,9 @@
 """The PyRhO package setup script"""
 
 from __future__ import print_function       # Added for (eventual) Python 2.x support
-from setuptools import setup, find_packages  # Always prefer setuptools over distutils
+from setuptools import setup, find_packages # Always prefer setuptools over distutils
 from codecs import open  # To use a consistent encoding
-#from os import path
 import os
-
 
 # Download and install setuptools if not installed
 #from ez_setup import use_setuptools
@@ -24,65 +22,47 @@ prwd = os.path.join(home, 'pyrho') # pyrho working directory
 with open(os.path.join(here, 'DESCRIPTION.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
-#cwd=os.getcwd()
 
-# Directories
-#dDir = cwd+'/data/'
-#fDir = cwd+'/figs/'
-
-#def createDir(path):
-#    try:
-#        os.makedirs(path)
-#    except OSError as exception:
-#        if exception.errno != errno.EEXIST:
-#            raise
-
-#createDir(dDir)
-#createDir(fDir)
-    
 setup(
     name='PyRhO',
-
+    
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
     version='0.9.1',
 
-    description='A Python module to fit and characterise rhodopsin photocurrents',
+    description='Fit and characterise rhodopsin photocurrents',
     long_description=long_description,
-
+    
     # The project's main homepage.
-    url='https://github.com/ProjectPyRhO/PyRhO', 
-
+    url='https://github.com/ProjectPyRhO/PyRhO/', 
+    #download_url='https://github.com/ProjectPyRhO/PyRhO/archive/master.zip', 
+    
     # Author details
     author='Benjamin D. Evans',
     author_email='ben.d.evans@gmail.com',
-
-    # Choose your license
+    
     license='BSD',
-
+    
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
-        # How mature is this project? Common values are
         #   3 - Alpha
         #   4 - Beta
         #   5 - Production/Stable
-        'Development Status :: 3 - Alpha',
-
-        # Indicate who your project is intended for
+        'Development Status :: 4 - Beta',
+        
         'Intended Audience :: Science/Research',
         'Intended Audience :: Education',
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Medical Science Apps.',
-        'Topic :: Scientific/Engineering :: Bio-Informatics',                       ### Consider these topics
+        'Topic :: Scientific/Engineering :: Bio-Informatics',
         'Topic :: Scientific/Engineering :: Artificial Life',
         'Topic :: Scientific/Engineering :: Human Machine Interfaces',
-
-        # Pick your license as you wish (should match "license" above)
+        
+        # The license should match "license" above
         'License :: OSI Approved :: BSD License',
-
-        # Specify the Python versions you support here. In particular, ensure
-        # that you indicate whether you support Python 2, Python 3 or both.
+        
+        # Supported Python versions
         'Programming Language :: Python',
         #'Programming Language :: Python :: 2',
         #'Programming Language :: Python :: 2.6',
@@ -98,7 +78,6 @@ setup(
         'Operating System :: OS Independent',
     ],
 
-    # What does your project relate to?
     keywords='optogenetics rhodopsin opsin brain neuroscience neuron brian jupyter',
 
     # You can just specify the packages manually here if your project is
