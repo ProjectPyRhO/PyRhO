@@ -13,7 +13,9 @@ The purpose of developing PyRhO is threefold:
 
 The module is written in Python with an additional IPython/Jupyter notebook based GUI, allowing models to be fit, simulations to be run and results to be shared through simply interacting with a webpage. The seamless integration of model fitting algorithms with simulation environments for these virtual opsins will enable neuroscientists to gain a comprehensive understanding of their behaviour and rapidly identify the most suitable variant for application in a particular biological system. This process may thereby guide not only experimental design and opsin choice but also alterations of the rhodopsin genetic code in a neuro-engineering feed-back loop. In this way, we expect PyRhO will help to significantly improve optogenetics as a tool for transforming biological sciences. 
 
-If you use PyRhO please cite our paper: Evans, B. D., Jarvis, S., Schultz, S. R. & Nikolic K. (2016) "PyRhO: A Multiscale Optogenetics Simulation Platform", *Front. Neuroinform., 10* (8). `doi:10.3389/fninf.2016.00008 <https://dx.doi.org/10.3389/fninf.2016.00008>`_
+If you use PyRhO please cite our paper: 
+
+Evans, B. D., Jarvis, S., Schultz, S. R. & Nikolic K. (2016) "PyRhO: A Multiscale Optogenetics Simulation Platform", *Front. Neuroinform., 10* (8). `doi:10.3389/fninf.2016.00008 <https://dx.doi.org/10.3389/fninf.2016.00008>`_
 
 The PyRhO project website with additional documentation may be found here: www.imperial.ac.uk/bio-modelling/pyrho
 
