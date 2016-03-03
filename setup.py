@@ -37,6 +37,7 @@ setup(
     # The project's main homepage.
     url='https://github.com/ProjectPyRhO/PyRhO/', 
     #download_url='https://github.com/ProjectPyRhO/PyRhO/archive/master.zip', 
+    #download_url='https://github.com/ProjectPyRhO/PyRhO/tarball/0.9.1',
     
     # Author details
     author='Benjamin D. Evans',
