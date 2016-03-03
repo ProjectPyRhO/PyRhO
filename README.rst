@@ -22,7 +22,11 @@ The PyRhO project website with additional documentation may be found here: `www.
 Installation
 ------------
 
-To install PyRhO from Github (including the GUI) use the command:
+To install PyRhO (including the GUI) from PyPI use the command:
+::
+    pip install pyrho[full]
+    
+Alternatively, to install the latest code from Github (including the GUI) use the command:
 ::
     pip install git+https://github.com/ProjectPyRhO/PyRhO.git#egg=PyRhO[full]
 
