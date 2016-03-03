@@ -17,7 +17,7 @@ If you use PyRhO please cite our paper:
 
 Evans, B. D., Jarvis, S., Schultz, S. R. & Nikolic K. (2016) "PyRhO: A Multiscale Optogenetics Simulation Platform", *Front. Neuroinform., 10* (8). `doi:10.3389/fninf.2016.00008 <https://dx.doi.org/10.3389/fninf.2016.00008>`_
 
-The PyRhO project website with additional documentation may be found here: www.imperial.ac.uk/bio-modelling/pyrho
+The PyRhO project website with additional documentation may be found here: `www.imperial.ac.uk/bio-modelling/pyrho <http://www.imperial.ac.uk/a-z-research/bio-modelling/pyrho>`_
 
 Installation
 ------------
