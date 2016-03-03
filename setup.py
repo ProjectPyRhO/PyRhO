@@ -44,6 +44,8 @@ setup(
     
     license='BSD',
     
+    platforms = ['Linux', 'Mac OS X', 'Windows'],
+    
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
         #   3 - Alpha
