@@ -19,7 +19,8 @@ print(home)
 prwd = os.path.join(home, 'pyrho') # pyrho working directory
 
 # Get the long description from the relevant file
-with open(os.path.join(here, 'DESCRIPTION.rst'), encoding='utf-8') as f:
+#with open(os.path.join(here, 'DESCRIPTION.rst'), encoding='utf-8') as f:
+with open('DESCRIPTION.rst', encoding='utf-8') as f:
     long_description = f.read()
 
 
