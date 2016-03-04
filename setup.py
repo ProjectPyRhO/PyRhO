@@ -55,7 +55,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='0.9.3',
+    version='0.9.4',
 
     description='Fit and characterise rhodopsin photocurrents',
     long_description=long_description,
@@ -63,7 +63,7 @@ setup(
     # The project's main homepage.
     url='https://github.com/ProjectPyRhO/PyRhO/', 
     #download_url='https://github.com/ProjectPyRhO/PyRhO/archive/master.zip', 
-    #download_url='https://github.com/ProjectPyRhO/PyRhO/tarball/0.9.3',
+    #download_url='https://github.com/ProjectPyRhO/PyRhO/tarball/0.9.4',
     
     # Author details
     author='Benjamin D. Evans',
@@ -139,6 +139,7 @@ setup(
     # have to be included in MANIFEST.in as well.
     package_data={
         'pyrho': ['NEURON/*.mod', 'NEURON/*.hoc', 'NEURON/*.sh', 'gui/*.png', 'datasets/*.pkl'],
+        #'datasets': ['*.pkl']
         #'sample': ['package_data.dat'],
     },
     

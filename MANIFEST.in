@@ -3,10 +3,13 @@ include LICENSE.txt
 
 #recursive-include docs *.html *.css *.png *.gif
 
-#include NEURON/*.mod
-#include NEURON/*.hoc
-#include GUI/*.png
-#recursive-include NEURON *
+#include pyrho/NEURON/*.mod
+#include pyrho/NEURON/*.hoc
+#include pyrho/NEURON/*.sh
+include pyrho/gui/*.png
+include pyrho/datasets/*.pkl
+recursive-include pyrho/NEURON *
+#recursive-include pyrho/gui *
 
 # Include examples
 recursive-include notebooks *.ipynb
