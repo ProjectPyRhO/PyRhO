@@ -359,7 +359,7 @@ class RhO_3states(RhodopsinModel):
                 $$ C + O + D = 1 $$
                 $$ $$
                 $$ G_a(\phi) = k_a\\frac{\phi^p}{\phi^p + \phi_m^p} $$
-                $$ G_r(\phi) = G_{r0} + k_r\\frac{\phi^q}{\phi^q + \phi_m^q} $$
+                $$ G_r(\phi) = k_r\\frac{\phi^q}{\phi^q + \phi_m^q} + G_{r0} $$
                 $$ $$
                 $$ f_{\phi}(\phi) = O \qquad \qquad $$
                 $$ f_v(v) = v_1\\frac{1-e^{-(v-E)/v_0}}{(v-E)} $$
@@ -371,7 +371,7 @@ class RhO_3states(RhodopsinModel):
                 "$\dot{D} = G_{d}O - G_{r}(\phi)D$",
                 "$C + O + D = 1$",
                 "$G_a(\phi) = k\\frac{\phi^p}{\phi^p + \phi_m^p}$",
-                "$G_r(\phi) = G_{r0} + \mathcal{H}(\phi) \cdot G_{r1}$",
+                "$G_r(\phi) = \mathcal{H}(\phi) \cdot G_{r1} + G_{r0}$",
                 "$f_{\phi}(\phi) = O$"
                 "$f_v(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1}$",
                 "$I_{\phi} = g_0 \cdot f_{\phi}(\phi) \cdot f_v(v) \cdot (v-E)$"]
@@ -379,14 +379,14 @@ class RhO_3states(RhodopsinModel):
     eqIss = """$I_{SS} = \bar{g_0} \cdot \frac{G_a \cdot G_r}{G_d \cdot (G_r + G_a) + G_a \cdot G_r} \cdot (v-E) 
     = \bar{g_0} \cdot \frac{\tau_d}{\tau_d + \tau_r + \tau_\phi} \cdot (v-E)$"""
     
-    brianStateVars = ['C','O','D'] #['S_C','S_O','S_D']
+    brianStateVars = ['C','O','D']
     
     brian = '''
             dC/dt = Gr*D - Ga*C                     : 1
             dO/dt = Ga*C - Gd*O                     : 1
             dD/dt = Gd*O - Gr*D                     : 1
-            Ga = Theta*k_a*((phi**p)/(phi**p + phi_m**p))               : second**-1
-            Gr = Gr0 + Theta*k_r*((phi(t)**q)/(phi(t)**q + phi_m**q))   : second**-1
+            Ga = Theta*k_a*((phi**p)/(phi**p + phi_m**p))             : second**-1
+            Gr = Theta*k_r*((phi(t)**q)/(phi(t)**q + phi_m**q)) + Gr0 : second**-1
             f_phi = O                               : 1
             f_v = (1-exp(-(v-E)/v0))/((v-E)/v1)     : 1
             I = g0*f_phi*f_v*(v-E)                  : amp
@@ -401,15 +401,15 @@ class RhO_3states(RhodopsinModel):
     #stimulus = int(ceil(clip(phi(t), 0, 1)))
     
     brian_phi_t = '''
-            dC/dt = Gr*D - Ga*C                         : 1
-            dO/dt = Ga*C - Gd*O                         : 1
-            dD/dt = Gd*O - Gr*D                         : 1
-            Ga = Theta*k_a*((phi(t)**p)/(phi(t)**p + phi_m**p))        : second**-1
-            Gr = Gr0 + Theta*k_r*((phi(t)**q)/(phi(t)**q + phi_m**q))  : second**-1
-            f_phi = O                                   : 1
-            f_v = (1-exp(-(v-E)/v0))/((v-E)/v1)         : 1
-            I = g0*f_phi*f_v*(v-E)                      : amp
-            Theta = int(phi(t) > 0*phi(t))              : 1 (shared)
+            dC/dt = Gr*D - Ga*C                                       : 1
+            dO/dt = Ga*C - Gd*O                                       : 1
+            dD/dt = Gd*O - Gr*D                                       : 1
+            Ga = Theta*k_a*((phi(t)**p)/(phi(t)**p + phi_m**p))       : second**-1
+            Gr = Theta*k_r*((phi(t)**q)/(phi(t)**q + phi_m**q)) + Gr0 : second**-1
+            f_phi = O                                                 : 1
+            f_v = (1-exp(-(v-E)/v0))/((v-E)/v1)                       : 1
+            I = g0*f_phi*f_v*(v-E)                                    : amp
+            Theta = int(phi(t) > 0*phi(t))                            : 1 (shared)
             '''
     
     """
@@ -580,15 +580,15 @@ class RhO_4states(RhodopsinModel):
                [1,0,1,0]]
     
     equations = """
-                $$ \dot{C_1} = G_{r}C_2 + G_{d1}O_1 - G_{a1}(\phi)C_1 $$
-                $$ \dot{O_1} = G_{a1}(\phi)C_1 - (G_{d1}+G_{f}(\phi))O_1 + G_{b}(\phi)O_2 $$
-                $$ \dot{O_2} = G_{a2}(\phi)C_2 + G_{f}(\phi)O_1 - (G_{d2}+G_{b}(\phi))O_2 $$
-                $$ \dot{C_2} = G_{d2}O_2 - (G_{a2}(\phi)+G_{r0})C_2 $$
+                $$ \dot{C_1} = G_{d1}O_1 + G_{r0}C_2 - G_{a1}(\phi)C_1 $$
+                $$ \dot{O_1} = G_{a1}(\phi)C_1 + G_{b}(\phi)O_2 - (G_{d1} + G_{f}(\phi))O_1 $$
+                $$ \dot{O_2} = G_{a2}(\phi)C_2 + G_{f}(\phi)O_1 - (G_{d2} + G_{b}(\phi))O_2 $$
+                $$ \dot{C_2} = G_{d2}O_2 - (G_{r0} + G_{a2}(\phi))C_2 $$
                 $$ C_1 + O_1 + O_2 + C_2 = 1 $$
                 $$$$
                 $$ G_{a1}(\phi) = k_1\\frac{\phi^p}{\phi^p + \phi_m^p} $$
-                $$ G_{f}(\phi) = G_{f0} + k_{f} \\frac{\phi^q}{\phi^q + \phi_m^q} $$
-                $$ G_{b}(\phi) = G_{b0} + k_{b} \\frac{\phi^q}{\phi^q + \phi_m^q} $$
+                $$ G_{f}(\phi)  = k_{f} \\frac{\phi^q}{\phi^q + \phi_m^q} + G_{f0} $$
+                $$ G_{b}(\phi)  = k_{b} \\frac{\phi^q}{\phi^q + \phi_m^q} + G_{b0} $$
                 $$ G_{a2}(\phi) = k_2\\frac{\phi^p}{\phi^p + \phi_m^p} $$
                 $$$$
                 $$ f_{\phi}(\phi) = O_1+\gamma O_2 $$
@@ -599,36 +599,36 @@ class RhO_4states(RhodopsinModel):
     brianStateVars = ['C_1','O_1','O_2','C_2'] #['S_C1','S_O1','S_O2','S_C2']
     
     brian = '''
-            dC_1/dt = Gr0*C_2 + Gd1*O_1 - Ga1*C_1 : 1
-            dO_1/dt = Ga1*C_1 - (Gd1+Gf)*O_1 + Gb*O_2 : 1
+            dC_1/dt = Gd1*O_1 + Gr0*C_2 - Ga1*C_1     : 1
+            dO_1/dt = Ga1*C_1 + Gb*O_2 - (Gd1+Gf)*O_1 : 1
             dO_2/dt = Ga2*C_2 + Gf*O_1 - (Gd2+Gb)*O_2 : 1
-            C_2 = 1 - C_1 - O_1 - O_2 : 1
-            H_p = Theta*((phi**p)/(phi**p+phi_m**p)) : 1
-            H_q = Theta*((phi**q)/(phi**q+phi_m**q)) : 1
-            Ga1 = k1*H_p : second**-1
-            Ga2 = k2*H_p : second**-1
-            Gf = Gf0 + k_f*H_q : second**-1
-            Gb = Gb0 + k_b*H_q : second**-1
-            f_v = (1-exp(-(v-E)/v0))/((v-E)/v1) : 1
-            f_phi = O_1+gam*O_2 : 1
-            I = g0*f_phi*f_v*(v-E) : amp
-            phi : metre**-2*second**-1 (shared)
-            Theta = int(phi > 0*phi)                : 1 (shared)
+            C_2 = 1 - C_1 - O_1 - O_2                 : 1
+            H_p = Theta*((phi**p)/(phi**p+phi_m**p))  : 1
+            H_q = Theta*((phi**q)/(phi**q+phi_m**q))  : 1
+            Ga1 = k1*H_p                              : second**-1
+            Ga2 = k2*H_p                              : second**-1
+            Gf  = k_f*H_q + Gf0                       : second**-1
+            Gb  = k_b*H_q + Gb0                       : second**-1
+            f_v   = (1-exp(-(v-E)/v0))/((v-E)/v1)     : 1
+            f_phi = O_1+gam*O_2                       : 1
+            I     = g0*f_phi*f_v*(v-E)                : amp
+            phi                                       : metre**-2*second**-1 (shared)
+            Theta = int(phi > 0*phi)                  : 1 (shared)
             '''
             
     brian_phi_t = '''
-            dC_1/dt = Gr0*C_2 + Gd1*O_1 - Ga1*C_1 : 1
-            dO_1/dt = Ga1*C_1 - (Gd1+Gf)*O_1 + Gb*O_2 : 1
-            dO_2/dt = Ga2*C_2 + Gf*O_1 - (Gd2+Gb)*O_2 : 1
-            C_2 = 1 - C_1 - O_1 - O_2 : 1
-            Ga1 = Theta*k1*phi(t)**p/(phi(t)**p+phi_m**p) : second**-1
-            Ga2 = Theta*k2*phi(t)**p/(phi(t)**p+phi_m**p) : second**-1
-            Gf = Gf0 + Theta*k_f*phi(t)**q/(phi(t)**q+phi_m**q) : second**-1
-            Gb = Gb0 + Theta*k_b*phi(t)**q/(phi(t)**q+phi_m**q) : second**-1
-            f_v = (1-exp(-(v-E)/v0))/((v-E)/v1) : 1
-            f_phi = O_1+gam*O_2 : 1
-            I = g0*f_phi*f_v*(v-E) : amp
-            Theta = int(phi(t) > 0*phi(t)) : 1 (shared)
+            dC_1/dt = Gd1*O_1 + Gr0*C_2 - Ga1*C_1                  : 1
+            dO_1/dt = Ga1*C_1 + Gb*O_2 - (Gd1+Gf)*O_1              : 1
+            dO_2/dt = Ga2*C_2 + Gf*O_1 - (Gd2+Gb)*O_2              : 1
+            C_2 = 1 - C_1 - O_1 - O_2                              : 1
+            Theta = int(phi(t) > 0*phi(t))                         : 1 (shared)
+            Ga1   = Theta*k1*phi(t)**p/(phi(t)**p+phi_m**p)        : second**-1
+            Ga2   = Theta*k2*phi(t)**p/(phi(t)**p+phi_m**p)        : second**-1
+            Gf    = Theta*k_f*phi(t)**q/(phi(t)**q+phi_m**q) + Gf0 : second**-1
+            Gb    = Theta*k_b*phi(t)**q/(phi(t)**q+phi_m**q) + Gb0 : second**-1
+            f_v   = (1-exp(-(v-E)/v0))/((v-E)/v1)                  : 1
+            f_phi = O_1+gam*O_2                                    : 1
+            I     = g0*f_phi*f_v*(v-E)                             : amp
             '''
     
     def _calcGa1(self, phi):
@@ -750,64 +750,63 @@ class RhO_6states(RhodopsinModel):
                [1,0,0,0,1,0]]
     
     equations = """
-                $$ \dot{C_1} = -G_{a1}(\phi)C_1 + G_{d1}O_1 + G_{r0}C_2 $$
+                $$ \dot{C_1} = G_{d1}O_1 + G_{r0}C_2 - G_{a1}(\phi)C_1 $$
                 $$ \dot{I_1} = G_{a1}(\phi)C_1 - G_{o1}I_1 $$
-                $$ \dot{O_1} = G_{o1}I_1 - (G_{d1} + G_{f}(\phi))O_1 + G_{b}(\phi)O_2 $$
-                $$ \dot{O_2} = G_{f}(\phi)O_1 - (G_{b}(\phi) + G_{d2})O_2 + G_{o2}I_2 $$
-                $$ \dot{I_2} = -G_{o2}I_2 + G_{a2}(\phi)C_2 $$
-                $$ \dot{C_2} = G_{d2}O_2 - (G_{a2}(\phi)+G_{r0})C_2 $$
+                $$ \dot{O_1} = G_{o1}I_1 + G_{b}(\phi)O_2 - (G_{d1} + G_{f}(\phi))O_1 $$
+                $$ \dot{O_2} = G_{o2}I_2 + G_{f}(\phi)O_1 - (G_{d2} + G_{b}(\phi))O_2 $$
+                $$ \dot{I_2} = G_{a2}(\phi)C_2 - G_{o2}I_2 $$
+                $$ \dot{C_2} = G_{d2}O_2 - (G_{r0} + G_{a2}(\phi))C_2 $$
                 $$ C_1 + I_1 + O_1 + O_2 + I_2 + C_2 = 1 $$
                 $$$$
                 $$ G_{a1}(\phi) = k_{1} \\frac{\phi^p}{\phi^p + \phi_m^p} $$
-                $$ G_{f}(\phi) = G_{f0} + k_{f} \\frac{\phi^q}{\phi^q + \phi_m^q} $$
-                $$ G_{b}(\phi) = G_{b0} + k_{b} \\frac{\phi^q}{\phi^q + \phi_m^q} $$
+                $$ G_{f}(\phi)  = k_{f} \\frac{\phi^q}{\phi^q + \phi_m^q} + G_{f0} $$
+                $$ G_{b}(\phi)  = k_{b} \\frac{\phi^q}{\phi^q + \phi_m^q} + G_{b0} $$
                 $$ G_{a2}(\phi) = k_{2} \\frac{\phi^p}{\phi^p + \phi_m^p} $$
                 $$$$
                 $$ f_{\phi}(\phi) = O_1+\gamma O_2 $$
                 $$ f_v(v) = v_1\\frac{1-e^{-(v-E)/v_0}}{(v-E)} $$
                 $$ I_{\phi} = g_0 \cdot f_{\phi}(\phi) \cdot f_v(v) \cdot (v-E) $$
                 """
-                #$$ f_v(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1} $$
     
-    brianStateVars = ['C_1','I_1','O_1','O_2','I_2','C_2'] #['S_C1','S_I1','S_O1','S_O2','S_I2','S_C2']
+    brianStateVars = ['C_1','I_1','O_1','O_2','I_2','C_2']
     
     brian = '''
-            dC_1/dt = Gr0*C_2 + Gd1*O_1 - Ga1*C_1 : 1
-            dI_1/dt = Ga1*C_1 - Go1*I_1 : 1
-            dO_1/dt = Go1*I_1 - (Gd1+Gf)*O_1 + Gb*O_2 : 1
+            dC_1/dt = Gd1*O_1 + Gr0*C_2 - Ga1*C_1     : 1
+            dI_1/dt = Ga1*C_1 - Go1*I_1               : 1
+            dO_1/dt = Go1*I_1 + Gb*O_2 - (Gd1+Gf)*O_1 : 1
             dO_2/dt = Go2*I_2 + Gf*O_1 - (Gd2+Gb)*O_2 : 1
-            dI_2/dt = Ga2*C_2 - Go2*I_2 : 1
-            C_2 = 1 - C_1 - I_1 - O_1 - O_2 - I_2 : 1
-            H_p = Theta*((phi**p)/(phi**p+phi_m**p)) : 1
-            H_q = Theta*((phi**q)/(phi**q+phi_m**q)) : 1
-            Ga1 = k1*H_p : second**-1
-            Ga2 = k2*H_p : second**-1
-            Gf = Gf0 + k_f*H_q : second**-1
-            Gb = Gb0 + k_b*H_q : second**-1
-            f_v = (1-exp(-(v-E)/v0))/((v-E)/v1) : 1
-            f_phi = O_1+gam*O_2 : 1
-            I = g0*f_phi*f_v*(v-E) : amp
-            phi : metre**-2*second**-1 (shared)
-            Theta = int(phi > 0*phi)                : 1 (shared)
+            dI_2/dt = Ga2*C_2 - Go2*I_2               : 1
+            C_2 = 1 - C_1 - I_1 - O_1 - O_2 - I_2     : 1
+            H_p = Theta*((phi**p)/(phi**p+phi_m**p))  : 1
+            H_q = Theta*((phi**q)/(phi**q+phi_m**q))  : 1
+            Ga1 = k1*H_p                              : second**-1
+            Ga2 = k2*H_p                              : second**-1
+            Gf = k_f*H_q + Gf0                        : second**-1
+            Gb = k_b*H_q + Gb0                        : second**-1
+            f_v = (1-exp(-(v-E)/v0))/((v-E)/v1)       : 1
+            f_phi = O_1+gam*O_2                       : 1
+            I = g0*f_phi*f_v*(v-E)                    : amp
+            phi                                       : metre**-2*second**-1 (shared)
+            Theta = int(phi > 0*phi)                  : 1 (shared)
             '''
     
     brian_phi_t = '''
-            dC_1/dt = Gr0*C_2 + Gd1*O_1 - Ga1*C_1 : 1
-            dI_1/dt = Ga1*C_1 - Go1*I_1 : 1
-            dO_1/dt = Go1*I_1 - (Gd1+Gf)*O_1 + Gb*O_2 : 1
-            dO_2/dt = Go2*I_2 + Gf*O_1 - (Gd2+Gb)*O_2 : 1
-            dI_2/dt = Ga2*C_2 - Go2*I_2 : 1
-            C_2 = 1 - C_1 - I_1 - O_1 - O_2 - I_2 : 1
-            H_p = Theta*((phi(t)**p)/(phi(t)**p+phi_m**p)) : 1
-            H_q = Theta*((phi(t)**q)/(phi(t)**q+phi_m**q)) : 1
-            Ga1 = k1*H_p : second**-1
-            Ga2 = k2*H_p : second**-1
-            Gf = Gf0 + k_f*H_q : second**-1
-            Gb = Gb0 + k_b*H_q : second**-1
-            f_v = (1-exp(-(v-E)/v0))/((v-E)/v1) : 1
-            f_phi = O_1+gam*O_2 : 1
-            I = g0*f_phi*f_v*(v-E) : amp
-            Theta = int(phi(t) > 0*phi(t)) : 1 (shared)
+            dC_1/dt = Gd1*O_1 + Gr0*C_2 - Ga1*C_1            : 1
+            dI_1/dt = Ga1*C_1 - Go1*I_1                      : 1
+            dO_1/dt = Go1*I_1 + Gb*O_2 - (Gd1+Gf)*O_1        : 1
+            dO_2/dt = Go2*I_2 + Gf*O_1 - (Gd2+Gb)*O_2        : 1
+            dI_2/dt = Ga2*C_2 - Go2*I_2                      : 1
+            C_2 = 1 - C_1 - I_1 - O_1 - O_2 - I_2            : 1
+            Theta = int(phi(t) > 0*phi(t))                   : 1 (shared)
+            H_p   = Theta*((phi(t)**p)/(phi(t)**p+phi_m**p)) : 1
+            H_q   = Theta*((phi(t)**q)/(phi(t)**q+phi_m**q)) : 1
+            Ga1   = k1*H_p                                   : second**-1
+            Ga2   = k2*H_p                                   : second**-1
+            Gf    = k_f*H_q + Gf0                            : second**-1
+            Gb    = k_b*H_q + Gb0                            : second**-1
+            f_v   = (1-exp(-(v-E)/v0))/((v-E)/v1)            : 1
+            f_phi = O_1+gam*O_2                              : 1
+            I     = g0*f_phi*f_v*(v-E)                       : amp
             '''
     
     def _calcGa1(self, phi):
