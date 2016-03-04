@@ -16,7 +16,8 @@ import pickle
 #    return resource_string(__name__, resource)
 
 def loadChR2():
-    """Return dictionary of ChR2 protocol data"""
+    """Return dictionary of ChR2 protocol data.
+        With thanks to Nir Grossman, Juan Burrone and Matthew Grub"""
     return pickle.load(resource_stream(__name__, 'ChR2.pkl'))
 
 '''    
