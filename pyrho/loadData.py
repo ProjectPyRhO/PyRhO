@@ -1,13 +1,16 @@
+"""Classes for storing and processing experimental photocurrent data"""
+
+import warnings
+import copy
+
 import numpy as np
 import scipy.io as sio # Use for Matlab files < v7.3
 from lmfit import Parameters, minimize, fit_report #*
+
 from pyrho.utilities import * # For times2cycles and cycles2times, expDecay, findPlateauCurrent
 from pyrho.parameters import tFromOff
 from pyrho.config import * #verbose, colours, styles
 from pyrho import config
-import warnings
-import copy
-
 
 # See also python electrophysiology modules
 # Neo: http://neuralensemble.org/neo/
