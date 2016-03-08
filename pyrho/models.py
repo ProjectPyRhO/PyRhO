@@ -243,8 +243,8 @@ class RhodopsinModel(PyRhOobject):
         #axLine.spines['left'].set_position('zero') # y-axis
         #axLine.spines['right'].set_color('none')
         #axLine.spines['bottom'].set_position('zero') # x-axis
-        axLine.spines['bottom'].set_color('none')
-        axLine.spines['top'].set_color('none')
+        #axLine.spines['bottom'].set_color('none')
+        #axLine.spines['top'].set_color('none')
         axLine.spines['left'].set_smart_bounds(True)
         axLine.spines['bottom'].set_smart_bounds(True)
         #axLine.xaxis.set_ticks_position('bottom')
