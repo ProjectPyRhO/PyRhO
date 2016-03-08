@@ -19,6 +19,8 @@ Evans, B. D., Jarvis, S., Schultz, S. R. & Nikolic K. (2016) "PyRhO: A Multiscal
 
 The PyRhO project website with additional documentation may be found here: `www.imperial.ac.uk/bio-modelling/pyrho <http://www.imperial.ac.uk/a-z-research/bio-modelling/pyrho>`_
 
+Follow us on twitter: `@ProjectPyRhO <https://twitter.com/ProjectPyRhO>`_!
+
 Installation
 ------------
 
