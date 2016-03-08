@@ -1,7 +1,5 @@
-# config.py
+"""General configuration variables and functions"""
 
-import matplotlib as mpl
-import numpy as np
 import warnings
 import os
 #import glob
@@ -10,6 +8,9 @@ import shutil
 import subprocess
 import sys
 import time
+
+import matplotlib as mpl
+import numpy as np
 
 pyVer = sys.version_info
 
@@ -42,6 +43,7 @@ if 'verbose' not in vars() or 'verbose' not in globals() or verbose is None:
 
 
 def createDir(path):
+    """Create directory"""
     if os.path.isdir(path):
         return
     try:
@@ -62,6 +64,7 @@ if 'fDir' not in vars() or 'fDir' not in globals() or fDir is None:
 
 GUIdir = 'gui'
 def setupGUI(path=None):
+    """Setup the Jupyter notebook GUI"""
     if path is None: # Copy image folders to home directory
         path = os.path.join(os.getcwd(), GUIdir)
     
@@ -74,6 +77,7 @@ def setupGUI(path=None):
     return
 
 def simAvailable(sim):
+    """Check whether or not a simulator is available"""
     sim = sim.lower()
     if sim is 'python':
         return True
@@ -218,6 +222,7 @@ def setupNEURON(path=None, NEURONpath=None):
     return
 
 def checkBrian(test=False):
+    """Check for the Brian2 simulator"""
     try:
         import brian2 as br
         found = True
@@ -237,6 +242,7 @@ def checkBrian(test=False):
     return found
 
 def setupBrian():
+    """Setup the Brian2 simulator"""
     if not checkBrian():
         import pip
         pip.main(['install', 'brian2']) # pip install brian2
@@ -262,6 +268,7 @@ if latexInstalled:
 xLabelPos = 0.98
 
 def setFigOutput(figDisplay='screen', width=None):
+    """Set figure plotting options"""
     golden_ratio = (1.0 + np.sqrt(5)) / 2.0
     global saveFigFormat
     global addTitles
@@ -336,6 +343,7 @@ setFigOutput(figDisplay)
 fancyPlots = False #True
 
 def setFigStyle(fancyPlots=False): # Merge this with setFigOutput
+    """Set figure style"""
     if fancyPlots:
         try:
             import seaborn
@@ -351,6 +359,7 @@ def setFigStyle(fancyPlots=False): # Merge this with setFigOutput
         #setFigOutput(figDisplay)
 
 def resetPlot():
+    """Reset figure style"""
     if 'seaborn' in sys.modules:
         seaborn.reset_orig()
     setFigOutput(figDisplay)
