@@ -14,6 +14,11 @@ import pickle
 import warnings
 import os
 
+"""Stimulation protocols to run on the opsin models including:
+    neuro-engineering stimuli: step, sinusoid, chirp, ramp, delta
+    and opsin-specific protocols: rectifier, shortPulse, recovery.
+    Additionally, custom can be used with arbitrary interpolation fuctions"""
+
 
 class Protocol(PyRhOobject):
     """Common base class for all protocols"""
