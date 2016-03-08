@@ -1,15 +1,31 @@
-
+__doc__ = """A Python module for fitting, characterising and simulating rhodopsin photocurrents"""
 # Main module file for PyRhO
 
 #if sys.version_info < (3,0) #IPython.__version__ < "3":
 from __future__ import division # a/b -> float
 from __future__ import absolute_import, print_function, unicode_literals 
 
+from pkg_resources import get_distribution, DistributionNotFound
+
+# Necessary?
+import matplotlib as mpl   
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Place all submodule functions and variables into namespace
+from pyrho.config import *
+from pyrho.parameters import *
+from pyrho.utilities import *
+from pyrho.loadData import * #import loadData
+from pyrho.models import * #import models
+from pyrho.simulators import *
+from pyrho.protocols import * #import modProtocols
+from pyrho.fitting import * #import fitStates
+from pyrho.IPythonGUI import *
+
 #TODO
 #__all__ = ['config', 'utilities', 'parameters', 'loadData', 'models', 'protocols', 'simulators', 'fitting', 'IPythonGUI']
 
-__doc__ = """A Python module for fitting, characterising and simulating rhodopsin photocurrents"""
-from pkg_resources import get_distribution, DistributionNotFound
 __project__ = 'pyrho'
 # http://stackoverflow.com/questions/17583443/what-is-the-correct-way-to-share-package-version-with-setup-py-and-the-package
 #__version__ = get_distribution(__project__).version #'0.8.0'
@@ -25,25 +41,6 @@ except DistributionNotFound:
 else:
     __version__ = _dist.version
 
-
-from pyrho.config import *
-
-# Necessary?
-import matplotlib as mpl   
-import matplotlib.pyplot as plt
-import numpy as np
-
-# Place all submodule functions and variables into namespace
-from pyrho.parameters import *
-from pyrho.utilities import *
-from pyrho.loadData import * #import loadData
-from pyrho.models import * #import models
-from pyrho.simulators import *
-from pyrho.protocols import * #import modProtocols
-from pyrho.fitting import * #import fitStates
-from pyrho.IPythonGUI import *
-
-
 if __name__ == '__main__': 
     try:
         __IPYTHON__
@@ -53,6 +50,7 @@ if __name__ == '__main__':
         print('Loading IPython GUI!')
         loadGUI()
 
+# TODO Move everything except imports elsewhere
         
 def runAll(listOfModels=[6]):
     """Run all protocols with the Python simulator on a list of models with default parameters!
