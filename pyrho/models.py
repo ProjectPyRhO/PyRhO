@@ -1,22 +1,21 @@
 """Rhodopsin model class and functions"""
 
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib as mpl # For plotStates
-from pyrho.utilities import plotLight, calcV1
-from scipy.integrate import odeint
 import warnings
 import itertools
 from collections import OrderedDict
 
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib as mpl # For plotStates
+from scipy.integrate import odeint
+
+from pyrho.utilities import plotLight, calcV1
 from pyrho.parameters import *
 from pyrho.config import *
 from pyrho import config
 
 
-
 ###### Model class definitions ######
-
 
 class RhodopsinModel(PyRhOobject):
     """Common base class for all models"""
