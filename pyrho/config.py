@@ -14,7 +14,7 @@ import time
 pyVer = sys.version_info
 
 # Set timing function
-if pyVer < (3,3):
+if pyVer < (3, 3):
     if sys.platform == 'win32':
         # On Windows, the best timer is time.clock
         wallTime = time.clock
@@ -48,14 +48,14 @@ def createDir(path):
         os.makedirs(path)
     except OSError as exception:
         if exception.errno != errno.EEXIST:
-            raise    
-    
-    
+            raise 
+
+
 ### Set data and figure directories to defaults
 if 'dDir' not in vars() or 'dDir' not in globals() or dDir is None:
     dDir = 'data' + os.sep
     createDir(dDir)
-    
+
 if 'fDir' not in vars() or 'fDir' not in globals() or fDir is None:
     fDir = 'figs' + os.sep
     createDir(fDir)
@@ -64,7 +64,7 @@ GUIdir = 'gui'
 def setupGUI(path=None):
     if path is None: # Copy image folders to home directory
         path = os.path.join(os.getcwd(), GUIdir)
-        
+    
     createDir(path)
     pyrhoGUIpath = os.path.join(pyrhoPath, GUIdir)
     pngFiles = [f for f in os.listdir(pyrhoGUIpath) if f.endswith('.png')]
@@ -72,7 +72,7 @@ def setupGUI(path=None):
         shutil.copy2(os.path.join(pyrhoGUIpath, f), path)
     
     return
-    
+
 def simAvailable(sim):
     sim = sim.lower()
     if sim is 'python':
@@ -83,8 +83,8 @@ def simAvailable(sim):
         return checkBrian()
     else:
         return False
-    
-    
+
+
 def checkNEURON(test=False):
     """Check for NEURON installation and optionally run tests"""
     
@@ -120,13 +120,13 @@ def checkNEURON(test=False):
         if verbose > 1:
             print('NEURON module not found!')
     return found
-    
-    
+
+
 def setupNEURON(path=None, NEURONpath=None):
     """Setup the NEURON simulator to work with PyRhO
         path        := Path to PyRhO's working directory containing hoc and mod files (default=pwd)
         NEURONpath  := Path to NEURON installation directory containing nrn (and iv)"""
-        
+    
     cwd = os.getcwd()
     # Boiler plates to expand '~'
     if path is not None:
@@ -216,7 +216,7 @@ def setupNEURON(path=None, NEURONpath=None):
         print('NMODL Compilation failed: ', e, file=sys.stderr)
         print('Try setting the NEURON directory as an environment variable or passing it as the NEURONpath argument.')
     return
-    
+
 def checkBrian(test=False):
     try:
         import brian2 as br
@@ -235,21 +235,21 @@ def checkBrian(test=False):
             print('Brian module not found!')
         
     return found
-    
+
 def setupBrian():
     if not checkBrian():
         import pip
         pip.main(['install', 'brian2']) # pip install brian2
     return
-    
 
 
-    
+
+
 ##### Plot settings #####
 
 figDisplay = 'screen' #'paper'
 
-colours = ['b','g','r','c','m','y','k']
+colours = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 styles = ['-', '--', '-.', ':']
 
 latexInstalled = False # Change this!
@@ -262,7 +262,7 @@ if latexInstalled:
 xLabelPos = 0.98
 
 def setFigOutput(figDisplay='screen', width=None):
-    golden_ratio  = (1.0 + np.sqrt(5)) / 2.0
+    golden_ratio = (1.0 + np.sqrt(5)) / 2.0
     global saveFigFormat
     global addTitles
     global addStimulus
@@ -349,12 +349,12 @@ def setFigStyle(fancyPlots=False): # Merge this with setFigOutput
         if 'seaborn' in sys.modules:
             seaborn.reset_orig()
         #setFigOutput(figDisplay)
-        
+
 def resetPlot():
     if 'seaborn' in sys.modules:
         seaborn.reset_orig()
     setFigOutput(figDisplay)
-        
+
 try:
     __IPYTHON__
     import IPython
