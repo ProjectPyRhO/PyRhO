@@ -1,11 +1,19 @@
-#TODO: Refactor the whole GUI! 
+"""Graphical User Interface for Jupyter notebooks"""
+# TODO: Refactor the whole GUI and move to submodule! 
 
 #from IPython.html.widgets import interact
 #from IPython.html import widgets # IPython < 4
 
 from __future__ import print_function
+import warnings
+import time
+from collections import OrderedDict
+import os.path
+import os
+import ast
+import copy
+
 import ipywidgets as widgets
-#from IPython.utils.traitlets import link # IPython < 4
 #from traitlets import link
 from traitlets import Unicode
 from IPython.display import display
@@ -22,13 +30,7 @@ from pyrho.loadData import *
 from pyrho.fitting import *
 from pyrho.config import GUIdir, setupGUI, dDir # For dataSet loading
 from pyrho.utilities import *
-import warnings
-import time
-from collections import OrderedDict
-import os.path
-import os
-import ast
-import copy
+
 
 
 # LaTeX in widget descriptions/labels
