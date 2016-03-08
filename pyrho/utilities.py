@@ -382,6 +382,22 @@ def plotLight(times, ax=None, light='shade', dark=None, lam=470, alpha=0.2): #=p
         warnings.warn('Warning: Unrecognised light representation: {}!'.format(light))
     return
     
+def setCrossAxes(ax, zeroX=True, zeroY=False):
+    """Remove box and set axes to run through zero"""
+    ax.spines['right'].set_color('none')
+    ax.spines['top'].set_color('none')
+    if zeroY:
+        ax.spines['left'].set_position('zero') # y-axis
+    if zeroX:
+        ax.spines['bottom'].set_position('zero') # x-axis
+    # 'center' -> ('axes', 0.5)
+    # 'zero'   -> ('data', 0.0)
+    ax.spines['left'].set_smart_bounds(True)
+    ax.spines['bottom'].set_smart_bounds(True)
+    ax.xaxis.set_ticks_position('bottom')
+    ax.yaxis.set_ticks_position('left')
+    #ax.yaxis.set_major_formatter(mpl.ticker.ScalarFormatter(useMathText=True))
+    #ax.yaxis.set_minor_formatter(mpl.ticker.ScalarFormatter(useMathText=True))
     
 def round_sig(x, sig=3):
     """Round a float to n significant digits (default is 3). """

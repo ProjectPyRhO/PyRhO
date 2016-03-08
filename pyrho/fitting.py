@@ -201,14 +201,7 @@ def plotOffPhaseFits(toffs, Ioffs, pOffs, phis, nStates, fitFunc, Exp1, Exp2, Gd
     plt.xlabel('$\mathrm{Time\ [ms]}$', position=(xLabelPos,0), ha='right')
     plt.ylabel('$\mathrm{Photocurrent\ [nA]}$')
     
-    #ax.spines['left'].set_position('zero') # y-axis
-    ax.spines['right'].set_color('none')
-    ax.spines['bottom'].set_position('zero') # x-axis
-    ax.spines['top'].set_color('none')
-    ax.spines['left'].set_smart_bounds(True)
-    ax.spines['bottom'].set_smart_bounds(True)
-    ax.xaxis.set_ticks_position('bottom')
-    ax.yaxis.set_ticks_position('left')
+    setCrossAxes(ax)
     
     plt.tight_layout()
     
@@ -239,15 +232,7 @@ def plotFit(PC, nStates, params, fitRates=False, index=None):
     axFit.set_ylabel('$\mathrm{Photocurrent\ [nA]}$')
     axFit.plot(t, I, color='g', label='$\mathrm{Experimental\ Data}$')
     
-    #axFit.spines['left'].set_position('zero') # y-axis
-    axFit.spines['right'].set_color('none')
-    axFit.spines['bottom'].set_position('zero') # x-axis
-    axFit.spines['top'].set_color('none')
-    axFit.spines['left'].set_smart_bounds(True)
-    axFit.spines['bottom'].set_smart_bounds(True)
-    axFit.xaxis.set_ticks_position('bottom')
-    axFit.yaxis.set_ticks_position('left')
-    
+    setCrossAxes(axFit)
     
     ### Plot model-generated curve
     #onInd, offInd = PC.pulseInds[0,0], PC.pulseInds[0,1]
@@ -339,14 +324,6 @@ def plotFit(PC, nStates, params, fitRates=False, index=None):
     #plt.xlim((0,totT))
     
     plt.axhline(y=0, linestyle=':', color='k')
-    #axRes.spines['left'].set_position('zero') # y-axis
-    # axRes.spines['right'].set_color('none')
-    # axRes.spines['bottom'].set_position('zero') # x-axis
-    # axRes.spines['top'].set_color('none')
-    # axRes.spines['left'].set_smart_bounds(True)
-    # axRes.spines['bottom'].set_smart_bounds(True)
-    # axRes.xaxis.set_ticks_position('bottom')
-    # axRes.yaxis.set_ticks_position('left')
     
     plt.tight_layout()
     
@@ -2054,14 +2031,7 @@ def plotFluxSetFits(fluxSet, nStates, params, runInd=0, vInd=0):
         t_on, t_off = PC.pulses[p]
         plt.axvspan(t_on, t_off, facecolor='y', alpha=0.2)
     
-    #setAx.spines['left'].set_position('zero') # y-axis
-    setAx.spines['right'].set_color('none')
-    setAx.spines['bottom'].set_position('zero') # x-axis
-    setAx.spines['top'].set_color('none')
-    setAx.spines['left'].set_smart_bounds(True)
-    setAx.spines['bottom'].set_smart_bounds(True)
-    setAx.xaxis.set_ticks_position('bottom')
-    setAx.yaxis.set_ticks_position('left')
+    setCrossAxes(setAx)
     plt.tight_layout()
     
     setFig.savefig(fDir+'fluxSetFit'+'-'.join(str(s) for s in nStates)+'states'+'.'+config.saveFigFormat, format=config.saveFigFormat)

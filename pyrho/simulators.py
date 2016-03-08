@@ -857,13 +857,14 @@ class simNEURON(Simulator):
             axV.set_xlim((-delD, self.h.tstop - delD)) ### HACK
             plt.xlabel('$\mathrm{Time\ [ms]}$', position=(xLabelPos,0), ha='right')
             
-            axV.spines['right'].set_color('none')
-            #axV.spines['bottom'].set_position('zero') # x-axis # Caused the plot to be too big!
-            axV.spines['top'].set_color('none')
-            axV.spines['left'].set_smart_bounds(True)
-            axV.spines['bottom'].set_smart_bounds(True)
-            axV.xaxis.set_ticks_position('bottom')
-            axV.yaxis.set_ticks_position('left')
+            setCrossAxes(axV, zeroX=False) # Zeroing x-axis caused the plot to become too big!
+            # axV.spines['right'].set_color('none')
+            # #axV.spines['bottom'].set_position('zero') # x-axis # Caused the plot to be too big!
+            # axV.spines['top'].set_color('none')
+            # axV.spines['left'].set_smart_bounds(True)
+            # axV.spines['bottom'].set_smart_bounds(True)
+            # axV.xaxis.set_ticks_position('bottom')
+            # axV.yaxis.set_ticks_position('left')
             
             axV.get_xaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
             axV.get_yaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
@@ -1253,13 +1254,14 @@ class simBrian(Simulator):
         
         plt.xlabel('$\mathrm{Time\ [ms]}$', position=(xLabelPos,0), ha='right')
         
-        axV.spines['right'].set_color('none')
-        #axV.spines['bottom'].set_position('zero') # x-axis # Caused the plot to be too big!
-        axV.spines['top'].set_color('none')
-        axV.spines['left'].set_smart_bounds(True)
-        axV.spines['bottom'].set_smart_bounds(True)
-        axV.xaxis.set_ticks_position('bottom')
-        axV.yaxis.set_ticks_position('left')
+        setCrossAxes(axV, zeroX=False) # Zeroing x-axis caused the plot to become too big!
+        # axV.spines['right'].set_color('none')
+        # #axV.spines['bottom'].set_position('zero') # x-axis # Caused the plot to be too big!
+        # axV.spines['top'].set_color('none')
+        # axV.spines['left'].set_smart_bounds(True)
+        # axV.spines['bottom'].set_smart_bounds(True)
+        # axV.xaxis.set_ticks_position('bottom')
+        # axV.yaxis.set_ticks_position('left')
         
         axV.get_xaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
         axV.get_yaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())

@@ -1163,16 +1163,8 @@ class protRectifier(Protocol):
         #if len(phis) > 1:
         #ax.legend(legLabels, loc='best')
         
-        ax.spines['left'].set_position('zero')
-        ax.spines['right'].set_color('none')
-        ax.spines['bottom'].set_position('zero')
-        ax.spines['top'].set_color('none')
-        ax.spines['left'].set_smart_bounds(True)
-        ax.spines['bottom'].set_smart_bounds(True)
-        ax.xaxis.set_ticks_position('bottom')
-        ax.yaxis.set_ticks_position('left')
-        #ax.yaxis.set_major_formatter(mpl.ticker.ScalarFormatter(useMathText=True))
-        #ax.yaxis.set_minor_formatter(mpl.ticker.ScalarFormatter(useMathText=True))
+        #ax.spines['left'].set_position('zero')
+        setCrossAxes(ax, zeroY=True)
         ax.set_xlim(min(Vs), max(Vs))
         
         ax.set_ylabel('$I_{ss}$ $\mathrm{[nA]}$')#, position=(0.95,0.8)) #plt.xlabel
@@ -1180,14 +1172,8 @@ class protRectifier(Protocol):
         ax = self.axfV
         ax.set_ylabel('$f(v)$ $\mathrm{[1]}$')#, position=(0.95,0.8)) #plt.xlabel
         
-        ax.spines['left'].set_position('zero')
-        ax.spines['right'].set_color('none')
-        ax.spines['bottom'].set_position('zero')
-        ax.spines['top'].set_color('none')
-        ax.spines['left'].set_smart_bounds(True)
-        ax.spines['bottom'].set_smart_bounds(True)
-        ax.xaxis.set_ticks_position('bottom')
-        ax.yaxis.set_ticks_position('left')
+        #ax.spines['left'].set_position('zero')
+        setCrossAxes(ax, zeroY=True)
         ax.set_xlim(min(Vs), max(Vs))
         
         # yticks = ax.get_yticklabels()

@@ -616,14 +616,7 @@ class PhotoCurrent():
         plt.xlim((self.begT, self.endT))
         plt.ylabel('$\mathrm{Photocurrent\ [nA]}$')
         
-        #ax.spines['left'].set_position('zero') # y-axis
-        ax.spines['right'].set_color('none')
-        ax.spines['bottom'].set_position('zero') # x-axis
-        ax.spines['top'].set_color('none')
-        ax.spines['left'].set_smart_bounds(True)
-        ax.spines['bottom'].set_smart_bounds(True)
-        ax.xaxis.set_ticks_position('bottom')
-        ax.yaxis.set_ticks_position('left')
+        setCrossAxes(ax)
         
         if addFeatures:
             #p = 0
@@ -1027,14 +1020,7 @@ class ProtocolData():
         plt.xlim((self.begT, self.endT))
         ax.set_ylabel('$\mathrm{Photocurrent\ [nA]}$')
         
-        #ax.spines['left'].set_position('zero') # y-axis
-        ax.spines['right'].set_color('none')
-        ax.spines['bottom'].set_position('zero') # x-axis
-        ax.spines['top'].set_color('none')
-        ax.spines['left'].set_smart_bounds(True)
-        ax.spines['bottom'].set_smart_bounds(True)
-        ax.xaxis.set_ticks_position('bottom')
-        ax.yaxis.set_ticks_position('left')
+        setCrossAxes(ax)
         
         #ax.set_yticklabels(tickLabels)
         #if np.all([onD == onDs[0] for onD in onDs]):
