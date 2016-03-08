@@ -1,23 +1,25 @@
+"""Rhodopsin model fitting and optimising routines"""
+
 from __future__ import print_function
+import os
+import pickle
+import warnings
+from copy import deepcopy
 
-#__all__ = ['fitModels', 'copyParam', 'getRecoveryPeaks', 'fitRecovery', 'fitfV']
-
-from lmfit import minimize, Parameters, fit_report
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from lmfit import minimize, Parameters, fit_report
+from scipy.optimize import curve_fit
+
 from pyrho.parameters import *
 from pyrho.loadData import *
 from pyrho.utilities import * # plotLight, round_sig, findPeaks, findPlateauCurrent
 from pyrho.models import * # for fitPeaks
 from pyrho.config import * #verbose, saveFigFormat, addTitles, fDir, dDir, eqSize
 from pyrho import config
-import os
-import pickle
-from copy import deepcopy
-import warnings
-from scipy.optimize import curve_fit
 
+#__all__ = ['fitModels', 'copyParam', 'getRecoveryPeaks', 'fitRecovery', 'fitfV']
 
 methods = ('leastsq', 'nelder', 'lbfgsb', 'powell', 'cg', 'cobyla', 'tnc', 'slsqp', 'differential_evolution')
 defMethod = methods[3]
