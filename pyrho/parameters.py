@@ -1,3 +1,4 @@
+"""Classes for handling parameters and dictionaries of default values"""
 
 ### Fitting Hyper parameters
 
@@ -8,12 +9,22 @@
 # Optimisation routine initial parameters
 # ...
 
+from copy import deepcopy
+from collections import OrderedDict, defaultdict
 
 ### Move this to models.py and add .setParams() method
 from lmfit import Parameters, Parameter
-from collections import OrderedDict, defaultdict
+
+# Units for model parameters (for Brian)
+# Replace with http://pythonhosted.org/NeuroTools/parameters.html
+from brian2.units.allunits import psiemens, second, mole #*
+from brian2.units.stdunits import *
+pS = psiemens
+sec = second
+# Units used: ms, mm, mV, Hz,       # Nonstd: psiemens, second, mole
+                                    #           nS, uS
+
 #from pyrho.utilities import irrad2flux, flux2irrad
-from copy import deepcopy
 
 
 ### Hyperparameters
@@ -79,14 +90,6 @@ modelLabels = OrderedDict([('E','E'), ('g0','g_0'), ('p','p'), ('k_a','k_a'), ('
                             ('Gd1','G_{d1}'), ('Gd2','G_{d2}'), ('Go1','G_{o1}'), ('Go2','G_{o2}'),
                             ('phi','\phi'), ('v','v')])
 
-# Units for model parameters (for Brian)
-# Replace with http://pythonhosted.org/NeuroTools/parameters.html
-from brian2.units.allunits import psiemens, second, mole #*
-from brian2.units.stdunits import *
-pS = psiemens
-sec = second
-# Units used: ms, mm, mV, Hz,       # Nonstd: psiemens, second, mole
-                                    #           nS, uS
 
 modelUnits = OrderedDict([('g0',pS), ('gam',1), ('k_a',ms**-1), ('k_r',ms**-1), ('phi_m',mm**-2*second**-1), ('p',1), ('Gd',ms**-1), ('Gr0',ms**-1), 
                             ('k1',ms**-1), ('k2',ms**-1), ('Gf0',ms**-1), ('Gb0',ms**-1), ('k_f',ms**-1), ('k_b',ms**-1), ('q',1), 
