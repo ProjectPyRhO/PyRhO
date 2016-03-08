@@ -1,8 +1,19 @@
+"""Stimulation protocols to run on the opsin models including:
+    neuro-engineering stimuli: step, sinusoid, chirp, ramp, delta
+    and opsin-specific protocols: rectifier, shortPulse, recovery.
+    Additionally, custom can be used with arbitrary interpolation fuctions
+"""
+
+import pickle
+import warnings
+import os
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl # for tick locators
 from scipy.interpolate import InterpolatedUnivariateSpline as spline
 from scipy.optimize import curve_fit
+
 from pyrho.parameters import *
 from pyrho.utilities import * # times2cycles, cycles2times, plotLight, round_sig, expDecay, biExpDecay, findPeaks
 from pyrho.loadData import * #import loadData
@@ -10,14 +21,6 @@ from pyrho.fitting import fitFV, errFV, fitfV, errfV, getRecoveryPeaks, fitRecov
 from pyrho.models import *
 from pyrho.simulators import * # For characterise()
 from pyrho.config import * #verbose, saveFigFormat, eqSize, addTitles, addStimulus, colours, styles, dDir, fDir
-import pickle
-import warnings
-import os
-
-"""Stimulation protocols to run on the opsin models including:
-    neuro-engineering stimuli: step, sinusoid, chirp, ramp, delta
-    and opsin-specific protocols: rectifier, shortPulse, recovery.
-    Additionally, custom can be used with arbitrary interpolation fuctions"""
 
 
 class Protocol(PyRhOobject):
