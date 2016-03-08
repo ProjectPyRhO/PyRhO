@@ -1,4 +1,12 @@
+"""Classes to wrap simulation engines for a uniform interface"""
 # simulators.py
+
+import warnings
+import os
+import copy
+from collections import OrderedDict
+
+import numpy as np
 
 from pyrho.parameters import *
 from pyrho.utilities import * # cycles2times, plotLight
@@ -6,10 +14,6 @@ from pyrho.loadData import *
 from pyrho.models import *
 from pyrho.config import * #verbose
 from pyrho import config
-import numpy as np
-import warnings
-import os
-import copy
 
 
 class Simulator(PyRhOobject): #object
@@ -131,8 +135,9 @@ class Simulator(PyRhOobject): #object
         
         
 class simPython(Simulator):
-    simulator = 'Python'
     """Class for channel level simulations with Python"""
+    
+    simulator = 'Python'
     
     def __init__(self, Prot, RhO, params=simParams['Python']):
         self.dt = params['dt'].value
@@ -1372,7 +1377,5 @@ class simBrian(Simulator):
         fileName = os.path.join(fDir, figName+'.'+config.saveFigFormat)
         Rfig.savefig(fileName, format=config.saveFigFormat)
     
-    
-    
-from collections import OrderedDict
+
 simulators = OrderedDict([('Python', simPython), ('NEURON', simNEURON), ('Brian', simBrian)])
