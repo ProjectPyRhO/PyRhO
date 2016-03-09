@@ -4,22 +4,25 @@ from __future__ import print_function
 import os
 import pickle
 import warnings
-from copy import deepcopy
+#from copy import deepcopy
+import copy
 
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from lmfit import minimize, Parameters, fit_report
+from lmfit import minimize, Parameters, fit_report, Model
 from scipy.optimize import curve_fit
+from scipy.integrate import odeint
 
 from pyrho.parameters import *
-from pyrho.loadData import *
+from pyrho.expdata import *
 from pyrho.utilities import * # plotLight, round_sig, findPeaks, findPlateauCurrent
+from pyrho.utilities import plotLight, round_sig, printParams, compareParams
 from pyrho.models import * # for fitPeaks
 from pyrho.config import * #verbose, saveFigFormat, addTitles, fDir, dDir, eqSize
 from pyrho import config
 
-#__all__ = ['fitModels', 'copyParam', 'getRecoveryPeaks', 'fitRecovery', 'fitfV']
+__all__ = ['fitModels', 'plotFluxSetFits', 'methods', 'defMethod', 'reportFit'] # ['fitModels', 'copyParam', 'getRecoveryPeaks', 'fitRecovery', 'fitfV']
 
 methods = ('leastsq', 'nelder', 'lbfgsb', 'powell', 'cg', 'cobyla', 'tnc', 'slsqp', 'differential_evolution')
 defMethod = methods[3]
@@ -90,7 +93,10 @@ def errSetOnPhase(p,Ions,tons,RhO,Vs,phis):
     return np.r_[ [Ions[i]/Ions[i][-1] - calcOnPhase(p,tons[i],RhO,Vs[i],phis[i])/Ions[i][-1] for i in range(len(Ions))]]
 '''
 
-    
+
+
+
+
 ##### Main fitting routines #####
     
 def calcOnPhase(p,t,RhO,V,phi):
@@ -153,6 +159,8 @@ def reportFit(minResult, description, method):
         print("Akaike Info.:   {} \nBayesian Info.: {}".format(minResult.aic, minResult.bic))
         #print("Chi^2 \t rChi^2 \t AIC \t BIC")
         #print("{} \t {} \t {} \t {}".format(minResult.chisqr, minResult.redchi, minResult.aic, minResult.bic))
+    
+    print("================================================================================\n")
     
     
 def copyParam(name, source, target):
@@ -511,7 +519,7 @@ def fit3states(fluxSet, run, vInd, params, method=defMethod, verbose=verbose):
     
     fitParams = pOns
     
-    return fitParams
+    return fitParams, onPmin
 
 
 
@@ -671,7 +679,7 @@ def fit4states(fluxSet, run, vInd, params, method=defMethod, verbose=verbose):
     
     fitParams = pOns
     
-    return fitParams
+    return fitParams, onPmin
 
 
 
@@ -910,7 +918,7 @@ def fit6states(fluxSet, quickSet, run, vInd, params, method=defMethod, verbose=v
     
     fitParams = pOns
     
-    return fitParams
+    return fitParams, onPmin
 
 
 
@@ -932,9 +940,9 @@ def getRecoveryPeaks(recData, phiInd=None, vInd=None, usePeakTime=False):
             vIndm70 = 0
         else:
             try: 
-                vIndm70 = setPC.Vs.index(-70)
+                vIndm70 = recData.Vs.index(-70)
             except:
-                vIndm70 = np.searchsorted(setPC.Vs, -70)
+                vIndm70 = np.searchsorted(recData.Vs, -70)
             #vIndm70 = getIndex(setPC.Vs, -70)
         vInd = vIndm70
     
@@ -985,7 +993,7 @@ def fitRecovery(t_peaks, I_peaks, params, Ipeak0, Iss0, ax=None, method=defMetho
             return model
         return I - model
     
-    shift = t_peaks[0]
+    #shift = t_peaks[0]
     # if np.isclose(shift, 0):
         # Iss0 = I_peaks[0]
     # else:
@@ -1162,6 +1170,7 @@ def _calcfVnew(V, v0, E):
     if type(V) != np.ndarray:
         V = np.array(V)
     fV = (E+70)*(np.exp((E-V)/v0)-1)/((E-V)*(np.exp((E+70)/v0)-1)) # Dimensionless #fV = abs((1 - exp(-v/v0))/v1) # Prevent signs cancelling
+    v1 = calcV1(E, v0)
     fV[np.isnan(fV)] = v1/v0 # Fix the error when dividing by zero
     return fV #* (V - E)
     
@@ -1553,6 +1562,7 @@ def calcCycle(p, ton, toff, RhO, V, phi, fitRates=False): #,fitDelay=False
     #RhO.setLight(phi) # Calculate transition rates for phi
     RhO.updateParams(p)
             
+    '''
     if 0: # fitDelay: # Change to pass t array and pulse indices
         # Delay phase
         RhO.setLight(RhO.phi_0)
@@ -1561,11 +1571,12 @@ def calcCycle(p, ton, toff, RhO, V, phi, fitRates=False): #,fitDelay=False
         else:
             soln = odeint(RhO.solveStates, RhO.s_0, tdel, Dfun=RhO.jacobian)
         RhO.storeStates(soln[1:], tdel[1:])
+    '''
     
     # On phase
     RhO.setLight(phi) # Calculate transition rates for phi
-    if fitRates: # Override light-sensitive transition rates
-        RhO.updateParams(params)
+    # if fitRates: # Override light-sensitive transition rates
+        # RhO.updateParams(params)
     RhO.s_on = RhO.states[-1,:] #soln[-1,:]
     if RhO.useAnalyticSoln:
         soln = RhO.calcSoln(ton, RhO.s_on)
@@ -1591,6 +1602,8 @@ def errCycle(p,Is,tons,toffs,nfs,RhO,Vs,phis):
 
 
 def fitModels(dataSet, nStates=3, params=None, postFitOpt=True, relaxFact=2, method=defMethod, postFitOptMethod=None, verbose=verbose):
+    """Fit a list of models and compare thier goodness-of-fit metrics"""
+    
     '''
     #TODO """Routine to fit as many models as possible and select between them according to some parsimony criterion"""
     
@@ -1607,18 +1620,6 @@ def fitModels(dataSet, nStates=3, params=None, postFitOpt=True, relaxFact=2, met
     #runSSA(RhO)
     #characterise(RhO)    
     
-    
-    if not isinstance(nStates, (list, tuple)):
-        nStates = [nStates]
-    else:
-        nStates = nStates
-    if not isinstance(params, (list, tuple)):
-        params = [params]
-    else:
-        params = params
-        
-    for nSt in nStates:
-        
     '''
     
     if not isinstance(nStates, (list, tuple)):
@@ -1630,11 +1631,50 @@ def fitModels(dataSet, nStates=3, params=None, postFitOpt=True, relaxFact=2, met
     else:
         params = params
     
+    assert(len(nStates) == len(params))
+    nModels = len(nStates)
+    
     fitParams = [None for nSt in nStates]
-    for i, nSt in enumerate(nStates):
-        fitParams[i] = fitModel(dataSet, nStates=nStates[i], params=params[i], 
-        postFitOpt=postFitOpt, relaxFact=relaxFact, method=method, postFitOptMethod=postFitOptMethod, verbose=verbose)
-
+    miniObjs = [None for nSt in nStates]
+    for i in range(nModels): #, nSt in enumerate(nStates):
+        fitParams[i], miniObjs[i] = fitModel(dataSet, nStates=nStates[i], params=params[i], 
+                                postFitOpt=postFitOpt, relaxFact=relaxFact, 
+                                method=method, postFitOptMethod=postFitOptMethod, verbose=verbose)
+    
+    if verbose > 0 and nModels > 1:
+        if isinstance(dataSet, dict):
+            if 'step' in dataSet:
+                fluxKey = 'step'
+            elif 'custom' in dataSet:
+                fluxKey = 'custom'
+            else:
+                raise KeyError("Flux set not found: Expected 'step' or 'custom'. ")
+        else:
+            fluxKey = 'step'
+        
+        plotFluxSetFits(fluxSet=dataSet[fluxKey], nStates=nStates, params=params)
+        
+        print("\n--------------------------------------------------------------------------------")
+        print("Model comparison with the '{}' algorithm".format(method), end=" ")
+        if postFitOpt:
+            if postFitOptMethod is None:
+                postFitOptMethod = method
+            print("['{}', relaxFact={}]".format(postFitOptMethod, relaxFact))
+        else:
+            print('')
+        print("--------------------------------------------------------------------------------")
+        print("Opsin model \tChi^2   \trChi^2  \tAIC     \tBIC")
+        for i, nSt in enumerate(nStates):
+            minResult = miniObjs[i]
+            #print("Fit for {} variables over {} points ({} d.f.) with {} function evaluations".format(minResult.nvarys, minResult.ndata, minResult.nfree, minResult.nfev))
+            print("{}-state \t{:8.3g} \t{:8.3g} \t{:8.3g} \t{:8.3g}".format(stateLabs[nSt], minResult.chisqr, minResult.redchi, minResult.aic, minResult.bic))            
+            #print("Chi^2: {}".format(minResult.chisqr))
+            #print("Reduced Chi^2: {}".format(minResult.redchi))
+            #print("Akaike Info.:   {}".format(minResult.aic))
+            #print("Bayesian Info.: {}".format(minResult.bic))
+    
+        print("================================================================================\n")
+        
         
 def fitModel(dataSet, nStates=3, params=None, postFitOpt=True, relaxFact=2, method=defMethod, postFitOptMethod=None, verbose=verbose):
     """Fit a model (with initial parameters) to a dataset of optogenetic photocurrents"""
@@ -1833,7 +1873,7 @@ def fitModel(dataSet, nStates=3, params=None, postFitOpt=True, relaxFact=2, meth
         quickSet = dataSet['shortPulse'] # Override delta
     elif 'delta' in dataSet:
         quickSet = dataSet['delta']
-    else:
+    else: # Consider just fixing Go1 and Go2
         q = 0
         onD = dataSet[fluxKey].trials[q][0][0].onDs[0]
         qI = dataSet[fluxKey].trials[q][0][0]
@@ -1859,14 +1899,14 @@ def fitModel(dataSet, nStates=3, params=None, postFitOpt=True, relaxFact=2, meth
     
     if nStates == 3:
         #phiFits[phiInd] = fit3states(I,t,onInd,offInd,phi,V,Gr0,gmax,Ipmax,params=pOns,method=method)#,Iss)
-        fittedParams = fit3states(setPC, runInd, vIndm70, fitParams, method, verbose)
+        fittedParams, miniObj = fit3states(setPC, runInd, vIndm70, fitParams, method, verbose)
         constrainedParams = ['Gd']
     elif nStates == 4:
         #phiFits[phiInd] = fit4states(I,t,onInd,offInd,phi,V,Gr0,gmax,params=pOns,method=method)
-        fittedParams = fit4states(setPC, runInd, vIndm70, fitParams, method, verbose)
+        fittedParams, miniObj = fit4states(setPC, runInd, vIndm70, fitParams, method, verbose)
         constrainedParams = ['Gd1', 'Gd2', 'Gf0', 'Gb0']
     elif nStates == 6:
-        fittedParams = fit6states(setPC, quickSet, runInd, vIndm70, fitParams, method, verbose)
+        fittedParams, miniObj = fit6states(setPC, quickSet, runInd, vIndm70, fitParams, method, verbose)
         constrainedParams = ['Gd1', 'Gd2', 'Gf0', 'Gb0', 'Go1', 'Go2']
         #constrainedParams = ['Go1', 'Go2', 'Gf0', 'Gb0']
         #nonOptParams.append(['Gd1', 'Gd2'])
@@ -1900,7 +1940,7 @@ def fitModel(dataSet, nStates=3, params=None, postFitOpt=True, relaxFact=2, meth
             
         RhO = models[str(nStates)]()
         postPmin = minimize(errCycle, fittedParams, args=(Icycles,tons,toffs,nfs,RhO,Vs,phis), method=postFitOptMethod)
-        optParams = postPmin.params
+        #optParams = postPmin.params
         
         if verbose > 0:
             reportFit(postPmin, "Post-fit optimisation report for the {}-state model".format(nStates), postFitOptMethod)
@@ -1910,6 +1950,7 @@ def fitModel(dataSet, nStates=3, params=None, postFitOpt=True, relaxFact=2, meth
         for p in params:
             copyParam(p, postPmin.params, orderedParams)
         
+        miniObj = postPmin
     else:
         # Create new Parameters object to ensure the default ordering
         orderedParams = Parameters()
@@ -1935,7 +1976,7 @@ def fitModel(dataSet, nStates=3, params=None, postFitOpt=True, relaxFact=2, meth
         print("\nParameters fit for the {}-state model in {:.3g}s".format(nStates, wallTime() - t0))
         print("--------------------------------------------------------------------------------\n")
     
-    return orderedParams
+    return orderedParams, miniObj
     
     
 def plotFluxSetFits(fluxSet, nStates, params, runInd=0, vInd=0):
