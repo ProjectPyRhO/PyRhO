@@ -6,12 +6,17 @@
 from __future__ import division # a/b -> float
 from __future__ import absolute_import, print_function, unicode_literals 
 
+import platform
+
 from pkg_resources import get_distribution, DistributionNotFound
 
 # Necessary?
 import matplotlib as mpl   
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy as sp
+import lmfit
+
 
 # Place all submodule functions and variables into namespace
 from pyrho.config import *
@@ -82,7 +87,7 @@ def runAll(listOfModels=[6]):
 def printVersions():
     """Display version information for PyRhO and its dependencies"""
 
-    import platform
+    #import platform
     print("Python version: ", platform.python_version())
     try:
         #import IPython
@@ -94,13 +99,13 @@ def printVersions():
     #depsGUI = [IPython, ast, base64]
     #for mod in dependencies:
     #    print("{} version: {}".format(mod, mod.__version__))
-    import numpy
-    print("NumPy version: ", numpy.__version__)
-    import scipy
-    print("SciPy version: ", scipy.__version__)
-    import matplotlib
-    print("Matplotlib version: ", matplotlib.__version__)
-    import lmfit
+    #import numpy
+    print("NumPy version: ", np.__version__)
+    #import scipy
+    print("SciPy version: ", sp.__version__)
+    #import matplotlib
+    print("Matplotlib version: ", mpl.__version__)
+    #import lmfit
     print("Lmfit version: ", lmfit.__version__)
     
     print("PyRhO version: ", __version__)
