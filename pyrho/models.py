@@ -14,6 +14,7 @@ from pyrho.parameters import *
 from pyrho.config import *
 from pyrho import config
 
+__all__ = ['models', 'selectModel']
 
 ###### Model class definitions ######
 
