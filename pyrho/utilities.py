@@ -1,8 +1,6 @@
 """General utility functions used throughout PyRhO"""
 
 import os
-#import shutil # for file copying
-#import subprocess # for running system commands
 import copy
 import warnings
 import pickle
@@ -95,7 +93,7 @@ def texIt(texString):
 
 def saveData(data, pkl, path=None):
     """
-    Pickle data in dDir or as specified in optional path arguement
+    Pickle data in dDir or as specified in optional path argument
     """
     # if pkl is None:
         # pkl = data.__name__
@@ -112,7 +110,7 @@ def saveData(data, pkl, path=None):
 def loadData(pkl, path=None):
     """
     Load a pickled dataSet from:
-    1) Optional path arguement
+    1) Optional path argument
     2) Present working directory
     3) Module's dDir
     Return: dataSet
@@ -325,10 +323,10 @@ def calcgbar(Ip, Vclamp, A=1):
     return gbar [pS/um^2]"""
     Gmax = Ip/Vclamp  # Maximum conductance for the whole cell
     gbar = Gmax/A     # Maximum conductance pS / um^2
-    return gbar * (1e6) # 1e-12 S / (1e-6 m)^2 = (1e-6)*(1e-9 A / 1e-3 V)/(1e-6 m)^2 # Check the conversion factor
+    return gbar * (1e6) # 1e-12 S / (1e-6 m)^2 = (1e-6)*(1e-9 A / 1e-3 V)/(1e-6 m)^2
 
 
-def times2cycles(times, totT):       # REVISE to handle negative delay times
+def times2cycles(times, totT):       # TODO revise to handle negative delay times c.f. PhotoCurrent
     """
     Convert times (absolute events) to pulse cycles (durations)
     Input    times:= [t_on, t_off], t_tot
@@ -366,7 +364,7 @@ def cycles2times(cycles, delD):
 
 def plotLight(times, ax=None, light='shade', dark=None, lam=470, alpha=0.2):
     """Plot light pulse(s)
-    times   = [[t_on, t_off]...]
+    times   = [[t_on, t_off],...]
     ax      = Axes to plot on (default: gca()
     light   = Representation type: {'shade', 'borders', 'greyscale', 'hatch', 'spectral'}. Default: 'shade'
     dark    = Lightness of the background [0 (black), 1 (white)]
