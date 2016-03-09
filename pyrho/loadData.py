@@ -6,9 +6,10 @@ import copy
 import numpy as np
 import scipy.io as sio # Use for Matlab files < v7.3
 from lmfit import Parameters, minimize, fit_report #*
+import matplotlib.pyplot as plt
 
 from pyrho.utilities import * # For times2cycles and cycles2times, expDecay, findPlateauCurrent
-from pyrho.parameters import tFromOff
+#from pyrho.parameters import tFromOff
 from pyrho.config import * #verbose, colours, styles
 from pyrho import config
 
