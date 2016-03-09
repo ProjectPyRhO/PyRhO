@@ -23,15 +23,16 @@ from IPython.display import clear_output
 #from IPython.core.pylabtools import print_figure
 #import base64
 
+from pyrho.parameters import modelParams, modelList, protList, protParams, simList, simParams
 from pyrho.models import *
 from pyrho.simulators import *
 from pyrho.protocols import *
-from pyrho.loadData import *
+from pyrho.expdata import *
 from pyrho.fitting import *
-from pyrho.config import GUIdir, setupGUI, dDir # For dataSet loading
+from pyrho.config import simAvailable, GUIdir, setupGUI, dDir # For dataSet loading
 from pyrho.utilities import *
 
-
+__all__ = ['loadGUI']
 
 # LaTeX in widget descriptions/labels
 # FloatRangeSlider and IntRangeSlider
