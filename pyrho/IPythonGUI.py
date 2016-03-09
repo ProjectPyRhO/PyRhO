@@ -5,8 +5,8 @@
 #from IPython.html import widgets # IPython < 4
 
 from __future__ import print_function
-import warnings
-import time
+#import warnings
+#import time
 from collections import OrderedDict
 import os.path
 import os
@@ -15,7 +15,7 @@ import copy
 
 import ipywidgets as widgets
 #from traitlets import link
-from traitlets import Unicode
+#from traitlets import Unicode
 from IPython.display import display
 from IPython.display import clear_output
 #from IPython import get_ipython
@@ -277,7 +277,7 @@ def loadGUI(IPythonWorkspace=None):
         pSet = modelParams[modelList[mInd]]
 
         initialParams = getGUIparams(pSet, pfValArr[mInd][:], varyList=fVaryArr[mInd][:], minList=pfMinArr[mInd][:], maxList=pfMaxArr[mInd][:], exprList=fExprArr[mInd][:])
-        fittedParams = fitModels(dataSet, nStates=int(statesToFitButtons.value), params=initialParams, postFitOpt=runPostOpt.value, relaxFact=relaxFactWid.value, method=methods[fitMethods.value], postFitOptMethod=methods[postOptFitMethods.value])
+        fittedParams, miniObj = fitModels(dataSet, nStates=int(statesToFitButtons.value), params=initialParams, postFitOpt=runPostOpt.value, relaxFact=relaxFactWid.value, method=methods[fitMethods.value], postFitOptMethod=methods[postOptFitMethods.value])
         
         #fitParamReport = widgets.TextareaWidget(description='Report:',value=fitRhO.reportParams())
         #fitParamsPopup = widgets.PopupWidget(children=[fitParamReport],button_text='Fitted Parameters',description='Fitted {} state model parameters from: {}'.format(int(statesToFitButtons.value),dataVar.value))
@@ -949,7 +949,7 @@ def loadGUI(IPythonWorkspace=None):
     for model, pSet in modelParams.items(): #range(len(modelParams)):
         #pSet = modelParams[m]            # Set of n-state model parameters
         m = modelList.index(model)
-        nParams = len(pSet)#.keys())
+        #nParams = len(pSet)#.keys())
         
         i=0
         for key in pSet:#.keys(): #, value in pSet.items():
