@@ -1,4 +1,5 @@
-__doc__ = """A Python module for fitting, characterising and simulating rhodopsin photocurrents"""
+"""A Python module for fitting, characterising and simulating rhodopsin photocurrents"""
+#__doc__ = 
 # Main module file for PyRhO
 
 #if sys.version_info < (3,0) #IPython.__version__ < "3":
