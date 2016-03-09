@@ -13,8 +13,8 @@ UNITS {
 	(nA) = (nanoamp)
 	(mA) = (milliamp)
 	(mV) = (millivolt)
-    (pS) = (picosiemens)
-    :(photons) = (1)
+	(pS) = (picosiemens)
+	:(photons) = (1)
 }
 
 
@@ -22,10 +22,10 @@ PARAMETER {	: Initialise parameters to defaults. These may be changed through ho
 
 : Illumination constants   
 :	lambda 	= 470	    : (nm)
-    phi_m   = 1e16      : (photons/sec mm2) : Hill Constant
+	phi_m   = 1e16      : (photons/sec mm2) : Hill Constant
   
 : Conductance    
-    E       = 0         (mV)                : Channel reversal potential
+	E       = 0         (mV)                : Channel reversal potential
 	g0    	= 1         (pS)	            : Biological conductance scaling factor
 
 : Inward rectifier conductance    	        fv = (1-exp(-(v-E)/v0))*v1/(v-E) := 1 at Vm=-70mV
@@ -34,19 +34,19 @@ PARAMETER {	: Initialise parameters to defaults. These may be changed through ho
     
 : State transition rate parameters (/ms)
 	k_a		= 0.28      (/ms)               : Quantum efficiency * number of photons absorbed by a RhO molecule per unit time 0.5*1.2e-14 /1.1
-    p       = 0.4       (1)                 : Hill Coefficient
-    k_r		= 0.28      (/ms)               : Recovery rate scaling
-    q       = 0.4       (1)                 : Hill Coefficient
+	p       = 0.4       (1)                 : Hill Coefficient
+	k_r		= 0.28      (/ms)               : Recovery rate scaling
+	q       = 0.4       (1)                 : Hill Coefficient
 	Gd 		= 0.0909    (/ms)   <0, 1e9>    : @ 1mW mm^-2
 	Gr0     = 0.0002	(/ms)   <0, 1e9>    : tau_r,dark = 5-10s p405 Nikolic et al. 2009
 }
 
 
 ASSIGNED {
-    phi		: (1)        : "flux" should now be "intensity". Er is normalised to be dimensionless
-    Ga      (/ms)
-    Gr      (/ms)
-    fphi    (1)
+	phi		: (1)        : "flux" should now be "intensity". Er is normalised to be dimensionless
+	Ga      (/ms)
+	Gr      (/ms)
+	fphi    (1)
 	fv      (1)
 	v       (mV) 
 	i       (nA)
@@ -71,8 +71,8 @@ INITIAL { 	: Initialise variables to fully dark-adapted state
 	D 	    = 0
     
 	phi     = 0
-    rates(phi) : necessary?
-    i       = 0
+	rates(phi) : necessary?
+	i       = 0
 }
 
 :DERIVATIVE deriv {
@@ -80,24 +80,24 @@ INITIAL { 	: Initialise variables to fully dark-adapted state
 :	C' = (Gr * D) - (Ga * C)
 :	O' = (Ga * C) - (Gd * D)
 :	D' = (Gd * O) - (Gr * D)
-:   D = 1 - (C + O)
+:	D = 1 - (C + O)
 :}
 
 KINETIC kin {
 	rates(phi)
-    ~ C <-> O (Ga, 0)
-    ~ O <-> D (Gd, 0)
-    ~ D <-> C (Gr, 0)
-    CONSERVE C + O + D = 1  : N.B. "NEURON's CVode method ignores conservation"
+	~ C <-> O (Ga, 0)
+	~ O <-> D (Gd, 0)
+	~ D <-> C (Gr, 0)
+	CONSERVE C + O + D = 1  : N.B. "NEURON's CVode method ignores conservation"
 }
 
 
 PROCEDURE rates(phi) {	: Define equations for calculating transition rates
-    if (phi>0) {        : Safeguard against negative phi values
-        Ga = k_a * 1/(1+pow(phi_m,p)/pow(phi,p))    	: pow(phi,p)/(pow(phi,p) + pow(phi_m,p))
-        Gr = Gr0 + k_r * 1/(1+pow(phi_m,q)/pow(phi,q))  : pow(phi,q)/(pow(phi,q) + pow(phi_m,q))
-    } else {
-        Ga = 0
-        Gr = Gr0
-    }
+	if (phi>0) {        : Safeguard against negative phi values
+		Ga = k_a * 1/(1+pow(phi_m,p)/pow(phi,p))    	: pow(phi,p)/(pow(phi,p) + pow(phi_m,p))
+		Gr = Gr0 + k_r * 1/(1+pow(phi_m,q)/pow(phi,q))  : pow(phi,q)/(pow(phi,q) + pow(phi_m,q))
+	} else {
+		Ga = 0
+		Gr = Gr0
+	}
 }
