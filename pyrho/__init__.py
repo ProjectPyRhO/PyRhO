@@ -7,6 +7,12 @@ from __future__ import division # a/b -> float
 from __future__ import absolute_import, print_function, unicode_literals 
 
 import platform
+IPY = False
+try:
+    import IPython
+    IPY = True
+except ImportError:
+    IPY = False
 
 from pkg_resources import get_distribution, DistributionNotFound
 
@@ -89,12 +95,13 @@ def printVersions():
 
     #import platform
     print("Python version: ", platform.python_version())
-    try:
-        #import IPython
-        #__IPYTHON__
-        print("IPython version: ", IPython.__version__)
-    except ImportError: # IPython not found
-        pass
+    if IPY:    
+        try:
+            #import IPython
+            #__IPYTHON__
+            print("IPython version: ", IPython.__version__)
+        except ImportError: # IPython not found
+            pass
     #deps = [numpy, scipy, matplotlib, lmfit, warnings, os, pickle, collections, platform]
     #depsGUI = [IPython, ast, base64]
     #for mod in dependencies:
