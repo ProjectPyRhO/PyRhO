@@ -21,7 +21,7 @@ UNITS {
 PARAMETER { : Initialise parameters to defaults. These may be changed through hoc files
 
 : Illumination constants   
-    phi_m    = 1e16                          : Hill Constant
+    phi_m   = 1e16                          : Hill Constant
 :   lambda  = 470   : (nm)
 
 : Conductance
@@ -36,8 +36,8 @@ PARAMETER { : Initialise parameters to defaults. These may be changed through ho
 : State transition rate parameters (/ms)
     k1      = 0.05      (/ms)
     k2      = 0.015     (/ms)
-    k_f      = 0.03      (/ms)
-    k_b      = 0.0115    (/ms)
+    k_f     = 0.03      (/ms)
+    k_b     = 0.0115    (/ms)
     Gf0     = 0.01      (/ms)
     Gb0     = 0.015     (/ms)
     p       = 0.7       (1)                 : Hill Coefficient Ga{1,2}
