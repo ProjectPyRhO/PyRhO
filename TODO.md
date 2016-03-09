@@ -9,11 +9,12 @@ Priority
 
 Mid-Term
 --------
+- [ ] Extend database of `modelFits` and add `general` with a wide range
 - [ ] Change flux units to mW/mm^2
 - [ ] Add more asserts, warnings and write unit tests
-- [ ] Standardise testing with tox
+- [ ] Standardise testing with `tox` or `nose`
 - [ ] Add Continuous Integration with Travis
-- [ ] Move GUI to submodule
+- [ ] Move GUI to submodule and add `modelFits` dropdowns (fitting and simulating)
 - [ ] Remove v_1 as a parameter (and add a dummy scaling factor for FV)
 - [ ] Suffix all parameters to avoid clashes with Brian?
 
