@@ -7,6 +7,7 @@ import copy
 from collections import OrderedDict
 
 import numpy as np
+from scipy.integrate import odeint
 
 from pyrho.parameters import *
 from pyrho.utilities import * # cycles2times, plotLight
@@ -15,14 +16,16 @@ from pyrho.models import *
 from pyrho.config import * #verbose
 from pyrho import config
 
+__all__ = ['simulators']
 
-class Simulator(PyRhOobject): #object
+
+class Simulator(PyRhOobject):  # object
     """Common base class for all simulators"""
-    
+
     #def __init__(self, Prot, RhO, simulator='Python'):
     #    self.simulator = simulator
         # Simulator is now initialised according to a particular protocol
-    
+
     def __str__(self):
         return self.simulator
     
