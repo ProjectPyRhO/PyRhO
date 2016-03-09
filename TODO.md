@@ -15,7 +15,7 @@ Mid-Term
 - [ ] Standardise testing with `tox` or `nose`
 - [ ] Add Continuous Integration with Travis
 - [ ] Move GUI to submodule and add `modelFits` dropdowns (fitting and simulating)
-- [ ] Remove v_1 as a parameter (and add a dummy scaling factor for FV)
+- [ ] Remove v_1 as a parameter, add procedure to mod files (and add a dummy scaling factor for FV)
 - [ ] Suffix all parameters to avoid clashes with Brian?
 
 Long-Term
