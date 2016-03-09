@@ -19,6 +19,7 @@ from pyrho import config
 # Stimfit: http://journal.frontiersin.org/Journal/10.3389/fninf.2014.00016/full
 # fit_neuron: http://pythonhosted.org/fit_neuron/tutorial_easy.html
 
+__all__ = ['PhotoCurrent', 'ProtocolData']
 
 # import h5py
 # f = h5py.File('myfile.hdf5','r')

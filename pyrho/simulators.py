@@ -11,7 +11,7 @@ from scipy.integrate import odeint
 
 from pyrho.parameters import *
 from pyrho.utilities import * # cycles2times, plotLight
-from pyrho.loadData import * 
+from pyrho.expdata import * 
 from pyrho.models import *
 from pyrho.config import * #verbose
 from pyrho import config

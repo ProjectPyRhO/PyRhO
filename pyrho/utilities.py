@@ -13,8 +13,10 @@ import matplotlib.pyplot as plt
 
 from pyrho.config import * #verbose, dDir
 
-__all__ = ['Timer', 'saveData', 'loadData', 'getExt', 'getIndex', 'calcV1', 'lam2rgb', 'irrad2flux', 'flux2irrad', 'calcgbar', 'times2cycles', 'cycles2times', 'plotLight', 'setCrossAxes', 'round_sig']
-# 'printParams', 'compareParams', 'texIt', 'expDecay', 'biExpDecay', 'biExpSum'
+__all__ = ['Timer', 'saveData', 'loadData', 'getExt', 'getIndex', 'calcV1', 
+           'lam2rgb', 'irrad2flux', 'flux2irrad', 'times2cycles', 'cycles2times', 
+           'plotLight', 'setCrossAxes', 'round_sig']
+# 'printParams', 'compareParams', 'texIt', 'expDecay', 'biExpDecay', 'biExpSum', 'calcgbar'
 
 
 class Timer:
@@ -313,7 +315,7 @@ def flux2irrad(phi, lam=470):
     return phi * Ep         # Irradiance (E) scaled to [mW * mm^-2]
 
 
-def calcgbar(Ip, Vclamp, A):
+def calcgbar(Ip, Vclamp, A=1):
     # Unused
     """Estimate (lower bound) the cell's maximum conductance from its peak current
     Ip      :=  Peak current [nA]

@@ -22,15 +22,15 @@ import lmfit
 from pyrho.config import *
 from pyrho.parameters import *
 from pyrho.utilities import *
-from pyrho.loadData import * #import loadData
+from pyrho.expdata import * #import loadData
 from pyrho.models import * #import models
 from pyrho.simulators import *
 from pyrho.protocols import * #import modProtocols
 from pyrho.fitting import * #import fitStates
-from pyrho.IPythonGUI import *
+from pyrho.jupytergui import * # IPythonGUI
 
 #TODO
-#__all__ = ['config', 'utilities', 'parameters', 'loadData', 'models', 'protocols', 'simulators', 'fitting', 'IPythonGUI']
+#__all__ = ['config', 'utilities', 'parameters', 'expdata', 'models', 'protocols', 'simulators', 'fitting', 'IPythonGUI']
 
 __project__ = 'pyrho'
 # http://stackoverflow.com/questions/17583443/what-is-the-correct-way-to-share-package-version-with-setup-py-and-the-package
