@@ -43,7 +43,7 @@ PARAMETER {	: Initialise parameters to defaults. These may be changed through ho
 
 
 ASSIGNED {
-    phi		        : "flux" should now be "intensity". Er is normalised to be dimensionless
+    phi		: (1)        : "flux" should now be "intensity". Er is normalised to be dimensionless
     Ga      (/ms)
     Gr      (/ms)
     fphi    (1)
@@ -94,8 +94,8 @@ KINETIC kin {
 
 PROCEDURE rates(phi) {	: Define equations for calculating transition rates
     if (phi>0) {        : Safeguard against negative phi values
-        Ga = k_a * 1/(1+pow(phi_m,p)/pow(phi,p))    : pow(phi,p)/(pow(phi,p) + pow(phi_m,p))
-        Gr = Gr0 + k_r * 1/(1+pow(phi_m,q)/pow(phi,q))    : pow(phi,q)/(pow(phi,q) + pow(phi_m,q))
+        Ga = k_a * 1/(1+pow(phi_m,p)/pow(phi,p))    	: pow(phi,p)/(pow(phi,p) + pow(phi_m,p))
+        Gr = Gr0 + k_r * 1/(1+pow(phi_m,q)/pow(phi,q))  : pow(phi,q)/(pow(phi,q) + pow(phi_m,q))
     } else {
         Ga = 0
         Gr = Gr0
