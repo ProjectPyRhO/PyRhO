@@ -4,7 +4,7 @@
     Additionally, custom can be used with arbitrary interpolation fuctions
 """
 
-import pickle
+#import pickle
 import warnings
 import os
 
@@ -1381,8 +1381,8 @@ class protRecovery(Protocol):
         for run in range(self.nRuns): 
             if self.nRuns > 1:
                 delD = self.delDs[run]
-                onD = self.cycles[run,0]
-                offD = self.cycles[run,1]
+                onD = self.cycles[run, 0]
+                offD = self.cycles[run, 1]
             else:
                 delD = self.delD
                             
