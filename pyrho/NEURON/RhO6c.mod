@@ -23,14 +23,14 @@ PARAMETER { : Initialise parameters to defaults. These may be changed through ho
 
 : Illumination constants   
 :   lambda  = 470   : (nm)
-    phi_m    = 1e16  :(photons/s mm2)
+    phi_m   = 1e16  : (photons/s mm2)
 
 : Conductance
     E       = 0     (mV) : Channel reversal potential
     gam     = 0.05  (1)  : Ratio of open-state conductances
     g0      = 75000 (pS) : gbar : defined in the main prog as HR_expression*Area
 
-: Inward rectifier conductance    : reversal potential for NpHr is about -400mV        e_rev = -400        :(mV)  
+: Inward rectifier conductance    : reversal potential for NpHr is about -400mV
     v0      = 43    (mV)
     v1      = 4.1   (mV)    
 
@@ -38,12 +38,12 @@ PARAMETER { : Initialise parameters to defaults. These may be changed through ho
     k1      = 5         (/ms)
     Go1     = 1         (/ms)
     Gf0     = 0.022     (/ms)
-    k_f      = 0.0135    (/ms)
+    k_f     = 0.0135    (/ms)
     Gd2     = 0.025     (/ms)
     Gr0     = 0.00033   (/ms)
     Gd1     = 0.13      (/ms)
     Gb0     = 0.011     (/ms)
-    k_b      = 0.0048    (/ms)
+    k_b     = 0.0048    (/ms)
     Go2     = 1         (/ms)
     k2      = 1.1       (/ms)
     p       = 0.7       (1)
@@ -79,7 +79,7 @@ BREAKPOINT {
 }
 
 
-INITIAL {   : Initialise variables
+INITIAL {       : Initialise variables
 : State occupancy proportions - starts in C1
     C1  = 1     : Closed state 1 (Ground state)
     I1  = 0     : Intermediate state 1
