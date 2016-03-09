@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from pyrho.utilities import * # For times2cycles and cycles2times, expDecay, findPlateauCurrent
 #from pyrho.parameters import tFromOff
 from pyrho.config import * #verbose, colours, styles
+from pyrho.config import xLabelPos
 from pyrho import config
 
 # See also python electrophysiology modules

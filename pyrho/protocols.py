@@ -21,6 +21,8 @@ from pyrho.fitting import fitFV, errFV, fitfV, errfV, getRecoveryPeaks, fitRecov
 from pyrho.models import *
 from pyrho.simulators import * # For characterise()
 from pyrho.config import * #verbose, saveFigFormat, eqSize, addTitles, addStimulus, colours, styles, dDir, fDir
+from pyrho.config import xLabelPos
+from pyrho import config
 
 __all__ = ['protocols', 'selectProtocol', 'characterise']
 

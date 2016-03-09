@@ -17,9 +17,10 @@ from scipy.integrate import odeint
 from pyrho.parameters import *
 from pyrho.expdata import *
 from pyrho.utilities import * # plotLight, round_sig, findPeaks, findPlateauCurrent
-from pyrho.utilities import plotLight, round_sig, printParams, compareParams
+from pyrho.utilities import plotLight, round_sig, printParams, compareParams, wallTime
 from pyrho.models import * # for fitPeaks
 from pyrho.config import * #verbose, saveFigFormat, addTitles, fDir, dDir, eqSize
+from pyrho.config import xLabelPos
 from pyrho import config
 
 __all__ = ['fitModels', 'plotFluxSetFits', 'methods', 'defMethod', 'reportFit'] # ['fitModels', 'copyParam', 'getRecoveryPeaks', 'fitRecovery', 'fitfV']
