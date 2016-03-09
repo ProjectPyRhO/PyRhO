@@ -13,9 +13,8 @@ import matplotlib.pyplot as plt
 
 from pyrho.config import * #verbose, dDir
 
-
-
-
+__all__ = ['Timer', 'saveData', 'loadData', 'getExt', 'getIndex', 'calcV1', 'lam2rgb', 'irrad2flux', 'flux2irrad', 'calcgbar', 'times2cycles', 'cycles2times', 'plotLight', 'setCrossAxes', 'round_sig']
+# 'printParams', 'compareParams', 'texIt', 'expDecay', 'biExpDecay', 'biExpSum'
 
 
 class Timer:
