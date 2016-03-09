@@ -12,6 +12,8 @@
 #from copy import deepcopy
 from collections import OrderedDict, defaultdict
 
+#from numpy import inf, nan, isfinite 
+import numpy as np
 ### Move this to models.py and add .setParams() method
 from lmfit import Parameters, Parameter
 
@@ -26,6 +28,8 @@ sec = second
 
 #from pyrho.utilities import irrad2flux, flux2irrad
 
+# TODO
+# __all__ = []
 
 ### Hyperparameters
 
@@ -201,8 +205,7 @@ unitPrefixes = {} ### Use a units library to convert between different prefixes
 # p, q: Hill coefficients
 # phi_m: Hill constant
 
-#from numpy import inf, nan, isfinite 
-import numpy as np
+
 
 ### This needs serious refactoring! Create a superclass which hands off attribute/method calls to a Parameter(s)() attribute by default or looks in self for other properties
 #class Parameters(OrderedDict):
