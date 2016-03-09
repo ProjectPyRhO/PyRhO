@@ -9,7 +9,7 @@
 # Optimisation routine initial parameters
 # ...
 
-from copy import deepcopy
+#from copy import deepcopy
 from collections import OrderedDict, defaultdict
 
 ### Move this to models.py and add .setParams() method
@@ -29,7 +29,7 @@ sec = second
 
 ### Hyperparameters
 
-tFromOff = 50  # Time [ms] to start the sample window before the end of the pulse for Iss
+#tFromOff = 50  # Time [ms] to start the sample window before the end of the pulse for Iss
 
 # Optimisation initialisation values
 #p0fV = (40,4,1)#25000)#,1)      # v0,v1,E,G
