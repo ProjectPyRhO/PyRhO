@@ -11,6 +11,14 @@ import time
 
 import matplotlib as mpl
 import numpy as np
+#import matplotlib as mpl   
+#import matplotlib.pyplot as plt
+#import numpy as np
+#import scipy as sp
+#import lmfit
+
+__all__ = ['setupGUI', 'simAvailable', 'setupNEURON', 'setupBrian', 'setFigOutput', 'setFigStyle', 'resetPlot', 'wallTime', 
+           'verbose', 'dDir', 'fDir', 'colours', 'styles']
 
 pyVer = sys.version_info
 
@@ -30,7 +38,7 @@ home = os.path.expanduser('~')
 pyrhoPath = os.path.dirname(os.path.abspath(__file__)) # modulePath
 
 pyrhoNEURONpath = os.path.join(pyrhoPath, 'NEURON')
-NMODLfiles = ['RhO3c.mod', 'RhO4c.mod', 'RhO6c.mod'] #['RhO3.mod', 'RhO4.mod', 'RhO6.mod']
+NMODLfiles = ('RhO3c.mod', 'RhO4c.mod', 'RhO6c.mod') #['RhO3.mod', 'RhO4.mod', 'RhO6.mod']
 #HOCfiles = glob.glob("*.hoc")
 HOCfiles = [h for h in os.listdir(pyrhoNEURONpath) if h.endswith('.hoc')]
 #NMODLfilesIncPath = [os.path.join(pyrhoNEURONpath, f) for f in NMODLfiles]
@@ -376,6 +384,8 @@ else: # and IPython. See also get_ipython()
     #display.set_matplotlib_formats(figFormat)
     if verbose > 1:
         print("Default display figure format set: "+figFormat)
+
+
 
 
 #IPython.core.magic.Magics.basic.pprint()
