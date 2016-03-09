@@ -12,6 +12,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from pyrho.config import * #verbose, dDir
+from pyrho.utilities import wallTime
 
 __all__ = ['Timer', 'saveData', 'loadData', 'getExt', 'getIndex', 'calcV1', 
            'lam2rgb', 'irrad2flux', 'flux2irrad', 'times2cycles', 'cycles2times', 
