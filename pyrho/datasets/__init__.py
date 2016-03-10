@@ -17,7 +17,14 @@ import pickle
 
 def loadChR2():
     """Return dictionary of ChR2 protocol data.
-        With thanks to Nir Grossman, Juan Burrone and Matthew Grub"""
+        The dataset is a dictionary containing three ProtocolData objects:
+        'step'      : Six PhotoCurrents recorded over flux values from 
+                      2.21e15 to 2.65e17 photons/mm2/s to steady-state
+        'delta'     : The PhotoCurrent from the 'step' set with the strongest peak
+        'shortPulse': Ten PhotoCurrents recorded with pulse durations of
+                      [1, 2, 3, 4, 5, 6, 8, 10, 20, 30] ms
+        With thanks to Nir Grossman, Juan Burrone and Matthew Grub.
+    """
     return pickle.load(resource_stream(__name__, 'ChR2.pkl'))
 
 '''    
