@@ -23,7 +23,7 @@ from pyrho.config import * #verbose, saveFigFormat, addTitles, fDir, dDir, eqSiz
 from pyrho.config import xLabelPos
 from pyrho import config
 
-__all__ = ['fitModels', 'plotFluxSetFits', 'methods', 'defMethod', 'reportFit'] # ['fitModels', 'copyParam', 'getRecoveryPeaks', 'fitRecovery', 'fitfV']
+__all__ = ['fitModels', 'plotFluxSetFits', 'reportFit', 'methods', 'defMethod'] # ['fitModel', 'copyParam', 'getRecoveryPeaks', 'fitRecovery', 'fitfV']
 
 methods = ('leastsq', 'nelder', 'lbfgsb', 'powell', 'cg', 'cobyla', 'tnc', 'slsqp', 'differential_evolution')
 defMethod = methods[3]
