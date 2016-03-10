@@ -8,6 +8,7 @@ import scipy.io as sio # Use for Matlab files < v7.3
 from lmfit import Parameters, minimize, fit_report #*
 import matplotlib.pyplot as plt
 
+from pyrho.fitting import methods, defMethod
 from pyrho.utilities import * # For times2cycles and cycles2times, expDecay, findPlateauCurrent
 #from pyrho.parameters import tFromOff
 from pyrho.config import * #verbose, colours, styles
@@ -253,20 +254,18 @@ class PhotoCurrent():
     
     
     #TODO: Finish this!
-    def findKinetics(self, p=0, trim=0.1):
-        ### Segment the photocurrent into ON, INACT and OFF phases (Williams et al., 2013)
-        # I_p := maximum (absolute) current
-        # I_ss := mean(I[400ms:450ms])
-        # ON := 10ms before I_p to I_p ?!
-        # INACT := 10:110ms after I_p
-        # OFF := 500:600ms after I_p
+    def fitKinetics(self, p=0, trim=0.1, method=defMethod):
+        """
+        Fit exponentials to a photocurrent to find time constants of kinetics
+        p       : specify which pulse to use (default=0)
         
-        method = 'powell'
+        method  : optimisation method (default=defMethod)
+        """
         
         def calcOn(p,t):
             """Fit a biexponential curve to the on-phase to find lambdas"""
             v = p.valuesdict()
-            return -(v['a0'] + v['a1']*(1-np.exp(-t/v['tau_act'])) + v['a2']*np.exp(-t/v['tau_deact']))
+            return v['a0'] + v['a_act']*(1-np.exp(-t/v['tau_act'])) + v['a_deact']*np.exp(-t/v['tau_deact'])
         
         #def jacOn(p,t):
         #    v = p.valuesdict()
@@ -277,101 +276,156 @@ class PhotoCurrent():
         
         def calcOff(p,t):
             v = p.valuesdict()
-            return -(v['a0'] + v['a1']*np.exp(-v['Gd1']*t) + v['a2']*np.exp(-v['Gd2']*t))
+            return v['a0'] + v['a1']*np.exp(-v['Gd1']*t) + v['a2']*np.exp(-v['Gd2']*t)
         
         def residOff(p,I,t):
             return I - calcOff(p,t)
         
-        def monoExp(t, A, B, C):
-            #C = -A
-            return A * np.exp(-B*t) + C
-
-        def biExp(t, a1, tau1, a2, tau2, I_ss):
-            return a1 * np.exp(-t/tau1) + a2 * np.exp(-t/tau2) + I_ss
         
         plt.figure()
         self.plot()
         
-        ### On phase
+        from pyrho.fitting import reportFit
+        
+        ### On phase ###
+        
+        # t=0 :         I = a0 + a_deact = 0    ==> a0 = -a_deact
+        # t=t_off :     I = a0 + a_act = Iss    ==> a_act = Iss - a0
+        #                                           a_act = Iss + a_deact
+        # Iss = a_act - a_deact        
+        
         Ion, ton = self.getOnPhase(p)
         
         pOn = Parameters()
-        pOn.add('a0', value=0, expr='-a2')
-        pOn.add('a1', value=1, min=1e-9)
-        pOn.add('a2', value=0.1, min=1e-9)
-        pOn.add('tau_act', value=5, min=1e-9)
-        pOn.add('tau_deact', value=50, min=1e-9)
-        minRes = minimize(residOn, pOn, args=(Ion,ton), method=method)
-        fp = pOn
-        print('tau_{{act}} = {:.3g}, tau_{{deact}} = {:.3g}'.format(fp['tau_act'].value, fp['tau_deact'].value))
-        if verbose > 1:
-            print(fit_report(minRes))
         
-        plt.plot(ton, calcOn(fp,ton), label='On-Fit $\\tau_{{act}}={:.3g}, \\tau_{{deact}}={:.3g}$'.format(fp['tau_act'].value, fp['tau_deact'].value))
+        Iss = self.ss_
+        #Ipeak = self.peak_
+        
+        if Iss < 0: # Excitatory
+            pOn.add('a_act', value=Iss, min=-1e3, max=1e-9) #1
+            pOn.add('a_deact', value=Iss*0.1, min=-1e3, max=1e-9, expr='a_act - {}'.format(Iss)) #0.1
+        else: # Inhibitory
+            pOn.add('a_act', value=Iss, min=1e-9, max=1e3) # peak_?
+            pOn.add('a_deact', value=Iss*0.1, min=1e-9, max=1e3, expr='a_act - {}'.format(Iss)) 
+        pOn.add('a0', value=0, min=-1e3, max=1e3, expr='-a_deact') # redundant
+        pOn.add('tau_act', value=5, min=1e-9, max=1e3)
+        pOn.add('tau_deact', value=50, min=1e-9, max=1e3)
 
+# Dictionary unpacking also works if preferred
+#        from pyrho.utilities import biExpSum
+#        def residBiExpSum(p, I, t):
+#            #v = p.valuesdict()
+#            return I - biExpSum(t, **p.valuesdict())#v['a_act'], v['tau_act'], v['a_deact'], v['tau_deact'], v['a0'])
+#        minRes = minimize(residBiExpSum, pOn, args=(Ion,ton), method=method)
+
+        minRes = minimize(residOn, pOn, args=(Ion,ton), method=method)
+
+        fpOn = minRes.params #pOn
+        v = fpOn.valuesdict()
+        print('tau_{{act}} = {:.3g}, tau_{{deact}} = {:.3g}'.format(v['tau_act'], v['tau_deact']))
+        print('a_{{act}} = {:.3g}, a_{{deact}} = {:.3g}, a_0 = {:.3g}'.format(v['a_act'], v['a_deact'], v['a0']))
+        if config.verbose > 1:
+            #print(fit_report(minRes))
+            reportFit(minRes, 'On-phase sum of exponentials', method)
+        
+        plt.plot(ton, calcOn(fpOn,ton), label=r'On-Fit $\tau_{{act}}={:.3g}, \tau_{{deact}}={:.3g}$'.format(v['tau_act'], v['tau_deact']))
+        #plt.plot(ton, biExpSum(ton, **fpOn.valuesdict()), label=r'On-Fit $\tau_{{act}}={:.3g}, \tau_{{deact}}={:.3g}$'.format(v['tau_act'], v['tau_deact']))
+        
         
         ### Add a check for steady-state before fitting the off-curve
         
-        ### Off phase
-        Iss = fp['a0'].value + fp['a1'].value
-        pOff = Parameters() # copy.deepcopy(pOn)
+        ### Off phase ###
+        
+        # t0 = t_off
+        # t=0 :     I = a0 + a1 + a2 = Iss
+        
+        Iss = self.ss_ #fpOn['a0'].value + fpOn['a1'].value        
         Ioff, toff = self.getOffPhase(p)
         
         # Single exponential
-        pOff.add('a0', value=0, expr='{}-a1-a2'.format(Iss))
-        pOff.add('a1', value=0, vary=True)
-        pOff.add('a2', value=-0, vary=False)
-        pOff.add('Gd1', value=0.1)#, min=1e-9)
-        pOff.add('Gd2', value=0, vary=False) #, expr='Gd1')#, min=1e-9)
-        minRes = minimize(residOff, pOff, args=(Ioff,toff-toff[0]), method=method)
-        fp = pOff
-        print('tau_{{off}} = {:.3g}'.format(1/fp['Gd1'].value))
-        if verbose > 1:
-            print(fit_report(minRes))
+        pOffs = Parameters()
+        if Iss < 0: # Excitatory
+            pOffs.add('a0', value=0, min=Iss*.001, max=-Iss*.001, vary=True) # Add some tolerance # expr='{}-a1-a2'.format(Iss))
+            pOffs.add('a1', value=0, min=-1e3, max=-1e-9, vary=True, expr='{}-a0'.format(Iss))
+            #pOffs.add('a2', value=0, min=-1e3, max=0, vary=False)
+        else: # Inhibitory
+            pOffs.add('a0', value=0, min=-Iss*.001, max=Iss*.001, vary=True) # expr='{}-a1-a2'.format(Iss))
+            pOffs.add('a1', value=0, min=1e-9, max=1e3, vary=True, expr='{}-a0'.format(Iss))
+            #pOffs.add('a2', value=0, min=0, max=1e3, vary=False)
         
-        plt.plot(toff, calcOff(fp, toff-toff[0]), label='Off-Fit (Mono-Exp) $\\tau_{{off}}={:.3g}$'.format(1/fp['Gd1'].value))
+        pOffs.add('Gd1', value=10, min=1e-3, max=1e3)
+        pOffs.add('Gd2', value=0, min=0, max=1e3, vary=False) #, expr='Gd1')#, min=1e-9)
+        pOffs.add('a2', value=0, min=-1e-9, max=1e-9, vary=False)
+        
+        minRes = minimize(residOff, pOffs, args=(Ioff,toff-toff[0]), method=method)
+        fpOffs = minRes.params #pOff
+        print('tau_{{off}} = {:.3g}'.format(1/fpOffs['Gd1'].value))
+        if config.verbose > 1:
+            #print(fit_report(minRes))
+            reportFit(minRes, 'Off-phase mono-exponential decay', method)
+        
+        plt.plot(toff, calcOff(fpOffs, toff-toff[0]), label=r'Off-Fit (Mono-Exp) $\tau_{{off}}={:.3g}$'.format(1/fpOffs['Gd1'].value))
         
         # Double exponential
-        pOff = Parameters()
-        pOff.add('a0', value=0, vary=False)
-        pOff.add('a1', value=0.1)
-        pOff.add('a2', value=-0.1, expr='{}-a0-a1'.format(Iss))
-        pOff.add('Gd1', value=0.1)#, min=1e-9)
-        pOff.add('Gd2', value=0.01)#, vary=True) #, expr='Gd1')#, min=1e-9)
-        minRes = minimize(residOff, pOff, args=(Ioff,toff-toff[0]), method=method)
-        fp = pOff
-        print('tau_{{off1}} = {:.3g}, tau_{{off2}} = {:.3g}'.format(1/fp['Gd1'].value, 1/fp['Gd2'].value))
-        if verbose > 1:
-            print(fit_report(minRes))
+        pOffd = Parameters()
+        if Iss < 0: # Excitatory
+            pOffd.add('a0', value=0, min=-1e3, max=1e3, vary=False)
+            pOffd.add('a1', value=0.8*Iss, min=-1e3, max=-1e-9)
+            pOffd.add('a2', value=0.2*Iss, min=-1e3, max=-1e-9, expr='{}-a0-a1'.format(Iss))
+        else: # Inhibitory
+            pOffd.add('a0', value=0, min=-1e3, max=1e3, vary=False)
+            pOffd.add('a1', value=0.8*Iss, min=1e-9, max=1e3)
+            pOffd.add('a2', value=0.2*Iss, min=-1e3, max=-1e-9, expr='{}-a0-a1'.format(Iss))
+        pOffd.add('Gd1', value=0.1, min=1e-9, max=1e3)
+        pOffd.add('Gd2', value=0.01, min=1e-9, max=1e3)#, vary=True) #, expr='Gd1')#, min=1e-9)
         
+        minRes = minimize(residOff, pOffd, args=(Ioff,toff-toff[0]), method=method)
+        fpOffd = minRes.params #pOff
+        print('tau_{{off1}} = {:.3g}, tau_{{off2}} = {:.3g}'.format(1/fpOffd['Gd1'].value, 1/fpOffd['Gd2'].value))
+        if config.verbose > 1:
+            #print(fit_report(minRes))
+            reportFit(minRes, 'Off-phase bi-exponential decay', method)
         
-        def solveGo(tlag, Gd, Go0=1000, tol=1e-9):
-            Go, Go_m1 = Go0, 0
-            #print(tlag, Gd, Go, Go_m1)
-            while abs(Go_m1 - Go) > tol:
-                Go_m1 = Go
-                Go = ((tlag*Gd) - np.log(Gd/Go_m1))/tlag
-                #Go_m1, Go = Go, ((tlag*Gd) - np.log(Gd/Go_m1))/tlag
-                #print(Go, Go_m1)
-            return Go
-        
-        E = 0 ### Find this from fitting fV first!!!
-        
-        GoA = solveGo(self.lag_, Gd=1/pOn['tau_deact'].value)
-        GoB = solveGo(self.lag_, Gd=max(pOff['Gd1'].value, pOff['Gd2'].value))
-        
-        corrFac = lambda Gact, Gdeact: 1 + Gdeact / Gact
-        Gd = max(pOff['Gd1'].value, pOff['Gd2'].value)
-        
-        print('Lag method (tau_deact): Go = {}, cf={} --> g0 = {}'.format(GoA, corrFac(GoA, 1/pOn['tau_deact'].value), 1e6 * self.peak_ * corrFac(GoA, 1/pOn['tau_deact'].value) / (self.V - E))) #(1 + 1 / (GoA * pOn['tau_deact'].value))
-        print('Lag method (max(Gd1,Gd2)): Go = {}, cf={} --> g0 = {}'.format(GoB, corrFac(GoB, Gd), 1e6 * self.peak_ * corrFac(GoB, Gd) / (self.V - E) )) #(1 + max(pOff['Gd1'].value, pOff['Gd2'].value)/GoB)
-        print('Exp method (tau_deact): Gact = {}, cf={} --> g0 = {}'.format(1/pOn['tau_act'].value, corrFac(1/pOn['tau_act'].value, 1/pOn['tau_deact'].value), 1e6 * self.peak_ * corrFac(1/pOn['tau_act'].value, 1/pOn['tau_deact'].value) / (self.V - E) )) #(1 + pOn['tau_act'].value / pOn['tau_deact'].value)
-        print('Exp method (max(Gd1,Gd2)): Gact = {}, cf={} --> g0 = {}'.format(1/pOn['tau_act'].value, corrFac(1/pOn['tau_act'].value, Gd), 1e6 * self.peak_ * corrFac(1/pOn['tau_act'].value, Gd) / (self.V - E) )) #(1 + pOn['tau_act'].value * max(pOff['Gd1'].value, pOff['Gd2'].value))
-        
-        plt.plot(toff, calcOff(pOff,toff-toff[0]), label='Off-Fit (Bi-Exp) $\\tau_{{off1}}={:.3g}, \\tau_{{off2}}={:.3g}$'.format(1/pOff['Gd1'].value, 1/pOff['Gd2'].value))  
-        
+        plt.plot(toff, calcOff(fpOffd,toff-toff[0]), label=r'Off-Fit (Bi-Exp) $\tau_{{off1}}={:.3g}, \tau_{{off2}}={:.3g}$'.format(1/fpOffd['Gd1'].value, 1/fpOffd['Gd2'].value))        
         #plt.show(block=False)
         plt.legend(loc='best')
+        
+        
+        # TODO: Move this to fitting subpackage
+        if config.verbose > 1:
+            def solveGo(tlag, Gd, Go0=1000, tol=1e-9):
+                Go, Go_m1 = Go0, 0
+                #print(tlag, Gd, Go, Go_m1)
+                while abs(Go_m1 - Go) > tol:
+                    Go_m1 = Go
+                    Go = ((tlag*Gd) - np.log(Gd/Go_m1))/tlag
+                    #Go_m1, Go = Go, ((tlag*Gd) - np.log(Gd/Go_m1))/tlag
+                    #print(Go, Go_m1)
+                return Go
+            
+            E = 0 ### Find this from fitting fV first!!!
+            
+            GoA = solveGo(self.lag_, Gd=1/fpOn['tau_deact'].value)
+            GoB = solveGo(self.lag_, Gd=max(fpOffd['Gd1'].value, fpOffd['Gd2'].value))
+            
+            corrFac = lambda Gact, Gdeact: 1 + Gdeact / Gact
+            Gd = max(fpOffd['Gd1'].value, fpOffd['Gd2'].value)
+            
+            print('Lag method (tau_deact): Go = {}, cf={} --> g0 = {}'.format(GoA, corrFac(GoA, 1/fpOn['tau_deact'].value), 1e6 * self.peak_ * corrFac(GoA, 1/fpOn['tau_deact'].value) / (self.V - E))) #(1 + 1 / (GoA * pOn['tau_deact'].value))
+            print('Lag method (max(Gd1,Gd2)): Go = {}, cf={} --> g0 = {}'.format(GoB, corrFac(GoB, Gd), 1e6 * self.peak_ * corrFac(GoB, Gd) / (self.V - E) )) #(1 + max(pOff['Gd1'].value, pOff['Gd2'].value)/GoB)
+            print('Exp method (tau_deact): Gact = {}, cf={} --> g0 = {}'.format(1/fpOn['tau_act'].value, corrFac(1/fpOn['tau_act'].value, 1/fpOn['tau_deact'].value), 1e6 * self.peak_ * corrFac(1/fpOn['tau_act'].value, 1/fpOn['tau_deact'].value) / (self.V - E) )) #(1 + pOn['tau_act'].value / pOn['tau_deact'].value)
+            print('Exp method (max(Gd1,Gd2)): Gact = {}, cf={} --> g0 = {}'.format(1/fpOn['tau_act'].value, corrFac(1/fpOn['tau_act'].value, Gd), 1e6 * self.peak_ * corrFac(1/fpOn['tau_act'].value, Gd) / (self.V - E) )) #(1 + pOn['tau_act'].value * max(pOff['Gd1'].value, pOff['Gd2'].value))
+        
+
+
+        ### Segment the photocurrent into ON, INACT and OFF phases (Williams et al., 2013)
+        # I_p := maximum (absolute) current
+        # I_ss := mean(I[400ms:450ms])
+        # ON := 10ms before I_p to I_p ?!
+        # INACT := 10:110ms after I_p
+        # OFF := 500:600ms after I_p
+
+
         
         # from scipy.optimize import curve_fit
         # from .parameters import p0on, p0inact, p0off
