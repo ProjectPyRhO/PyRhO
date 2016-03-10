@@ -22,23 +22,23 @@ PARAMETER {	: Initialise parameters to defaults. These may be changed through ho
 
 : Illumination constants   
 :	lambda 	= 470	    : (nm)
-	phi_m   = 1e16      : (photons/sec mm2) : Hill Constant
+	phi_m   = 1e16      : (photons/sec mm2) < 0, 1e30 > : Hill Constant
   
 : Conductance    
-	E       = 0         (mV)                : Channel reversal potential
-	g0    	= 1         (pS)	            : Biological conductance scaling factor
+	E       = 0         (mV)   < -1e3, 1e3 >: Channel reversal potential
+	g0    	= 1         (pS)   < 0, 1e9 >   : Biological conductance scaling factor
 
 : Inward rectifier conductance    	        fv = (1-exp(-(v-E)/v0))*v1/(v-E) := 1 at Vm=-70mV
 	v0 		= 43	    (mV)
 	v1 		= 4.1       (mV)
     
 : State transition rate parameters (/ms)
-	k_a		= 0.28      (/ms)               : Quantum efficiency * number of photons absorbed by a RhO molecule per unit time 0.5*1.2e-14 /1.1
+	k_a		= 0.28      (/ms)   < 0, 1e9 >  : Quantum efficiency * number of photons absorbed by a RhO molecule per unit time 0.5*1.2e-14 /1.1
 	p       = 0.4       (1)                 : Hill Coefficient
-	k_r		= 0.28      (/ms)               : Recovery rate scaling
+	k_r		= 0.28      (/ms)   < 0, 1e9 >  : Recovery rate scaling
 	q       = 0.4       (1)                 : Hill Coefficient
-	Gd 		= 0.0909    (/ms)   <0, 1e9>    : @ 1mW mm^-2
-	Gr0     = 0.0002	(/ms)   <0, 1e9>    : tau_r,dark = 5-10s p405 Nikolic et al. 2009
+	Gd 		= 0.0909    (/ms)   < 0, 1e9 >  : @ 1mW mm^-2
+	Gr0     = 0.0002	(/ms)   < 0, 1e9 >  : tau_r,dark = 5-10s p405 Nikolic et al. 2009
 }
 
 
@@ -73,6 +73,7 @@ INITIAL { 	: Initialise variables to fully dark-adapted state
 	phi     = 0
 	rates(phi) : necessary?
 	i       = 0
+	setV1(E, v0)
 }
 
 :DERIVATIVE deriv {
@@ -100,4 +101,16 @@ PROCEDURE rates(phi) {	: Define equations for calculating transition rates
 		Ga = 0
 		Gr = Gr0
 	}
+}
+
+
+PROCEDURE setV1(E (mV), v0 (mV)) { :
+: Calculate v1 from v0 and E to satisfy the definition: f(V=-70) := 1
+    v1 = (70+E)/(exp((70+E)/v0)-1)
+    : v1 = (-70-E)/(1-exp(-(-70-E)/v0))
+}
+
+: FUNCTION f_name(arg1 (units1), arg2 (units2), . . . ) (returned_units)
+FUNCTION g(g0 (pS), fphi (1), fv (1)) (pS) { : Make the effective channel conductance available to hoc
+    g = g0 * fphi * fv
 }
