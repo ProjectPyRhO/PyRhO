@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import sys
 import time
+import importlib
 
 import matplotlib as mpl
 import numpy as np
@@ -17,8 +18,10 @@ import numpy as np
 #import scipy as sp
 #import lmfit
 
-__all__ = ['setupGUI', 'simAvailable', 'setupNEURON', 'setupBrian', 'setFigOutput', 'setFigStyle', 'resetPlot', 'wallTime', 
-           'verbose', 'dDir', 'fDir', 'colours', 'styles']
+__all__ = ['setupGUI', 'simAvailable', 'setupNEURON', 'setupBrian', 
+           'setFigOutput', 'setFigStyle', 'resetPlot', 'wallTime', 
+           'verbose', 'dDir', 'fDir', 'colours', 'styles', 'check_package', 
+           'DASH_LINE', 'DOUB_DASH_LINE']
 
 pyVer = sys.version_info
 
@@ -33,6 +36,17 @@ if pyVer < (3, 3):
 else:
     wallTime = time.perf_counter
 
+
+if pyVer <= (3, 3):
+    def check_package(pkg):
+        return importlib.find_loader(pkg) is not None
+elif pyVer >= (3, 4):
+    def check_package(pkg):
+        return importlib.util.find_spec(pkg) is not None
+
+
+DASH_LINE = '-' * 80
+DOUB_DASH_LINE = '=' * 80
 
 home = os.path.expanduser('~')
 pyrhoPath = os.path.dirname(os.path.abspath(__file__)) # modulePath
