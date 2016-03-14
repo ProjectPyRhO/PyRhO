@@ -210,35 +210,37 @@ class RhodopsinModel(PyRhOobject):
         if labels is None:
             labels = self.stateLabels
         
-        
-        if peaks is not None and len(peaks) > 0:
+        #peaks = list(peaks) #np.array(peaks)
+        if peaks is not None and len(peaks) > 0: #peaks.size > 0: #
             plotPieCharts = True
+            piePulse = 0 # Plot the first pulse. Generalise to each pulse?
         else:
             plotPieCharts = False
         
         figWidth, figHeight = mpl.rcParams['figure.figsize']
         fig = plt.figure(figsize=(figWidth, 1.5*figHeight))
-        gs = plt.GridSpec(3,3)
+        gs = plt.GridSpec(3, 3)
         
         begT, endT = t[0], t[-1]
         
         # Plot line graph of states
         axLine = fig.add_subplot(gs[0,:])
-        plt.plot(t,states)
+        plt.plot(t, states)
         plt.setp(axLine.get_xticklabels(), visible=False)
         plotSum = False
         if plotSum:
             sig, = plt.plot(t, np.sum(states,axis=1), color='k', linestyle='--')
-            labelsIncSum = np.append(labels,'$\Sigma s_i$')
+            labelsIncSum = np.append(labels, '$\Sigma s_i$')
             plt.legend(labelsIncSum, loc=6)
         else:
             plt.legend(labels, loc=6)
-        plt.ylabel('$\mathrm{State\ occupancy}$')# proportion')
-        plt.xlim((begT, endT)) #plt.xlim((0,delD+(nPulses*(onD+offD)))) # t_run
+        plt.ylabel('$\mathrm{State\ occupancy}$')
+        plt.xlim((begT, endT))
         #plt.ylim((-0.1,1.1))
-        plt.ylim((0,1))
+        plt.ylim((0, 1))
         if config.addTitles:
-            plt.title('$\mathrm{State\ variables\ through\ time}$') #plt.title('State variables through time: $v={} \mathrm{{mV}},\ \phi={:.3g} \mathrm{{photons}} \cdot \mathrm{{s}}^{{-1}} \cdot \mathrm{{cm}}^{{-2}}$'.format(V,phiOn))
+            plt.title('$\mathrm{State\ variables\ through\ time}$') 
+            #plt.title('State variables through time: $v={} \mathrm{{mV}},\ \phi={:.3g} \mathrm{{photons}} \cdot \mathrm{{s}}^{{-1}} \cdot \mathrm{{cm}}^{{-2}}$'.format(V,phiOn))
         plotLight(pulses, axLine)
         ### New plot format (plus change in ylims)
         #axLine.spines['left'].set_position('zero') # y-axis
@@ -250,73 +252,105 @@ class RhodopsinModel(PyRhOobject):
         axLine.spines['bottom'].set_smart_bounds(True)
         #axLine.xaxis.set_ticks_position('bottom')
         #axLine.yaxis.set_ticks_position('left')
-        ##########################################
+        
         
         ### Plot stack plot of state variables
         axStack = fig.add_subplot(gs[1,:], sharex=axLine)
-        plt.stackplot(t,states.T)
+        plt.stackplot(t, states.T)
         plt.ylim((0,1))
-        plt.xlim((begT, endT)) #plt.xlim((0,delD+(nPulses*(onD+offD))))
+        plt.xlim((begT, endT))
         plotLight(pulses, axStack, 'borders')
         if config.addTitles:
             axStack.title.set_visible(False)
         plt.xlabel('$\mathrm{Time\ [ms]}$')
-        plt.ylabel('$\mathrm{State\ occupancy}$')# proportion')
+        plt.ylabel('$\mathrm{State\ occupancy}$')
         
         if plotPieCharts:
-            axS0 = fig.add_subplot(gs[2,0])
-            initialStates = self.s0 * 100
-            if verbose > 1:
-                pct = {l:s for l,s in zip(labels,sizes)}
-                print('Initial state occupancies (%):',sorted(pct.items(),key=lambda x: labels.index(x[0])))
-            patches, texts, autotexts = plt.pie(initialStates, labels=labels, autopct='%1.1f%%', startangle=90, shadow=False) #, explode=explode
-            for lab in range(len(labels)):
-                texts[lab].set_fontsize(mpl.rcParams['ytick.labelsize'])
-                autotexts[lab].set_fontsize(mpl.rcParams['axes.labelsize'])
-            plt.axis('equal')
-            if config.addTitles:
-                plt.title('$\mathrm{Initial\ state\ occupancies}$')
-            #else:
-            #    plt.title('$t_{0}$')
+            if config.fancyPlots:
+                import seaborn as sns
+                cp = sns.color_palette()
+            else:
+                cp = config.colours
+            
+            plotInitStates = False
+            
+            pieInd = 0
+            if plotInitStates:
+                axS0 = fig.add_subplot(gs[2, pieInd])
+                initialStates = self.s0 * 100
+                if verbose > 1:
+                    pct = {l:s for l,s in zip(labels, sizes)}
+                    print('Initial state occupancies (%):', sorted(pct.items(), key=lambda x: labels.index(x[0])))
+                patches, texts, autotexts = plt.pie(initialStates, labels=labels, autopct='%1.1f%%', startangle=90, shadow=False, colors=cp)
+                for lab in range(len(labels)):
+                    texts[lab].set_fontsize(mpl.rcParams['ytick.labelsize'])
+                    autotexts[lab].set_fontsize(mpl.rcParams['axes.labelsize'])
+                plt.axis('equal')
+                if config.addTitles:
+                    plt.title('$\mathrm{Initial\ state\ occupancies}$')
+                else:
+                    #axS0.text(-1, 1, '$t_{0}$')
+                    axS0.annotate('$t_{0}$', xycoords='axes fraction', xy=(0, 1))
+                pieInd += 1
             
             if peaks is not None: ### Plot peak state proportions
-                pInd = peaks[0] # Plot the first peak
-                axLine.axvline(x=t[pInd],linestyle=':',color='k')
-                axStack.axvline(x=t[pInd],linestyle=':',color='k')
-                axPeak = fig.add_subplot(gs[2,1])
+                pInd = peaks[piePulse] # Plot the first peak
+                axLine.axvline(x=t[pInd], linestyle=':', color='k')
+                axStack.axvline(x=t[pInd], linestyle=':', color='k')
+                axPeak = fig.add_subplot(gs[2, pieInd])
                 sizes = states[pInd,:] * 100
                 #sizes = [s*100 for s in sizes]
                 #explode = (0,0,0.1,0.1,0,0)
                 if verbose > 1:
                     pct = {l:s for l,s in zip(labels,sizes)}
-                    print('Peak state occupancies (%):',sorted(pct.items(),key=lambda x: labels.index(x[0])))
-                patches, texts, autotexts = plt.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90, shadow=False)#, explode=explode)
+                    print('Peak state occupancies (%):', sorted(pct.items(), key=lambda x: labels.index(x[0])))
+                patches, texts, autotexts = plt.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90, shadow=False, colors=cp)#, explode=explode)
                 for lab in range(len(labels)):
                     texts[lab].set_fontsize(mpl.rcParams['ytick.labelsize'])
                     autotexts[lab].set_fontsize(mpl.rcParams['axes.labelsize'])
                 plt.axis('equal')
                 if config.addTitles:
                     plt.title('$\mathrm{Simulated\ peak\ state\ occupancies}$')
-                #else:
-                #    plt.title('$t_{peak}$')
+                else:
+                    #axPeak.text(-1, 1, '$t_{peak}$')
+                    axPeak.annotate('$t_{peak}$', xycoords='axes fraction', xy=(0, 1))
+                pieInd += 1
             
-            if phiOn > 0: ### Plot steady state proportions
-                axSS = fig.add_subplot(gs[2,2])
-                steadyStates = self.calcSteadyState(phiOn) * 100 # Convert array of proportions to %
-                #steadyStates = [s*100 for s in steadyStates]
-                #explode = (0,0,0.1,0.1,0,0)
+            if not plotInitStates: # Plot steady-state proportions
+                axSS = fig.add_subplot(gs[2, pieInd])
+                offInd = self.pulseInd[piePulse, 1]
+                sizes = states[offInd,:] * 100
                 if verbose > 1:
-                    pct = {l:s for l,s in zip(labels,sizes)}
-                    print('Steady state occupancies (%):',sorted(pct.items(),key=lambda x: labels.index(x[0])))
-                patches, texts, autotexts = plt.pie(steadyStates, labels=labels, autopct='%1.1f%%', startangle=90, shadow=False) #, explode=explode
+                    pct = {l:s for l,s in zip(labels, sizes)}
+                    print('Steady-state occupancies (%):', sorted(pct.items(), key=lambda x: labels.index(x[0])))
+                patches, texts, autotexts = plt.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90, shadow=False, colors=cp)
                 for lab in range(len(labels)):
                     texts[lab].set_fontsize(mpl.rcParams['ytick.labelsize'])
                     autotexts[lab].set_fontsize(mpl.rcParams['axes.labelsize'])
                 plt.axis('equal')
                 if config.addTitles:
-                    plt.title('$\mathrm{Analytic\ steady\ state\ occupancies}$')
-                #else:
-                #    plt.title('$t_{\inf}$')
+                    plt.title('$\mathrm{Simulated\ steady-state\ occupancies}$')
+                else:
+                    #axSS.text(-1, 1, '$t_{peak}$')
+                    axSS.annotate('$t_{ss}$', xycoords='axes fraction', xy=(0, 1))
+                pieInd += 1
+            
+            if phiOn > 0: ### Plot steady state proportions
+                axInf = fig.add_subplot(gs[2, pieInd])
+                steadyStates = self.calcSteadyState(phiOn) * 100 # Convert array of proportions to %
+                if verbose > 1:
+                    pct = {l:s for l,s in zip(labels,sizes)}
+                    print('Steady state occupancies (%):', sorted(pct.items(), key=lambda x: labels.index(x[0])))
+                patches, texts, autotexts = plt.pie(steadyStates, labels=labels, autopct='%1.1f%%', startangle=90, shadow=False, colors=cp) #, explode=explode
+                for lab in range(len(labels)):
+                    texts[lab].set_fontsize(mpl.rcParams['ytick.labelsize'])
+                    autotexts[lab].set_fontsize(mpl.rcParams['axes.labelsize'])
+                plt.axis('equal')
+                if config.addTitles:
+                    plt.title('$\mathrm{Analytic\ steady-state\ occupancies}$')
+                else:
+                    #axInf.text(-1, 1, r'$t_{\inf}$')#, fontsize=mpl.rcParams['legend.fontsize'])
+                    axInf.annotate(r'$t_{\infty}$', xycoords='axes fraction', xy=(0, 1))
 
         plt.tight_layout()
         
