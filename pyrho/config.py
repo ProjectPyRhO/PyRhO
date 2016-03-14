@@ -362,28 +362,33 @@ def setFigOutput(figDisplay='screen', width=None):
 
 setFigOutput(figDisplay)
 
+#global fancyPlots
 fancyPlots = False #True
 
-def setFigStyle(fancyPlots=False): # Merge this with setFigOutput
+def setFigStyle(): #fancyPlots=False): # Merge this with setFigOutput
     """Set figure style"""
+    global fancyPlots
     if fancyPlots:
         try:
-            import seaborn
+            import seaborn as sns
         except ImportError:
             warnings.warn('Seaborn not found - using default plotting scheme.')
         else: # Try another package?
             pass
         finally: # Always do this last
-            pass
+            fancyPlots = True
     else:
         if 'seaborn' in sys.modules:
-            seaborn.reset_orig()
+            sns.reset_orig()
+        fancyPlots = False
         #setFigOutput(figDisplay)
 
 def resetPlot():
     """Reset figure style"""
-    if 'seaborn' in sys.modules:
+    global fancyPlots
+    if 'seaborn' in sys.modules and fancyPlots:
         seaborn.reset_orig()
+        fancyPlots = False
     setFigOutput(figDisplay)
 
 try:
