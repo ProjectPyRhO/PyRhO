@@ -173,13 +173,14 @@ def setupNEURON(path=None, NEURONpath=None):
                         return
                     #NEURONscriptPath = os.path.join(home, 'NEURON')
                     #NEURONscriptPath = pyrhoNEURONpath
+                    
                     NEURONscriptIncPath = os.path.join(pyrhoNEURONpath, NEURONinstallScript)
                     exitcode = subprocess.call([NEURONscriptIncPath, NEURONpath], shell=True) # .check_call
                 except:
-                    shutil.copy2(os.path.join(NEURONscriptPath, NEURONinstallScript), cwd)
+                    shutil.copy2(os.path.join(pyrhoNEURONpath, NEURONinstallScript), cwd)
                     print('Unable to install NEURON - please install manually with the script copied to {}.'.format(cwd))
         else:    
-            shutil.copy2(os.path.join(NEURONscriptPath, NEURONinstallScript), cwd)
+            shutil.copy2(os.path.join(pyrhoNEURONpath, NEURONinstallScript), cwd)
             print("NEURON must be compiled from source to work with Python 3. Please use the script '{}' copied to '{}' and then rerun setupNEURON.".format(NEURONinstallScript, cwd))
             print("E.g.: ./{} /abs/path/to/install/NEURON/".format(NEURONinstallScript))
     
@@ -387,7 +388,7 @@ def resetPlot():
     """Reset figure style"""
     global fancyPlots
     if 'seaborn' in sys.modules and fancyPlots:
-        seaborn.reset_orig()
+        sns.reset_orig()
         fancyPlots = False
     setFigOutput(figDisplay)
 
