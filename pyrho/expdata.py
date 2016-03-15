@@ -733,14 +733,17 @@ class PhotoCurrent():
     
     
     def plot(self, ax=None, light='shade', dark=None, addFeatures=True, colour=None, linestyle=None):
-        """Plot the photocurrent
-            Optional arguments:
-            ax          :=  Specify axes on which to plot
-            light       :=  Specify style of plotting for the stimulus. See plotLight()
-            addFeatures :=  Plot additional features including peak, steady-state and stimulation times
-            colour      :=  Specify colour for the photocurrent data
-            linestyle   :=  Specify linestyle for the photocurrent data
-            """
+        
+        """
+        Plot the photocurrent
+        Optional arguments:
+        ax          :=  Specify axes on which to plot
+        light       :=  Specify style of plotting for the stimulus. See plotLight()
+        addFeatures :=  Plot additional features including peak, steady-state and stimulation times
+        colour      :=  Specify colour for the photocurrent data
+        linestyle   :=  Specify linestyle for the photocurrent data
+        """
+        
         if ax == None:
             ax = plt.gca()
         else:
@@ -753,9 +756,9 @@ class PhotoCurrent():
         
         plotLight(self.pulses, ax=ax, light=light, dark=dark, lam=470, alpha=0.2)
         
-        plt.xlabel('$\mathrm{Time\ [ms]}$', position=(xLabelPos,0), ha='right')
+        plt.xlabel(r'$\mathrm{Time\ [ms]}$', position=(xLabelPos,0), ha='right')
         plt.xlim((self.begT, self.endT))
-        plt.ylabel('$\mathrm{Photocurrent\ [nA]}$')
+        plt.ylabel(r'$\mathrm{Photocurrent\ [nA]}$')
         
         setCrossAxes(ax)
         
@@ -809,10 +812,7 @@ class PhotoCurrent():
         return # ax
     
     
-    def plotStates(self, pulse=None, name=None, verbose=config.verbose):
-        
-        # Consider removing arguments t,states,pulses,labels...
-        
+    def plotStates(self, plotPieCharts=True, pulse=None, name=None, verbose=config.verbose):
         
         phi = self.phi # Use the value at t_off if the stimulus if a function of time
         t = self.t
@@ -820,38 +820,34 @@ class PhotoCurrent():
         pulses = self.pulses
         peakInds = self.peakInds_
         labels = self.stateLabels
-        #if pulses is None:
-        #    pulses = self.t[self.pulseInd]
+
+        plotSum = False
+        #plotPieCharts = True
         
-        #if labels is None:
-        #    labels = self.stateLabels
-        
-        #peaks = list(peaks) #np.array(peaks)
-        if peakInds is not None and len(peakInds) > 0: #peaks.size > 0: #
-            plotPieCharts = True
-            #piePulse = 0 # Plot the first pulse. Generalise to each pulse?
-        else:
-            plotPieCharts = False
+
         
         if pulse is None:
-            piePulses = range(self.nPulses)
+            piePulses = list(range(self.nPulses))
         else:
             if isinstance(pulse, (list, tuple)):
                 piePulses = pulse
             else:
                 piePulses = [pulse]
         
-        plotSum = False
-        
-        plotInit = bool(len(piePulses) > 1)
-        plotPeaks = bool(peakInds is not None)
-        plotSS = True
-        plotSSinf = hasattr(self, 'ssInf') # not plotInit #
-        count = sum([plotInit, plotPeaks, plotSS, plotSSinf])
+        if plotPieCharts:
+            plotInit = bool(len(piePulses) > 1)
+            plotPeaks = bool(peakInds is not None)
+            plotSS = True
+            plotSSinf = hasattr(self, 'ssInf') # not plotInit #
+            count = sum([plotInit, plotPeaks, plotSS, plotSSinf])
+        else:
+            count = 1
+            piePulses = []
+        nPulses = len(piePulses)
         
         figWidth, figHeight = mpl.rcParams['figure.figsize']
-        fig = plt.figure(figsize=(figWidth, (1+len(piePulses)/2)*figHeight)) # 1.5*
-        gs = plt.GridSpec(2+len(piePulses), count)
+        fig = plt.figure(figsize=(figWidth, (1+nPulses/2)*figHeight)) # 1.5*
+        gs = plt.GridSpec(2+nPulses, count)
         
         begT, endT = t[0], t[-1] # self.begT, self.endT
         
@@ -898,14 +894,13 @@ class PhotoCurrent():
         plt.xlabel('$\mathrm{Time\ [ms]}$')
         plt.ylabel('$\mathrm{State\ occupancy}$')
         
+        
         if plotPieCharts:
             if config.fancyPlots:
                 import seaborn as sns
                 cp = sns.color_palette()
             else:
                 cp = config.colours
-            
-            
             
             for p in piePulses:
                 pieInd = 0
