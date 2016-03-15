@@ -133,42 +133,7 @@ class Protocol(PyRhOobject):
         return phi_t
     
     
-    ### Move fitPeaks and fitfV to fitting.py ###
-    def fitPeaks(self, t_peaks, I_peaks, curveFunc, p0, eqString, fig=None):
-        shift = t_peaks[0] # ~ delD
-        popt, pcov = curve_fit(curveFunc, t_peaks-shift, I_peaks, p0=p0) #Needs ball-park guesses (0.3, 125, 0.5)
-        peakEq = eqString.format(*[round_sig(p,3) for p in popt]) # *popt rounded to 3s.f.
-        
-        if fig:
-            plt.figure(fig.number) # Select figure
-    #     ext = 10 # Extend for ext ms either side
-    #     xspan = t_peaks[-1] - t_peaks[0] + 2*ext 
-    #     xfit=np.linspace(t_peaks[0]-ext-shift,t_peaks[-1]+ext-shift,xspan/dt)
-            plt.plot(t_peaks, I_peaks, linestyle='', color='r', marker='*')
-            #xfit=np.linspace(-shift,self.totT-shift,self.totT/self.dt) #totT
-            nPoints = 10*int(round(self.totT-shift/self.dt))+1 # 1001
-            xfit=np.linspace(-shift, self.totT-shift, nPoints) #totT
-            yfit=curveFunc(xfit,*popt)
-            
-            plt.plot(xfit+shift,yfit,linestyle=':',color='#aaaaaa',linewidth=1.5*mpl.rcParams['lines.linewidth'])#,label="$v={:+} \mathrm{{mV}}$, $\phi={:.3g}$".format(V,phiOn)) # color='#aaaaaa' 
-            #ylower = copysign(1.0,I_peaks.min())*ceil(abs((I_peaks.min()*10**ceil(abs(log10(abs(I_peaks.min())))))))/10**ceil(abs(log10(abs(I_peaks.min()))))
-            #yupper = copysign(1.0,I_peaks.max())*ceil(abs((I_peaks.max()*10**ceil(abs(log10(abs(I_peaks.max())))))))/10**ceil(abs(log10(abs(I_peaks.max()))))
-        #     if (len(Vs) == 1) and (len(phis) == 1) and (nRuns == 1):
-        #         x, y = 0.8, 0.9
-        #     else:
-            x = 0.8
-            y = yfit[-1] #popt[2]
-            
-            plt.text(x*self.totT,y,peakEq,ha='center',va='bottom',fontsize=config.eqSize) #, transform=ax.transAxes)
-        
-        print(peakEq)
-        if verbose > 1:
-            print("Parameters: {}".format(popt))
-            if type(pcov) in (tuple, list):
-                print("$\sigma$: {}".format(np.sqrt(pcov.diagonal())))
-            else:
-                print("Covariance: {}".format(pcov))
-        return popt, pcov, peakEq
+
 
         
         
@@ -336,56 +301,6 @@ class Protocol(PyRhOobject):
         plt.ylabel('$\mathrm{\phi\ [ph./mm^{2}/s]}$')
         
         return ax
-    
-    # TODO: Incorporate into Photocurrent class
-    def _plotKinetics(self):
-        ### Segment the photocurrent into ON, INACT and OFF phases (Williams et al., 2013)
-        # I_p := maximum (absolute) current
-        # I_ss := mean(I[400ms:450ms])
-        # ON := 10ms before I_p to I_p ?!
-        # INACT := 10:110ms after I_p
-        # OFF := 500:600ms after I_p
-        
-        if not peakInds: # Prevent indexing problems when no peak was found
-            peakInds = [0]
-        else:
-            ### Analyse kinetics for the first pulse
-            ### Fit curve for tau_on
-            if verbose > 1:
-                print('Analysing on-phase decay...')
-            onBegInd = np.searchsorted(t,delD,side="left")
-            self.fitPeaks(t[onBegInd:peakInds[0]], I_RhO[onBegInd:peakInds[0]], expDecay, p0on, '$I_{{on}} = {:.3}e^{{-t/{:g}}} {:+.3}$','')
-            ### Plot tau_on vs Irrad (for curves of V)
-            ### Plot tau_on vs V (for curves of Irrad)
-        
-        ### Fit curve for tau_inact
-        if verbose > 1:
-            print('Analysing inactivation-phase decay...')
-        onEndInd = np.searchsorted(t,onD+delD,side="left") # Add one since upper bound is not included in slice
-        popt, _, _ = self.fitPeaks(t[peakInds[0]:onEndInd + 1], I_RhO[peakInds[0]:onEndInd + 1], expDecay, p0inact, '$I_{{inact}} = {:.3}e^{{-t/{:g}}} {:+.3}$','')
-        if verbose > 1:
-            print("$\tau_{{inact}} = {}$; $I_{{ss}} = {}$".format(popt[1],popt[2]))
-        Iss=popt[2]
-        IssVals[run][phiInd][vInd] = Iss
-        ### Plot tau_inact vs Irrad (for curves of V)
-        ### Plot tau_inact vs V (for curves of Irrad)
-        
-        ### Fit curve for tau_off (bi-exponential)
-        if verbose > 1:
-            print('Analysing off-phase decay...')
-#                 endInd = -1 #np.searchsorted(t,offD+onD+delD,side="right") #totT
-        popt, _, _ = self.fitPeaks(t[onEndInd:], I_RhO[onEndInd:], biExpDecay, p0off, '$I_{{off}} = {:.3}e^{{-t/{:g}}} {:+.3}e^{{-t/{:g}}} {:+.3}$','')
-        ### Plot tau_off vs Irrad (for curves of V)
-        ### Plot tau_off vs V (for curves of Irrad)
-        
-        # Draw boundary between ON and INACT phases
-        for p in peakInds:
-            plt.axvline(x=t[p],linestyle=':',color='m')
-            plt.axhline(y=I_RhO[peakInds[0]],linestyle=':',color='r')
-            plt.axhline(y=Iss,linestyle=':',color='b')
-        
-        plt.legend(loc='best')
-        return
     
 
 

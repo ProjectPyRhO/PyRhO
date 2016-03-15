@@ -1114,7 +1114,42 @@ def fitRecovery(t_peaks, I_peaks, params, Ipeak0, Iss0, ax=None, method=defMetho
     return params
     
 
+def fitPeaks(self, t_peaks, I_peaks, curveFunc, p0, eqString, fig=None):
+    
+    shift = t_peaks[0] # ~ delD
+    popt, pcov = curve_fit(curveFunc, t_peaks-shift, I_peaks, p0=p0) #Needs ball-park guesses (0.3, 125, 0.5)
+    peakEq = eqString.format(*[round_sig(p,3) for p in popt]) # *popt rounded to 3s.f.
+    
+    if fig:
+        plt.figure(fig.number) # Select figure
+#     ext = 10 # Extend for ext ms either side
+#     xspan = t_peaks[-1] - t_peaks[0] + 2*ext 
+#     xfit=np.linspace(t_peaks[0]-ext-shift, t_peaks[-1]+ext-shift, xspan/dt)
+        plt.plot(t_peaks, I_peaks, linestyle='', color='r', marker='*')
+        #xfit=np.linspace(-shift, self.totT-shift, self.totT/self.dt) #totT
+        nPoints = 10*int(round(self.totT-shift/self.dt))+1 # 1001
+        xfit = np.linspace(-shift, self.totT-shift, nPoints)
+        yfit = curveFunc(xfit,*popt)
+        
+        plt.plot(xfit+shift, yfit, linestyle=':', color='#aaaaaa', linewidth=1.5*mpl.rcParams['lines.linewidth'])
+        #ylower = copysign(1.0,I_peaks.min())*ceil(abs((I_peaks.min()*10**ceil(abs(log10(abs(I_peaks.min())))))))/10**ceil(abs(log10(abs(I_peaks.min()))))
+        #yupper = copysign(1.0,I_peaks.max())*ceil(abs((I_peaks.max()*10**ceil(abs(log10(abs(I_peaks.max())))))))/10**ceil(abs(log10(abs(I_peaks.max()))))
 
+        x = 0.8
+        y = yfit[-1] #popt[2]
+        
+        plt.text(x*self.totT, y, peakEq, ha='center', va='bottom', fontsize=config.eqSize) #, transform=ax.transAxes)
+    
+    print(peakEq)
+    if verbose > 1:
+        print("Parameters: {}".format(popt))
+        if type(pcov) in (tuple, list):
+            print("$\sigma$: {}".format(np.sqrt(pcov.diagonal())))
+        else:
+            print("Covariance: {}".format(pcov))
+    
+    return popt, pcov, peakEq
+        
 
     
 #TODO; Refactor all fitting functions to do with fV and FV
