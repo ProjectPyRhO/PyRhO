@@ -635,6 +635,7 @@ class PhotoCurrent():
             
             from pyrho.parameters import p0inact
             from pyrho.utilities import expDecay
+            from scipy.optimize import curve_fit
             t = self.t[postPeak]
             I = self.I[postPeak]
             shift = t[0]
