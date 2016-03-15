@@ -21,6 +21,7 @@ __all__ = ['models', 'selectModel']
 class RhodopsinModel(PyRhOobject):
     """Common base class for all models"""
     
+    # TODO: Revise to be stateless and store date in PhotoCurrent objects
     phi = 0.0  # Instantaneous Light flux [photons * mm^-2 * s^-1]
     
     def __init__(self, params=None, rhoType=rhoType):
@@ -82,6 +83,7 @@ class RhodopsinModel(PyRhOobject):
         self.states = np.vstack((np.empty([0,self.nStates]), s0)) #np.empty([0,self.nStates])
         self.t = [0] #[]
         self.pulseInd = np.empty([0,2],dtype=int) # Light on and off indexes for each pulse
+        self.ssInf = []
         self.setLight(phi)
         #if s0 is not None: # Override default initial conditions
         #    self.s_0 = s0
@@ -195,9 +197,10 @@ class RhodopsinModel(PyRhOobject):
         
         return
         
+    '''
     def plotStates(self, t=None, states=None, pulses=None, labels=None, phiOn=0, peaks=None, name=None):
         # Consider removing arguments t,states,pulses,labels...
-        
+        # TODO: Move to expdata photocurrent
         if t is None:
             t = self.t
         
@@ -358,7 +361,7 @@ class RhodopsinModel(PyRhOobject):
             from os import path
             figName = path.join(fDir, name+'.'+config.saveFigFormat)
             plt.savefig(figName, format=config.saveFigFormat)
-
+        '''
 
 class RhO_3states(RhodopsinModel):
     """Class definition for the 3-state model"""

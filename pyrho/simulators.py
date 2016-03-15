@@ -102,10 +102,13 @@ class Simulator(PyRhOobject):  # object
                         phi_ts = Prot.phi_ts[run][phiInd][:]
                         I_RhO, t, soln = self.runTrialPhi_t(RhO, phi_ts, V, delD, cycles, self.dt, verbose) #, totT
                         
-                    PC = PhotoCurrent(I_RhO, t, pulses, phiOn, V, Prot.protocol)
+                    # TODO: Add phi_t (stimulus) to pc
+                    # TODO: Place states and stateLabels in pc.sim[nStates].states ?
+                    PC = PhotoCurrent(I_RhO, t, pulses, phiOn, V, states=soln, stateLabels=RhO.stateLabels, label=Prot.protocol)
                     #PC.alignToTime()
-
-                    PC.states = soln
+                    
+                    PC.ssInf = np.array(RhO.ssInf)
+                    #PC.states = soln
                     Prot.PD.trials[run][phiInd][vInd] = PC
                     Prot.PD.peak_[run][phiInd][vInd] = PC.peak_
                     Prot.PD.ss_[run][phiInd][vInd] = PC.ss_
@@ -113,7 +116,7 @@ class Simulator(PyRhOobject):  # object
                     self.saveExtras(run, phiInd, vInd)
                     
                     if verbose > 1:
-                        print('Run=#{}/{}; phiInd=#{}/{}; vInd=#{}/{}; Irange=[{:.3g},{:.3g}]'.format(run,Prot.nRuns, phiInd,Prot.nPhis, vInd,Prot.nVs, PC.range_[0],PC.range_[1]))
+                        print('Run=#{}/{}; phiInd=#{}/{}; vInd=#{}/{}; Irange=[{:.3g},{:.3g}]'.format(run, Prot.nRuns, phiInd, Prot.nPhis, vInd, Prot.nVs, PC.range_[0], PC.range_[1]))
         
         Prot.finish(PC, RhO)
         
@@ -247,7 +250,7 @@ class simPython(Simulator):
                 soln = odeint(RhO.solveStates, RhO.s_on, t, args=(None,), Dfun=RhO.jacobian)
             
             RhO.storeStates(soln[1:],t[1:]) # Skip first values to prevent duplicating initial conditions and times
-            
+            RhO.ssInf.append(RhO.calcSteadyState(phi))
             
             ### Light off phase
             RhO.s_off = soln[-1,:]
@@ -324,6 +327,7 @@ class simPython(Simulator):
                 soln = odeint(RhO.solveStates, RhO.s_on, t, args=(phi_t,), Dfun=RhO.jacobian)
             
             RhO.storeStates(soln[1:], t[1:]) # Skip first values to prevent duplicating initial conditions and times
+            RhO.ssInf.append(RhO.calcSteadyState(phi_t(end-offD)))
             
             if verbose > 1:
                 print('t_pulse{} = [{}, {}]'.format(p,RhO.t[onInd],RhO.t[offInd]))
@@ -669,6 +673,7 @@ class simNEURON(Simulator):
         for p in range(nPulses):
             pInds = np.searchsorted(t,times[p,:],side="left")
             RhO.pulseInd = np.vstack((RhO.pulseInd,pInds))
+            RhO.ssInf.append(RhO.calcSteadyState(phiOn))
         
         
         ### Get solution variables
@@ -793,6 +798,8 @@ class simNEURON(Simulator):
             
             t = np.r_[t, tPulse[1:]]
             phi_tV = np.r_[phi_tV, phiPulse[1:]]
+            
+            RhO.ssInf.append(RhO.calcSteadyState(phi_t(end-offD)))
                     
         tvec = self.h.Vector(t)
         tvec.label('Time [ms]')
@@ -1079,7 +1086,7 @@ class simBrian(Simulator):
             self.net[self.G_RhO].phi = phi * modelUnits['phi_m']
             #self.net[self.G_RhO].stimulus = True if (phiOn>0) else False #True
             self.net.run(duration=cycles[p,0]*ms, namespace=self.namespace, report=report)
-            
+            RhO.ssInf.append(RhO.calcSteadyState(phi))
             
             ### Light off phase
             # Turn off light and set transition rates
@@ -1181,6 +1188,8 @@ class simBrian(Simulator):
             
             t = np.r_[t, tPulse[1:]]
             phi_tV = np.r_[phi_tV, phiPulse[1:]]
+            
+            RhO.ssInf.append(RhO.calcSteadyState(phi_t(end-offD)))
         
         
         phi_tV[np.ma.where(phi_tV < 0)] = 0 # Safeguard for negative phi values # np.clip(phi_tV, 0, phiMax)?
