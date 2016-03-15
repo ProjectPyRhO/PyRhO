@@ -5,6 +5,7 @@ import copy
 
 import numpy as np
 import scipy.io as sio # Use for Matlab files < v7.3
+#import h5py
 from lmfit import Parameters, minimize, fit_report #*
 import matplotlib.pyplot as plt
 
@@ -23,6 +24,7 @@ from pyrho import config
 
 __all__ = ['PhotoCurrent', 'ProtocolData']
 
+# TODO: Move to utilities.py
 # import h5py
 # f = h5py.File('myfile.hdf5','r')
 
@@ -42,11 +44,11 @@ def loadMatFile(filename):
     ### Extend to load pkl files too
     #try:
     #import scipy.io as sio # Use for Matlab files < v7.3
-    #sio.whosmat(matfile)
-    data = sio.loadmat(matfile)
+    #sio.whosmat(filename)
+    data = sio.loadmat(filename)
     #except: 
     #    import h5py
-    #    fh = h5py.File(matfile,'r')
+    #    fh = h5py.File(filename,'r')
     #    data = fh.get("var")
     #    fh.close()
     return data
@@ -58,8 +60,10 @@ class RhodopsinStates():
     def __init__(self, states, t, varLabels):
         ### Load data
         self.states = np.copy(states)                     # Array of state values
+        self.nStates = len(varLabels)
+        self.nPoints = states.size/self.nStates
         
-        if len(t) == len(I):
+        if len(t) == len(self.nPoints):
             assert(len(t) > 1)
             self.t = np.copy(t)                 # Corresponding array of time points [ms] #np.array copies by default
             tdiff = t[1:] - t[:-1]
@@ -67,7 +71,7 @@ class RhodopsinStates():
             self.sr = 1000/(self.dt)            # Sampling rate [samples/s]
         elif len(t) == 1:                       # Assume time step is passed rather than time array
             assert(t > 0)
-            self.t = np.array(t*range(len(I)))
+            self.t = np.array(t*range(self.nPoints))
             self.dt = t                         # Step size
             self.sr = 1000/t                    # Sampling rate [samples/s]
         else:
@@ -78,6 +82,7 @@ class RhodopsinStates():
 
 class PhotoCurrent():
     """Data storage class for an individual Photocurrent and its associated properties"""
+    # TODO: Make this a setter which calls findPeakInds and findSteadyState when changed
     overlap = True  # Periods are up to *and including* the start of the next e.g. onPhase := t[onInd] <= t <? t[offInd]
     
     def __init__(self, I, t, pulses, phi, V, label=None):
@@ -90,6 +95,7 @@ class PhotoCurrent():
                         
         ### Load data
         self.I = np.copy(I)                     # Array of photocurrent values np.copy(I) == np.array(I, copy=True) == np.array(I)
+        self.nSamples = len(self.I)             # Number of samples        
         
         if len(t) == len(I):
             assert(len(t) > 1)
@@ -104,8 +110,6 @@ class PhotoCurrent():
             self.sr = 1000/t                    # Sampling rate [samples/s]
         else:
             raise ValueError("Dimension mismatch: |t|={}; |I|={}. t must be either an array of the same length as I or a scalar defining the timestep!".format(len(t), len(I)))
-        
-        self.nSamples = len(self.I)             # Number of samples
         
         self.begT = self.t[0]                   # Beginning trial time
         self.endT = self.t[-1]                  # Last trial time point
@@ -219,6 +223,11 @@ class PhotoCurrent():
         self.sss_ = np.array([self.findSteadyState(p) for p in range(self.nPulses)])
         self.ss_ = self.sss_[0]
         
+        if self.peak_ < 0 and self.ss_ < 0:
+            self.type = 'excitatory'
+        else:
+            self.type = 'inhibitory'
+        
         # Align t_0 to the start of the first pulse
         self.pulseAligned = False
         self.alignPoint = 0
@@ -227,7 +236,7 @@ class PhotoCurrent():
         #self.findKinetics()
         
         if verbose > 1:
-            print("Photocurrent data loaded! nPulses={}; Total time={}ms; Range={}nA".format(self.nPulses, self.totT, str(self.Irange)))
+            print("Photocurrent data loaded! nPulses={}; Total time={}ms; Range={}nA".format(self.nPulses, self.totT, str(self.range_)))
     
     
     def __len__(self):
@@ -453,9 +462,65 @@ class PhotoCurrent():
 
         #popt, pcov = curve_fit(biExp, toff, Ioff, p0=(-1, 7.5, -1, 35, -1)) #Needs ball-park guesses (0.3, 125, 0.5)
         #print("Off (Bi-Exp): ", popt)
+        
+        
+        # Taken from protocols.py
+        '''
+        # TODO: Incorporate into Photocurrent class
+        def _plotKinetics(self):
+            ### Segment the photocurrent into ON, INACT and OFF phases (Williams et al., 2013)
+            # I_p := maximum (absolute) current
+            # I_ss := mean(I[400ms:450ms])
+            # ON := 10ms before I_p to I_p ?!
+            # INACT := 10:110ms after I_p
+            # OFF := 500:600ms after I_p
+            
+            if not peakInds: # Prevent indexing problems when no peak was found
+                peakInds = [0]
+            else:
+                ### Analyse kinetics for the first pulse
+                ### Fit curve for tau_on
+                if verbose > 1:
+                    print('Analysing on-phase decay...')
+                onBegInd = np.searchsorted(t,delD,side="left")
+                self.fitPeaks(t[onBegInd:peakInds[0]], I_RhO[onBegInd:peakInds[0]], expDecay, p0on, '$I_{{on}} = {:.3}e^{{-t/{:g}}} {:+.3}$','')
+                ### Plot tau_on vs Irrad (for curves of V)
+                ### Plot tau_on vs V (for curves of Irrad)
+            
+            ### Fit curve for tau_inact
+            if verbose > 1:
+                print('Analysing inactivation-phase decay...')
+            onEndInd = np.searchsorted(t,onD+delD,side="left") # Add one since upper bound is not included in slice
+            popt, _, _ = self.fitPeaks(t[peakInds[0]:onEndInd + 1], I_RhO[peakInds[0]:onEndInd + 1], expDecay, p0inact, '$I_{{inact}} = {:.3}e^{{-t/{:g}}} {:+.3}$','')
+            if verbose > 1:
+                print("$\tau_{{inact}} = {}$; $I_{{ss}} = {}$".format(popt[1],popt[2]))
+            Iss=popt[2]
+            IssVals[run][phiInd][vInd] = Iss
+            ### Plot tau_inact vs Irrad (for curves of V)
+            ### Plot tau_inact vs V (for curves of Irrad)
+            
+            ### Fit curve for tau_off (bi-exponential)
+            if verbose > 1:
+                print('Analysing off-phase decay...')
+    #                 endInd = -1 #np.searchsorted(t,offD+onD+delD,side="right") #totT
+            popt, _, _ = self.fitPeaks(t[onEndInd:], I_RhO[onEndInd:], biExpDecay, p0off, '$I_{{off}} = {:.3}e^{{-t/{:g}}} {:+.3}e^{{-t/{:g}}} {:+.3}$','')
+            ### Plot tau_off vs Irrad (for curves of V)
+            ### Plot tau_off vs V (for curves of Irrad)
+            
+            # Draw boundary between ON and INACT phases
+            for p in peakInds:
+                plt.axvline(x=t[p],linestyle=':',color='m')
+                plt.axhline(y=I_RhO[peakInds[0]],linestyle=':',color='r')
+                plt.axhline(y=Iss,linestyle=':',color='b')
+            
+            plt.legend(loc='best')
+            return
+        '''
+
+
 
         return
-
+    
     
     def alignToPulse(self, pulse=0, alignPoint=0):
         """Set time array so that the first pulse occurs at t=0 (with negative delay period)"""
@@ -561,8 +626,19 @@ class PhotoCurrent():
         elif method == 1: # Theoretical: Fit curve from peak to end of on phase
             
             postPeak = slice(self.peakInds_[pulse], self.pulseInds[pulse, 1]+int(self.overlap)) #1 # t_peak : t_off+1
-            popt = fitPeaks(self.t[postPeak], self.I[postPeak], expDecay, p0inact, '$I_{{inact}} = {:.3}e^{{-t/{:g}}} {:+.3}$','')
+            #popt = fitPeaks(self.t[postPeak], self.I[postPeak], expDecay, p0inact, '$I_{{inact}} = {:.3}e^{{-t/{:g}}} {:+.3}$','')
+            #Iss = popt[2]
+            
+            from pyrho.parameters import p0inact
+            from pyrho.utilities import expDecay
+            t = self.t[postPeak]
+            I = self.I[postPeak]
+            shift = t[0]
+            popt, pcov = curve_fit(expDecay, t-shift, I, p0=p0inact)
             Iss = popt[2]
+            if config.verbose > 1:
+                peakEq = '$I_{{inact}} = {:.3}e^{{-t/{:g}}} {:+.3}$'.format(*[round_sig(p,3) for p in popt])
+                print(peakEq)
         
         return Iss
     
@@ -744,11 +820,11 @@ class PhotoCurrent():
         """
 
         if not self.isFiltered:
-            self.Iorig = copy(self.I)
+            self.Iorig = np.copy(self.I)
             self.isFiltered = True
             I = self.Iorig
         else:
-            self.Iprev = copy(self.I)
+            self.Iprev = np.copy(self.I)
             I = self.Iprev
         
         # Moving average
