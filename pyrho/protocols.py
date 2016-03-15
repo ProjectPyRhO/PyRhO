@@ -649,7 +649,7 @@ class protChirp(Protocol):
         
         self.sr = max(10000, int(round(10 * max(self.f0, self.fT)))) # Nyquist frequency - sampling rate (10*f) >= 2*f
         self.nRuns = 1 #len(self.ws)
-        self.cycles = np.column_stack((self.onDs,self.offDs))
+        #self.cycles = np.column_stack((self.onDs,self.offDs))
         #ws = 2 * np.pi * np.logspace(-4,10,num=7) # Frequencies [rads/s]
         
         if (1000)/self.f0 > min(self.onDs): #1/10**self.fs[0] > self.totT:
