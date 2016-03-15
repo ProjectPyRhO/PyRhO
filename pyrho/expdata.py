@@ -812,7 +812,7 @@ class PhotoCurrent():
         return # ax
     
     
-    def plotStates(self, plotPieCharts=True, pulse=None, name=None, verbose=config.verbose):
+    def plotStates(self, plotPies=True, pulse=None, name=None, verbose=config.verbose):
         
         phi = self.phi # Use the value at t_off if the stimulus if a function of time
         t = self.t
@@ -822,8 +822,6 @@ class PhotoCurrent():
         labels = self.stateLabels
 
         plotSum = False
-        #plotPieCharts = True
-        
 
         
         if pulse is None:
@@ -834,7 +832,7 @@ class PhotoCurrent():
             else:
                 piePulses = [pulse]
         
-        if plotPieCharts:
+        if plotPies:
             plotInit = bool(len(piePulses) > 1)
             plotPeaks = bool(peakInds is not None)
             plotSS = True
@@ -895,7 +893,7 @@ class PhotoCurrent():
         plt.ylabel('$\mathrm{State\ occupancy}$')
         
         
-        if plotPieCharts:
+        if plotPies:
             if config.fancyPlots:
                 import seaborn as sns
                 cp = sns.color_palette()
