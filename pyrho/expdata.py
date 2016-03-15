@@ -54,7 +54,7 @@ def loadMatFile(filename):
     #    fh.close()
     return data
 
-
+'''
 class RhodopsinStates():
     """Data storage class for models states and their associated properties"""
     
@@ -79,7 +79,7 @@ class RhodopsinStates():
             raise ValueError("Dimension mismatch: t must be either an array of the same length as I or a scalar defining the timestep!")
         
         #...
-
+'''
 
 class PhotoCurrent():
     """Data storage class for an individual Photocurrent and its associated properties"""
@@ -124,6 +124,8 @@ class PhotoCurrent():
             assert(len(self.stateLabels) == self.nStates)
             self.synthetic = True
             assert(self.states.shape[0] == self.nSamples)
+        else:
+            self.synthetic = False
         
         '''
         if Vm is not None:
@@ -729,7 +731,7 @@ class PhotoCurrent():
         return (self.I[deactSlice], self.t[deactSlice])
     
     
-    def plot(self, ax=None, light='shade', dark=None, addFeatures=True, colour=None, linestyle=None): #colour, linestyle
+    def plot(self, ax=None, light='shade', dark=None, addFeatures=True, colour=None, linestyle=None):
         """Plot the photocurrent
             Optional arguments:
             ax          :=  Specify axes on which to plot
@@ -779,23 +781,28 @@ class PhotoCurrent():
                 # Add pointer to steady-state currents
                 if self.sss_[p] is not None:
                     #plt.text(1.1*self.pulses[p,1], self.ss_, '$I_{{ss}} = {:.3g}\mathrm{{nA}}$'.format(self.ss_), ha='left', va='center', fontsize=eqSize)
+                    #if toffset+self.pulses[p,1] > self.endT:
+                    #xPos = 0
                     ax.annotate('$I_{{ss}} = {:.3g}\mathrm{{nA}}$'.format(self.sss_[p]), xy=(self.pulses[p,1], self.sss_[p]), xytext=(toffset+self.pulses[p,1], self.sss_[p]), arrowprops=dict(arrowstyle="wedge,tail_width=0.6", shrinkA=5, shrinkB=5), horizontalalignment='left', verticalalignment='center', fontsize=config.eqSize)
                 
                 # Add labels for on and off phases
                 #ymin, ymax = plt.ylim()
                 #plt.ylim(round_sig(ymin,3), round_sig(ymax,3))
                 #pos = 0.95 * abs(ymax-ymin)
-                arrowy = 0.085 #0.075
-                texty = 0.05
+                #arrowy = 0.085 #0.075
+                #texty = 0.05
+                
+                texty = -round(0.1 * self.peak_)
+                arrowy = 1.5 * texty
                 #awidth=10
-                ax.annotate('', xy=(self.pulses[p,0], arrowy), xytext=(self.pulses[p,1], arrowy), arrowprops=dict(arrowstyle='<->',color='blue'))
-                plt.text(self.pulses[p,0]+self.onDs[p]/2, texty, '$\Delta on_{}={:.3g}\mathrm{{ms}}$'.format(p, self.onDs[p]), ha='center', va='bottom', fontsize=config.eqSize)
+                ax.annotate('', xy=(self.pulses[p,0], arrowy), xytext=(self.pulses[p,1], arrowy), arrowprops=dict(arrowstyle='<->',color='blue',shrinkA=0,shrinkB=0))
+                plt.text(self.pulses[p,0]+self.onDs[p]/2, texty, '$\Delta t_{{on_{}}}={:.3g}\mathrm{{ms}}$'.format(p, self.onDs[p]), ha='center', va='bottom', fontsize=config.eqSize)
                 if p < self.nPulses-1:
                     end = self.pulses[p+1,0]
                 else:
                     end = self.endT
-                ax.annotate('', xy=(self.pulses[p,1], arrowy), xytext=(end, arrowy), arrowprops=dict(arrowstyle='<->',color='green'))
-                plt.text(self.pulses[p,1]+self.offDs[p]/2, texty, '$\Delta off_{}={:.3g}\mathrm{{ms}}$'.format(p, self.offDs[p]), ha='center', va='bottom', fontsize=config.eqSize)
+                ax.annotate('', xy=(self.pulses[p,1], arrowy), xytext=(end, arrowy), arrowprops=dict(arrowstyle='<->',color='green',shrinkA=0,shrinkB=0))
+                plt.text(self.pulses[p,1]+self.offDs[p]/2, texty, '$\Delta t_{{off_{}}}={:.3g}\mathrm{{ms}}$'.format(p, self.offDs[p]), ha='center', va='bottom', fontsize=config.eqSize)
         
         
         return # ax
@@ -835,15 +842,15 @@ class PhotoCurrent():
         
         plotSum = False
         
-        plotInit = False
+        plotInit = bool(len(piePulses) > 1)
         plotPeaks = bool(peakInds is not None)
         plotSS = True
-        plotSSinf = hasattr(self, 'ssInf')
-        
+        plotSSinf = hasattr(self, 'ssInf') # not plotInit #
+        count = sum([plotInit, plotPeaks, plotSS, plotSSinf])
         
         figWidth, figHeight = mpl.rcParams['figure.figsize']
         fig = plt.figure(figsize=(figWidth, (1+len(piePulses)/2)*figHeight)) # 1.5*
-        gs = plt.GridSpec(2+len(piePulses), 3)
+        gs = plt.GridSpec(2+len(piePulses), count)
         
         begT, endT = t[0], t[-1] # self.begT, self.endT
         
@@ -903,9 +910,10 @@ class PhotoCurrent():
                 pieInd = 0
                 if plotInit:
                     axS0 = fig.add_subplot(gs[p+2, pieInd])
-                    initialStates = self.s0 * 100
+                    #initialStates = states[0,:] * 100 #self.s0 * 100
+                    initialStates = states[self.pulseInds[p,0],:] * 100
                     if verbose > 1:
-                        pct = {l:s for l,s in zip(labels, sizes)}
+                        pct = {l:s for l,s in zip(labels, initialStates)}
                         print('Initial state occupancies (%):', sorted(pct.items(), key=lambda x: labels.index(x[0])))
                     patches, texts, autotexts = plt.pie(initialStates, labels=labels, autopct='%1.1f%%', startangle=90, shadow=False, colors=cp)
                     for lab in range(len(labels)):
