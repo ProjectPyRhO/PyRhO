@@ -265,6 +265,21 @@ class PhotoCurrent():
         else:
             return self.I
     
+    #TODO: Finish this!
+    def toDF():
+        """Export to pandas dictionary"""
+        df = DataFrame({
+                        't'    : self.t
+                        'I'    : self.I
+                        })
+        if self.synthetic:
+            #for si, st in enumerate(self.stateLabels):
+            #    df[st] = self.states[si, :]
+            df[self.stateLabels] = self.states #.T?
+        if self.isFiltered:
+            df['Iorig'] = self.Iorig
+        return df
+    
     
     #TODO: Finish this!
     def fitKinetics(self, p=0, trim=0.1, method=defMethod):
@@ -1017,7 +1032,7 @@ class PhotoCurrent():
         """
 
         if not self.isFiltered:
-            self.Iorig = np.copy(self.I)
+            self.Iorig = np.copy(self.I) # TODO: Put in __init__
             self.isFiltered = True
             I = self.Iorig
         else:
