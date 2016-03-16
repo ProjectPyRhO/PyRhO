@@ -56,3 +56,6 @@ docs/_build/
 
 # Spyder configuration
 .spyderproject
+
+# Pylint configuration
+pylintrc
