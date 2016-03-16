@@ -1,5 +1,6 @@
 """General configuration variables and functions"""
 
+from __future__ import print_function, division
 import warnings
 import os
 #import glob
@@ -9,6 +10,7 @@ import subprocess
 import sys
 import time
 import importlib
+import pkgutil
 
 import matplotlib as mpl
 import numpy as np
@@ -37,13 +39,16 @@ else:
     wallTime = time.perf_counter
 
 
-if pyVer <= (3, 3):
+if pyVer[0] == 3:
+    if pyVer <= (3, 3):
+        def check_package(pkg):
+            return importlib.find_loader(pkg) is not None
+    elif pyVer >= (3, 4):
+        def check_package(pkg):
+            return importlib.util.find_spec(pkg) is not None
+elif pyVer[0] == 2:
     def check_package(pkg):
-        return importlib.find_loader(pkg) is not None
-elif pyVer >= (3, 4):
-    def check_package(pkg):
-        return importlib.util.find_spec(pkg) is not None
-
+        return pkgutil.find_loader(pkg) is not None
 
 DASH_LINE = '-' * 80
 DOUB_DASH_LINE = '=' * 80

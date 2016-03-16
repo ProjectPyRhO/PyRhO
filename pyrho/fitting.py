@@ -1,6 +1,6 @@
 """Rhodopsin model fitting and optimising routines"""
 
-from __future__ import print_function
+from __future__ import print_function, division
 import os
 import pickle
 import warnings
@@ -15,7 +15,8 @@ from scipy.optimize import curve_fit
 from scipy.integrate import odeint
 
 from pyrho.parameters import *
-from pyrho.expdata import *
+#from pyrho.expdata import *
+from pyrho.expdata import ProtocolData, PhotoCurrent
 from pyrho.utilities import * # plotLight, round_sig, findPeaks, findPlateauCurrent
 from pyrho.utilities import plotLight, round_sig, printParams, compareParams, wallTime
 from pyrho.models import * # for fitPeaks

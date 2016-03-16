@@ -4,7 +4,7 @@
 #from IPython.html.widgets import interact
 #from IPython.html import widgets # IPython < 4
 
-from __future__ import print_function
+from __future__ import print_function, division
 #import warnings
 #import time
 from collections import OrderedDict
@@ -13,17 +13,19 @@ import os
 import ast
 import copy
 
+import numpy as np
 import ipywidgets as widgets
 #from traitlets import link
 #from traitlets import Unicode
 from IPython.display import display
 from IPython.display import clear_output
 #from IPython import get_ipython
+from lmfit import Parameters
 
 #from IPython.core.pylabtools import print_figure
 #import base64
 
-from pyrho.parameters import modelParams, modelList, protList, protParams, simList, simParams
+from pyrho.parameters import modelParams, modelList, modelLabels, protList, protParams, simList, simParams, unitLabels, stateLabs, simUnitLabels, protParamLabels, protUnitLabels, protParamNotes, PyRhOparameters
 from pyrho.models import *
 from pyrho.simulators import *
 from pyrho.protocols import *

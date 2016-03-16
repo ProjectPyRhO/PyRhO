@@ -7,16 +7,17 @@ import copy
 import numpy as np
 import scipy.io as sio # Use for Matlab files < v7.3
 #import h5py
-from lmfit import Parameters, minimize, fit_report #*
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-from pyrho.fitting import methods, defMethod
 from pyrho.utilities import * # For times2cycles and cycles2times, expDecay, findPlateauCurrent
 #from pyrho.parameters import tFromOff
 from pyrho.config import * #verbose, colours, styles
 from pyrho.config import xLabelPos
 from pyrho import config
+
+__all__ = ['PhotoCurrent', 'ProtocolData']
+
 
 # See also python electrophysiology modules
 # Neo: http://neuralensemble.org/neo/
@@ -24,7 +25,6 @@ from pyrho import config
 # Stimfit: http://journal.frontiersin.org/Journal/10.3389/fninf.2014.00016/full
 # fit_neuron: http://pythonhosted.org/fit_neuron/tutorial_easy.html
 
-__all__ = ['PhotoCurrent', 'ProtocolData']
 
 # TODO: Move to utilities.py
 # import h5py
@@ -82,7 +82,7 @@ class RhodopsinStates():
         #...
 '''
 
-class PhotoCurrent():
+class PhotoCurrent(object):
     """Data storage class for an individual Photocurrent and its associated properties"""
     # TODO: Make this a setter which calls findPeakInds and findSteadyState when changed
     overlap = True  # Periods are up to *and including* the start of the next e.g. onPhase := t[onInd] <= t <? t[offInd]
@@ -267,7 +267,7 @@ class PhotoCurrent():
             return self.I
     
     #TODO: Finish this!
-    def toDF():
+    def toDF(self):
         """Export to pandas dictionary"""
         df = DataFrame({
                         't'    : self.t,
@@ -282,8 +282,8 @@ class PhotoCurrent():
         return df
     
     
-    #TODO: Finish this!
-    def fitKinetics(self, p=0, trim=0.1, method=defMethod):
+    #TODO: Finish this - avoid circular imports or move to fitting.py!
+    def fitKinetics(self, p=0, trim=0.1, method='powell'): # defMethod
         """
         Fit exponentials to a photocurrent to find time constants of kinetics
         p       : specify which pulse to use (default=0)
@@ -314,6 +314,9 @@ class PhotoCurrent():
         plt.figure()
         self.plot()
         
+        # These are used only in fitKinetics
+        #from lmfit import Parameters, minimize
+        #from pyrho.fitting import methods, defMethod
         from pyrho.fitting import reportFit
         
         ### On phase ###
@@ -340,12 +343,12 @@ class PhotoCurrent():
         pOn.add('tau_act', value=5, min=1e-9, max=1e3)
         pOn.add('tau_deact', value=50, min=1e-9, max=1e3)
 
-# Dictionary unpacking also works if preferred
-#        from pyrho.utilities import biExpSum
-#        def residBiExpSum(p, I, t):
-#            #v = p.valuesdict()
-#            return I - biExpSum(t, **p.valuesdict())#v['a_act'], v['tau_act'], v['a_deact'], v['tau_deact'], v['a0'])
-#        minRes = minimize(residBiExpSum, pOn, args=(Ion,ton), method=method)
+        # Dictionary unpacking also works if preferred
+        # from pyrho.utilities import biExpSum
+        # def residBiExpSum(p, I, t):
+             #v = p.valuesdict()
+            # return I - biExpSum(t, **p.valuesdict())#v['a_act'], v['tau_act'], v['a_deact'], v['tau_deact'], v['a0'])
+        # minRes = minimize(residBiExpSum, pOn, args=(Ion,ton), method=method)
 
         minRes = minimize(residOn, pOn, args=(Ion,ton), method=method)
 
@@ -1046,10 +1049,45 @@ class PhotoCurrent():
         
 
 
-class ProtocolData():
+class ProtocolData(object):
     """Container for PhotoCurrent data from parameter variations in the same protocol"""
     
     # TODO: Replace lists with dictionaries or pandas data structures    
+    '''
+    def __new__(cls, protocol, nRuns, phis, Vs): #*args, **kwargs): #
+        # self.protocol = protocol
+        # self.nRuns = nRuns
+        # self.phis = phis
+        # self.nPhis = len(phis)
+        # self.Vs = Vs
+        # self.nVs = len(Vs)
+        # self.trials = [[[None for v in range(len(Vs))] for p in range(len(phis))] for r in range(nRuns)] # Array of PhotoCurrent objects
+        # self.metaData = {'nRuns':self.nRuns, 'nPhis':self.nPhis, 'nVs':self.nVs}
+        obj = cls.__new__(cls, protocol, nRuns, phis, Vs)
+        obj.__dict__.update(protocol, nRuns, phis, Vs)
+        return obj #.__init__(protocol, nRuns, phis, Vs) #*args, **kwargs) #
+    '''
+    '''
+    def __copy__():
+        return
+    def __deepcopy__():
+        return
+    def __getstate__():
+        """Return an object's state before pickling"""
+        return
+    def __reduce__():
+        """Serialise (pickle) an object"""
+        return
+    def __reduce_ex__(protocol_version):
+        """Serialise an object (new protocol)"""
+        return
+    def __getnewargs__():
+        """Control how an object is created during unpickling"""
+        return
+    def __setstate__():
+        """Restore an object's state after unpickling"""
+        return
+    '''
     
     def __init__(self, protocol, nRuns, phis, Vs):
         

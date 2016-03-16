@@ -1,5 +1,7 @@
 """General utility functions used throughout PyRhO"""
 
+from __future__ import print_function, division
+
 import os
 import copy
 import warnings

@@ -1,5 +1,6 @@
 """Rhodopsin model class and functions"""
 
+from __future__ import print_function, division
 import warnings
 import itertools
 from collections import OrderedDict
