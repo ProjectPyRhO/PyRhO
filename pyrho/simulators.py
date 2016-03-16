@@ -9,6 +9,8 @@ from collections import OrderedDict
 
 import numpy as np
 from scipy.integrate import odeint
+import matplotlib as mpl
+from matplotlib import pyplot as plt
 
 from pyrho.parameters import *
 from pyrho.utilities import * # cycles2times, plotLight
