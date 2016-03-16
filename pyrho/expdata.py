@@ -269,7 +269,7 @@ class PhotoCurrent():
     def toDF():
         """Export to pandas dictionary"""
         df = DataFrame({
-                        't'    : self.t
+                        't'    : self.t,
                         'I'    : self.I
                         })
         if self.synthetic:
