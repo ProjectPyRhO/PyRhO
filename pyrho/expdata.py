@@ -1,5 +1,6 @@
 """Classes for storing and processing experimental photocurrent data"""
 
+from __future__ import print_function, division
 import warnings
 import copy
 
@@ -228,9 +229,9 @@ class PhotoCurrent():
         self.ss_ = self.sss_[0]
         
         if self.peak_ < 0 and self.ss_ < 0:
-            self.type = 'excitatory'
+            self.type = 'excitatory' # Depolarising
         else:
-            self.type = 'inhibitory'
+            self.type = 'inhibitory' # Hyperpolarising
         
         # Align t_0 to the start of the first pulse
         self.pulseAligned = False
@@ -624,8 +625,8 @@ class PhotoCurrent():
         dI = Ion[-cutInd+1:] - Ion[-cutInd:-1]
         if abs(np.mean(dI)) > 0.01 * self.span_:
             warnings.warn('Steady-state Convergence Warning: The average step size is larger than 1% of the current span!')
-            return None
-            #method = 0
+            #return None
+            method = 0
         
         if method == 0: # Empirical: Calculate Steady-state as the mean of the last 5% of the On phase
 
