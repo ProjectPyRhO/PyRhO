@@ -11,37 +11,48 @@ from string import Template
 import numpy as np
 import matplotlib.pyplot as plt
 
-from pyrho.config import * #verbose, dDir
-from pyrho.utilities import wallTime
+#from pyrho.config import * #verbose, dDir
+from pyrho import config
+#from pyrho.utilities import wallTime
 
-__all__ = ['Timer', 'saveData', 'loadData', 'getExt', 'getIndex', 'calcV1', 
-           'lam2rgb', 'irrad2flux', 'flux2irrad', 'times2cycles', 'cycles2times', 
+__all__ = ['Timer', 'saveData', 'loadData', 'getExt', 'getIndex', 'calcV1',
+           'lam2rgb', 'irrad2flux', 'flux2irrad', 'times2cycles', 'cycles2times',
            'plotLight', 'setCrossAxes', 'round_sig']
 # 'printParams', 'compareParams', 'texIt', 'expDecay', 'biExpDecay', 'biExpSum', 'calcgbar'
 
 
 class Timer:
     """
-    Class for timing blocks of code. 
+    Class for timing blocks of code.
     http://preshing.com/20110924/timing-your-code-using-pythons-with-statement/
     Usage:
     with Timer() as t:
        run code...
     #print('Execution took ', t)
     """
-    interval = 0
-    
+    #interval = 0
+    def __init__(self):
+        self.start = 0
+        self.end = 0
+        self.interval = 0
+
     def __enter__(self):
-        self.start = wallTime() #time.clock()
+        self.start = config.wallTime() #time.clock()
         return self
 
     def __exit__(self, *args):
-        self.end = wallTime() #time.clock()
+        self.end = config.wallTime() #time.clock()
         self.interval = self.end - self.start
         print('{:.3g}s'.format(self.interval))
-    
+
     def __str__(self):
         return '{:.3g}s'.format(self.interval)
+
+    def reset(self):
+        """Reset timer to 0"""
+        self.start = 0
+        self.end = 0
+        self.interval = 0
 
 
 # The following two functions are only used in fitModel
@@ -60,8 +71,8 @@ def printParams(params):
             report += '{:>7} = {:8}\n'.format(k, str(v))
     report += '========================\n'
     print(report)
-    
-    
+
+
 def compareParams(origParams, newParams):
     """
     Print two sets of LMFIT Parameters with the percentage (or absolute) difference
@@ -100,11 +111,11 @@ def saveData(data, pkl, path=None):
     # if pkl is None:
         # pkl = data.__name__
     if path is None:
-        path = dDir
+        path = config.dDir
     pklFile = os.path.join(path, pkl+".pkl")
     with open(pklFile, 'wb') as fh:
         pickle.dump(data, fh)
-    if verbose > 0: #config.verbose?!
+    if config.verbose > 0: #config.verbose?!
         print("Data saved to disk: {}".format(pklFile))
     return pklFile
 
@@ -125,7 +136,7 @@ def loadData(pkl, path=None):
         if os.path.isfile(pklFile):
             pass
         else:
-            pklFile = os.path.join(dDir, pklFile)
+            pklFile = os.path.join(config.dDir, pklFile)
     else:
         pklFile = os.path.join(path, pklFile)
     with open(pklFile, 'rb') as fh:
@@ -145,16 +156,16 @@ def getExt(vector, ext='max'):
 def getIndex(valList, val):
     """Return the index of val in valList.
     This handles lists containing None"""
-    
+
     # valList types: list, array, number
     #   +/- None
     # val types: list, array, number
     #   +/- None
-    
+
     # Vs=[-100,-70,-40,-10]
     # V = -70
     # np.where(np.isclose(Vs,V))[0] # Array of indices
-    
+
     # locList = copy.copy(valList)
     # if isinstance(valList, (list, tuple)):
         # try:
@@ -174,7 +185,7 @@ def getIndex(valList, val):
         # locList = list([copy.copy(valList)])
     # else:
         # raise TypeError("Value list must be a list, array or number")
-    
+
     locList = list(copy.copy(valList))
     if val is None:
         try:
@@ -202,51 +213,47 @@ def calcV1(E, v0):
     return (70+E)/(np.exp((70+E)/v0)-1)
     #return (-70-E)/(1-np.exp(-(-70-E)/v0))
 
-'''
-    == A few notes about colour ==
-
-    Color   Wavelength(nm) Frequency(THz)
-    Red     620-750        484-400
-    Orange  590-620        508-484
-    Yellow  570-590        526-508
-    Green   495-570        606-526
-    Blue    450-495        668-606
-    Violet  380-450        789-668
-
-    f is frequency (cycles per second)
-    l (lambda) is wavelength (meters per cycle)
-    e is energy (Joules)
-    h (Plank's constant) = 6.6260695729 x 10^-34 Joule*seconds
-                         = 6.6260695729 x 10^-34 m^2*kg/seconds
-    c = 299792458 meters per second
-    f = c/l
-    l = c/f
-    e = h*f
-    e = c*h/l
-
-    List of peak frequency responses for each type of 
-    photoreceptor cell in the human eye:
-        S cone: 437 nm
-        M cone: 533 nm
-        L cone: 564 nm
-        rod:    550 nm in bright daylight, 498 nm when dark adapted. 
-                Rods adapt to low light conditions by becoming more sensitive.
-                Peak frequency response shifts to 498 nm.
-
-'''
-
 
 def lam2rgb(wav, gamma=0.8, output='norm'):
-    """This converts a given wavelength of light to an 
-    approximate RGB colour value with edge attenuation. 
-    The wavelength must be given in nanometres in the 
+    """This converts a given wavelength of light to an
+    approximate RGB colour value with edge attenuation.
+    The wavelength must be given in nanometres in the
     range from 380 nm - 750 nm (789 THz - 400 THz).
-    
+
     Adapted from: http://www.noah.org/wiki/Wavelength_to_RGB_in_Python
     Based on code by Dan Bruton
     http://www.physics.sfasu.edu/astro/color/spectra.html
     """
-    
+    # == A few notes about colour ==
+
+    # Color   Wavelength(nm) Frequency(THz)
+    # Red     620-750        484-400
+    # Orange  590-620        508-484
+    # Yellow  570-590        526-508
+    # Green   495-570        606-526
+    # Blue    450-495        668-606
+    # Violet  380-450        789-668
+
+    # f is frequency (cycles per second)
+    # l (lambda) is wavelength (meters per cycle)
+    # e is energy (Joules)
+    # h (Plank's constant) = 6.6260695729 x 10^-34 Joule*seconds
+    #                      = 6.6260695729 x 10^-34 m^2*kg/seconds
+    # c = 299792458 meters per second
+    # f = c/l
+    # l = c/f
+    # e = h*f
+    # e = c*h/l
+
+    # List of peak frequency responses for each type of
+    # photoreceptor cell in the human eye:
+    #     S cone: 437 nm
+    #     M cone: 533 nm
+    #     L cone: 564 nm
+    #     rod:    550 nm in bright daylight, 498 nm when dark adapted.
+    #             Rods adapt to low light conditions by becoming more sensitive.
+    #             Peak frequency response shifts to 498 nm.
+
     wav = float(wav)
     if wav >= 380 and wav < 440:
         attenuation = 0.3 + 0.7 * (wav - 380) / (440 - 380)
@@ -278,7 +285,7 @@ def lam2rgb(wav, gamma=0.8, output='norm'):
         R = 0.0
         G = 0.0
         B = 0.0
-    
+
     if output == 'norm':
         return (R, G, B)
     elif output == 'hex':
@@ -295,7 +302,10 @@ def lam2rgb(wav, gamma=0.8, output='norm'):
 ### Model functions ###
 
 def irrad2flux(E, lam=470):   # E2phi
-    """Converts irradiance [mW * mm^-2] and wavelength (default: 470) [nm] to flux [photons * mm^-2 * s^-1]"""
+    """
+    Converts irradiance [mW * mm^-2] and wavelength (default: 470) [nm]
+    to flux [photons * mm^-2 * s^-1]
+    """
     ### Physical constants
     h = 6.6260695729e-34    # Planck's constant (Js)
     c = 2.99792458e8        # Speed of light    (m*s^-1)
@@ -306,12 +316,15 @@ def irrad2flux(E, lam=470):   # E2phi
 
 
 def flux2irrad(phi, lam=470):
-    """Converts flux [photons * mm^-2 * s^-1] and wavelength (default: 470) [nm] to irradiance [mW * mm^-2]"""
+    """
+    Converts flux [photons * mm^-2 * s^-1] and wavelength (default: 470) [nm]
+    to irradiance [mW * mm^-2]
+    """
     ### Physical constants
     h = 6.6260695729e-34    # Planck's constant (Js)
     c = 2.99792458e8        # Speed of light    (m*s^-1)
     #NA = 6.0221413e23      # Avogadro's Number (mol^-1)
-    
+
     Ep = 1e12 * h * c / lam # Energy per photon [mJ] (using lambda in [nm])
     return phi * Ep         # Irradiance (E) scaled to [mW * mm^-2]
 
@@ -335,7 +348,7 @@ def times2cycles(times, totT):       # TODO revise to handle negative delay time
     Output   cycles:= [onD, offD], delD
     """
     times = np.array(times, copy=True)
-    nPulses = times.shape[0]
+    #nPulses = times.shape[0]
     assert(times.shape[1] <= 2)
     delD = times[0, 0] # This assumes that the times have not been shifted
     onDs = [row[1]-row[0] for row in times] # pulses[:,1] - pulses[:,0]   # Pulse Durations
@@ -346,12 +359,12 @@ def times2cycles(times, totT):       # TODO revise to handle negative delay time
 
 def cycles2times(cycles, delD):
     """
-    Convert pulse cycles (durations) to times (absolute events) 
+    Convert pulse cycles (durations) to times (absolute events)
     Input    cycles:= [onD, offD], delD
     Output   times:= [t_on, t_off], totT
     """
-    
-    ### Generalise to delDs c.f. recovery
+
+    # TODO: Generalise to delDs c.f. recovery
     cycles = np.array(cycles)
     nPulses = cycles.shape[0]
     assert(cycles.shape[1] <= 2)
@@ -367,30 +380,31 @@ def cycles2times(cycles, delD):
 def plotLight(times, ax=None, light='shade', dark=None, lam=470, alpha=0.2):
     """Plot light pulse(s)
     times   = [[t_on, t_off],...]
-    ax      = Axes to plot on (default: gca()
-    light   = Representation type: {'shade', 'borders', 'greyscale', 'hatch', 'spectral'}. Default: 'shade'
+    ax      = Axes to plot on [default: gca()]
+    light   = Representation type: {'shade', 'borders', 'greyscale', 'hatch', 'spectral'}
+              [Default: 'shade']
     dark    = Lightness of the background [0 (black), 1 (white)]
     lam     = Wavelength [nm] (default: 470)
     alpha   = Transparency (default: 0.2)"""
-    
-    ### Change plt.axvspan to ax.axvspan etc. 
+
+    ### Change plt.axvspan to ax.axvspan etc.
     if ax is None:
         ax = plt.gca()
     else:
         plt.sca(ax)
     nPulses = times.shape[0]
-    
+
     if dark is None:
         pass
     else:
         ax.set_axis_bgcolor(str(dark))
         for p in range(nPulses):
             ax.axvspan(times[p][0], times[p][1], facecolor='w')
-        
+
     if light == 'shade':
         for p in range(nPulses):
             ax.axvspan(times[p][0], times[p][1], facecolor='y', alpha=alpha)
-    elif light == 'borders': 
+    elif light == 'borders':
         for p in range(0, nPulses):
             ax.axvline(x=times[p][0], linestyle='--', color='k')
             ax.axvline(x=times[p][1], linestyle='--', color='k')
@@ -406,10 +420,10 @@ def plotLight(times, ax=None, light='shade', dark=None, lam=470, alpha=0.2):
         # Plot the colour corresponding to the wavelength
         if 380 <= lam <= 750:
             rgb = lam2rgb(lam)
-            for p in range(0, nPulses): 
+            for p in range(0, nPulses):
                 ax.axvspan(times[p][0], times[p][1], facecolor=rgb, alpha=alpha)
         else: # Light is not in the visible spectrum - plot borders instead
-            for p in range(0, nPulses): 
+            for p in range(0, nPulses):
                 ax.axvline(x=times[p][0], linestyle='--', color='k')
                 ax.axvline(x=times[p][1], linestyle='--', color='k')
                 ax.axvspan(times[p][0], times[p][1], hatch='/') #'*'
