@@ -12,11 +12,11 @@ from scipy.integrate import odeint
 
 from pyrho.parameters import *
 from pyrho.utilities import * # cycles2times, plotLight
-from pyrho.utilities import wallTime
+#from pyrho.utilities import wallTime
 from pyrho.expdata import * 
 from pyrho.models import *
 from pyrho.config import * #verbose
-from pyrho.config import xLabelPos
+from pyrho.config import xLabelPos, wallTime
 from pyrho import config
 
 __all__ = ['simulators']
