@@ -315,7 +315,7 @@ class PhotoCurrent(object):
         self.plot()
         
         # These are used only in fitKinetics
-        #from lmfit import Parameters, minimize
+        from lmfit import Parameters, minimize
         #from pyrho.fitting import methods, defMethod
         from pyrho.fitting import reportFit
         
@@ -815,6 +815,7 @@ class PhotoCurrent(object):
                 #arrowy = 0.085 #0.075
                 #texty = 0.05
                 
+                # TODO: Fix positioning - data or axes proportions?
                 texty = -round(0.1 * self.peak_)
                 arrowy = 1.5 * texty
                 #awidth=10
