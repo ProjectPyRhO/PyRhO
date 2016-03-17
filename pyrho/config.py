@@ -15,13 +15,13 @@ import pkgutil
 
 import matplotlib as mpl
 import numpy as np
-#import matplotlib as mpl   
+#import matplotlib as mpl
 #import matplotlib.pyplot as plt
 #import numpy as np
 #import scipy as sp
 #import lmfit
 
-__all__ = ['setupGUI', 'simAvailable', 'setupNEURON', 'setupBrian', 'check_package', 
+__all__ = ['setupGUI', 'simAvailable', 'setupNEURON', 'setupBrian', 'check_package',
            'setFigOutput', 'setFigStyle', 'resetPlot', 'wallTime', 'setOutput']
 # TODO: Place in dict i.e. CONFIG_PARAMS['dDir']
 #, 'colours', 'styles', 'verbose', 'dDir', 'fDir', 'DASH_LINE', 'DOUB_DASH_LINE'
@@ -51,8 +51,8 @@ elif pyVer[0] == 2:
     def check_package(pkg):
         return pkgutil.find_loader(pkg) is not None
 
-DASH_LINE = '-' * 80
-DOUB_DASH_LINE = '=' * 80
+_DASH_LINE = '-' * 80
+_DOUB_DASH_LINE = '=' * 80
 
 
 ##### Output level settings #####
@@ -85,7 +85,7 @@ def createDir(path):
         os.makedirs(path)
     except OSError as exception:
         if exception.errno != errno.EEXIST:
-            raise 
+            raise
 
 
 ### Set data and figure directories to defaults
@@ -102,13 +102,13 @@ def setupGUI(path=None):
     """Setup the Jupyter notebook GUI"""
     if path is None: # Copy image folders to home directory
         path = os.path.join(os.getcwd(), GUIdir)
-    
+
     createDir(path)
     pyrhoGUIpath = os.path.join(pyrhoPath, GUIdir)
     pngFiles = [f for f in os.listdir(pyrhoGUIpath) if f.endswith('.png')]
     for f in pngFiles:
         shutil.copy2(os.path.join(pyrhoGUIpath, f), path)
-    
+
     return
 
 def simAvailable(sim):
@@ -126,7 +126,7 @@ def simAvailable(sim):
 
 def checkNEURON(test=False):
     """Check for NEURON installation and optionally run tests"""
-    
+
     if 'NRN_NMODL_PATH' in os.environ:
         nmodlPath = os.environ['NRN_NMODL_PATH']
         if verbose > 1:
@@ -142,10 +142,10 @@ def checkNEURON(test=False):
                 warnings.warn('Missing mod files in {}: {}'.format(nmodlPath, set(NMODLfiles) - set(modList)))
             if not set(HOCfiles).issubset(set(hocList)):
                 warnings.warn('Missing hoc files in {}: {}'.format(nmodlPath, set(HOCfiles) - set(hocList)))
-            
+
     else:
         warnings.warn("'NRN_NMODL_PATH' is not set - add e.g. 'export NRN_NMODL_PATH=/path/to/NEURON' to your bash profile.")
-    
+
     try:
         import neuron as nrn
         found = True
@@ -165,14 +165,15 @@ def setupNEURON(path=None, NEURONpath=None):
     """Setup the NEURON simulator to work with PyRhO
         path        := Path to PyRhO's working directory containing hoc and mod files (default=pwd)
         NEURONpath  := Path to NEURON installation directory containing nrn (and iv)"""
-    
+
     cwd = os.getcwd()
     # Boiler plates to expand '~'
     if path is not None:
         path = os.path.expanduser(path)
     if NEURONpath is not None:
         NEURONpath = os.path.expanduser(NEURONpath)
-        
+
+    # TODO: Add instructions to compile/install for Python 2
     if not checkNEURON():   # Check for a working NEURON installation...
         if False: # TODO: Make NEURONinstallScript work with subprocess
             if sys.platform == 'win32':
@@ -186,17 +187,17 @@ def setupNEURON(path=None, NEURONpath=None):
                         return
                     #NEURONscriptPath = os.path.join(home, 'NEURON')
                     #NEURONscriptPath = pyrhoNEURONpath
-                    
+
                     NEURONscriptIncPath = os.path.join(pyrhoNEURONpath, NEURONinstallScript)
                     exitcode = subprocess.call([NEURONscriptIncPath, NEURONpath], shell=True) # .check_call
                 except:
                     shutil.copy2(os.path.join(pyrhoNEURONpath, NEURONinstallScript), cwd)
                     print('Unable to install NEURON - please install manually with the script copied to {}.'.format(cwd))
-        else:    
+        else:
             shutil.copy2(os.path.join(pyrhoNEURONpath, NEURONinstallScript), cwd)
             print("NEURON must be compiled from source to work with Python 3. Please use the script '{}' copied to '{}' and then rerun setupNEURON.".format(NEURONinstallScript, cwd))
             print("E.g.: ./{} /abs/path/to/install/NEURON/".format(NEURONinstallScript))
-    
+
     ### To load mod files:
     # Add os.environ['NRN_NMODL_PATH'] to environment variables. See $NEURONPATH/nrn/lib/python/neuron/__init__.py
     if path is None:
@@ -211,10 +212,10 @@ def setupNEURON(path=None, NEURONpath=None):
     else:
         print("Using suplied path for hoc & nmodl files: ", end='')
     print(path)
-        
+
     # mod files should be compiled in the working directory for NEURON to find them
     # Alternatively, change os.environ['NRN_NMODL_PATH'] ?
-    
+
     #print('NEURON module path: ', path)
     print('Copying mod {} and hoc {} files from {}...'.format(NMODLfiles, HOCfiles, pyrhoNEURONpath))
     if os.path.isdir(path): # Check path
@@ -231,8 +232,8 @@ def setupNEURON(path=None, NEURONpath=None):
             shutil.copy2(f, path)
         #for f in HOCfiles:
         #    shutil.copy2(pyrhoNEURONpath, path, f)
-    
-    
+
+
     nrnivmodl = shutil.which('nrnivmodl')
     if nrnivmodl is None:
         arch = platform.machine()
@@ -240,7 +241,7 @@ def setupNEURON(path=None, NEURONpath=None):
             nrnivmodl = os.path.join(NEURONpath, "nrn", arch, "bin", "nrnivmodl")
         else:
             nrnivmodl = os.path.join(path, "nrn", arch, "bin", "nrnivmodl") # Try the hoc/mod path
-    
+
     print('Compiling mod files with ', nrnivmodl)
     try:
         cwd = os.getcwd()
@@ -274,7 +275,7 @@ def checkBrian(test=False):
         found = False
         if verbose > 1:
             print('Brian module not found!')
-        
+
     return found
 
 def setupBrian():
@@ -310,12 +311,12 @@ def setFigOutput(figDisplay='screen', width=None):
     global addTitles
     global addStimulus
     global eqSize
-    
+
     # http://matplotlib.org/users/customizing.html
     if figDisplay == 'screen':
         dpi = 300 #mpl.rcParams['savefig.dpi'] #300
         #figFormat = 'retina'
-        saveFigFormat = 'png'    
+        saveFigFormat = 'png'
         if width is None:
             width = 12
         figWidth = width
@@ -354,10 +355,10 @@ def setFigOutput(figDisplay='screen', width=None):
 
         mpl.rcParams['savefig.dpi'] = dpi        # http://nbviewer.ipython.org/gist/minrk/3301035
                                                 # http://wiki.scipy.org/Cookbook/Matplotlib/AdjustingImageSize
-        
+
     else:
         warnings.warn('Warning: Unknown display type selected - using matplotlib defaults!')
-    
+
     # http://matplotlib.org/users/customizing.html
     mpl.rcParams['figure.figsize'] = (figWidth, figHeight) #pylab.rcParams
     mpl.rcParams['figure.dpi'] = dpi
@@ -371,7 +372,7 @@ def setFigOutput(figDisplay='screen', width=None):
     mpl.rcParams['lines.markersize'] = markerSize
     mpl.rcParams['font.size'] = eqSize
     #mpl.rcParams['figure.autolayout'] = True
-    
+
     #return saveFigFormat, addTitles, addStimulus, eqSize
 
 setFigOutput(figDisplay)

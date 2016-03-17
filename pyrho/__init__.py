@@ -28,7 +28,7 @@ import lmfit
 
 # Place all submodule functions and variables into namespace
 from pyrho.config import *
-from pyrho.config import DASH_LINE, DOUB_DASH_LINE
+from pyrho.config import _DASH_LINE, _DOUB_DASH_LINE
 from pyrho.parameters import *
 from pyrho.utilities import *
 from pyrho.expdata import *
@@ -91,11 +91,11 @@ def runAll(listOfModels=[6]):
             for sim in ['Python']:#simulators:
                 Sim = simulators[sim](Prot, RhO)
                 print("\nRunning Protocol '{}' on the {}-state model...".format(prot, model))
-                print(DASH_LINE, '\n')
+                print(_DASH_LINE, '\n')
                 Sim.run()
                 Sim.plot()
                 print("\nFinished!")
-                print(DOUB_DASH_LINE, '\n\n')
+                print(_DOUB_DASH_LINE, '\n\n')
 
 
 def printVersions():
