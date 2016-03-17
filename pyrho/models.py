@@ -2,6 +2,7 @@
 
 from __future__ import print_function, division
 import warnings
+import abc
 import itertools
 from collections import OrderedDict
 
@@ -23,6 +24,7 @@ __all__ = ['models', 'selectModel']
 class RhodopsinModel(PyRhOobject):
     """Common base class for all models"""
 
+    __metaclass__ = abc.ABCMeta
     # TODO: Revise to be stateless and store date in PhotoCurrent objects
     phi = 0.0  # Instantaneous Light flux [photons * mm^-2 * s^-1]
 
@@ -361,7 +363,7 @@ class RhodopsinModel(PyRhOobject):
 
         if name is not None:
             from os import path
-            figName = path.join(fDir, name+'.'+config.saveFigFormat)
+            figName = path.join(config.fDir, name+'.'+config.saveFigFormat)
             plt.savefig(figName, format=config.saveFigFormat)
         '''
 
