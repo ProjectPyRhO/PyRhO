@@ -713,8 +713,8 @@ class RhO_4states(RhodopsinModel):
             self.dispRates()
 
     def dispRates(self):
-        print("Transition rates (phi={:.3g}): C1 --[Ga1={:.3g}]--> O1 --[Gf={:.3g}]--> O2".format(self.phi,self.Ga1,self.Gf))
-        print("Transition rates (phi={:.3g}): O1 <--[Gb={:.3g}]-- O2 <--[Ga2={:.3g}]-- C2".format(self.phi,self.Gb,self.Ga2))
+        print("Transition rates (phi={:.3g}): C1 --[Ga1={:.3g}]--> O1 --[Gf={:.3g}]--> O2".format(self.phi, self.Ga1, self.Gf))
+        print("Transition rates (phi={:.3g}): O1 <--[Gb={:.3g}]-- O2 <--[Ga2={:.3g}]-- C2".format(self.phi, self.Gb, self.Ga2))
 
     def solveStates(self, s_0, t, phi_t=None):
         """Function describing the differential equations of the 4-state model to be solved by odeint"""
@@ -879,13 +879,16 @@ class RhO_6states(RhodopsinModel):
             self.dispRates()
 
     def dispRates(self):
-        print("Transition rates (phi={:.3g}): O1 --[Gf]--> O2 = {}; O1 <--[Gb]-- O2 = {}".format(self.phi, self.Gf, self.Gb))
-        print("                  ^O1      O2^")
-        print("                   \        /")
-        print("                  [Ga1]  [Ga2]")
-        print("                     \    /")
-        print("                     C1  C2")
-        print("Transition rates [Ga1] = {}; [Ga2] = {}".format(self.Ga1, self.Ga2))
+        """Print photosensitive transition rates"""
+        #print("Transition rates (phi={:.3g}): O1 --[Gf]--> O2 = {}; O1 <--[Gb]-- O2 = {}".format(self.phi, self.Gf, self.Gb))
+        #print("                  ^O1      O2^")
+        #print("                   \        /")
+        #print("                  [Ga1]  [Ga2]")
+        #print("                     \    /")
+        #print("                     C1  C2")
+        #print("Transition rates [Ga1] = {}; [Ga2] = {}".format(self.Ga1, self.Ga2))
+        print("Transition rates (phi={:.3g}): C1 --[Ga1={:.3g}]--> O1 --[Gf={:.3g}]--> O2".format(self.phi, self.Ga1, self.Gf))
+        print("Transition rates (phi={:.3g}): O1 <--[Gb={:.3g}]-- O2 <--[Ga2={:.3g}]-- C2".format(self.phi, self.Gb, self.Ga2))
 
     def solveStates(self, s_0, t, phi_t=None):
         """Function describing the differential equations of the 6-state model to be solved by odeint"""
