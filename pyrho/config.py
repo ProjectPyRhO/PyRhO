@@ -2,6 +2,7 @@
 
 from __future__ import print_function, division
 import warnings
+import logging
 import os
 #import glob
 import platform
@@ -20,10 +21,10 @@ import numpy as np
 #import scipy as sp
 #import lmfit
 
-__all__ = ['setupGUI', 'simAvailable', 'setupNEURON', 'setupBrian', 
-           'setFigOutput', 'setFigStyle', 'resetPlot', 'wallTime', 
-           'verbose', 'dDir', 'fDir', 'colours', 'styles', 'check_package', 
-           'DASH_LINE', 'DOUB_DASH_LINE']
+__all__ = ['setupGUI', 'simAvailable', 'setupNEURON', 'setupBrian', 'check_package', 
+           'setFigOutput', 'setFigStyle', 'resetPlot', 'wallTime', 'setOutput']
+# TODO: Place in dict i.e. CONFIG_PARAMS['dDir']
+#, 'colours', 'styles', 'verbose', 'dDir', 'fDir', 'DASH_LINE', 'DOUB_DASH_LINE'
 
 pyVer = sys.version_info
 
@@ -53,6 +54,18 @@ elif pyVer[0] == 2:
 DASH_LINE = '-' * 80
 DOUB_DASH_LINE = '=' * 80
 
+
+##### Output level settings #####
+global verbose
+if 'verbose' not in vars() or 'verbose' not in globals() or verbose is None:
+    verbose = 1 # Text notification output level [0,1,2]
+logLevels = [logging.CRITICAL, logging.ERROR, logging.WARNING, logging.INFO, logging.DEBUG, logging.NOTSET]
+logging.basicConfig(filename='PyRhO.log', level=logLevels[verbose])
+
+def setOutput(level):
+    verbose = level
+    logging.setLevel(level)
+
 home = os.path.expanduser('~')
 pyrhoPath = os.path.dirname(os.path.abspath(__file__)) # modulePath
 
@@ -62,11 +75,6 @@ NMODLfiles = ('RhO3c.mod', 'RhO4c.mod', 'RhO6c.mod') #['RhO3.mod', 'RhO4.mod', '
 HOCfiles = [h for h in os.listdir(pyrhoNEURONpath) if h.endswith('.hoc')]
 #NMODLfilesIncPath = [os.path.join(pyrhoNEURONpath, f) for f in NMODLfiles]
 NEURONinstallScript = 'install_neuron.sh'
-
-##### Output level settings #####
-global verbose
-if 'verbose' not in vars() or 'verbose' not in globals() or verbose is None:
-    verbose = 1 # Text notification output level [0,1,2]
 
 
 def createDir(path):
