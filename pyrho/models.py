@@ -400,11 +400,11 @@ class RhO_3states(RhodopsinModel):
                 $$ \dot{D} = G_{d}O - G_{r}(\phi)D $$
                 $$ C + O + D = 1 $$
                 $$ $$
-                $$ G_a(\phi) = k_a\\frac{\phi^p}{\phi^p + \phi_m^p} $$
-                $$ G_r(\phi) = k_r\\frac{\phi^q}{\phi^q + \phi_m^q} + G_{r0} $$
+                $$ G_a(\phi) = k_a\frac{\phi^p}{\phi^p + \phi_m^p} $$
+                $$ G_r(\phi) = k_r\frac{\phi^q}{\phi^q + \phi_m^q} + G_{r0} $$
                 $$ $$
                 $$ f_{\phi}(\phi) = O \qquad \qquad $$
-                $$ f_v(v) = v_1\\frac{1-e^{-(v-E)/v_0}}{(v-E)} $$
+                $$ f_v(v) = v_1\frac{1-e^{-(v-E)/v_0}}{(v-E)} $$
                 $$ I_{\phi} = g_0 \cdot f_{\phi}(\phi) \cdot f_v(v) \cdot (v-E) $$
                 """
 
@@ -628,13 +628,13 @@ class RhO_4states(RhodopsinModel):
                 $$ \dot{C_2} = G_{d2}O_2 - (G_{r0} + G_{a2}(\phi))C_2 $$
                 $$ C_1 + O_1 + O_2 + C_2 = 1 $$
                 $$$$
-                $$ G_{a1}(\phi) = k_1\\frac{\phi^p}{\phi^p + \phi_m^p} $$
-                $$ G_{f}(\phi)  = k_{f} \\frac{\phi^q}{\phi^q + \phi_m^q} + G_{f0} $$
-                $$ G_{b}(\phi)  = k_{b} \\frac{\phi^q}{\phi^q + \phi_m^q} + G_{b0} $$
-                $$ G_{a2}(\phi) = k_2\\frac{\phi^p}{\phi^p + \phi_m^p} $$
+                $$ G_{a1}(\phi) = k_1 \frac{\phi^p}{\phi^p + \phi_m^p} $$
+                $$ G_{f}(\phi)  = k_{f} \frac{\phi^q}{\phi^q + \phi_m^q} + G_{f0} $$
+                $$ G_{b}(\phi)  = k_{b} \frac{\phi^q}{\phi^q + \phi_m^q} + G_{b0} $$
+                $$ G_{a2}(\phi) = k_2 \frac{\phi^p}{\phi^p + \phi_m^p} $$
                 $$$$
                 $$ f_{\phi}(\phi) = O_1+\gamma O_2 $$
-                $$ f_v(v) = v_1\\frac{1-e^{-(v-E)/v_0}}{(v-E)} $$
+                $$ f_v(v) = v_1\frac{1-e^{-(v-E)/v_0}}{(v-E)} $$
                 $$ I_{\phi} = g_0 \cdot f_{\phi}(\phi) \cdot f_v(v) \cdot (v-E) $$
                 """
 
@@ -800,13 +800,13 @@ class RhO_6states(RhodopsinModel):
                 $$ \dot{C_2} = G_{d2}O_2 - (G_{r0} + G_{a2}(\phi))C_2 $$
                 $$ C_1 + I_1 + O_1 + O_2 + I_2 + C_2 = 1 $$
                 $$$$
-                $$ G_{a1}(\phi) = k_{1} \\frac{\phi^p}{\phi^p + \phi_m^p} $$
-                $$ G_{f}(\phi)  = k_{f} \\frac{\phi^q}{\phi^q + \phi_m^q} + G_{f0} $$
-                $$ G_{b}(\phi)  = k_{b} \\frac{\phi^q}{\phi^q + \phi_m^q} + G_{b0} $$
-                $$ G_{a2}(\phi) = k_{2} \\frac{\phi^p}{\phi^p + \phi_m^p} $$
+                $$ G_{a1}(\phi) = k_{1} \frac{\phi^p}{\phi^p + \phi_m^p} $$
+                $$ G_{f}(\phi)  = k_{f} \frac{\phi^q}{\phi^q + \phi_m^q} + G_{f0} $$
+                $$ G_{b}(\phi)  = k_{b} \frac{\phi^q}{\phi^q + \phi_m^q} + G_{b0} $$
+                $$ G_{a2}(\phi) = k_{2} \frac{\phi^p}{\phi^p + \phi_m^p} $$
                 $$$$
                 $$ f_{\phi}(\phi) = O_1+\gamma O_2 $$
-                $$ f_v(v) = v_1\\frac{1-e^{-(v-E)/v_0}}{(v-E)} $$
+                $$ f_v(v) = v_1\frac{1-e^{-(v-E)/v_0}}{(v-E)} $$
                 $$ I_{\phi} = g_0 \cdot f_{\phi}(\phi) \cdot f_v(v) \cdot (v-E) $$
                 """
 
@@ -879,13 +879,13 @@ class RhO_6states(RhodopsinModel):
             self.dispRates()
 
     def dispRates(self):
-        print("Transition rates (phi={:.3g}): O1 --[Gf]--> O2 = {}; O1 <--[Gb]-- O2 = {}".format(self.phi,self.Gf,self.Gb))
+        print("Transition rates (phi={:.3g}): O1 --[Gf]--> O2 = {}; O1 <--[Gb]-- O2 = {}".format(self.phi, self.Gf, self.Gb))
         print("                  ^O1      O2^")
         print("                   \        /")
         print("                  [Ga1]  [Ga2]")
         print("                     \    /")
         print("                     C1  C2")
-        print("Transition rates [Ga1] = {}; [Ga2] = {}".format(self.Ga1,self.Ga2))
+        print("Transition rates [Ga1] = {}; [Ga2] = {}".format(self.Ga1, self.Ga2))
 
     def solveStates(self, s_0, t, phi_t=None):
         """Function describing the differential equations of the 6-state model to be solved by odeint"""
