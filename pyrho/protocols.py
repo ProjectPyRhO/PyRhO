@@ -7,6 +7,7 @@
 from __future__ import print_function, division
 #import pickle
 import warnings
+import logging
 import os
 #from abc import ABCMeta
 import abc
@@ -23,7 +24,7 @@ from pyrho.expdata import * #import loadData
 from pyrho.fitting import fitFV, errFV, fitfV, errfV, getRecoveryPeaks, fitRecovery
 from pyrho.models import *
 from pyrho.simulators import * # For characterise()
-from pyrho.config import * #verbose, saveFigFormat, eqSize, addTitles, addStimulus, colours, styles, dDir, fDir
+from pyrho.config import *
 from pyrho.config import xLabelPos
 from pyrho import config
 
@@ -35,6 +36,15 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
     """Common base class for all protocols"""
 
     __metaclass__ = abc.ABCMeta
+
+    protocol = None
+    nRuns = None
+    delD = None
+    cycles = None
+    totT = None
+    dt = None
+    phis = None
+    Vs = None
 
     def __init__(self, params=None, saveData=True):
         if params is None:
@@ -139,70 +149,10 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
         phi_t = spline([pStart,pEnd], [phi,phi], k=1, ext=1)
         return phi_t
 
-
-
-
-
-
-
-    def plot(self, plotStateVars=False):
-
-        Ifig = plt.figure()
-        self.createLayout(Ifig)
-        self.PD.plot(self.axI)
-        self.addAnnotations()
-        self.plotExtras()
-
-        self.plotStateVars = plotStateVars
-
-        #animateStates = True # https://jakevdp.github.io/blog/2013/05/28/a-simple-animation-the-magic-triangle/
-        if self.plotStateVars:
-            RhO = self.RhO
-            for run in range(self.nRuns):
-                #cycles, delD = self.getRunCycles(run)
-                #pulses, totT = cycles2times(cycles, delD)
-                for phiInd, phi in enumerate(self.phis):
-                    for vInd in range(self.nVs):
-                        # write getPulseSeries() to return the correct set for shortPulses and IPIs?
-                        # if self.protocol == 'shortPulse':
-                            # pulses = np.array([[0,self.pDs[run]]])+self.delDs[run]
-                        # else:
-                            # pulses = self.pulses
-                        pc = self.PD.trials[run][phiInd][vInd]
-                        # soln = pc.states #multisoln[run][phiInd][vInd]
-                        # t = pc.t
-                        #RhO.plotStates(t,soln,pulses,RhO.labels,phiOn,IpInds[run][phiInd][vInd],'states{}s-{}-{}-{}'.format(RhO.nStates,run,phiInd,vInd))
-                        fileName = '{}States{}s-{}-{}-{}'.format(self.protocol,RhO.nStates,run,phiInd,vInd)#; print(fileName)
-                        RhO.plotStates(pc.t, pc.states, pc.pulses, RhO.stateLabels, phi, pc.peakInds_, fileName)
-
-        plt.figure(Ifig.number)
-        plt.sca(self.axI)
-        self.axI.set_xlim(self.PD.begT, self.PD.endT)
-        # if addTitles:
-            # figTitle = self.genTitle()
-            # plt.title(figTitle) #'Photocurrent through time'
-
-        #plt.show()
-        plt.tight_layout()
-
-        externalLegend = False
-        figName = os.path.join(fDir, self.protocol+self.dataTag+"."+config.saveFigFormat)
-        if externalLegend:
-            Ifig.savefig(figName, bbox_extra_artists=(lgd,), bbox_inches='tight', format=config.saveFigFormat) # Use this to save figures when legend is beside the plot
-        else:
-            Ifig.savefig(figName, format=config.saveFigFormat)
-
-        return #Ifig.number
-
-
     def genPlottingStimuli(self, genPulse=None, vInd=0):
         """Redraw stimulus functions in case data has been realigned"""
         if genPulse is None:
             genPulse = self.genPulse
-
-        #self.addStimulus = config.addStimulus # Necessary?
-        #if self.addStimulus: # Redraw stimulus functions in case data has been realigned
-            #vInd = 0
 
             # # for delD in len(self.delDs):
                 # # self.delDs -= self.PD.trials[run][phiInd][vInd]
@@ -217,8 +167,87 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
                     phi_ts[run][phiInd][p] = genPulse(run, pc.phi, pulse)
         #self.phi_ts = self.genPulseSet()
         return phi_ts
+
+
+    def getStimArray(self, run, phiInd, dt) : #phi_ts, delD, cycles, dt):
+        """Return a stimulus array (not spline) with the same sampling rate as the photocurrent"""
+
+        cycles, delD = self.getRunCycles(run)
+        phi_ts = self.phi_ts[run][phiInd][:]
+
+        nPulses = cycles.shape[0]
+        assert(len(phi_ts) == nPulses)
+
+        #start, end = RhO.t[0], RhO.t[0]+delD #start, end = 0.00, delD
+        start, end = 0, delD
+        nSteps = int(round(((end-start)/dt)+1))
+        t = np.linspace(start, end, nSteps, endpoint=True)
+        phi_tV = np.zeros_like(t)
+        #pulseInds = np.empty([0,2],dtype=int) # Light on and off indexes for each pulse
+
+        for p in range(nPulses):
+            start = end
+            onD, offD = cycles[p,0], cycles[p,1]
+            end = start + onD + offD
+            nSteps = int(round(((end-start)/dt)+1))
+            tPulse = np.linspace(start, end, nSteps, endpoint=True)
+            phi_t = phi_ts[p]
+            phiPulse = phi_t(tPulse) # -tPulse[0] # Align time vector to 0 for phi_t to work properly
+
+            #onInd = len(t) - 1 # Start of on-phase
+            #offInd = onInd + int(round(onD/dt))
+            #pulseInds = np.vstack((pulseInds, [onInd,offInd]))
+
+            #t = np.r_[t, tPulse[1:]]
+
+            phi_tV = np.r_[phi_tV, phiPulse[1:]]
+
+        phi_tV[np.ma.where(phi_tV < 0)] = 0 # Safeguard for negative phi values
+        return phi_tV #, t, pulseInds
+
+
+    def plot(self, plotStateVars=False):
+        """Plot protocol"""
+        Ifig = plt.figure()
+        self.createLayout(Ifig)
+        self.PD.plot(self.axI)
+        self.addAnnotations()
+        self.plotExtras()
+
+        self.plotStateVars = plotStateVars
+
+        #animateStates = True # https://jakevdp.github.io/blog/2013/05/28/a-simple-animation-the-magic-triangle/
+        if self.plotStateVars:
+            #RhO = self.RhO
+            for run in range(self.nRuns):
+                #cycles, delD = self.getRunCycles(run)
+                #pulses, totT = cycles2times(cycles, delD)
+                for phiInd in range(self.nPhis): #, phi in enumerate(self.phis):
+                    for vInd in range(self.nVs):
+                        pc = self.PD.trials[run][phiInd][vInd]
+                        fileName = '{}States{}s-{}-{}-{}'.format(self.protocol, pc.nStates, run, phiInd, vInd) # RhO.nStates
+                        #RhO.plotStates(pc.t, pc.states, pc.pulses, RhO.stateLabels, phi, pc.peakInds_, fileName)
+                        pc.plotStates(name=fileName)
+                        logging.info('Plotting states to: {}'.format(fileName))
+
+        plt.figure(Ifig.number)
+        plt.sca(self.axI)
+        self.axI.set_xlim(self.PD.begT, self.PD.endT)
+        # if addTitles:
+            # figTitle = self.genTitle()
+            # plt.title(figTitle) #'Photocurrent through time'
+
+        #plt.show()
+        plt.tight_layout()
+
+        figName = os.path.join(config.fDir, self.protocol+self.dataTag+"."+config.saveFigFormat)
+        #externalLegend = False
+        #if externalLegend:
+        #    Ifig.savefig(figName, bbox_extra_artists=(lgd,), bbox_inches='tight', format=config.saveFigFormat) # Use this to save figures when legend is beside the plot
         #else:
-        #    return None
+        Ifig.savefig(figName, format=config.saveFigFormat)
+
+        return #Ifig.number
 
 
     def createLayout(self, Ifig=None, vInd=0):
@@ -234,14 +263,17 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
         plt.sca(self.axI)
         #plotLight(self.pulses, self.axI)
 
-
+    # TODO: Refactor multiple getLineProps
     def getLineProps(self, run, vInd, phiInd):
 
-        if verbose > 1 and (self.nRuns>len(colours) or len(self.phis)>len(colours) or len(self.Vs)>len(colours)):
+        colours = config.colours
+        styles = config.styles
+        
+        if config.verbose > 1 and (self.nRuns>len(colours) or len(self.phis)>len(colours) or len(self.Vs)>len(colours)):
             warnings.warn("Warning: only {} line colours are available!".format(len(colours)))
-        if verbose > 0 and self.nRuns>1 and len(self.phis)>1 and len(self.Vs)>1:
+        if config.verbose > 0 and self.nRuns>1 and len(self.phis)>1 and len(self.Vs)>1:
             warnings.warn("Warning: Too many changing variables for one plot!")
-        if verbose > 2:
+        if config.verbose > 2:
             print("Run=#{}/{}; phiInd=#{}/{}; vInd=#{}/{}".format(run,self.nRuns,phiInd,len(self.phis),vInd,len(self.Vs)))
         if self.nRuns > 1:
             col = colours[run % len(colours)]
@@ -392,6 +424,9 @@ class protSinusoid(Protocol):
     protocol = 'sinusoid'
     squarePulse = False
 
+    startOn = False
+    phi0 = 0
+
     def extraPrep(self):
         """Function to set-up additional variables and make parameters consistent after any changes"""
 
@@ -498,7 +533,7 @@ class protSinusoid(Protocol):
                         fsmooth = np.logspace(np.log10(self.fs[0]), np.log10(self.fs[-1]), num=1001)
                         self.axIp.plot(fsmooth, intIp(fsmooth))
                     except:
-                        if verbose > 0:
+                        if config.verbose > 0:
                             print('Unable to plot spline for current peaks!')
                     fstar_p = self.fs[np.argmax(Ipeaks)]
                     fstars[phiInd,vInd] = fstar_p
@@ -564,7 +599,7 @@ class protSinusoid(Protocol):
                         #fsmooth = np.logspace(self.fs[0], self.fs[-1], 100)
                         self.axIss.plot(fsmooth, intIss(fsmooth))
                     except:
-                        if verbose > 0:
+                        if config.verbose > 0:
                             print('Unable to plot spline for current steady-states!')
                     fstar_abs = self.fs[np.argmax(Iabs)]
                     fstars[phiInd,vInd] = fstar_abs
@@ -573,7 +608,7 @@ class protSinusoid(Protocol):
                     self.axIss.plot(fstar_abs, Aabs, '*', markersize=10, label=fabsLabel)
                     self.axIss.legend(loc='best')
                     #axIss.annotate(fabsLabel, xy=(fstar_abs,Aabs), xytext=(0.7, 0.9), textcoords='axes fraction', arrowprops={'arrowstyle':'->','color':'black'})
-                    if verbose > 0:
+                    if config.verbose > 0:
                         print('Resonant frequency (phi={}; V={}) = {} Hz'.format(phiOn, V, fstar_abs))
             self.axIss.set_xscale('log')
             self.axIss.set_xlabel(r'$f$ $\mathrm{[Hz]}$')
@@ -650,6 +685,12 @@ class protChirp(Protocol):
     """Sweep through a range of frequencies from f0 to fT either linearly or exponentially"""
     protocol = 'chirp'
     squarePulse = False
+
+    f0 = 0
+    fT = 0
+    linear = True
+    startOn = False
+    phi0 = 0
 
     def extraPrep(self):
         'Function to set-up additional variables and make parameters consistent after any changes'
@@ -748,6 +789,8 @@ class protRamp(Protocol):
     squarePulse = False
     nRuns = 1
 
+    phi0 = 0
+
     def extraPrep(self):
         'Function to set-up additional variables and make parameters consistent after any changes'
         self.nRuns = 1 #nRuns # Make len(phi_ton)?
@@ -799,6 +842,8 @@ class protDelta(Protocol):
     squarePulse = True
     nRuns = 1
 
+    onD = 0
+
     def prepare(self):
         """Function to set-up additional variables and make parameters consistent after any changes"""
         self.cycles = np.asarray([[self.onD, self.totT-self.delD]])
@@ -842,7 +887,7 @@ class protDelta(Protocol):
 
         gbar_est = Gmax * 1e6
 
-        if verbose > 0:
+        if config.verbose > 0:
             print("Estimated maximum conductance (g) = {} uS".format(round_sig(gbar_est,3)))
 
     def createLayout(self, Ifig=None, vInd=0):
@@ -924,6 +969,7 @@ class protRectifier(Protocol):
     def plotExtras(self):
         # TODO: Refactor!!!
         #plt.figure(Ifig.number) #IssVfig = plt.figure()
+        colours = config.colours
         ax = self.axVI #IssVfig.add_subplot(111)
 
         legLabels = [None for p in range(self.nPhis)]
@@ -1068,15 +1114,15 @@ class protRectifier(Protocol):
 
                 gs = Iss / (np.asarray(Vs) - E) # 1e6 *
                 gm70 = Iss[Vs.index(-70)] / (-70 - E)# * -70 # 1e6 *
-                if verbose > 0:
+                if config.verbose > 0:
                     print('g(v=-70) = ', gm70)
                 #g0[(Vs - E)==0] = None #(v1/v0)
                 gNorm = gs / gm70 # Normalised conductance relative to V=-70
 
                 self.axfV.scatter(Vs, gNorm, marker='x', color=colours, s=markerSize)#,linestyle=''
-                if verbose > 1:
+                if config.verbose > 1:
                     print(gm70)
-                    if verbose > 2:
+                    if config.verbose > 2:
                         print(np.c_[Vs, np.asarray(Vs)-E, Iss, gs, gNorm])
 
 
@@ -1229,6 +1275,7 @@ class protRecovery(Protocol):
     squarePulse = True
     nPulses = 2 # Fixed at 2 for this protocol
 
+    onD = 0
     # def __next__(self):
         # if self.run >= self.nRuns:
             # raise StopIteration
@@ -1290,7 +1337,7 @@ class protRecovery(Protocol):
                     self.PD.IPIpeaks_[run][phiInd][vInd] = PC.peaks_[1]
                     self.PD.tIPIpeaks_[run][phiInd][vInd] = PC.tpeaks_[1]
 
-        if verbose > 1:
+        if config.verbose > 1:
             print(self.PD.tIPIpeaks_)
             print(self.PD.IPIpeaks_)
 
@@ -1305,13 +1352,6 @@ class protRecovery(Protocol):
         plt.xlim(xmin, xmax)
 
         for run in range(self.nRuns):
-            #if self.nRuns > 1:
-            #    delD = self.delDs[run]
-            #    onD = self.cycles[run, 0]
-            #    offD = self.cycles[run, 1]
-            #else:
-            #    delD = self.delD
-
             for phiInd in range(self.nPhis):
                 for vInd in range(self.nVs):
                     col, style = self.getLineProps(run, vInd, phiInd)
@@ -1323,7 +1363,7 @@ class protRecovery(Protocol):
                         params = Parameters()
                         params.add('Gr0', value=0.002, min=0.0001, max=0.1)
                         params = fitRecovery(t_peaks, I_peaks, params, Ipeak0, Iss0, self.axI)
-                        if verbose > 0:
+                        if config.verbose > 0:
                             print("tau_r0 = {} ==> G_r0 = {}".format(1/params['Gr0'].value, params['Gr0'].value))
         return
 
