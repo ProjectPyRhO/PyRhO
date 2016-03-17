@@ -1541,7 +1541,7 @@ def fitFV(Vs, Iss, p0, ax=None):
     poptrel, pcov = curve_fit(calcScale, Vs, gNorm, p0=(v0, v1))
     print('Phase II curve fit: ', poptrel)
 
-    if verbose > 1:
+    if config.verbose > 1:
         print(np.c_[Vs,Iss,gs,gNorm])
 
     #popt[0] = poptrel[0]
