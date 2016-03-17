@@ -11,6 +11,8 @@
 from __future__ import print_function, division
 #from copy import deepcopy
 from collections import OrderedDict, defaultdict
+import logging
+import abc
 
 #from numpy import inf, nan, isfinite 
 import numpy as np
@@ -633,11 +635,12 @@ simParams['Brian'].add_many(('dt', 0.1, 0, None)) #, # 'ms'
 class PyRhOobject(object):
     """Common base class for all PyRhO objects"""
     
+    __metaclass__ = abc.ABCMeta
     # https://docs.python.org/3/reference/datamodel.html#special-method-names
     
     #def __new__(self):
     #    pass
-        
+    @abc.abstractmethod
     def __init__(self):
         pass
         
@@ -686,7 +689,12 @@ class PyRhOobject(object):
     def printParams(self):
         for p in self.__dict__.keys():
             print(p, ' = ', self.__dict__[p])
-    
+
+    def logParams(self):
+        logging.info(self.__class__.__name__, ' Parameters')
+        for p in self.__dict__.keys():
+            logging.info(p, ' = ', self.__dict__[p])
+            
     def printParamsWithLabels(self):
         for p in self.__dict__.keys():
             if p in unitLabels:
