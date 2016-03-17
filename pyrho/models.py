@@ -394,6 +394,7 @@ class RhO_3states(RhodopsinModel):
                [ 1, 0,-1],
                [-1, 1, 0]]
 
+    # TODO: Try using \begin{align*} now this is a raw string, or leave a comment if it does not work
     equations = r"""
                 $$ \dot{C} = G_{r}(\phi)D - G_{a}(\phi)C $$
                 $$ \dot{O} = G_{a}(\phi)C - G_{d}O $$
@@ -493,7 +494,7 @@ class RhO_3states(RhodopsinModel):
             self.dispRates()
 
     def dispRates(self):
-        print("Transition rates (phi={:.3g}): C --[Ga={:.3g}]--> O --[Gd={:.3g}]--> D --[Gr={:.3g}]--> C".format(self.phi,self.Ga,self.Gd,self.Gr))
+        print("Transition rates (phi={:.3g}): C --[Ga={:.3g}]--> O --[Gd={:.3g}]--> D --[Gr={:.3g}]--> C".format(self.phi, self.Ga, self.Gd, self.Gr))
 
     def solveStates(self, s_0, t, phi_t=None):
         """Function describing the differential equations of the 3-state model to be solved by odeint"""
@@ -502,7 +503,7 @@ class RhO_3states(RhodopsinModel):
 
         if phi_t is not None:
             self.setLight(float(phi_t(t)))
-        C,O,D = s_0 # Split state vector into individual variables s1=s[0], s2=s[1], etc
+        C, O, D = s_0 # Split state vector into individual variables
         dCdt = -self.Ga*C +             self.Gr*D   # C'
         dOdt =  self.Ga*C - self.Gd*O               # O'
         dDdt =              self.Gd*O - self.Gr*D   # D'
@@ -564,12 +565,14 @@ class RhO_3states(RhodopsinModel):
         self.steadyStates = np.array([Css, Oss, Dss]) / denom3
         return self.steadyStates
 
-    def calcSoln(self, t, s0=[1,0,0]): #RhO_3states.s_0
+    def calcSoln(self, t, s0=None): # [1,0,0] #RhO_3states.s_0
+        if s0 is None:
+            s0 = self.s_0
         [C_0, O_0, D_0] = s0
         Ga = self.Ga
         Gd = self.Gd
         Gr = self.Gr
-        #if t[0] > 0: # Shift time array to start at 0
+
         t = t - t[0] # Shift time array forwards or backwards to start at 0
 
         SP = Ga*Gd + Ga*Gr + Gd*Gr
@@ -720,7 +723,7 @@ class RhO_4states(RhodopsinModel):
         """Function describing the differential equations of the 4-state model to be solved by odeint"""
         if phi_t is not None:
             self.setLight(float(phi_t(t)))
-        C1,O1,O2,C2 = s_0 # Split state vector into individual variables s1=s[0], s2=s[1], etc
+        C1, O1, O2, C2 = s_0 # Split state vector into individual variables s1=s[0], s2=s[1], etc
         dC1dt = -self.Ga1*C1 +           self.Gd1*O1       +                  self.Gr0 *C2 # C1'
         dO1dt =  self.Ga1*C1 - (self.Gd1+self.Gf)*O1       +   self.Gb*O2                  # O1'
         dO2dt =                           self.Gf*O1 - (self.Gd2+self.Gb)*O2 + self.Ga2*C2 # O2'
@@ -729,8 +732,10 @@ class RhO_4states(RhodopsinModel):
         return np.array([ dC1dt, dO1dt, dO2dt, dC2dt ])
 
     def jacobian(self, s_0, t, phi_t=None):
-        # Jacobian matrix used to improve precision / speed up ODE solver
-        # jac[i,j] = df[i]/dy[j]; where y'(t) = f(t,y)
+        """
+        Jacobian matrix used to improve precision / speed up ODE solver
+        jac[i,j] = df[i]/dy[j]; where y'(t) = f(t,y)
+        """
         return np.array([[-self.Ga1, self.Gd1, 0, self.Gr0],
                          [self.Ga1, -(self.Gd1+self.Gf), self.Gb, 0],
                          [0, self.Gf, -(self.Gd2+self.Gb), self.Ga2],
@@ -895,12 +900,12 @@ class RhO_6states(RhodopsinModel):
         if phi_t is not None:
             self.setLight(float(phi_t(t)))
         C1, I1, O1, O2, I2, C2 = s_0 # Unpack state vector
-        dC1dt = -self.Ga1*C1 + self.Gd1*O1 + self.Gr0*C2           # s1'
-        dI1dt =  self.Ga1*C1 - self.Go1*I1                        # s2'
-        dO1dt =  self.Go1*I1 - (self.Gd1+self.Gf)*O1 + self.Gb*O2 # s3'
-        dO2dt =  self.Gf*O1 - (self.Gb+self.Gd2)*O2 + self.Go2*I2 # s4'
-        dI2dt = -self.Go2*I2 + self.Ga2*C2                        # s5'
-        dC2dt =  self.Gd2*O2 - (self.Ga2+self.Gr0)*C2              # s6'
+        dC1dt = -self.Ga1*C1 + self.Gd1*O1 + self.Gr0*C2
+        dI1dt =  self.Ga1*C1 - self.Go1*I1
+        dO1dt =  self.Go1*I1 - (self.Gd1+self.Gf)*O1 + self.Gb*O2
+        dO2dt =  self.Gf*O1 - (self.Gb+self.Gd2)*O2 + self.Go2*I2
+        dI2dt = -self.Go2*I2 + self.Ga2*C2
+        dC2dt =  self.Gd2*O2 - (self.Ga2+self.Gr0)*C2
         #d5 = - (f0+f1+f2+f3+f4)
         #dr0 = -2*pi*f*sin(2*pi*f*t)*C(1+cos(2*pi*f*t))      # d/dt (A(1+cos(2*pi*f*t)))
         return np.array([ dC1dt, dI1dt, dO1dt, dO2dt, dI2dt, dC2dt ])
@@ -914,7 +919,7 @@ class RhO_6states(RhodopsinModel):
                          [0, 0, 0, self.Gd2, 0, -(self.Ga2+self.Gr0)]])
 
 
-    def calcSteadyState(self, phi): # implicitly depends on phi0
+    def calcSteadyState(self, phi):
         self.setLight(phi)
         Ga1 = self.Ga1
         Go1 = self.Go1
@@ -936,7 +941,7 @@ class RhO_6states(RhodopsinModel):
         return self.steadyStates
 
     def calcfphi(self, states=None):
-        """Function to calculate the conductance scalar from the photocycle"""
+        """Calculate the conductance scalar from the photocycle"""
         if states is None:
             states = self.states
         C1, I1, O1, O2, I2, C2 = states.T
@@ -947,7 +952,8 @@ class RhO_6states(RhodopsinModel):
         raise NotImplementedError(self.nStates)
 
 
-models = OrderedDict([('3', RhO_3states), ('4', RhO_4states), ('6', RhO_6states), (3, RhO_3states), (4, RhO_4states), (6, RhO_6states)])
+models = OrderedDict([('3', RhO_3states), ('4', RhO_4states), ('6', RhO_6states), 
+                      (3, RhO_3states), (4, RhO_4states), (6, RhO_6states)])
 
 
 def selectModel(nStates):
