@@ -1701,7 +1701,7 @@ def fitModels(dataSet, nStates=3, params=None, postFitOpt=True, relaxFact=2, met
         else:
             fluxKey = 'step'
 
-        plotFluxSetFits(fluxSet=dataSet[fluxKey], nStates=nStates, params=params)
+        plotFluxSetFits(fluxSet=dataSet[fluxKey], nStates=nStates, params=fitParams)
 
         print("\n--------------------------------------------------------------------------------")
         print("Model comparison with the '{}' algorithm".format(method), end=" ")
