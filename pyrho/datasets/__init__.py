@@ -18,7 +18,7 @@ import pickle
 def loadChR2():
     """Return dictionary of ChR2 protocol data.
         The dataset is a dictionary containing three ProtocolData objects:
-        'step'      : Six PhotoCurrents recorded over flux values from 
+        'step'      : Six PhotoCurrents recorded over flux values from
                       2.21e15 to 2.65e17 photons/mm2/s to steady-state
         'delta'     : The PhotoCurrent from the 'step' set with the strongest peak
         'shortPulse': Ten PhotoCurrents recorded with pulse durations of
@@ -27,21 +27,21 @@ def loadChR2():
     """
     return pickle.load(resource_stream(__name__, 'ChR2.pkl'))
 
-'''    
+'''
 def loadpkl(pkl, path=None):
     # with, try, finaly etc...
     #import os
     pklFile = pkl+".pkl"
     if path is None:
         dataSet = resource_string(__name__, pklFile)
-        
+
         cwd = os.getcwd()
         if pkl in cwd: ### Finish!!!
             pass #pklFile = pklFile
             #fh = open(pklFile, "rb")
         else:
-            pklFile = os.path.join(dDir, pklFile)
-            #fh = open(os.path.join(dDir, pklFile), "rb") #dDir+'expData'+".pkl"
+            pklFile = os.path.join(config., pklFile)
+            #fh = open(os.path.join(config., pklFile), "rb")
     else:
         pklFile = os.path.join(path, pklFile)
     with open(pklFile, "rb") as fh :
