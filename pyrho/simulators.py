@@ -3,8 +3,10 @@
 
 from __future__ import print_function, division
 import warnings
+import logging
 import os
 import copy
+import abc
 from collections import OrderedDict
 
 import numpy as np
@@ -14,7 +16,6 @@ from matplotlib import pyplot as plt
 
 from pyrho.parameters import *
 from pyrho.utilities import * # cycles2times, plotLight
-#from pyrho.utilities import wallTime
 from pyrho.expdata import *
 from pyrho.models import *
 from pyrho.config import * #verbose
@@ -27,9 +28,24 @@ __all__ = ['simulators']
 class Simulator(PyRhOobject):  # object
     """Common base class for all simulators"""
 
-    #def __init__(self, Prot, RhO, simulator='Python'):
-    #    self.simulator = simulator
+    __metaclass__ = abc.ABCMeta
+
+    Prot = None
+    RhO = None
+    simulator = None
+    
+    @abc.abstractmethod
+    def __init__(self, Prot, RhO, params=None):
+        self.simulator = simulator
         # Simulator is now initialised according to a particular protocol
+
+    @abc.abstractmethod
+    def runTrial(self, RhO, phiOn, V, delD, cycles, dt, verbose=config.verbose):
+        pass
+
+    @abc.abstractmethod
+    def runTrialPhi_t(self, RhO, phi_ts, V, delD, cycles, dt, verbose=config.verbose):
+        pass
 
     def __str__(self):
         return self.simulator
@@ -57,7 +73,7 @@ class Simulator(PyRhOobject):  # object
     def initialise(self):
         pass
 
-    def run(self, verbose=verbose):
+    def run(self, verbose=config.verbose):
         """Main routine to run the simulation protocol"""
 
         t0 = wallTime()
@@ -82,6 +98,7 @@ class Simulator(PyRhOobject):  # object
 
         if verbose > 1:
             Prot.printParams()
+        Prot.logParams()
 
         for run in range(Prot.nRuns):                   # Loop over the number of runs...
 
@@ -105,9 +122,8 @@ class Simulator(PyRhOobject):  # object
                         phi_ts = Prot.phi_ts[run][phiInd][:]
                         I_RhO, t, soln = self.runTrialPhi_t(RhO, phi_ts, V, delD, cycles, self.dt, verbose) #, totT
 
-                    # TODO: Add phi_t (stimulus) to pc
-                    # TODO: Place states and stateLabels in pc.sim[nStates].states ?
-                    PC = PhotoCurrent(I_RhO, t, pulses, phiOn, V, states=soln, stateLabels=RhO.stateLabels, label=Prot.protocol)
+                    stim = Prot.getStimArray(run, phiInd, self.dt) # phi_ts, delD, cycles, 
+                    PC = PhotoCurrent(I_RhO, t, pulses, phiOn, V, stimuli=stim, states=soln, stateLabels=RhO.stateLabels, label=Prot.protocol)
                     #PC.alignToTime()
 
                     PC.ssInf = np.array(RhO.ssInf)
@@ -133,6 +149,7 @@ class Simulator(PyRhOobject):  # object
             print("--------------------------------------------------------------------------------\n")
 
         return Prot.PD
+
 
     def saveExtras(self, run, phiInd, vInd):
         pass
@@ -179,7 +196,7 @@ class simPython(Simulator):
         return soln
     '''
 
-    def runTrial(self, RhO, phiOn, V, delD, cycles, dt, verbose=verbose):
+    def runTrial(self, RhO, phiOn, V, delD, cycles, dt, verbose=config.verbose):
         """
         Main routine for simulating a square pulse train
 
@@ -288,7 +305,7 @@ class simPython(Simulator):
         return I_RhO, t, states
 
 
-    def runTrialPhi_t(self, RhO, phi_ts, V, delD, cycles, dt, verbose=verbose): # endT,
+    def runTrialPhi_t(self, RhO, phi_ts, V, delD, cycles, dt, verbose=config.verbose): # endT,
         """Main routine for simulating a pulse train"""
 
         nPulses = cycles.shape[0]
@@ -392,7 +409,7 @@ class simNEURON(Simulator):
             self.h.dt = params['dt'].value
             self.dt = self.h.dt
 
-        if verbose > 0:
+        if config.verbose > 0:
             print('Integrator tolerances: absolute=',self.h.cvode.atol(),
                                         ' relative=',self.h.cvode.rtol()) ### Set as parameters
         #self.h.cvode.atol(0.000001)
@@ -474,7 +491,7 @@ class simNEURON(Simulator):
             if not os.path.isfile(os.path.join(cwd, script)):
                 script = os.path.join(os.environ['NRN_NMODL_PATH'], script)
 
-            if verbose > 0:
+            if config.verbose > 0:
                 print('Loading ', script)
 
             if ext == 'hoc' or ext == 'HOC':
@@ -497,7 +514,7 @@ class simNEURON(Simulator):
             self.cell.append(sec)
             self.nSecs += 1
 
-        if verbose > 0:
+        if config.verbose > 0:
             print('Total sections: ', self.nSecs) #self.cell.count())
 
 
@@ -571,7 +588,7 @@ class simNEURON(Simulator):
             rho.offD = offD
             rho.nPulses = nPulses
 
-    def runTrial(self, RhO, phiOn, V, delD, cycles, dt, verbose=verbose):
+    def runTrial(self, RhO, phiOn, V, delD, cycles, dt, verbose=config.verbose):
 
         # Notes on the integrator
         # http://www.neuron.yale.edu/phpbb/viewtopic.php?f=8&t=1330
@@ -699,7 +716,7 @@ class simNEURON(Simulator):
         return I_RhO, t, soln
 
 
-    def runTrialPhi_t(self, RhO, phi_ts, V, delD, cycles, dt, verbose=verbose):
+    def runTrialPhi_t(self, RhO, phi_ts, V, delD, cycles, dt, verbose=config.verbose):
         """Main routine for simulating a pulse train"""
         # Make RhO.mod a continuous function of light - 9.12: Discontinuities 9.13: Time-dependent parameters p263
             #- Did cubic spline interpolation ever get implemented for vec.play(&rangevar, tvec, 1)?
@@ -901,7 +918,7 @@ class simNEURON(Simulator):
 
             #figName = '{}Vm{}s-{}-{}-{}'.format(Prot.protocol,RhO.nStates,run,phiInd,vInd)
             figName = '{}Vm{}s'.format(Prot.protocol,RhO.nStates)
-            fileName = os.path.join(fDir, figName+"."+config.saveFigFormat)
+            fileName = os.path.join(config.fDir, figName+"."+config.saveFigFormat)
             Vfig.savefig(fileName, format=config.saveFigFormat)
 
 
@@ -1028,7 +1045,7 @@ class simBrian(Simulator):
         self.net.add(self.monitors)  # manually add the monitors
     '''
 
-    def runTrial(self, RhO, phiOn, V, delD, cycles, dt, verbose=verbose):
+    def runTrial(self, RhO, phiOn, V, delD, cycles, dt, verbose=config.verbose):
         """Main routine for simulating a square pulse train"""
 
         nPulses = cycles.shape[0]
@@ -1131,7 +1148,7 @@ class simBrian(Simulator):
         return I_RhO, t, states
 
 
-    def runTrialPhi_t(self, RhO, phi_ts, V, delD, cycles, dt, verbose=verbose):
+    def runTrialPhi_t(self, RhO, phi_ts, V, delD, cycles, dt, verbose=config.verbose):
         """Main routine for simulating a pulse train"""
         # TimedArray([x1, x2, ...], dt=my_dt), the value x1 will be returned for all 0<=t<my_dt, x2 for my_dt<=t<2*my_dt etc.
 
@@ -1300,7 +1317,7 @@ class simBrian(Simulator):
 
         if figName is None:
             figName = '{}Vm{}s'.format(Prot.protocol, RhO.nStates)
-        fileName = os.path.join(fDir, figName+'.'+config.saveFigFormat)
+        fileName = os.path.join(config.fDir, figName+'.'+config.saveFigFormat)
         Vfig.savefig(fileName, format=config.saveFigFormat)
 
 
@@ -1347,7 +1364,7 @@ class simBrian(Simulator):
 
         if figName is None:
             figName = '{}Spikes{}s'.format(self.Prot.protocol, self.RhO.nStates)
-        fileName = os.path.join(fDir, figName+'.'+config.saveFigFormat)
+        fileName = os.path.join(config.fDir, figName+'.'+config.saveFigFormat)
         Rfig.savefig(fileName, format=config.saveFigFormat)
 
 
@@ -1391,7 +1408,7 @@ class simBrian(Simulator):
 
         if figName is None:
             figName = '{}Spikes{}s'.format(self.Prot.protocol, self.RhO.nStates)
-        fileName = os.path.join(fDir, figName+'.'+config.saveFigFormat)
+        fileName = os.path.join(config.fDir, figName+'.'+config.saveFigFormat)
         Rfig.savefig(fileName, format=config.saveFigFormat)
 
 
