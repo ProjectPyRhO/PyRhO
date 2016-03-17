@@ -11,7 +11,6 @@ from string import Template
 import numpy as np
 import matplotlib.pyplot as plt
 
-#from pyrho.config import * #verbose, dDir
 from pyrho import config
 #from pyrho.utilities import wallTime
 
@@ -115,7 +114,7 @@ def saveData(data, pkl, path=None):
     pklFile = os.path.join(path, pkl+".pkl")
     with open(pklFile, 'wb') as fh:
         pickle.dump(data, fh)
-    if config.verbose > 0: #config.verbose?!
+    if config.verbose > 0:
         print("Data saved to disk: {}".format(pklFile))
     return pklFile
 

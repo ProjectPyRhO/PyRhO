@@ -188,6 +188,7 @@ def plotOffPhaseFits(toffs, Ioffs, pOffs, phis, nStates, fitFunc, Exp1, Exp2, Gd
     #gs = plt.GridSpec(nTrials,1)
     ax = fig.add_subplot(111)
     lw = 2.5 * mpl.rcParams['lines.linewidth']
+    colour = config.colours
 
     nTrials = len(Ioffs)
     assert(len(toffs) == nTrials)
@@ -226,7 +227,7 @@ def plotOffPhaseFits(toffs, Ioffs, pOffs, phis, nStates, fitFunc, Exp1, Exp2, Gd
 
     plt.tight_layout()
 
-    fig.savefig(fDir+'OffPhaseFits'+str(nStates)+'states'+'.'+config.saveFigFormat, format=config.saveFigFormat)
+    fig.savefig(os.path.join(config.fDir, 'OffPhaseFits'+str(nStates)+'states'+'.'+config.saveFigFormat), format=config.saveFigFormat)
 
 
 def plotFit(PC, nStates, params, fitRates=False, index=None):
@@ -350,7 +351,7 @@ def plotFit(PC, nStates, params, fitRates=False, index=None):
 
     if index is None:
         index = ''
-    Ifig.savefig(fDir+'fit'+str(nStates)+'states'+str(index)+'.'+config.saveFigFormat, format=config.saveFigFormat)
+    Ifig.savefig(os.path.join(config.fDir, 'fit'+str(nStates)+'states'+str(index)+'.'+config.saveFigFormat), format=config.saveFigFormat)
 
     if config.verbose > 1:
         print("Fit has been plotted for the {}-state model".format(nStates))# at a flux of {} [photons * s^-1 * mm^-2]".format(phi))
@@ -2012,7 +2013,7 @@ def fitModel(dataSet, nStates=3, params=None, postFitOpt=True, relaxFact=2, meth
         plotFit(PCs[trial], nStates, orderedParams, fitRates=False, index=trial)#, postPmin, fitRates=False, index=trial)
 
     exportName = 'fitted{}sParams.pkl'.format(nStates)
-    with open(os.path.join(dDir, exportName), "wb") as fh:
+    with open(os.path.join(config.dDir, exportName), "wb") as fh:
         pickle.dump(orderedParams, fh)
 
     # Plot set of curves
@@ -2038,13 +2039,15 @@ def plotFluxSetFits(fluxSet, nStates, params, runInd=0, vInd=0):
     setFig = plt.figure()
     setAx = setFig.add_subplot(111)
     lineWidth = 2.5 * mpl.rcParams['lines.linewidth']
+    colours = config.colours
+    styles = config.styles
 
     # Plot experimental data
     for phiInd in range(fluxSet.nPhis):
         PC = fluxSet.trials[runInd][phiInd][vInd]
         PC.alignToTime()
         phi = PC.phi
-        setAx.plot(PC.t, PC.I, color=config.colours[phiInd%len(config.colours)],
+        setAx.plot(PC.t, PC.I, color=colours[phiInd%len(colours)],
                    lw=lineWidth, markeredgecolor='None',
                    label=r"$\phi = {:.3g}\ \mathrm{{[ph. \cdot mm^{{-2}} \cdot s^{{-1}}]}}$".format(phi))
 
@@ -2129,7 +2132,7 @@ def plotFluxSetFits(fluxSet, nStates, params, runInd=0, vInd=0):
     setCrossAxes(setAx)
     plt.tight_layout()
 
-    setFig.savefig(fDir+'fluxSetFit'+'-'.join(str(s) for s in nStates)+'states'+'.'+config.saveFigFormat, format=config.saveFigFormat)
+    setFig.savefig(os.path.join(config.fDir, 'fluxSetFit'+'-'.join(str(s) for s in nStates)+'states'+'.'+config.saveFigFormat), format=config.saveFigFormat)
 
     return
 

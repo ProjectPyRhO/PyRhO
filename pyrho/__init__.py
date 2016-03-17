@@ -3,12 +3,13 @@
 # Main module file for PyRhO
 
 #if sys.version_info < (3,0) #IPython.__version__ < "3":
-from __future__ import division # a/b -> float
-from __future__ import absolute_import, print_function, unicode_literals
+from __future__ import print_function, division # a/b -> float
+#from __future__ import absolute_import, unicode_literals
 
 import platform
 import os
-from pkg_resources import get_distribution, DistributionNotFound
+#from pkg_resources import get_distribution, DistributionNotFound
+import pkg_resources
 
 # Necessary?
 import matplotlib as mpl
@@ -27,6 +28,7 @@ import lmfit
 
 # Place all submodule functions and variables into namespace
 from pyrho.config import *
+from pyrho.config import DASH_LINE, DOUB_DASH_LINE
 from pyrho.parameters import *
 from pyrho.utilities import *
 from pyrho.expdata import *
@@ -42,15 +44,15 @@ from pyrho.jupytergui import *
 
 __project__ = 'pyrho'
 # http://stackoverflow.com/questions/17583443/what-is-the-correct-way-to-share-package-version-with-setup-py-and-the-package
-#__version__ = get_distribution(__project__).version #'0.8.0'
+#__version__ = pkg_resources.get_distribution(__project__).version #'0.8.0'
 try:
-    _dist = get_distribution(__project__)
+    _dist = pkg_resources.get_distribution(__project__)
     distLoc = os.path.normcase(_dist.location) # Normalise case for Windows
     here = os.path.normcase(__file__)
     if not here.startswith(os.path.join(distLoc, __project__)):
         # not installed, but there is another version that *is*
-        raise DistributionNotFound
-except DistributionNotFound:
+        raise pkg_resources.DistributionNotFound
+except pkg_resources.DistributionNotFound:
     __version__ = __project__ + '-' + '(local)'
 else:
     __version__ = _dist.version

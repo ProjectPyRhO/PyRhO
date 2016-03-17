@@ -31,8 +31,10 @@ from pyrho.simulators import *
 from pyrho.protocols import *
 from pyrho.expdata import *
 from pyrho.fitting import *
-from pyrho.config import simAvailable, GUIdir, setupGUI, dDir # For dataSet loading
+from pyrho.config import simAvailable, GUIdir, setupGUI #, dDir # For dataSet loading
 from pyrho.utilities import *
+from pyrho import config
+from pyrho.config import verbose
 
 __all__ = ['loadGUI']
 
@@ -256,10 +258,10 @@ def loadGUI(IPythonWorkspace=None):
             print('Successfully loaded from globals!')
         else:
             # Try treating it as a file name instead?
-            fh = open(path.join(dDir, dataVar.value), "rb") #dDir+'expData'+".pkl"
+            fh = open(path.join(config.dDir, dataVar.value), "rb")
             dataSet = pickle.load(fh)
             fh.close()
-            print('Successfully loaded "{}"!'.format(path.join(dDir, dataVar.value)))
+            print('Successfully loaded "{}"!'.format(path.join(config.dDir, dataVar.value)))
             #dataSet = None
             #useFitCheck.value = False
             #warnings.warn('Warning! Variable: {} not found!'.format(dataVar.value))
@@ -491,7 +493,7 @@ def loadGUI(IPythonWorkspace=None):
         #saveData = True
         #@interact(nStates={'Three-state':3,'Four-state':4,'Six-state':6}, protocol=('custom', 'step', 'sinusoid', 'ramp', 'delta', 'rectifier', 'shortPulse', 'recovery'), saveData=True, verbose=1)
 
-    def runModel(model, protocol, simulator='Python', saveData=True, verbose=1): #verboseSlide.value
+    def runModel(model, protocol, simulator='Python', saveData=True, verbose=config.verbose): #verboseSlide.value
         """Main GUI function to create protocol, simulator and rhdopsin objects, set parameters, run and plot"""
         
         #verbose = verbose
@@ -1242,7 +1244,7 @@ def loadGUI(IPythonWorkspace=None):
         """
         
         protFigHTML[pInd] = widgets.HTML()
-        exampleProt = '{}{}6s.{}'.format(guiFigDir,prot,'png')#saveFigFormat) # fDir
+        exampleProt = '{}{}6s.{}'.format(guiFigDir, prot, 'png')#saveFigFormat) # fDir
         if os.path.isfile(exampleProt):
             protFigHTML[pInd].value='<img src="{}" alt=Example {} width=200px>'.format(exampleProt,prot)
         else:
