@@ -15,6 +15,7 @@ import matplotlib as mpl
 from matplotlib import pyplot as plt
 
 from pyrho.parameters import *
+from pyrho.parameters import PyRhOobject
 from pyrho.utilities import * # cycles2times, plotLight
 from pyrho.expdata import *
 from pyrho.models import *

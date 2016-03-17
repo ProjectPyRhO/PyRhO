@@ -31,7 +31,7 @@ sec = second
 #from pyrho.utilities import irrad2flux, flux2irrad
 
 # TODO
-# __all__ = ['modelParams', 'modelFits', 'stateLabs', 'defaultOpsinType', 'protParams', 'simParams']
+__all__ = ['modelParams', 'modelFits', 'stateLabs', 'defaultOpsinType', 'protParams', 'simParams']
 
 ### Hyperparameters
 

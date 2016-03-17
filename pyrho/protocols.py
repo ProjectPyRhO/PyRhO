@@ -17,8 +17,10 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl # for tick locators
 from scipy.interpolate import InterpolatedUnivariateSpline as spline
 #from scipy.optimize import curve_fit
+from lmfit import Parameters
 
 from pyrho.parameters import *
+from pyrho.parameters import PyRhOobject
 from pyrho.utilities import * # times2cycles, cycles2times, plotLight, round_sig, expDecay, biExpDecay, findPeaks
 from pyrho.expdata import * #import loadData
 from pyrho.fitting import fitFV, errFV, fitfV, errfV, getRecoveryPeaks, fitRecovery
