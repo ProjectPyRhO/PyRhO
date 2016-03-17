@@ -22,7 +22,7 @@ Long-Term
 ---------
 - [ ] GUI for Brian
 - [ ] Implement automatic unit handling and conversions
-- [ ] Backport to Python 2?
+- [x] Backport to Python 2: 2.7
 - [ ] Incorporate additional independent variables
   - [ ] Temperature (Q10)
   - [ ] Wavelength
