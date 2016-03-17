@@ -2,6 +2,7 @@
 
 from __future__ import print_function, division
 import warnings
+import logging
 import copy
 
 import numpy as np
@@ -87,7 +88,7 @@ class PhotoCurrent(object):
     # TODO: Make this a setter which calls findPeakInds and findSteadyState when changed
     overlap = True  # Periods are up to *and including* the start of the next e.g. onPhase := t[onInd] <= t <? t[offInd]
     
-    def __init__(self, I, t, pulses, phi, V, states=None, stateLabels=None, label=None):
+    def __init__(self, I, t, pulses, phi, V, stimuli=None, states=None, stateLabels=None, label=None):
         """ I       := Photocurrent [nA]
             t       := Time series (or time step) [ms]
             phi     := Stimulating flux (max) [ph*mm^-2*s^-1]
@@ -117,7 +118,22 @@ class PhotoCurrent(object):
         self.endT = self.t[-1]                  # Last trial time point
         self.totT = self.endT - self.begT       # Total trial time #max(self.t) # Handles negative delays
         
-        
+        if stimuli is not None:
+            # Expect nStimuli x nSamples row vectors
+            self.stimuli = np.copy(stimuli)
+            ndim = self.stimuli.ndim
+            shape = self.stimuli.shape
+            if ndim == 1:
+                self.nStimuli = 1
+                assert(shape[0] == self.nSamples)
+            elif ndim == 2:
+                self.nStimuli = shape[0]
+                assert(shape[1] == self.nSamples)
+            else:
+                raise ValueError('Dimension mismatch with stimuli: {}; shape: {}!'.format(ndim, shape))
+        else:
+            self.stimuli = None
+
         if states is not None:
             self.states = np.copy(states)
             self.nStates = self.states.shape[1] # len(stateLabels)
@@ -177,7 +193,7 @@ class PhotoCurrent(object):
         I_offset = np.mean(Idel[:int(round(0.9*len(Idel)))+1]) # Calculate the mean over the first 90% to avoid edge effects
         if abs(I_offset) > 0.01 * abs(max(self.I) - min(self.I)): # Recalibrate if the offset is more than 1% of the span
             self.I -= I_offset
-            if verbose > 0:
+            if config.verbose > 0:
                 print("Photocurrent recalibrated by {} [nA]".format(I_offset))
             self.offset_ = I_offset
         
@@ -240,7 +256,7 @@ class PhotoCurrent(object):
         
         #self.findKinetics()
         
-        if verbose > 1:
+        if config.verbose > 1:
             print("Photocurrent data loaded! nPulses={}; Total time={}ms; Range={}nA".format(self.nPulses, self.totT, str(self.range_)))
     
     
@@ -627,7 +643,7 @@ class PhotoCurrent(object):
         
         dI = Ion[-cutInd+1:] - Ion[-cutInd:-1]
         if abs(np.mean(dI)) > 0.01 * self.span_:
-            warnings.warn('Steady-state Convergence Warning: The average step size is larger than 1% of the current span!')
+            logging.warn('Steady-state Convergence Warning: The average step size is larger than 1% of the current span!')
             #return None
             method = 0
         
@@ -768,6 +784,29 @@ class PhotoCurrent(object):
         else:
             plt.sca(ax)
         
+        fig = plt.gcf()
+        
+        # TODO: Implement optional stimulus plotting
+        '''
+        if addFeatures and self.stimuli is not None:
+            inner_grid = mpl.gridspec.GridSpecFromSubplotSpec(4, 1, subplot_spec=ax)
+            axStim = plt.Subplot(fig, inner_grid[0,0])
+            axStim.plot(self.t, self.stimuli)
+            plt.setp(axStim.get_xticklabels(), visible=False)
+            #plt.setp(axLine.get_xticklabels(), visible=False)
+            
+            axPC = plt.Subplot(fig, inner_grid[1:,0], sharex=True)
+            ax = axPC
+            #fig, (ax1, ax2) = plt.subplots(1,2, sharex=True, sharey=True)
+            #gs = plt.GridSpec(4, 1)
+            #axStim = fig.add_subplot(gs[1,1]) #, sharex=axLine)
+            
+            #axStim.plot(self.t, self.stimuli)
+            
+            #axPC = fig.add_subplot(gs[2:,1])
+            #plt.sca(axPC)
+        '''
+        
         if colour is None or linestyle is None:
             plt.plot(self.t, self.I)
         else:
@@ -782,6 +821,7 @@ class PhotoCurrent(object):
         setCrossAxes(ax)
         
         if addFeatures:
+
             #p = 0
             #plt.axvline(x=self.tpeaks_[p], linestyle=':', color='k')
             #plt.axhline(y=self.peaks_[p], linestyle=':', color='k')
@@ -832,7 +872,7 @@ class PhotoCurrent(object):
         return # ax
     
     
-    def plotStates(self, plotPies=True, pulse=None, name=None, verbose=config.verbose):
+    def plotStates(self, plotPies=True, pulse=None, name=None): #, verbose=config.verbose):
         
         phi = self.phi # Use the value at t_off if the stimulus if a function of time
         t = self.t
@@ -926,7 +966,7 @@ class PhotoCurrent(object):
                     axS0 = fig.add_subplot(gs[p+2, pieInd])
                     #initialStates = states[0,:] * 100 #self.s0 * 100
                     initialStates = states[self.pulseInds[p,0],:] * 100
-                    if verbose > 1:
+                    if config.verbose > 1:
                         pct = {l:s for l,s in zip(labels, initialStates)}
                         print('Initial state occupancies (%):', sorted(pct.items(), key=lambda x: labels.index(x[0])))
                     patches, texts, autotexts = plt.pie(initialStates, labels=labels, autopct='%1.1f%%', startangle=90, shadow=False, colors=cp)
@@ -951,7 +991,7 @@ class PhotoCurrent(object):
                     sizes = states[pInd,:] * 100
                     #sizes = [s*100 for s in sizes]
                     #explode = (0,0,0.1,0.1,0,0)
-                    if verbose > 1:
+                    if config.verbose > 1:
                         pct = {l:s for l,s in zip(labels,sizes)}
                         print('Peak state occupancies (%):', sorted(pct.items(), key=lambda x: labels.index(x[0])))
                     patches, texts, autotexts = plt.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90, shadow=False, colors=cp)#, explode=explode)
@@ -972,7 +1012,7 @@ class PhotoCurrent(object):
                     axSS = fig.add_subplot(gs[p+2, pieInd])
                     offInd = self.pulseInds[p, 1] # TODO: Revise
                     ss = states[offInd,:] * 100
-                    if verbose > 1:
+                    if config.verbose > 1:
                         pct = {l:s for l,s in zip(labels, ss)}
                         print('Steady-state occupancies (%):', sorted(pct.items(), key=lambda x: labels.index(x[0])))
                     patches, texts, autotexts = plt.pie(ss, labels=labels, autopct='%1.1f%%', startangle=90, shadow=False, colors=cp)
@@ -992,7 +1032,7 @@ class PhotoCurrent(object):
                     axInf = fig.add_subplot(gs[p+2, pieInd])
                     #ssInf = self.calcSteadyState(phi) * 100 # Convert array of proportions to %
                     ssInf = self.ssInf[p, :] * 100
-                    if verbose > 1:
+                    if config.verbose > 1:
                         pct = {l:s for l,s in zip(labels, ssInf)}
                         print('Analytic steady-state occupancies (%):', sorted(pct.items(), key=lambda x: labels.index(x[0])))
                     patches, texts, autotexts = plt.pie(ssInf, labels=labels, autopct='%1.1f%%', startangle=90, shadow=False, colors=cp) #, explode=explode
@@ -1010,7 +1050,7 @@ class PhotoCurrent(object):
         
         if name is not None:
             from os import path
-            figName = path.join(fDir, name+'.'+config.saveFigFormat)
+            figName = path.join(config.fDir, name+'.'+config.saveFigFormat)
             plt.savefig(figName, format=config.saveFigFormat)    
     
         return    
@@ -1180,7 +1220,7 @@ class ProtocolData(object):
             
             self.trials[run][iPhi][iV] = pc
             
-            if verbose > 1:
+            if config.verbose > 1:
                 print("PhotoCurrent added to run={}, iPhi={}, iV={}".format(run, iPhi, iV))
             indices.append((run, iPhi, iV))
             
@@ -1203,7 +1243,7 @@ class ProtocolData(object):
         
         self.trials[run][iPhi][iV] = photocurrent
         
-        if verbose > 1:
+        if config.verbose > 1:
             print("PhotoCurrent added to run={}, iPhi={}, iV={}".format(run, iPhi, iV))
             
         return (run, iPhi, iV)
@@ -1224,7 +1264,7 @@ class ProtocolData(object):
         #assert(0 <= runs < self.nRuns)
         assert(0 < len(runs) <= self.nRuns)
         
-        if verbose > 0:
+        if config.verbose > 0:
             print("runs = ", runs)
         
         if "phis" in kwargs:
@@ -1239,7 +1279,7 @@ class ProtocolData(object):
         # iPhis = [i for i,el in enumerate(cl) if el]
         assert(0 < len(iPhis) <= self.nPhis)
         
-        if verbose > 0:
+        if config.verbose > 0:
             print("phis = ", iPhis)
         
         #cl = list(np.isclose(Vs, Vs))
@@ -1249,7 +1289,7 @@ class ProtocolData(object):
         else:
             iVs = [getIndex(self.Vs, V) for V in self.Vs]
         
-        if verbose > 0:
+        if config.verbose > 0:
             print("Vs = ", iVs)
         
         # Vs = kwargs["Vs"] if "Vs" in kwargs else self.nVs
@@ -1288,11 +1328,14 @@ class ProtocolData(object):
     def getLineProps(self, run, phiInd, vInd):
         #global colours
         #global styles
-        if verbose > 1 and (self.nRuns>len(colours) or len(self.phis)>len(colours) or len(self.Vs)>len(colours)):
+        colours = config.colours
+        styles = config.styles
+        
+        if config.verbose > 1 and (self.nRuns>len(colours) or len(self.phis)>len(colours) or len(self.Vs)>len(colours)):
             warnings.warn("Warning: only {} line colours are available!".format(len(colours)))
-        if verbose > 0 and self.nRuns>1 and len(self.phis)>1 and len(self.Vs)>1:
+        if config.verbose > 0 and self.nRuns>1 and len(self.phis)>1 and len(self.Vs)>1:
             warnings.warn("Warning: Too many changing variables for one plot!")
-        if verbose > 2:
+        if config.verbose > 2:
             print("Run=#{}/{}; phiInd=#{}/{}; vInd=#{}/{}".format(run,self.nRuns,phiInd,len(self.phis),vInd,len(self.Vs)))
         if self.nRuns > 1:
             col = colours[run % len(colours)]
