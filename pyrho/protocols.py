@@ -1,15 +1,14 @@
-"""Stimulation protocols to run on the opsin models including:
-    neuro-engineering stimuli: step, sinusoid, chirp, ramp, delta
-    and opsin-specific protocols: rectifier, shortPulse, recovery.
-    Additionally, custom can be used with arbitrary interpolation fuctions
+"""
+Stimulation protocols to run on the opsin models including:
+neuro-engineering stimuli: step, sinusoid, chirp, ramp, delta
+and opsin-specific protocols: rectifier, shortPulse, recovery.
+Additionally, custom can be used with arbitrary interpolation fuctions
 """
 
 from __future__ import print_function, division
-#import pickle
 import warnings
 import logging
 import os
-#from abc import ABCMeta
 import abc
 
 import numpy as np
@@ -27,13 +26,11 @@ from pyrho.fitting import fitFV, errFV, fitfV, errfV, getRecoveryPeaks, fitRecov
 from pyrho.models import *
 from pyrho.simulators import * # For characterise()
 from pyrho.config import *
-from pyrho.config import xLabelPos
 from pyrho import config
 
 __all__ = ['protocols', 'selectProtocol', 'characterise']
 
 
-# TODO: Make into an Abstract Base Class
 class Protocol(PyRhOobject): #, metaclass=ABCMeta
     """Common base class for all protocols"""
 
@@ -63,6 +60,7 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
         self.phi_ts = None
         self.lam = 470 # Default wavelength [nm]
         self.PD = None
+        self.Ifig = None
 
     def __str__(self):
         return self.protocol
@@ -87,13 +85,13 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
     def prepare(self):
         """Function to set-up additional variables and make parameters consistent after any changes"""
 
-        if np.isscalar(self.cycles): #self.cycles.shape[1] == 1: # Only on duration specified
+        if np.isscalar(self.cycles): # Only 'on' duration specified
             onD = self.cycles
             if hasattr(self, 'totT'):
                 offD = self.totT - onD - self.delD
             else:
                 offD = 0
-            self.cycles = np.asarray([[onD, offD]]) #self.cycles[0]
+            self.cycles = np.asarray([[onD, offD]])
 
         self.cycles = np.asarray(self.cycles)
         self.nPulses = self.cycles.shape[0]
@@ -140,7 +138,6 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
             pulses, totT = cycles2times(cycles, delD)
             for phiInd, phi in enumerate(self.phis):
                 for pInd, pulse in enumerate(pulses):
-
                     phi_ts[run][phiInd][pInd] = genPulse(run, phi, pulse)
         self.phi_ts = phi_ts
         return phi_ts
@@ -210,8 +207,8 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
 
     def plot(self, plotStateVars=False):
         """Plot protocol"""
-        Ifig = plt.figure()
-        self.createLayout(Ifig)
+        self.Ifig = plt.figure()
+        self.createLayout(self.Ifig)
         self.PD.plot(self.axI)
         self.addAnnotations()
         self.plotExtras()
@@ -222,8 +219,6 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
         if self.plotStateVars:
             #RhO = self.RhO
             for run in range(self.nRuns):
-                #cycles, delD = self.getRunCycles(run)
-                #pulses, totT = cycles2times(cycles, delD)
                 for phiInd in range(self.nPhis): #, phi in enumerate(self.phis):
                     for vInd in range(self.nVs):
                         pc = self.PD.trials[run][phiInd][vInd]
@@ -232,7 +227,7 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
                         pc.plotStates(name=fileName)
                         logging.info('Plotting states to: {}'.format(fileName))
 
-        plt.figure(Ifig.number)
+        plt.figure(self.Ifig.number)
         plt.sca(self.axI)
         self.axI.set_xlim(self.PD.begT, self.PD.endT)
         # if addTitles:
@@ -245,15 +240,15 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
         figName = os.path.join(config.fDir, self.protocol+self.dataTag+"."+config.saveFigFormat)
         #externalLegend = False
         #if externalLegend:
-        #    Ifig.savefig(figName, bbox_extra_artists=(lgd,), bbox_inches='tight', format=config.saveFigFormat) # Use this to save figures when legend is beside the plot
+        #    self.Ifig.savefig(figName, bbox_extra_artists=(lgd,), bbox_inches='tight', format=config.saveFigFormat) # Use this to save figures when legend is beside the plot
         #else:
-        Ifig.savefig(figName, format=config.saveFigFormat)
+        self.Ifig.savefig(figName, format=config.saveFigFormat)
 
-        return #Ifig.number
+        return
 
 
     def createLayout(self, Ifig=None, vInd=0):
-
+        """Create axes for protocols with multiple subplots"""
         if Ifig == None:
             Ifig = plt.figure()
 
@@ -276,7 +271,7 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
         if config.verbose > 0 and self.nRuns>1 and len(self.phis)>1 and len(self.Vs)>1:
             warnings.warn("Warning: Too many changing variables for one plot!")
         if config.verbose > 2:
-            print("Run=#{}/{}; phiInd=#{}/{}; vInd=#{}/{}".format(run,self.nRuns,phiInd,len(self.phis),vInd,len(self.Vs)))
+            print("Run=#{}/{}; phiInd=#{}/{}; vInd=#{}/{}".format(run, self.nRuns, phiInd, len(self.phis), vInd, len(self.Vs)))
         if self.nRuns > 1:
             col = colours[run % len(colours)]
             if len(self.phis) > 1:
@@ -337,7 +332,7 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
         else:
             plotLight(pulses, ax=ax, light=light)
 
-        plt.xlabel(r'$\mathrm{Time\ [ms]}$') #(r'\textbf{Time} [ms]')
+        plt.xlabel(r'$\mathrm{Time\ [ms]}$')
         plt.xlim((begT, endT))
         plt.ylabel(r'$\mathrm{\phi\ [ph./mm^{2}/s]}$')
 
@@ -362,7 +357,7 @@ class protCustom(Protocol):
         self.nRuns = 1 #nRuns ### Reconsider this...
 
         #self.custPulseGenerator = self.phi_ft
-        if not hasattr(self, 'phi_ts') or self.phi_ts == None:
+        if not hasattr(self, 'phi_ts') or self.phi_ts is None:
             #self.phi_ts = self.genPulseSet()
             #self.genPulseSet(self.custPulseGenerator)
             self.genPulseSet(self.phi_ft)
@@ -394,8 +389,6 @@ class protCustom(Protocol):
             self.axI = Ifig.add_subplot(111)
 
 
-
-
     def plotExtras(self):
         pass
 
@@ -407,12 +400,9 @@ class protStep(Protocol):
     nRuns = 1
 
     def extraPrep(self):
-        'Function to set-up additional variables and make parameters consistent after any changes'
-
-        self.nRuns = 1 #nRuns
-
+        """Function to set-up additional variables and make parameters consistent after any changes"""
+        self.nRuns = 1
         self.phi_ts = self.genPulseSet()
-        #self.genPulseSet()
 
     def addAnnotations(self):
         self.axI.get_xaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
@@ -475,9 +465,8 @@ class protSinusoid(Protocol):
             Ifig = plt.figure()
 
         self.addStimulus = config.addStimulus
-        #phi_ts = self.genPlottingStimuli()
 
-        if self.nRuns > 1: #len(phis) > 1: #nRuns???
+        if self.nRuns > 1: #len(phis) > 1:
             gsSin = plt.GridSpec(2,3)
             self.axIp = Ifig.add_subplot(gsSin[0,-1])
             self.axIss = Ifig.add_subplot(gsSin[1,-1], sharex=self.axIp)
@@ -503,8 +492,7 @@ class protSinusoid(Protocol):
                     self.axS.set_yscale('log') #plt.yscale('log')
             else:
                 self.axI = Ifig.add_subplot(111)
-            #self.axI = Ifig.add_subplot(111) # Combine with else condition below
-        #plotLight(self.pulses, axI)
+
 
 
     def plotExtras(self):
@@ -949,9 +937,8 @@ class protRectifier(Protocol):
     nRuns = 1
 
     def extraPrep(self):
-        'Function to set-up additional variables and make parameters consistent after any changes'
+        """Function to set-up additional variables and make parameters consistent after any changes"""
         self.nRuns = 1 #nRuns
-
         self.phi_ts = self.genPulseSet()
 
     def createLayout(self, Ifig=None, vInd=0):
@@ -1076,7 +1063,8 @@ class protRectifier(Protocol):
 
                 #col, = getLineProps(Prot, 0, 0, 0) #Prot, run, vInd, phiInd
                 #plt.plot(Vs,Iss,linestyle='',marker='x',color=col)
-                markerSize=40
+                # TODO: Set from config
+                markerSize = 40
                 ax.scatter(Vs, Iss, marker='x', color=colours, s=markerSize)#,linestyle=''
 
 
@@ -1173,10 +1161,8 @@ class protRectifier(Protocol):
         ax.vlines(x=-70, ymin=0, ymax=1, linestyle=':', color='k')
         ax.hlines(y=1, xmin=-70, xmax=0, linestyle=':', color='k')
 
-        #ax.set_xlabel('$V_{clamp}$ $\mathrm{[mV]}$', position=(0.8,0.8)) #plt.xlabel
-        ax.set_xlabel(r'$V_{clamp}$ $\mathrm{[mV]}$', position=(xLabelPos,0), ha='right')
+        ax.set_xlabel(r'$V_{clamp}$ $\mathrm{[mV]}$', position=(config.xLabelPos,0), ha='right')
         #plt.xlim((min(Vs),max(Vs)))
-        #ax.set_ylabel('$I_{ss}$ $\mathrm{[nA]}$', position=(0.55,0.05)) # Shared axis
 
         self.axI.grid(b=True, which='minor', axis='both', linewidth=.2)
         self.axI.grid(b=True, which='major', axis='both', linewidth=1)
@@ -1284,7 +1270,7 @@ class protRecovery(Protocol):
         # return np.asarray[self.pulses[self.run]]
 
     def prepare(self):
-        '''Function to set-up additional variables and make parameters consistent after any changes'''
+        """Function to set-up additional variables and make parameters consistent after any changes"""
         self.IPIs = np.sort(np.asarray(self.IPIs))
 
         self.nRuns = len(self.IPIs)
@@ -1358,7 +1344,8 @@ class protRecovery(Protocol):
                 for vInd in range(self.nVs):
                     col, style = self.getLineProps(run, vInd, phiInd)
                     pulses = self.PD.trials[run][phiInd][vInd].pulses
-                    plt.annotate('', (pulses[0,1], (run+1)*pos), (pulses[1,0], (run+1)*pos), arrowprops={'arrowstyle':'<->','color':col,'shrinkA':0,'shrinkB':0})
+                    plt.annotate('', (pulses[0,1], (run+1)*pos), (pulses[1,0], (run+1)*pos), 
+                                 arrowprops={'arrowstyle':'<->', 'color':col, 'shrinkA':0, 'shrinkB':0})
 
                     if run == 0:    ### Fit peak recovery
                         t_peaks, I_peaks, Ipeak0, Iss0 = getRecoveryPeaks(self.PD, phiInd, vInd, usePeakTime=True)
@@ -1372,7 +1359,9 @@ class protRecovery(Protocol):
 
 
 from collections import OrderedDict
-protocols = OrderedDict([('step', protStep), ('delta', protDelta), ('sinusoid', protSinusoid), ('chirp', protChirp), ('ramp', protRamp), ('recovery', protRecovery), ('rectifier', protRectifier), ('shortPulse', protShortPulse), ('custom', protCustom)])
+protocols = OrderedDict([('step', protStep), ('delta', protDelta), ('sinusoid', protSinusoid), 
+                         ('chirp', protChirp), ('ramp', protRamp), ('recovery', protRecovery), 
+                         ('rectifier', protRectifier), ('shortPulse', protShortPulse), ('custom', protCustom)])
 
 # E.g.
 # protocols['shortPulse']([1e12], [-70], 25, [1,2,3,5,8,10,20], 100, 0.1)
