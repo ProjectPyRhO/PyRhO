@@ -383,7 +383,8 @@ class simNEURON(Simulator):
         import copy
         from neuron import h
         #self.neuron = neuron
-        self.h = h
+        self.h = h  # Enables self.h('any hoc statement')
+                    # c.f. nrnpython('any python statement')
 
         self.h.load_file('stdrun.hoc')
         ### To load mod files:
@@ -401,7 +402,7 @@ class simNEURON(Simulator):
             self.h('objref cvode')
             self.h.cvode = self.h.CVode()
             self.h.cvode.active(1)
-        else: # 'fixed'
+        else: # 'fixed' N.B. NEURON overrides this, so it is reset at the end of runTrial
             #self.h.cvode.active(0)
             self.h.dt = params['dt'].value
             self.dt = self.h.dt
@@ -709,6 +710,10 @@ class simNEURON(Simulator):
         self.h.Iphi.resize(0)
         self.h.Vm.clear()
         self.h.Vm.resize(0)
+        
+        # NEURON changes the timestep! Set the actual timestep for plotting stimuli
+        self.dt = self.h.dt
+        self.Prot.dt = self.h.dt
 
         return I_RhO, t, soln
 
@@ -836,7 +841,7 @@ class simNEURON(Simulator):
         self.Vm = np.array(self.h.Vm.to_python(), copy=True)
         self.t = t
 
-        ### Get solution variables
+        ### Get solution variables N.B. NEURON changes the sampling rate
         soln = np.zeros((len(t), RhO.nStates))
         for sInd, s in enumerate(RhO.stateVars):
             self.h('objref tmpVec')
@@ -854,7 +859,11 @@ class simNEURON(Simulator):
         self.h.Vm.resize(0)
         # phiVec ?
 
-        RhO.storeStates(soln[1:],t[1:])
+        RhO.storeStates(soln[1:], t[1:])
+
+        # NEURON changes the timestep! Set the actual timestep for plotting stimuli
+        self.dt = self.h.dt
+        self.Prot.dt = self.h.dt
 
         ### Calculate photocurrent
         #I_RhO = RhO.calcI(V, RhO.states) # Recorded directly
