@@ -23,7 +23,7 @@ import numpy as np
 
 __all__ = ['setupGUI', 'simAvailable', 'setupNEURON', 'setupBrian', 'check_package',
            'setFigOutput', 'setFigStyle', 'resetPlot', 'wallTime', 'setOutput']
-# TODO: Place in dict i.e. CONFIG_PARAMS['dDir']
+# TODO: Place in dict i.e. CONFIG_PARAMS['dDir'] or class with setter methods e.g. to call setOutput
 #, 'colours', 'styles', 'verbose', 'dDir', 'fDir', 'DASH_LINE', 'DOUB_DASH_LINE'
 
 pyVer = sys.version_info
@@ -43,12 +43,15 @@ else:
 if pyVer[0] == 3:
     if pyVer <= (3, 3):
         def check_package(pkg):
+            """Test for 'pkg' on the system"""
             return importlib.find_loader(pkg) is not None
     elif pyVer >= (3, 4):
         def check_package(pkg):
+            """Test for 'pkg' on the system"""
             return importlib.util.find_spec(pkg) is not None
 elif pyVer[0] == 2:
     def check_package(pkg):
+        """Test for 'pkg' on the system"""
         return pkgutil.find_loader(pkg) is not None
 
 _DASH_LINE = '-' * 80
@@ -56,10 +59,11 @@ _DOUB_DASH_LINE = '=' * 80
 
 
 ##### Output level settings #####
-global verbose
-if 'verbose' not in vars() or 'verbose' not in globals() or verbose is None:
-    verbose = 1 # Text notification output level [0,1,2]
-logLevels = [logging.CRITICAL, logging.ERROR, logging.WARNING, logging.INFO, logging.DEBUG, logging.NOTSET]
+#global verbose
+#if 'verbose' not in vars() or 'verbose' not in globals() or verbose is None:
+verbose = 1 # Text notification output level [0,1,2]
+logLevels = [logging.CRITICAL, logging.ERROR, logging.WARNING, 
+             logging.INFO, logging.DEBUG, logging.NOTSET]
 logging.basicConfig(filename='PyRhO.log', level=logLevels[verbose])
 
 def setOutput(level):
@@ -144,7 +148,7 @@ def checkNEURON(test=False):
                 warnings.warn('Missing hoc files in {}: {}'.format(nmodlPath, set(HOCfiles) - set(hocList)))
 
     else:
-        warnings.warn("'NRN_NMODL_PATH' is not set - add e.g. 'export NRN_NMODL_PATH=/path/to/NEURON' to your bash profile.")
+        warnings.warn("'NRN_NMODL_PATH' is not set - add 'export NRN_NMODL_PATH=/path/to/NEURON' to your bash profile.")
 
     try:
         import neuron as nrn
@@ -386,6 +390,7 @@ def setFigStyle(): #fancyPlots=False): # Merge this with setFigOutput
     if fancyPlots:
         try:
             import seaborn as sns
+            cp = sns.color_palette()
         except ImportError:
             warnings.warn('Seaborn not found - using default plotting scheme.')
         else: # Try another package?

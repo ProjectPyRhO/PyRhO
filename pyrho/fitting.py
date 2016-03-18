@@ -1712,11 +1712,13 @@ def fitModels(dataSet, nStates=3, params=None, postFitOpt=True, relaxFact=2, met
         else:
             print('')
         print("--------------------------------------------------------------------------------")
-        print("Opsin model \tChi^2   \trChi^2  \tAIC     \tBIC")
+        #print("Opsin model \tChi^2   \trChi^2  \tAIC     \tBIC")
+        print('Opsin model:', 'Chi^2'.rjust(8), 'rChi^2'.rjust(8), 'AIC'.rjust(8), 'BIC'.rjust(8))
         for i, nSt in enumerate(nStates):
             minResult = miniObjs[i]
             #print("Fit for {} variables over {} points ({} d.f.) with {} function evaluations".format(minResult.nvarys, minResult.ndata, minResult.nfree, minResult.nfev))
             print("{}-state \t{:8.3g} \t{:8.3g} \t{:8.3g} \t{:8.3g}".format(stateLabs[nSt], minResult.chisqr, minResult.redchi, minResult.aic, minResult.bic))
+            #print('{}-state \t', '{:8.3g}'.rjust(8), '{:8.3g}'.rjust(8), '{:8.3g}'.rjust(8), '{:8.3g}'.rjust(8).format(stateLabs[nSt], minResult.chisqr, minResult.redchi, minResult.aic, minResult.bic))
             #print("Chi^2: {}".format(minResult.chisqr))
             #print("Reduced Chi^2: {}".format(minResult.redchi))
             #print("Akaike Info.:   {}".format(minResult.aic))
