@@ -47,9 +47,9 @@ __project__ = 'pyrho'
 #__version__ = pkg_resources.get_distribution(__project__).version #'0.8.0'
 try:
     _dist = pkg_resources.get_distribution(__project__)
-    distLoc = os.path.normcase(_dist.location) # Normalise case for Windows
+    _distLoc = os.path.normcase(_dist.location) # Normalise case for Windows
     here = os.path.normcase(__file__)
-    if not here.startswith(os.path.join(distLoc, __project__)):
+    if not here.startswith(os.path.join(_distLoc, __project__)):
         # not installed, but there is another version that *is*
         raise pkg_resources.DistributionNotFound
 except pkg_resources.DistributionNotFound:
@@ -73,9 +73,14 @@ if __name__ == '__main__':
 
 def runAll(listOfModels=[6]):
     """
-    Run all protocols (with Python) on a list of models with default parameters!
-    listOfModels    := individual or list of integers or strings
-                        e.g. [3, 4, 6], 3, '4', ['4', '6'], modelList
+    Run all protocols (with Python) on a list of models with default parameters.
+
+    Parameters
+    ----------
+    listOfModels : int, str, list
+        Individual or list of integers or strings specifying the models to run
+        e.g. e.g. [3, 4, 6], 3, '4', ['4', '6'], modelList
+    
     """
 
     if not isinstance(listOfModels, (list, tuple)):
