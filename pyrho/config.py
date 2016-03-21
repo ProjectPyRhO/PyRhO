@@ -43,15 +43,15 @@ else:
 if pyVer[0] == 3:
     if pyVer <= (3, 3):
         def check_package(pkg):
-            """Test for 'pkg' on the system"""
+            """Test if 'pkg' is available"""
             return importlib.find_loader(pkg) is not None
     elif pyVer >= (3, 4):
         def check_package(pkg):
-            """Test for 'pkg' on the system"""
+            """Test if 'pkg' is available"""
             return importlib.util.find_spec(pkg) is not None
 elif pyVer[0] == 2:
     def check_package(pkg):
-        """Test for 'pkg' on the system"""
+        """Test if 'pkg' is available"""
         return pkgutil.find_loader(pkg) is not None
 
 _DASH_LINE = '-' * 80
@@ -64,6 +64,8 @@ _DOUB_DASH_LINE = '=' * 80
 verbose = 1 # Text notification output level [0,1,2]
 logLevels = [logging.CRITICAL, logging.ERROR, logging.WARNING, 
              logging.INFO, logging.DEBUG, logging.NOTSET]
+
+logger = logging.getLogger(__name__)
 logging.basicConfig(filename='PyRhO.log', level=logLevels[verbose])
 
 def setOutput(level):
@@ -102,8 +104,20 @@ if 'fDir' not in vars() or 'fDir' not in globals() or fDir is None:
     createDir(fDir)
 
 GUIdir = 'gui'
+
 def setupGUI(path=None):
-    """Setup the Jupyter notebook GUI"""
+    
+    """
+    Setup the Jupyter notebook GUI.
+    
+    Parameters
+    ----------
+    path : str, optional
+        Specify the path for where to set up the GUI folders. 
+        Defaults to the current working directory
+    
+    """
+    
     if path is None: # Copy image folders to home directory
         path = os.path.join(os.getcwd(), GUIdir)
 
@@ -115,21 +129,37 @@ def setupGUI(path=None):
 
     return
 
-def simAvailable(sim):
-    """Check whether or not a simulator is available"""
+def simAvailable(sim, test=False):
+    
+    """
+    Check if a simulator is available. 
+    
+    Parameters
+    ----------
+    sim : str {'python', 'neuron', 'brian', 'brian2'}
+        Specify the simulator to check
+    test : bool, optional
+        Specify whether to run the simulator's test suite (the default is False)
+
+    Returns
+    -------
+    bool
+        True if the simulator is available, otherwise False
+    """
+    
     sim = sim.lower()
     if sim is 'python':
         return True
     elif sim is 'neuron':
-        return checkNEURON()
+        return checkNEURON(test)
     elif sim is 'brian' or sim is 'brian2':
-        return checkBrian()
+        return checkBrian(test)
     else:
         return False
 
 
 def checkNEURON(test=False):
-    """Check for NEURON installation and optionally run tests"""
+    """Check for NEURON installation and optionally run tests."""
 
     if 'NRN_NMODL_PATH' in os.environ:
         nmodlPath = os.environ['NRN_NMODL_PATH']
@@ -165,41 +195,60 @@ def checkNEURON(test=False):
     return found
 
 
-def setupNEURON(path=None, NEURONpath=None):
-    """Setup the NEURON simulator to work with PyRhO
-        path        := Path to PyRhO's working directory containing hoc and mod files (default=pwd)
-        NEURONpath  := Path to NEURON installation directory containing nrn (and iv)"""
+def setupNEURON(path=None): # , NEURONpath=None):
+    
+    """
+    Setup the NEURON simulator to work with PyRhO.
+    
+    Parameters
+    ----------
+    path : str, optional
+        Path to NEURON installation directory containing nrn (and iv) containing hoc and mod files (default=pwd)
+    """
 
+    #path : str, optional
+    #    Path to PyRhO's working directory containing hoc and mod files (default=pwd)
+    #NEURONpath : str, optional
+    #    Path to NEURON installation directory containing nrn (and iv)
+    
     cwd = os.getcwd()
     # Boiler plates to expand '~'
     if path is not None:
         path = os.path.expanduser(path)
-    if NEURONpath is not None:
-        NEURONpath = os.path.expanduser(NEURONpath)
+    #if NEURONpath is not None:
+    #    NEURONpath = os.path.expanduser(NEURONpath)
 
     # TODO: Add instructions to compile/install for Python 2
     if not checkNEURON():   # Check for a working NEURON installation...
         if False: # TODO: Make NEURONinstallScript work with subprocess
             if sys.platform == 'win32':
-                # TODO: Create cmd script for compiling on Windows
+                # TODO: Create bat/cmd script for compiling on Windows
                 warnings.warn('Compilation on Windows is not yet supported - please install NEURON manually and rerun!')
                 return
             else:
                 try:
-                    if NEURONpath is None:
-                        print("Please specify an installation path for NEURON with 'NEURONpath' and run again")
-                        return
+                    if path is None: #NEURONpath
+                        ans = input('The `path` argument was not specified - please enter one or press `Enter` to use the current working directory ({}): '.format(cwd))
+                        if ans == '' or ans is None:
+                            path = cwd
+                        else:
+                            path = os.path.expanduser(ans)
+                        # Set NRN_NMODL_PATH environment variable to path
+                        #print('Please specify an installation path for NEURON with `NEURONpath` and run again')
+                        #return
                     #NEURONscriptPath = os.path.join(home, 'NEURON')
                     #NEURONscriptPath = pyrhoNEURONpath
 
                     NEURONscriptIncPath = os.path.join(pyrhoNEURONpath, NEURONinstallScript)
-                    exitcode = subprocess.call([NEURONscriptIncPath, NEURONpath], shell=True) # .check_call
+                    exitcode = subprocess.call([NEURONscriptIncPath, path], shell=True) #NEURONpath # .check_call
                 except:
-                    shutil.copy2(os.path.join(pyrhoNEURONpath, NEURONinstallScript), cwd)
-                    print('Unable to install NEURON - please install manually with the script copied to {}.'.format(cwd))
+                    createDir(path)
+                    shutil.copy2(os.path.join(pyrhoNEURONpath, NEURONinstallScript), path) #cwd
+                    print('Unable to install NEURON - please install manually with the script copied to {}.'.format(path)) #cwd
         else:
-            shutil.copy2(os.path.join(pyrhoNEURONpath, NEURONinstallScript), cwd)
-            print("NEURON must be compiled from source to work with Python 3. Please use the script '{}' copied to '{}' and then rerun setupNEURON.".format(NEURONinstallScript, cwd))
+            shutil.copy2(os.path.join(pyrhoNEURONpath, NEURONinstallScript), path) #cwd
+            print('NEURON must be compiled from source to work with Python 3. ')
+            print('Please use the script `{}` in `{}` and then rerun setupNEURON.'.format(NEURONinstallScript, path)) #cwd
             print("E.g.: ./{} /abs/path/to/install/NEURON/".format(NEURONinstallScript))
 
     ### To load mod files:
@@ -207,14 +256,14 @@ def setupNEURON(path=None, NEURONpath=None):
     if path is None:
         try:
             path = os.environ['NRN_NMODL_PATH']
-            print("Using path from 'NRN_NMODL_PATH' for hoc & nmodl files: ", end='')
+            print('Using path from `NRN_NMODL_PATH` for hoc & nmodl files: ', end='')
         except KeyError:
             path = cwd
             os.environ['NRN_NMODL_PATH'] = path
             #os.putenv(key, value) # Direct assignment is preferable
             print('Using current directory for hoc & nmodl files: ', end='')
     else:
-        print("Using suplied path for hoc & nmodl files: ", end='')
+        print('Using suplied path for hoc & nmodl files: ', end='')
     print(path)
 
     # mod files should be compiled in the working directory for NEURON to find them
@@ -241,10 +290,10 @@ def setupNEURON(path=None, NEURONpath=None):
     nrnivmodl = shutil.which('nrnivmodl')
     if nrnivmodl is None:
         arch = platform.machine()
-        if NEURONpath is not None:
-            nrnivmodl = os.path.join(NEURONpath, "nrn", arch, "bin", "nrnivmodl")
-        else:
-            nrnivmodl = os.path.join(path, "nrn", arch, "bin", "nrnivmodl") # Try the hoc/mod path
+        #if NEURONpath is not None:
+        #    nrnivmodl = os.path.join(NEURONpath, "nrn", arch, "bin", "nrnivmodl")
+        #else:
+        nrnivmodl = os.path.join(path, 'nrn', arch, 'bin', 'nrnivmodl') # Try the hoc/mod path
 
     print('Compiling mod files with ', nrnivmodl)
     try:
@@ -259,7 +308,7 @@ def setupNEURON(path=None, NEURONpath=None):
             print("NMODL compilation returned", retcode) #, file=sys.stderr)
     except OSError as e:
         print('NMODL Compilation failed: ', e, file=sys.stderr)
-        print('Try setting the NEURON directory as an environment variable or passing it as the NEURONpath argument.')
+        print('Try setting the NEURON directory as an environment variable or passing it as the `path` argument.') #NEURONpath
     return
 
 def checkBrian(test=False):
@@ -283,10 +332,13 @@ def checkBrian(test=False):
     return found
 
 def setupBrian():
-    """Setup the Brian2 simulator"""
+    """Setup the Brian2 simulator."""
     if not checkBrian():
-        import pip
-        pip.main(['install', 'brian2']) # pip install brian2
+        try:
+            import pip
+            pip.main(['install', 'brian2']) # pip install brian2
+        except:
+            warnings.warn('Unable to install Brian2 - please run `pip install brian2` from the terminal')
     return
 
 
@@ -309,7 +361,18 @@ if latexInstalled:
 xLabelPos = 0.98
 
 def setFigOutput(figDisplay='screen', width=None):
-    """Set figure plotting options"""
+    
+    """
+    Set figure plotting options. 
+    
+    Parameters
+    ----------
+    figDisplay : str, {'screen', 'paper'}, optional
+        Specify the output medium to set figure properties for
+    width : int or float, optional
+        Figure width in inches. Default depends on figDisplay. 
+    """
+    
     golden_ratio = (1.0 + np.sqrt(5)) / 2.0
     global saveFigFormat
     global addTitles
