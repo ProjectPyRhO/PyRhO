@@ -1119,7 +1119,29 @@ class PhotoCurrent(object):
 
 
 class ProtocolData(object):
-    """Container for PhotoCurrent data from parameter variations in the same protocol"""
+    """
+    Container for PhotoCurrent data from parameter variations in the same protocol
+    
+    Attributes
+    ----------
+    protocol : str
+        Label corresponding to the stimulation protocol used to collect the data.
+    nRuns : int >= 1
+        The number of `runs` recorded in the protocol (default=1).
+    phis : list[float]
+        The flux values used in the protocol.
+    nPhis : int >= 1
+        The number of flux values used == len(phis).
+    Vs : list[float, None]
+        The membrane clamp voltages used in the protocol.
+    nVs : int >= 1 or None
+        The number of membrane clamp voltages == len(Vs) or `None` if no voltage clamps were used.
+    trials : list[list[list[PhotoCurrent]]]
+        Nested lists of the PhotoCurrents for each protocol condition.
+        nRuns x nPhis x nVs
+    runLabels : list[str]
+        List of series labels specifying the independent variable for each run. 
+    """
 
     # TODO: Replace lists with dictionaries or pandas data structures
     '''
@@ -1177,6 +1199,17 @@ class ProtocolData(object):
         ### Extract the parameters from the pcs and file them accordingly
         ### Alternatively, put them all in a flat list/set and use getTrials to retrieve relevant pcs.
 
+    ''' # This may be overkill since the metadata should be set upon initialisation and not changed
+    @property
+    def phis(self):
+        return self._phis
+
+    @phis.setter
+    def phis(self, phis):
+        self._phis = phis
+        self.nPhis = len(phis)
+    '''
+    
     def __str__(self):
         return 'Protocol data set: [nRuns={}, nPhis={}, nVs={}]'.format(self.nRuns, self.nPhis, self.nVs)
 
@@ -1209,7 +1242,17 @@ class ProtocolData(object):
 
 
     def addTrials(self, photocurrents, run=0):
-
+        """
+        Add a photocurrent to the ProtocolData object without the need to specify the phi or V index. 
+        
+        Parameters
+        ----------
+        photocurrents : list[PhotoCurrent] or PhotoCurrent
+            PhotoCurrent or list of PhotoCurrent data to add to the ProtocolData object. 
+        run : int, optional
+            Specify the run index, as this is not apparent from the PhotoCurrent (default=0).
+        """
+        
         assert(0 <= run < self.nRuns)
 
         if not isinstance(photocurrents, (list, tuple)):
@@ -1391,6 +1434,24 @@ class ProtocolData(object):
 
 
     def plot(self, ax=None, light='shade', addFeatures=True):
+        """
+        Convenience method to plot the data set. 
+        
+        Parameters
+        ----------
+        ax : axis, optional
+            Existing axis on which to plot the PhotoCurrent data (default=None). 
+            If `None`, create a new axis. 
+        light : str {'shade', ...}, optional
+            Specify the light style to plot. 
+        addFeatures : bool, optional
+            Flag to pass to PhotoCurrent.plot for adding extra features e.g. peak and steady-state
+        
+        See Also
+        --------
+        utilities.plotLight
+        """
+        
         if ax == None:
             ax = plt.gca()
         else:
@@ -1500,7 +1561,20 @@ class ProtocolData(object):
     def getIpmax(self, vInd=None):
         """
         Find the maximum peak current for the whole data set.
-        This is useful when the 'delta' protocol is absent
+        
+        This is useful when the 'delta' protocol is absent.
+        
+        Parameters
+        ----------
+        vInd : int, optional
+            Optionally restrict the search to a particular membrane potential (default=None). 
+        
+        Returns
+        -------
+        Ipmax_ : float
+            Maximum absolute (most extreme) peak current value found in data set.
+        tuple
+            Indexes of the most extreme value found (rmax, pmax, vmax)
         """
 
         self.Ipmax_ = 0
@@ -1527,7 +1601,16 @@ class ProtocolData(object):
     # reduce(lambda a,b: a if (a > b) else b, list)
 
     def getProtPeaks(self):
-        """Return the set of maximum (absolute) peak currents across a whole set of photocurrents"""
+        """
+        Return the set of maximum absolute (most extreme) peak currents across a whole set of photocurrents
+        
+        Returns
+        -------
+        Ipeaks : list[list[list[float]]]
+            Nested lists of peak values: nRuns x nPhis x nVs. 
+        tpeaks : list[list[list[float]]]
+            Nested lists of peak value times: nRuns x nPhis x nVs.
+        """
         if self.nRuns > 1:
             phiInd = 0
             vInd = 0
@@ -1553,15 +1636,34 @@ class ProtocolData(object):
 
 
     def getSteadyStates(self, run=0, phiInd=None):
-        """Return Iss, Vss"""
+        """
+        Return Iss, Vss. 
+        
+        Find the steady-state currents and the corresponding voltage clamp potentials. 
+
+        Parameters
+        ----------
+        run : int, optional
+            Specify the run index to collect the data from (default=0). 
+        phiInd : int, optional
+            Specify the phi index to collect the data from or collect from all flux values (default=None). 
+        
+        Returns
+        -------
+        Iss : list[list[float]] or list[float]
+            Nested lists of peak values: len == nPhis x nVs or nVs. 
+        Vss : list[list[float]] or list[float]
+            Nested lists of steady-state membrane potentials: len == nPhis x nVs or nVs
+        """
+        
         assert(self.nVs > 1)
         if phiInd is None: # Return 2D array
-            self.Isss_ = np.zeros((self.nPhis,self.nVs))
-            self.Vss_ = np.zeros((self.nPhis,self.nVs))
+            self.Isss_ = np.zeros((self.nPhis, self.nVs))
+            self.Vss_ = np.zeros((self.nPhis, self.nVs))
             for phiInd, phi in enumerate(self.phis):
                 for vInd, V in enumerate(self.Vs):
-                    self.Isss_[phiInd,vInd] = self.trials[run][phiInd][vInd].ss_ # Variations along runs are not useful here
-                    self.Vss_[phiInd,vInd] = self.trials[run][phiInd][vInd].V
+                    self.Isss_[phiInd, vInd] = self.trials[run][phiInd][vInd].ss_ # Variations along runs are not useful here
+                    self.Vss_[phiInd, vInd] = self.trials[run][phiInd][vInd].V
         else:
             self.Isss_ = np.zeros(self.nVs)
             self.Vss_ = np.zeros(self.nVs)
