@@ -287,7 +287,9 @@ def setupNEURON(path=None): # , NEURONpath=None):
         #    shutil.copy2(pyrhoNEURONpath, path, f)
 
 
-    nrnivmodl = shutil.which('nrnivmodl')
+    if pyVer >= (3, 3):
+        nrnivmodl = shutil.which('nrnivmodl')
+
     if nrnivmodl is None:
         arch = platform.machine()
         #if NEURONpath is not None:
