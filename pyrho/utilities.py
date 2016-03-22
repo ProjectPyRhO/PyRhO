@@ -377,14 +377,19 @@ def cycles2times(cycles, delD):
 
 
 def plotLight(times, ax=None, light='shade', dark=None, lam=470, alpha=0.2):
-    """Plot light pulse(s)
+    """
+    Plot light pulse(s)
+    
+    Parameters
+    ----------
     times   = [[t_on, t_off],...]
     ax      = Axes to plot on [default: gca()]
     light   = Representation type: {'shade', 'borders', 'greyscale', 'hatch', 'spectral'}
               [Default: 'shade']
     dark    = Lightness of the background [0 (black), 1 (white)]
     lam     = Wavelength [nm] (default: 470)
-    alpha   = Transparency (default: 0.2)"""
+    alpha   = Transparency (default: 0.2)
+    """
 
     ### Change plt.axvspan to ax.axvspan etc.
     if ax is None:
