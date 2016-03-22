@@ -1337,10 +1337,10 @@ class ProtocolData(object):
         assert(0 < len(runs) <= self.nRuns)
 
         if config.verbose > 0:
-            print("runs = ", runs)
+            print('runs = ', runs)
 
-        if "phis" in kwargs:
-            phis = kwargs["phis"]
+        if 'phis' in kwargs:
+            phis = kwargs['phis']
             cl = list(np.isclose(self.phis, phis))
             iPhis = [i for i,el in enumerate(cl) if el]
         else:
@@ -1352,17 +1352,17 @@ class ProtocolData(object):
         assert(0 < len(iPhis) <= self.nPhis)
 
         if config.verbose > 0:
-            print("phis = ", iPhis)
+            print('phis = ', iPhis)
 
         #cl = list(np.isclose(Vs, Vs))
         #iVs = [i for i,el in enumerate(cl) if el]
-        if "Vs" in kwargs:
-            iVs = [getIndex(self.Vs, V) for V in kwargs["Vs"]]
+        if 'Vs' in kwargs:
+            iVs = [getIndex(self.Vs, V) for V in kwargs['Vs']]
         else:
             iVs = [getIndex(self.Vs, V) for V in self.Vs]
 
         if config.verbose > 0:
-            print("Vs = ", iVs)
+            print('Vs = ', iVs)
 
         # Vs = kwargs["Vs"] if "Vs" in kwargs else self.nVs
         # assert(0 <= len(Vs) < self.nVs)
