@@ -79,7 +79,7 @@ def runAll(listOfModels=[6]):
     ----------
     listOfModels : int, str, list
         Individual or list of integers or strings specifying the models to run
-        e.g. e.g. [3, 4, 6], 3, '4', ['4', '6'], modelList
+        e.g. [3, 4, 6], 3, '4', ['4', '6'], modelList
     
     """
 
