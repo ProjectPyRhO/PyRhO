@@ -18,6 +18,9 @@ home = os.path.expanduser("~")
 print(home)
 prwd = os.path.join(home, 'pyrho') # pyrho working directory
 
+# TODO: Test changes to package_data and include notebooks and license without MANIFEST
+
+# TODO: Fix this to remove redundant long_description text
 # Get the long description from the relevant file
 #with open(os.path.join(here, 'DESCRIPTION.rst'), encoding='utf-8') as f:
 #with open('DESCRIPTION.rst', encoding='utf-8') as f:
@@ -47,7 +50,7 @@ The PyRhO project website with additional documentation may be found here: `www.
 
 
 """
-    
+
 
 setup(
     name='PyRhO',
