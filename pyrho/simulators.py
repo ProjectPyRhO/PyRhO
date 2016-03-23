@@ -1,4 +1,9 @@
-"""Classes to wrap simulation engines for a uniform interface"""
+"""
+Classes to wrap simulation engines for a uniform interface
+    * ``Python`` for simulations at the `channel` level
+    * ``NEURON`` for simulations at the `cellular` level
+    * ``Brian2`` for simulations at the `network` level
+"""
 
 from __future__ import print_function, division
 import warnings

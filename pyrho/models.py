@@ -1,4 +1,9 @@
-"""Rhodopsin model class and functions"""
+"""
+Rhodopsin model class and functions
+    * Three-state model :math:`\{C, O, D\}`
+    * Four-state model :math:`\{C_1, O_1, O_2, C_2\}`
+    * Six-state model :math:`\{C_1, I_1, O_1, O_2, I_2, C_2\}`
+"""
 
 from __future__ import print_function, division
 import warnings

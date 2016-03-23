@@ -85,7 +85,30 @@ class RhodopsinStates():
 '''
 
 class PhotoCurrent(object):
-    """Data storage class for an individual Photocurrent and its associated properties"""
+    """
+    Data storage class for an individual Photocurrent and its associated properties
+    
+    Attributes
+    ----------
+    I : ndarray(float)
+        Array of photocurrent values in nanoamps [nA].
+    t : ndarray(float)
+        Array of time values in milliseconds [ms] corresponding to ``I``. 
+    pulses : list(list(float))
+        Pairs of time points describing the beginning and end of stimulation
+        e.g. [[t_on0, t_off0], [t_on1, t_off1], ..., [t_onN-1, t_offN-1]]. 
+    phi : float
+        Stimulating flux (max) [ph*mm^-2*s^-1]. 
+    V : float or ``None``
+        Voltage clamp potential [mV] or ``None`` if no clamp was used. 
+    stimuli : ndarray(float) or ``None``, optional
+        Optional array of flux values corresponding to ``I``. Expect nStimuli x nSamples row vectors. 
+    states : ndarray(float) or ``None``, optional
+        Optional array of model state variables if the data are synthetic (shape=nStates x nSamples). 
+    stateLabels : list(str) or ``None``, optional
+        Optional list of LaTeX strings labelling each of the state variables. 
+    """
+    
     # TODO: Make this a setter which calls findPeakInds and findSteadyState when changed
     overlap = True  # Periods are up to *and including* the start of the next e.g. onPhase := t[onInd] <= t <? t[offInd]
 
@@ -123,6 +146,7 @@ class PhotoCurrent(object):
         self.totT = self.endT - self.begT       # Total trial time #max(self.t) # Handles negative delays
 
         if stimuli is not None:
+            # TODO: Remove stimuli and make it equivalent to t i.e. float or array
             # Expect nStimuli x nSamples row vectors
             self.stimuli = np.copy(stimuli)
             ndim = self.stimuli.ndim
@@ -313,12 +337,21 @@ class PhotoCurrent(object):
 
 
     #TODO: Finish this - avoid circular imports or move to fitting.py!
-    def fitKinetics(self, p=0, trim=0.1, method='powell'): # defMethod
-        """
-        Fit exponentials to a photocurrent to find time constants of kinetics
-        p       : specify which pulse to use (default=0)
-
-        method  : optimisation method (default=defMethod)
+    def fitKinetics(self, p=0, method='powell'): # trim=0.1, # defMethod
+        r"""
+        Fit exponentials to a photocurrent to find time constants of kinetics. 
+        
+        Plot the time-constants along with the photocurrent: 
+            * :math:`\tau_{act} :=` The activation time-constant of :math:`[I_{on}:I_{peak}]`
+            * :math:`\tau_{inact} :=` The inactivation time-constant of :math:`[I_{peak}:I_{off}]`
+            * :math:`\tau_{deact} :=` The deactivation time-constant(s) of :math:`[I_{off}:]`. A single and double exponential function are fit the the off-curve. 
+        
+        Parameters
+        ----------
+        p : int
+            Specify which pulse to use (default=0) ``0 <= p < nPulses``. 
+        method : str
+            Optimisation method (default=defMethod)
         """
 
         def calcOn(p, t):
@@ -618,8 +651,16 @@ class PhotoCurrent(object):
 
 
     def findPeakInds(self): #, pulse=0):
-        """Find the indicies of the photocurrent peaks for each pulse
-            OUT:    np.array([peakInd_0, peakInd_1, ..., peakInd_n])"""
+        """
+        Find the indicies of the photocurrent peaks for each pulse
+        
+        Returns
+        -------
+        ndarry(int)
+            Array of peak indexes for each pulse (shape=nPulses)
+            np.array([peakInd_0, peakInd_1, ..., peakInd_n-1])
+        """
+        
         offsetInd = len(self.getDelayPhase()[0]) - int(self.overlap) #1
         peakInds = np.zeros((self.nPulses,), dtype=np.int)
         for p in range(self.nPulses):
@@ -635,7 +676,7 @@ class PhotoCurrent(object):
         # self.I_peaks = self.I[self.peakInds]
 
     def findSteadyState(self, pulse=0, tail=0.05, method=0): #, window=tFromOff): ### c.f. findPlateauCurrent() in models.py
-        """Find the steady-state current either as the last tail % of the on-phase or by fitting a decay function"""
+        """Find the steady-state current either as the last ``tail`` proportion of the on-phase or by fitting a decay function"""
         assert(0 <= pulse < self.nPulses)
 
         #offInd = self.pulseInds[pulse][1] #np.searchsorted(t,onD+delD,side="left")
@@ -685,6 +726,7 @@ class PhotoCurrent(object):
             from pyrho.parameters import p0inact
             from pyrho.utilities import expDecay
             from scipy.optimize import curve_fit
+            
             t = self.t[postPeak]
             I = self.I[postPeak]
             shift = t[0]
@@ -698,6 +740,7 @@ class PhotoCurrent(object):
 
 
     def getdIdt(self, offset=1):
+        """Calculate the first derivative of the photocurrent"""
         dI = self.I[offset:] - self.I[:-offset]
         dt = self.t[offset:] - self.t[:-offset]
         #return (dI/dt, np.cumsum(dt) - dt/2)
@@ -706,6 +749,7 @@ class PhotoCurrent(object):
 
 
     def getd2Idt2(self, offset=1):
+        """Calculate the second derivative of the photocurrent"""
         dI = self.I[offset:] - self.I[:-offset]
         dt = self.t[offset:] - self.t[:-offset]
         d2I = dI[offset:] - dI[:-offset]
@@ -1144,41 +1188,6 @@ class ProtocolData(object):
     """
 
     # TODO: Replace lists with dictionaries or pandas data structures
-    '''
-    def __new__(cls, protocol, nRuns, phis, Vs): #*args, **kwargs): #
-        # self.protocol = protocol
-        # self.nRuns = nRuns
-        # self.phis = phis
-        # self.nPhis = len(phis)
-        # self.Vs = Vs
-        # self.nVs = len(Vs)
-        # self.trials = [[[None for v in range(len(Vs))] for p in range(len(phis))] for r in range(nRuns)] # Array of PhotoCurrent objects
-        # self.metaData = {'nRuns':self.nRuns, 'nPhis':self.nPhis, 'nVs':self.nVs}
-        obj = cls.__new__(cls, protocol, nRuns, phis, Vs)
-        obj.__dict__.update(protocol, nRuns, phis, Vs)
-        return obj #.__init__(protocol, nRuns, phis, Vs) #*args, **kwargs) #
-    '''
-    '''
-    def __copy__():
-        return
-    def __deepcopy__():
-        return
-    def __getstate__():
-        """Return an object's state before pickling"""
-        return
-    def __reduce__():
-        """Serialise (pickle) an object"""
-        return
-    def __reduce_ex__(protocol_version):
-        """Serialise an object (new protocol)"""
-        return
-    def __getnewargs__():
-        """Control how an object is created during unpickling"""
-        return
-    def __setstate__():
-        """Restore an object's state after unpickling"""
-        return
-    '''
 
     def __init__(self, protocol, nRuns, phis, Vs):
 

@@ -3,15 +3,31 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to PyRhO's documentation!
-=================================
+PyRhO documentation
+===================
 
-Contents:
+.. automodule:: pyrho
+.. currentmodule:: pyrho
+
+Introduction
+============
+
+.. include:: ../README.rst
+
+Contents
+--------
 
 .. toctree::
    :maxdepth: 2
-
-.. automodule:: pyrho
+   
+   models
+   protocols
+   simulators
+   expdata
+   fitting
+   parameters
+   utilities
+   config
 
 
 Abstraction Layers
@@ -19,49 +35,46 @@ Abstraction Layers
 
 PyRhO contains three abstraction layers which can be used independently of one another. 
 
-.. automodule:: pyrho.models
-	:members:
-.. automodule:: pyrho.protocols
-	:members:
-.. automodule:: pyrho.simulators
-	:members:
+* :doc:`models`
+    .. automodule:: pyrho.models
+* :doc:`protocols`
+    .. automodule:: pyrho.protocols
+* :doc:`simulators`
+    .. automodule:: pyrho.simulators
+	
+.. image:: figs/architecture.png
+    
+Model Fitting
+=============
 
 In addition PyRhO has a fitting subpackage for optionally parameterising the rhodopsin 
 models with experimental datasets. These must first be loaded into the appropriate data
 structures as detailed below. 
 
-.. automodule:: pyrho.expdata
-    :members:
-.. automodule:: pyrho.fitting
-    :members:
+:doc:`expdata`
+    .. automodule:: pyrho.expdata
+    
+:doc:`fitting`
+    .. automodule:: pyrho.fitting
+    
 
-Alternatively, parameters for the models (and protocols and simulators) can be loaded from
-pre-defined sets. 
+Alternatively, parameters for the models (and protocols and simulators) can be loaded from pre-defined sets. 
 
-.. automodule:: pyrho.parameters
-    :members:
+:doc:`parameters`
+    .. automodule:: pyrho.parameters
+    
 
 To aid in the use of these abilities, several utility functions are also provided:
 
-.. automodule:: pyrho.utilities
-    :members:
-.. automodule:: pyrho.config
-    :members:
-
-Finally there is an IPython/Jupyter notebook based graphical user interface (GUI) which 
-can be used to fit and simulate the models. 
-
-
-PyRhO API
-=========
-
-* fitModels(dataSet, nStates=3, params=modelParams['3'], method=methods[3])
-    """Routine to fit as many models as possible and select between them according to some parsimony criterion"""
-* plotFit(I, t, onInd, offInd, phi, V, nStates, params, fitRates, index)
-
-* PhotoCurrent
+:doc:`utilities`
+    .. automodule:: pyrho.utilities
     
-* ProtocolData
+:doc:`config`
+    .. automodule:: pyrho.config
+    
+
+Finally there is an IPython/Jupyter notebook based graphical user interface (GUI) which can be used to fit and simulate the models. 
+
 
 
 Examples

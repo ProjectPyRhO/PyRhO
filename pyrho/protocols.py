@@ -1,8 +1,8 @@
 """
-Stimulation protocols to run on the opsin models including:
-neuro-engineering stimuli: step, sinusoid, chirp, ramp, delta
-and opsin-specific protocols: rectifier, shortPulse, recovery.
-Additionally, custom can be used with arbitrary interpolation fuctions
+Stimulation protocols to run on the opsin models
+    * Neuro-engineering stimuli: ``step``, ``sinusoid``, ``chirp``, ``ramp``, ``delta``
+    * Opsin-specific protocols: ``rectifier``, ``shortPulse``, ``recovery``.
+    * The ``custom`` protocol can be used with arbitrary interpolation fuctions
 """
 
 from __future__ import print_function, division

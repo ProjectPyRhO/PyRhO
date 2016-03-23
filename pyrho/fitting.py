@@ -130,13 +130,29 @@ def errOnPhase(p, Ions, tons, RhO, Vs, phis):
 
 def reportFit(minResult, description, method):
 
-    """
-    N           := number of data points
-    N_{vars}    := number of variables
-    \chi^2      := \Sum_i^N [Resid_i]^2
-    \chi_v^2    := \chi^2 / (N - N_{vars})  # Reduced \chi^2
-    AIC         := N ln(\chi^2 / N) + 2N_{vars}
-    BIC         := N ln(\chi^2 / N) + ln(N) \cdot N_{vars}
+    r"""
+    Print a summary of the model-fitting procedure and metrics
+    
+    Parameters
+    ----------
+    minResult : lmfit.MinimizerResult
+        Object returned by ``lmfit.minimize`` containing the optimised parameters and goodness-of-fit statistics. 
+    description : str
+        Text describing the fitting process which produced minResult. 
+    method : str
+        The name of the fitting algorithm used
+    
+    Notes
+    -----
+    Some definitions used in the goodness-of-fit statistics:
+    
+    .. math::
+        N           &:= \mathrm{number\ of\ data\ points} \\
+        N_{vars}    &:= \mathrm{number\ of\ variables} \\
+        \chi^2      &:= \sum_i^N [Resid_i]^2 \\
+        \chi_v^2    &:= \chi^2 / (N - N_{vars}) \\
+        AIC         &:= N \ln(\chi^2 / N) + 2N_{vars} \\
+        BIC         &:= N \ln(\chi^2 / N) + \ln(N) \cdot N_{vars} \\
     """
 
     #Fitting parameters for the {}-state model
