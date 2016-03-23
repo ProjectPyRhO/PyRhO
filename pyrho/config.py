@@ -22,7 +22,8 @@ import numpy as np
 #import lmfit
 
 __all__ = ['setupGUI', 'simAvailable', 'setupNEURON', 'setupBrian', 'check_package',
-           'setFigOutput', 'setFigStyle', 'resetPlot', 'wallTime', 'setOutput']
+           'setFigOutput', 'setFigStyle', 'resetPlot', 'setOutput']
+# 'wallTime', 
 # TODO: Place in dict i.e. CONFIG_PARAMS['dDir'] or class with setter methods e.g. to call setOutput
 #, 'colours', 'styles', 'verbose', 'dDir', 'fDir', 'DASH_LINE', 'DOUB_DASH_LINE'
 
@@ -289,6 +290,9 @@ def setupNEURON(path=None): # , NEURONpath=None):
 
     if pyVer >= (3, 3):
         nrnivmodl = shutil.which('nrnivmodl')
+    else:
+        from distutils.spawn import find_executable
+        nrnivmodl = find_executable('nrnivmodl')
 
     if nrnivmodl is None:
         arch = platform.machine()
