@@ -77,11 +77,11 @@ class PhotoCurrent(object):
     """
     '''
     overlap     # Periods are up to *and including* the start of the next phase
-    dt          # Sampling time step
-    sr          # Sampling rate [Hz] [samples/s]
-    begT        # t[0]
-    endT        # t[-1]
-    totT        # t[-1] - t[0]
+    dt          # Sampling time step                dt_
+    sr          # Sampling rate [Hz] [samples/s]    sr_
+    begT        # t[0]          HIDE
+    endT        # t[-1]         HIDE
+    totT        # t[-1] - t[0]  
     nStimuli    # Number of stimuli
     nStates     # Number of model states
     synthetic   # Modelling data
@@ -94,13 +94,13 @@ class PhotoCurrent(object):
     offDs       # Off-phase durations
     pulseInds   # Indexes for the start of each on- and off-phase
     clamped     # Membrane potential was clamped
-    lam         # Stimulus wavelength
-    isFiltered  # Data hase been filtered
-    Iorig       # Original photocurrent (unfiltered)
-    Iprev       # Previous photocurrent
-    offset_     # Current offset calculated to zero dark current
-    on_         # Current at t_on[:]
-    off_        # Current at t_off[:]
+    lam         # Stimulus wavelength       RETHINK c.f. stimuli
+    isFiltered  # Data hase been filtered               HIDE
+    Iorig       # Original photocurrent (unfiltered)    HIDE
+    Iprev       # Previous photocurrent                 HIDE
+    offset_     # Current offset calculated to zero dark current    HIDE
+    on_         # Current at t_on[:]        REMOVE
+    off_        # Current at t_off[:]       REMOVE
     range_      # [Imin, Imax]
     span_       # Imax - Imin
     peakInd_    # Index of biggest current peak
@@ -110,11 +110,11 @@ class PhotoCurrent(object):
     tpeaks_     # Times of current peaks in each pulse
     peaks_      # Current peaks in each pulse
     lags_       # t_lag = t_peak - t_on
-    lag_        # Lag of first pulse
+    lag_        # Lag of first pulse      REMOVE
     sss_        # Steady-state currents for each pulse
-    ss_         # Steady-state current of first pulse
-    type        # Polarity of current
-    pulseAligned# Aligned to (a) pulse
+    ss_         # Steady-state current of first pulse   REMOVE
+    type        # Polarity of current     RENAME
+    pulseAligned# Aligned to (a) pulse    RETHINK...
     alignPoint  # {0:=t_on, 1:=t_peak, 2:=t_off}
     p0          # Time shift
     '''
