@@ -12,16 +12,13 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 from pyrho.utilities import getIndex, times2cycles, setCrossAxes, round_sig, plotLight
-#* # expDecay, findPlateauCurrent
-#from pyrho.parameters import tFromOff
-#from pyrho.config import * #verbose, colours, styles
 from pyrho.config import check_package
 from pyrho import config
 
 __all__ = ['PhotoCurrent', 'ProtocolData']
 
 
-# See also python electrophysiology modules
+# TODO: Import/Export from/to python electrophysiology modules
 # Neo: http://neuralensemble.org/neo/
 # G-Node: http://www.ncbi.nlm.nih.gov/pmc/articles/PMC3942789/ (uses Neo and odML)
 # Stimfit: http://journal.frontiersin.org/Journal/10.3389/fninf.2014.00016/full
@@ -38,11 +35,6 @@ __all__ = ['PhotoCurrent', 'ProtocolData']
 # array([[ 0.,  1.],
        # [ 2.,  3.]])
 
-# I = [0.,0.,0.,...-0.945,...,0.]
-# t = [0,0.1,0.2,...,tmax]
-# pulses = [[100,250],[300,500]]
-# photocurrent(I,t,V,phi,pulses)
-
 
 def loadMatFile(filename):
     ### Extend to load pkl files too
@@ -57,32 +49,7 @@ def loadMatFile(filename):
     #    fh.close()
     return data
 
-'''
-class RhodopsinStates():
-    """Data storage class for models states and their associated properties"""
 
-    def __init__(self, states, t, varLabels):
-        ### Load data
-        self.states = np.copy(states)                     # Array of state values
-        self.nStates = len(varLabels)
-        self.nPoints = states.size/self.nStates
-
-        if len(t) == len(self.nPoints):
-            assert(len(t) > 1)
-            self.t = np.copy(t)                 # Corresponding array of time points [ms] #np.array copies by default
-            tdiff = t[1:] - t[:-1]
-            self.dt = tdiff.sum()/len(tdiff)    # (Average) step size
-            self.sr = 1000/(self.dt)            # Sampling rate [samples/s]
-        elif len(t) == 1:                       # Assume time step is passed rather than time array
-            assert(t > 0)
-            self.t = np.array(t*range(self.nPoints))
-            self.dt = t                         # Step size
-            self.sr = 1000/t                    # Sampling rate [samples/s]
-        else:
-            raise ValueError("Dimension mismatch: t must be either an array of the same length as I or a scalar defining the timestep!")
-
-        #...
-'''
 
 class PhotoCurrent(object):
     """
@@ -108,6 +75,49 @@ class PhotoCurrent(object):
     stateLabels : list(str) or ``None``, optional
         Optional list of LaTeX strings labelling each of the state variables. 
     """
+    '''
+    overlap     # Periods are up to *and including* the start of the next phase
+    dt          # Sampling time step
+    sr          # Sampling rate [Hz] [samples/s]
+    begT        # t[0]
+    endT        # t[-1]
+    totT        # t[-1] - t[0]
+    nStimuli    # Number of stimuli
+    nStates     # Number of model states
+    synthetic   # Modelling data
+    nPulses     # Number of pulses
+    pulseCycles # Pulse durations # TODO: Rename cycles to durations
+    delD        # Delay duration before the first pulse
+    delDs       # Total delay before each pulse
+    onDs        # On-phase durations
+    IPIs        # Inter-pulse-intervals t_off <-> t_on
+    offDs       # Off-phase durations
+    pulseInds   # Indexes for the start of each on- and off-phase
+    clamped     # Membrane potential was clamped
+    lam         # Stimulus wavelength
+    isFiltered  # Data hase been filtered
+    Iorig       # Original photocurrent (unfiltered)
+    Iprev       # Previous photocurrent
+    offset_     # Current offset calculated to zero dark current
+    on_         # Current at t_on[:]
+    off_        # Current at t_off[:]
+    range_      # [Imin, Imax]
+    span_       # Imax - Imin
+    peakInd_    # Index of biggest current peak
+    tpeak_      # Time of biggest current peak
+    peak_       # Biggest current peak
+    peakInds_   # Indexes of current peaks in each pulse
+    tpeaks_     # Times of current peaks in each pulse
+    peaks_      # Current peaks in each pulse
+    lags_       # t_lag = t_peak - t_on
+    lag_        # Lag of first pulse
+    sss_        # Steady-state currents for each pulse
+    ss_         # Steady-state current of first pulse
+    type        # Polarity of current
+    pulseAligned# Aligned to (a) pulse
+    alignPoint  # {0:=t_on, 1:=t_peak, 2:=t_off}
+    p0          # Time shift
+    '''
     
     # TODO: Make this a setter which calls findPeakInds and findSteadyState when changed
     overlap = True  # Periods are up to *and including* the start of the next e.g. onPhase := t[onInd] <= t <? t[offInd]
@@ -119,7 +129,12 @@ class PhotoCurrent(object):
         phi     := Stimulating flux (max) [ph*mm^-2*s^-1]
         V       := Voltage clamp potential [mV]
         pulses  := Pairs of time points describing the beginning and end of stimulation
-        e.g. [[t_on1,t_off1],[t_on2,t_off2],...]
+                    e.g. [[t_on1,t_off1],[t_on2,t_off2],...]
+        
+        # I = [0., 0., 0., ..., -0.945, ..., 0.]
+        # t = [0, 0.1, 0.2, ..., tmax]
+        # pulses = [[100, 250], [300, 500]]
+        # photocurrent(I, t, V, phi, pulses)
         """
 
         ### Load data
@@ -771,15 +786,14 @@ class PhotoCurrent(object):
 
     def getDelayPhase(self):
         """Return Idel, tdel"""
-        delSlice = slice(0, self.pulseInds[0, 0]+int(self.overlap))
-        #return self.I[:self.pulseInds[0,0]+1]
+        delSlice = slice(0, self.pulseInds[0, 0]+int(self.overlap)) # [:pulseInds[0, 0]+overlap]
         return (self.I[delSlice], self.t[delSlice])
 
 
     def getOnPhase(self, pulse=0):
         """Return I [nA] and t [ms] arrays from the on-phase (Ion, ton) for a given pulse"""
         assert(0 <= pulse < self.nPulses)
-        onSlice = slice(self.pulseInds[pulse, 0], self.pulseInds[pulse, 1]+int(self.overlap))
+        onSlice = slice(self.pulseInds[pulse, 0], self.pulseInds[pulse, 1]+int(self.overlap)) # [pulseInds[pulse,0]:pulseInds[pulse,1]+overlap]
         #return (self.I[self.pulseInds[pulse,0]:self.pulseInds[pulse,1]+1], self.t[self.pulseInds[pulse,0]:self.pulseInds[pulse,1]+1])
         return (self.I[onSlice], self.t[onSlice])
 
@@ -791,7 +805,7 @@ class PhotoCurrent(object):
             offSlice = slice(self.pulseInds[pulse, 1], self.pulseInds[pulse+1, 0]+int(self.overlap))
             #return self.I[self.pulseInds[pulse,1]:self.pulseInds[pulse+1,0]+1]
         elif pulse == self.nPulses-1:   # Last Pulse
-            offSlice = slice(self.pulseInds[pulse, 1], None)
+            offSlice = slice(self.pulseInds[pulse, 1], None) # [pulseInds[pulse, 1]:]
             #return self.I[self.pulseInds[pulse,1]:]
         else:
             raise IndexError("Error: Selected pulse out of range!")
