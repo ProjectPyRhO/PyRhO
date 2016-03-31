@@ -41,6 +41,9 @@ extensions = [
     'sphinx.ext.autosummary'
 ]
 
+#numfig = True
+#numfig_format = {'figure': 'Fig. %s', 'table': 'Table %s', 'code-block': 'Code %s'}
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 

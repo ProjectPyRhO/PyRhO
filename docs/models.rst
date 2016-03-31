@@ -190,10 +190,10 @@ can also be determined:
    D_{SS} &= \frac{G_a G_d}{G_a G_d + G_a G_r + G_d G_r}
    \end{align}
 
-Steady-State (Plateau) Current, :math:`I_{ss}`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Steady-State Current
+~~~~~~~~~~~~~~~~~~~~
 
-The steady-state current is therefore given by:
+The steady-state (plateau) current, :math:`I_{ss}`, is therefore given by:
 
 .. math:: I_{SS} = g_0\cdot\frac{\tau_d}{\tau_d + \tau_r + \tau_a}\cdot f_v(v) \cdot (v-E)
 
@@ -257,7 +257,7 @@ Steady-State Current
 
 
 Six-state model
-===============
+---------------
 
 Grossman et al. (2013). The spatial pattern of light determines the
 kinetics and modulates backpropagation of optogenetic action potentials.
@@ -294,7 +294,7 @@ by the following equations.
 Stead-State dynamics
 ~~~~~~~~~~~~~~~~~~~~
 
-.. raw:: latex
+.. math::
 
    \begin{align*}
    C_{1ss} &= \frac{G_{o1} G_{o2} (G_{a2} G_b G_{d1} + G_b G_{d1} G_{r0} + G_{d1} G_{d2} G_{r0} + G_f G_{d2} G_{r0})} {N} \\
@@ -321,8 +321,8 @@ Steady-State current
 
 
 
-Models
-======
+Package: ``models`` API
+=======================
 
 .. automodule:: pyrho.models
 	:members:
