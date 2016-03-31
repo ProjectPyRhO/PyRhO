@@ -27,7 +27,7 @@ PARAMETER { : Initialise parameters to defaults. These may be changed through ho
 : Conductance
     E       = 0         (mV) : Channel reversal potential
     gam     = 0.05      (1)  : Ratio of open-state conductances
-    g0      = 75000     (pS) : gbar : defined in the main prog as HR_expression*Area
+    g0      = 75000     (pS) : Biological conductance scaling factor
 
 : Inward rectifier conductance    
     v0      = 43        (mV)
@@ -86,6 +86,7 @@ INITIAL {   : Initialise variables
     phi = 0
     rates(phi) : necessary?
     i   = 0
+    setV1(E, v0)
 }
 
 
@@ -123,7 +124,9 @@ PROCEDURE rates(phi) { : Define equations for calculating transition rates
 
 
 : Add functions for calculating transition rates outside of simulations
-:FUNCTION A1(phi) {
-:    A1 = a10*(phi/phi0)
-:}
-: ...
+
+PROCEDURE setV1(E (mV), v0 (mV)) { :
+: Calculate v1 from v0 and E to satisfy the definition: f(V=-70) := 1
+    v1 = (70+E)/(exp((70+E)/v0)-1)
+    : v1 = (-70-E)/(1-exp(-(-70-E)/v0))
+}
