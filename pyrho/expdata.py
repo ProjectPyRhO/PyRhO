@@ -119,6 +119,8 @@ class PhotoCurrent(object):
     p0          # Time shift
     '''
     
+    # Move states (and Vm, stimuli) into .extras['states']...
+    
     # TODO: Make this a setter which calls findPeakInds and findSteadyState when changed
     overlap = True  # Periods are up to *and including* the start of the next e.g. onPhase := t[onInd] <= t <? t[offInd]
 
