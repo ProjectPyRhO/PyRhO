@@ -369,7 +369,7 @@ class simNEURON(Simulator):
     """Class for cellular level simulations with NEURON"""
 
     simulator = 'NEURON'
-    mechanisms = {3:'RhO3', 4:'RhO4', 6:'RhO6'}
+    mechanisms = {3:'RhO3c', 4:'RhO4c', 6:'RhO6c'}
 
     def __init__(self, Prot, RhO, params=simParams['NEURON'], recInd=0): #v_init=-70, integrator='fixed'):
 
@@ -421,8 +421,8 @@ class simNEURON(Simulator):
         self.h.v_init = params['v_init'].value
 
         ### TODO: Move into prepare() in order to insert the correct type of mechanism (continuous or discrete) according to the protocol
-        for states, mod in self.mechanisms.items():
-            self.mechanisms[states] += 'c'
+        #for states, mod in self.mechanisms.items():
+        #    self.mechanisms[states] += 'c'
         self.mod = self.mechanisms[self.RhO.nStates] ### Use this to select the appropriate mod file for insertion
         #if not Prot.squarePulse:
         #self.mod += 'c'
