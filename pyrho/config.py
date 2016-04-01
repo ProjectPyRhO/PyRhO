@@ -247,10 +247,14 @@ def setupNEURON(path=None): # , NEURONpath=None):
                     shutil.copy2(os.path.join(pyrhoNEURONpath, NEURONinstallScript), path) #cwd
                     print('Unable to install NEURON - please install manually with the script copied to {}.'.format(path)) #cwd
         else:
+            if path is None:
+                path = cwd
+            createDir(path)
             shutil.copy2(os.path.join(pyrhoNEURONpath, NEURONinstallScript), path) #cwd
             print('NEURON must be compiled from source to work with Python 3. ')
             print('Please use the script `{}` in `{}` and then rerun setupNEURON.'.format(NEURONinstallScript, path)) #cwd
             print("E.g.: ./{} /abs/path/to/install/NEURON/".format(NEURONinstallScript))
+            return
 
     ### To load mod files:
     # Add os.environ['NRN_NMODL_PATH'] to environment variables. See $NEURONPATH/nrn/lib/python/neuron/__init__.py
