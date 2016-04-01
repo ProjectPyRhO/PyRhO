@@ -339,11 +339,14 @@ echo -e "\n *** Installing NEURON... *** "
 make install
 echo -e " *** Installed NEURON! *** \n"
 
-export PATH=$Ndir/$IVdir/$CPU/bin:$PATH
-export PATH=$Ndir/$NRNdir/$CPU/bin:$PATH # Necessary?
-export PATH=$Ndir/$CPU/bin:$PATH
+#export PATH=$Ndir/$IVdir/$CPU/bin:$PATH
+#export PATH=$Ndir/$NRNdir/$CPU/bin:$PATH # Necessary?
+#export PATH=$Ndir/$CPU/bin:$PATH
 
-echo "export PATH=$Ndir:$Ndir/$NRNdir/$CPU/bin:$Ndir/$IVdir/$CPU/bin:$PATH" >> ~/.profile # :$Ndir/$CPU/bin
+#echo "export PATH=$Ndir:$Ndir/$NRNdir/$CPU/bin:$Ndir/$IVdir/$CPU/bin:$PATH" >> ~/.profile # :$Ndir/$CPU/bin
+
+export PATH=$Ndir:$Ndir/$CPU/bin:$Ndir/$NRNdir/$CPU/bin:$Ndir/$IVdir/$CPU/bin:$PATH
+echo "export PATH=$PATH" >> ~/.profile
 
 #export LD_LIBRARY_PATH=/opt/local/lib/
 #source $Ndir/nrnenv
@@ -367,12 +370,13 @@ fi
 # Create environment variables so python can import the NEURON module
 export NEURONHOME=$Ndir/$NRNdir #/NEURON-7.3/nrn
 export PYTHONPATH=$PYTHONPATH:$NEURONHOME/lib/python
-echo "export PYTHONPATH=$PYTHONPATH:$NEURONHOME/lib/python" >> ~/.profile
+# echo "export PYTHONPATH=$PYTHONPATH:$NEURONHOME/lib/python" >> ~/.profile
+echo "export PYTHONPATH=$PYTHONPATH" >> ~/.profile
 export NRN_NMODL_PATH=$Ndir
 echo "export NRN_NMODL_PATH=$Ndir" >> ~/.profile
 #cd ~
 source ~/.profile
-echo -e " *** Set up nrnpython! *** \n"
+echo -e " *** Finished setting up nrnpython! *** \n"
 
 cd $Ndir
 
