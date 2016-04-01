@@ -1,11 +1,11 @@
-TITLE Nikolic 3-state rhodopsin model
+TITLE Three-state rhodopsin kinetic model
 
 NEURON  {
     POINT_PROCESS RhO3c
     NONSPECIFIC_CURRENT i
     RANGE i, E, v0, v1, g0      :, fphi, fv
     RANGE k_a, k_r, Gd, Gr0, p, q
-    RANGE phi, phi_m            : phiOn, 
+    RANGE phi, phi_m
 }
 
 
@@ -21,35 +21,35 @@ UNITS {
 PARAMETER { : Initialise parameters to defaults. These may be changed through hoc files
 
 : Illumination constants   
-:   lambda  = 470       : (nm)
+:   lambda  = 470       : (nm)              : Light wavelength
     phi_m   = 1e16      : (photons/sec mm2) < 0, 1e30 > : Hill Constant
   
 : Conductance    
-    E       = 0         (mV)                : Channel reversal potential
     g0      = 1         (pS)   < 0, 1e9 >   : Biological conductance scaling factor
 
-: Inward rectifier conductance              fv = (1-exp(-(v-E)/v0))*v1/(v-E) := 1 at Vm=-70mV
-    v0      = 43        (mV)
-    v1      = 4.1       (mV)
+: Inward rectifier conductance  fv(-70mV) := 1
+    E       = 0         (mV)                : Channel reversal potential
+    v0      = 43        (mV)                : Rectifier exponent scaling factor
+    v1      = 4.1       (mV)                := (70+E)/(exp((70+E)/v0)-1) Since fv(-70) := 1
     
 : State transition rate parameters (/ms)
-    k_a     = 0.28      (/ms)   < 0, 1e9 >  : Quantum efficiency * number of photons absorbed by a RhO molecule per unit time 0.5*1.2e-14 /1.1
-    p       = 0.4       (1)                 : Hill Coefficient (Ga)
-    k_r     = 0.28      (/ms)   < 0, 1e9 >  : Recovery rate scaling
-    q       = 0.4       (1)                 : Hill Coefficient (Gr)
-    Gd      = 0.0909    (/ms)   < 0, 1e9 >  : @ 1mW mm^-2
+    k_a     = 0.28      (/ms)   < 0, 1e9 >  : Activation rate scaling (Ga)
+    p       = 0.4       (1)     < 0, 1000 > : Hill Coefficient (Ga)
+    k_r     = 0.28      (/ms)   < 0, 1e9 >  : Recovery rate scaling (Gr)
+    q       = 0.4       (1)     < 0, 1000 > : Hill Coefficient (Gr)
+    Gd      = 0.0909    (/ms)   < 0, 1e9 >  : Deactivatrion Rate @ 1mW mm^-2
     Gr0     = 0.0002    (/ms)   < 0, 1e9 >  : tau_r,dark = 5-10s p405 Nikolic et al. 2009
 }
 
 
 ASSIGNED {
-    phi     : (1)        : "flux" should now be "intensity". Er is normalised to be dimensionless
-    Ga      (/ms)
-    Gr      (/ms)
-    fphi    (1)
-    fv      (1)
-    v       (mV) 
-    i       (nA)
+    phi     : (1)   : Instantaneous flux
+    Ga      (/ms)   : Activation rate (C -> O)
+    Gr      (/ms)   : Recovery Rate (D -> C)
+    fphi    (1)     : Photocycle fractional conductance
+    fv      (1)     : Rectifier fractional conductance
+    v       (mV)    : Membrane voltage
+    i       (nA)    : Photocurrent
 }
 
 
@@ -71,9 +71,9 @@ INITIAL {   : Initialise variables to fully dark-adapted state
     D       = 0
     
     phi     = 0
-    rates(phi) : necessary?
-    i       = 0
+    rates(phi)
     setV1(E, v0)
+    i       = 0
 }
 
 :DERIVATIVE deriv {

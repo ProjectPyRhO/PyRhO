@@ -1,4 +1,4 @@
-TITLE Nikolic 4-state rhodopsin model
+TITLE Four-state rhodopsin kinetic model
 
 NEURON {
     POINT_PROCESS RhO4c
@@ -21,47 +21,47 @@ UNITS {
 PARAMETER { : Initialise parameters to defaults. These may be changed through hoc files
 
 : Illumination constants   
-    phi_m   = 1e16                          : Hill Constant
 :   lambda  = 470   : (nm)
+    phi_m   = 1e16           : Hill Constant
 
 : Conductance
-    E       = 0         (mV) : Channel reversal potential
-    gam     = 0.05      (1)  : Ratio of open-state conductances
-    g0      = 75000     (pS) : Biological conductance scaling factor
+    g0      = 75000     (pS)    < 0, 1e9 >  : Biological conductance scaling factor
+    gam     = 0.05      (1)     < 0, 1 >    : Ratio of open-state conductances gO2/gO1
 
-: Inward rectifier conductance    
-    v0      = 43        (mV)
-    v1      = 4.1       (mV)    
+: Inward rectifier conductance  fv(-70mV) := 1
+    E       = 0         (mV)                : Channel reversal potential
+    v0      = 43        (mV)                : Rectifier exponent scaling factor
+    v1      = 4.1       (mV)                := (70+E)/(exp((70+E)/v0)-1) Since fv(-70) := 1
 
 : State transition rate parameters (/ms)
-    k1      = 0.05      (/ms)
-    k2      = 0.015     (/ms)
-    k_f     = 0.03      (/ms)
-    k_b     = 0.0115    (/ms)
-    Gf0     = 0.01      (/ms)
-    Gb0     = 0.015     (/ms)
-    p       = 0.7       (1)                 : Hill Coefficient Ga{1,2}
-    q       = 0.47      (1)                 : Hill Coefficient G{f,b}
-    Gd1     = 0.11      (/ms)
-    Gd2     = 0.025     (/ms)
-    Gr0     = 0.0004    (/ms)
+    k1      = 0.05      (/ms)   < 0, 1e9 >  : Activation rate scaling factor (Ga1)
+    k2      = 0.015     (/ms)   < 0, 1e9 >  : Activation rate scaling factor (Ga2)
+    k_f     = 0.03      (/ms)   < 0, 1e9 >  : Forwards (O1 -> O2) activation rate scaling (Gf)
+    k_b     = 0.0115    (/ms)   < 0, 1e9 >  : Backwards (O1 <- O2) activation rate scaling (Gb)
+    Gf0     = 0.01      (/ms)   < 0, 1e9 >  : Forwards (O1 -> O2) dark rate (Gf)
+    Gb0     = 0.015     (/ms)   < 0, 1e9 >  : Backwards (O1 <- O2) dark rate (Gb)
+    p       = 0.7       (1)     < 0, 1000 > : Hill Coefficient Ga{1,2}
+    q       = 0.47      (1)     < 0, 1000 > : Hill Coefficient G{f,b}
+    Gd1     = 0.11      (/ms)   < 0, 1e9 >  : Deactivation rate (O1 -> C1)
+    Gd2     = 0.025     (/ms)   < 0, 1e9 >  : Deactivation rate (O2 -> C2)
+    Gr0     = 0.0004    (/ms)   < 0, 1e9 >  : Dark recovery rate (C1 <- C2)
 }
 
 
 ASSIGNED {
-    phi     :(photons/s mm2)                : Instantaneous flux
+    phi     :(photons/s mm2)    : Instantaneous flux
 
-    Ga1     (/ms)  : C1 -> O1
-    Ga2     (/ms)  : C2 -> O2
-    Gf      (/ms)  : O1 -> O2
-    Gb      (/ms)  : O2 -> O1
-    h1      (1)
-    h2      (1)
+    Ga1     (/ms)               : C1 -> O1
+    Ga2     (/ms)               : C2 -> O2
+    Gf      (/ms)               : O1 -> O2
+    Gb      (/ms)               : O2 -> O1
+    h1      (1)                 : Hill Equation (Ga1, Ga2)
+    h2      (1)                 : Hill Equation (Gf, Gb)
 
-    fphi    (1) : Fractional conductance
-    fv      (1) : Fractional conductance
-    v       (mV) 
-    i       (nA)
+    fphi    (1)                 : Photocycle fractional conductance
+    fv      (1)                 : Rectifier fractional conductance
+    v       (mV)                : Membrane voltage
+    i       (nA)                : Photocurrent
 }
 
 
@@ -70,7 +70,7 @@ STATE { C1 O1 O2 C2 }
 
 BREAKPOINT {
     SOLVE kin METHOD sparse
-    fphi    = O1+gam*O2                     : Light dependency op=[0:1] 
+    fphi    = O1+gam*O2                     : Light dependency {O1,O2}=[0:1] 
     fv      = (1-exp(-(v-E)/v0))/((v-E)/v1) : Voltage dependency (equal 1 at Vm=-70mV)
     i       = g0*fphi*fv*(v-E)*(1e-6)       : Photocurrent
 }
@@ -84,9 +84,9 @@ INITIAL {   : Initialise variables
     C2  = 0     : Closed state 2
 
     phi = 0
-    rates(phi) : necessary?
-    i   = 0
+    rates(phi)
     setV1(E, v0)
+    i   = 0
 }
 
 
@@ -115,10 +115,10 @@ PROCEDURE rates(phi) { : Define equations for calculating transition rates
         h2 = 0
     }
     
-    Ga1 = k1 * h1             :Ga1 = k1 * pow(phi,p)/(pow(phi,p) + pow(phi_m,p))
-    Ga2 = k2 * h1             :Ga2 = k2 * pow(phi,p)/(pow(phi,p) + pow(phi_m,p))
-    Gf = Gf0 + k_f * h2      :Gf = Gf0 + k_f * pow(phi,q)/(pow(phi,q) + pow(phi_m,q))
-    Gb = Gb0 + k_b * h2      :Gb = Gb0 + k_b * pow(phi,q)/(pow(phi,q) + pow(phi_m,q))
+    Ga1 = k1 * h1           :Ga1 = k1 * pow(phi,p)/(pow(phi,p) + pow(phi_m,p))
+    Ga2 = k2 * h1           :Ga2 = k2 * pow(phi,p)/(pow(phi,p) + pow(phi_m,p))
+    Gf = Gf0 + k_f * h2     :Gf = Gf0 + k_f * pow(phi,q)/(pow(phi,q) + pow(phi_m,q))
+    Gb = Gb0 + k_b * h2     :Gb = Gb0 + k_b * pow(phi,q)/(pow(phi,q) + pow(phi_m,q))
     
 }
 
