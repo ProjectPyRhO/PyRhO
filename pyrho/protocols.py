@@ -236,6 +236,7 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
 
         #plt.show()
         plt.tight_layout()
+        plt.show()
 
         figName = os.path.join(config.fDir, self.protocol+self.dataTag+"."+config.saveFigFormat)
         #externalLegend = False

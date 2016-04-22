@@ -61,7 +61,7 @@ class PhotoCurrent(object):
         Array of photocurrent values in nanoamps [nA].
     t : ndarray(float)
         Array of time values in milliseconds [ms] corresponding to ``I``. 
-    pulses : list(list(float))
+    pulses : array, shape = [n_pulses, 2]
         Pairs of time points describing the beginning and end of stimulation
         e.g. [[t_on0, t_off0], [t_on1, t_off1], ..., [t_onN-1, t_offN-1]]. 
     phi : float
@@ -75,6 +75,7 @@ class PhotoCurrent(object):
     stateLabels : list(str) or ``None``, optional
         Optional list of LaTeX strings labelling each of the state variables. 
     """
+    #pulses : list(list(float))
     '''
     overlap     # Periods are up to *and including* the start of the next phase
     dt          # Sampling time step                dt_
@@ -620,7 +621,7 @@ class PhotoCurrent(object):
             return
         '''
 
-
+        plt.show()
 
         return
 
@@ -956,7 +957,8 @@ class PhotoCurrent(object):
                          r'$\Delta t_{{off_{}}}={:.3g}\mathrm{{ms}}$'.format(p, self.offDs[p]), 
                         ha='center', va='bottom', fontsize=config.eqSize)
 
-
+        #plt.show()
+        
         return # ax
 
 
@@ -1135,6 +1137,7 @@ class PhotoCurrent(object):
                         axInf.annotate(r'$t_{\infty}$', xycoords='axes fraction', xy=(0, 1))
 
         plt.tight_layout()
+        plt.show()
 
         if name is not None:
             from os import path
@@ -1580,6 +1583,7 @@ class ProtocolData(object):
         #plotLight(self.getProtPulses(), ax=ax, light=light, lam=470, alpha=0.2)
         #ax.tight_layout()
 
+        #plt.show()
         return # ax
 
 

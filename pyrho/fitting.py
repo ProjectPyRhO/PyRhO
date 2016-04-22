@@ -70,6 +70,7 @@ def plotData(Is, ts, t_on, t_off, phis):
     plt.xlabel('Time [ms]')
     plt.ylabel('Photocurrent [nA]')
     plt.axvspan(t_on, t_off, facecolor='y', alpha=0.2)
+    plt.show()
 
 
 # func(params, *args, **kws)
@@ -153,6 +154,8 @@ def reportFit(minResult, description, method):
         \chi_v^2    &:= \chi^2 / (N - N_{vars}) \\
         AIC         &:= N \ln(\chi^2 / N) + 2N_{vars} \\
         BIC         &:= N \ln(\chi^2 / N) + \ln(N) \cdot N_{vars} \\
+    
+    For a set of models, the one with the lowest AIC (or BIC) is preferred. 
     """
 
     #Fitting parameters for the {}-state model
@@ -242,6 +245,7 @@ def plotOffPhaseFits(toffs, Ioffs, pOffs, phis, nStates, fitFunc, Exp1, Exp2, Gd
     setCrossAxes(ax)
 
     plt.tight_layout()
+    plt.show()
 
     fig.savefig(os.path.join(config.fDir, 'OffPhaseFits'+str(nStates)+'states'+'.'+config.saveFigFormat), format=config.saveFigFormat)
 
@@ -364,6 +368,7 @@ def plotFit(PC, nStates, params, fitRates=False, index=None):
     plt.axhline(y=0, linestyle=':', color='k')
 
     plt.tight_layout()
+    plt.show()
 
     if index is None:
         index = ''
@@ -888,10 +893,11 @@ def fit6states(fluxSet, quickSet, run, vInd, params, method=defMethod, verbose=c
             ax.plot(tpulses, tpeaks, 'x')
             ax.plot(tsmooth, devFunc(tsmooth, *popt))
             ax.plot(tsmooth, tsmooth,'--')
-            ax.set_ylim([0,max(tpulses)]) #+5
-            ax.set_xlim([0,max(tpulses)]) #+5
-        #plt.tight_layout()
-        #plt.axis('equal')
+            ax.set_ylim([0, max(tpulses)]) #+5
+            ax.set_xlim([0, max(tpulses)]) #+5
+            #plt.tight_layout()
+            #plt.axis('equal')
+            plt.show()
 
         # Solve iteratively Go = ((tlag*Gd) - np.log(Gd/Go))/tlag
         Gd1 = pOffs['Gd1'].value
@@ -1485,6 +1491,7 @@ def fitfV(Vs, Iss, params, relaxFact=2, method=defMethod, verbose=config.verbose
         ax2.vlines(x=-70, ymin=ymin, ymax=1, linestyles=':', colors='g') # ymax=errfV(pfV, -70)
         ax2.hlines(y=1, xmin=-70, xmax=xmax, linestyles=':', colors='g')
         plt.legend()
+        plt.show()
 
     # for p in ['E', 'v0', 'v1']:
         # copyParam(p, pfV, params)
@@ -2149,6 +2156,7 @@ def plotFluxSetFits(fluxSet, nStates, params, runInd=0, vInd=0):
 
     setCrossAxes(setAx)
     plt.tight_layout()
+    plt.show()
 
     setFig.savefig(os.path.join(config.fDir, 'fluxSetFit'+'-'.join(str(s) for s in nStates)+'states'+'.'+config.saveFigFormat), format=config.saveFigFormat)
 

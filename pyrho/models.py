@@ -203,6 +203,7 @@ class RhodopsinModel(PyRhOobject):
         axR.grid(b=True, which='major', axis='both', linewidth=1)
 
         plt.tight_layout()
+        plt.show()
 
         return
 

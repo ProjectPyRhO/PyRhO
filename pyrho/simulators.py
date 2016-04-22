@@ -919,6 +919,7 @@ class simNEURON(Simulator):
             ymin, ymax = axV.get_ylim()
 
             plt.tight_layout()
+            plt.show()
 
             #figName = '{}Vm{}s-{}-{}-{}'.format(Prot.protocol, RhO.nStates, run, phiInd, vInd)
             figName = '{}Vm{}s'.format(Prot.protocol, RhO.nStates)
@@ -1318,6 +1319,7 @@ class simBrian(Simulator):
         ymin, ymax = axV.get_ylim()
 
         plt.tight_layout()
+        plt.show()
 
         if figName is None:
             figName = '{}Vm{}s'.format(Prot.protocol, RhO.nStates)
@@ -1365,6 +1367,7 @@ class simBrian(Simulator):
         #plt.xlim((-offset, totT - offset))
 
         plt.tight_layout()
+        plt.show()
 
         if figName is None:
             figName = '{}Spikes{}s'.format(self.Prot.protocol, self.RhO.nStates)
