@@ -1,8 +1,10 @@
 .. _models:
 
+Rhodopsin models
+================
 
-PyRhO opsin kinetic models
-==========================
+Photocurrent model
+------------------
 
 We assume that all light-sensitive ion channel currents (:math:`I`) can
 be expressed in the classic form:
@@ -32,6 +34,9 @@ These two dependences are considered to be most relevant for
 physiological electrolyte conditions, when temperature and pH are
 considered to be fixed. Other dependencies will be implemented in the
 next version of PyRhO.
+
+Photocycle models
+-----------------
 
 At the core of PyRhO are three functional Markov models of opsin
 kinetics, namely the three, four and six-state models. These models vary
@@ -118,7 +123,7 @@ since been extended.
 Konstantin Nikolic, Nir Grossman, Matthew S. Grubb, Juan Burrone, Chris
 Toumazou & Patrick Degenaar (2009). Photocycles of Channelrhodopsin-2.
 *Photochemistry and Photobiology*, 85(1), 400-411.
-`doi:10.1111/j.1751-1097.2008.00460.x <http://dx.doi.org/10.1111/j.1751-1097.2008.00460.x>`__
+`doi:10.1111/j.1751-1097.2008.00460.x <http://dx.doi.org/10.1111/j.1751-1097.2008.00460.x>`_
 
 The three-state model shown in figure (a) consists of a closed state,
 :math:`C`, an open state, :math:`O` and a deactivated state, :math:`D`.
@@ -207,7 +212,9 @@ if:
 Four-state model
 ----------------
 
-http://dx.doi.org/10.1111/j.1751-1097.2008.00460.x
+The model was originally described in `Nikolic et al. (2009) <http://dx.doi.org/10.1111/j.1751-1097.2008.00460.x>`_ but has
+since been extended.
+
 
 The system of differential equations describing the Markov state
 variables are given below.
@@ -258,6 +265,9 @@ Steady-State Current
 
 Six-state model
 ---------------
+
+The model was originally described in `Grossman et al. (2013) <http://dx.doi.org/10.1007/s10827-012-0431-7>`_ but has
+since been extended. 
 
 Grossman et al. (2013). The spatial pattern of light determines the
 kinetics and modulates backpropagation of optogenetic action potentials.
