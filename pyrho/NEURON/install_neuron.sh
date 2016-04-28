@@ -17,6 +17,7 @@ NRNv="v7.4"
 IVdir="iv"
 NRNdir="nrn"
 pyVer="python3" #"dynamic" # http://www.neuron.yale.edu/phpbb/viewtopic.php?f=6&t=3386
+pV="35"
 #pyVer=${2:-"3"} # Allow choice of Python version when backported
 
 if [[ -L $0 ]] ; then
@@ -64,13 +65,28 @@ case $OS in # if [[ "OS" == "Linux" ]]; then
 		sudo apt-get update
 		# Use \ continuation character for fewer calls to apt-get
 		# Consider -y --force-yes for automated installations
-		sudo apt-get -y install autotools-dev autoconf automake libtool bison flex
-		# bison and flex (and autoconf automake libtool?) are needed if useRepo
+		sudo apt-get -y install autotools-dev \
+                                autoconf \
+                                automake \
+                                libtool \
+                                bison \
+                                flex \
+                                xfonts-100dpi \
+                                libncurses5-dev \
+                                libxext-dev \
+                                libreadline-dev \
+                                libopenmpi-dev \
+                                openmpi-bin \
+                                openmpi-doc \
+                                openmpi-common
+		# useRepo : bison and flex (and autoconf automake libtool?)
 		# build-essential python-dev
 		
-		sudo apt-get -y install xfonts-100dpi libncurses5-dev libxext-dev libreadline-dev
+		#sudo apt-get -y install xfonts-100dpi libncurses5-dev libxext-dev libreadline-dev
+        # https://www.neuron.yale.edu/phpBB/viewtopic.php?f=4&t=3043
+        # g++ rpm python-dev cython alien xfonts-75dpi
 		
-		sudo apt-get -y install libopenmpi-dev openmpi-bin openmpi-doc openmpi-common
+		# paranrn : libopenmpi-dev openmpi-bin openmpi-doc openmpi-common
 		#sudo apt-get install python3-mpi4py #python-mpi4py # openmpipython
 
 		#sudo apt-get install git git-man git-doc git-gui gitweb
@@ -78,34 +94,42 @@ case $OS in # if [[ "OS" == "Linux" ]]; then
 		
 		# Fortran compiler for scientific stack i.e. building scipy with pip3. Alternatively just install scipy, numpy and matplotlib
 		#sudo apt-get remove g77 # Remove g77 to avoid conflicts with gfortran
-		sudo apt-get -y install gcc gfortran liblapack-dev libblas-dev libatlas-base-dev libatlas-dev
+		# Replace gcc with g++
+        sudo apt-get -y install gcc \
+                                gfortran \
+                                liblapack-dev \
+                                libblas-dev \
+                                libatlas-base-dev \
+                                libatlas-dev \
+                                libfreetype6-dev \
+                                libxft-dev
 		# See here for more details on linear algebra libraries: http://docs.scipy.org/doc/numpy-1.10.1/user/install.html
 		# http://docs.scipy.org/doc/scipy/reference/tutorial/linalg.html
 		# Alternative Fortran compiler: g77. Do not mix compilers! Check compiler with ldd /usr/lib/{libblas.so.3,liblapack.so.3}
-		# TODO: Add option to compile LA library from source for optimal performance
+		# TODO: Add option to compile LA library from source for optimal performance : cython
+        # http://www.scipy.org/scipylib/building/linux.html
 		# export BLAS=/usr/lib/libblas.so
 		# export LAPACK=/usr/lib/liblapack.so.3
 		# export ATLAS=/usr/lib/libatlas.so
 		
-		sudo apt-get -y install libfreetype6-dev libxft-dev # Fix a bug in upgrading matplotlib with pip3
+		# matplotlib : libfreetype6-dev libxft-dev # Fix a bug in upgrading matplotlib with pip3
 		#sudo apt-get build-dep matplotlib
 		#sudo pip3 install matplotlib
 		
-		# NEURON requires Python 2.7 (3 will not work)
-		sudo apt-get -y install python3-setuptools python3-pip
-		sudo apt-get -y install python3-numpy python3-scipy python3-matplotlib
+		sudo apt-get -y install python3-setuptools python3-pip cython cython3 python3-numpy python3-scipy python3-matplotlib
 		sudo pip3 install -U pip
+        
 		
+		if [[ "$useRepo" == true ]] ; then
+			sudo apt-get -y install mercurial mercurial-common
+		fi
+        
 		# Install IPython
 		# http://ipython.org/ipython-doc/2/install/install.html
 		# disutils2 replaces setuptools and pip replaces easy_install
 		#pip install ipython[all]
 		#pip3 install jupyter # Installed in pip setup.py
-		
-		if [[ "$useRepo" == true ]] ; then
-			sudo apt-get -y install mercurial mercurial-common
-		fi
-		
+        
 		# Install pandoc - a dependency of nbconvert
 		# sudo apt-get install pandoc
 	fi
@@ -115,11 +139,15 @@ case $OS in # if [[ "OS" == "Linux" ]]; then
 	# http://www.neuron.yale.edu/neuron/download/compilestd_osx
 	xPath="/opt/local"	
 	# Assumes that Xcode, Python and IPython are already installed. 
-	#sudo port selfupdate
+	sudo port selfupdate
 	#sudo port upgrade outdated
-	sudo port install automake autoconf libtool xorg-libXext ncurses mercurial bison flex readline
-	sudo port install openmpi
+	sudo port install automake autoconf libtool xorg-libXext ncurses bison flex readline openmpi
+    if [[ "$useRepo" == true ]] ; then
+        sudo port install mercurial
+    fi
 	
+    sudo port install python${pV} ${pV}-numpy ${pV}-scipy ${pV}-matplotlib
+    sudo port select python python${pV}
 	### Setup paths to required libraries and tools ###
 	# export CC=/opt/local/bin/gcc-mp-4.9
 	# export CXX=/opt/local/bin/g++-mp-4.9
