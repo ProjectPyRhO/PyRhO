@@ -132,8 +132,9 @@ setup(
     #    'dev': ['check-manifest'],
     #    'test': ['coverage'],
     #    'brian' : ['brian2'],
-        'GUI'   : ['jupyter>=1.0', 'notebook>=4.1', 'ipywidgets>=4.1', 'traitlets>=4.1', 'seaborn'], #, 'ipython>=4'
-        'full'  : ['jupyter>=1.0', 'notebook>=4.1', 'ipywidgets>=4.1', 'traitlets>=4.1', 'seaborn'],
+    # traitlets is a dependency of ipywidgets and can be removed if 4.1 entails traitlets>=4.1
+        'GUI'   : ['jupyter>=1.0', 'notebook>=4.1', 'ipywidgets>=4.1,<5', 'traitlets>=4.1,<5', 'seaborn'], #, 'ipython>=4'
+        'full'  : ['jupyter>=1.0', 'notebook>=4.1', 'ipywidgets>=4.1,<5', 'traitlets>=4.1,<5', 'seaborn'],
     },
     
     include_package_data=True,
