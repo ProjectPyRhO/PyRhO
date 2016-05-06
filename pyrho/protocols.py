@@ -19,7 +19,7 @@ from scipy.interpolate import InterpolatedUnivariateSpline as spline
 from lmfit import Parameters
 
 from pyrho.parameters import *
-from pyrho.parameters import PyRhOobject
+from pyrho.parameters import PyRhOobject, smallSignalAnalysis
 from pyrho.utilities import * # times2cycles, cycles2times, plotLight, round_sig, expDecay, biExpDecay, findPeaks
 from pyrho.expdata import * #import loadData
 from pyrho.fitting import fitFV, errFV, fitfV, errfV, getRecoveryPeaks, fitRecovery
