@@ -231,7 +231,7 @@ case $OS in
 		hg clone http://www.neuron.yale.edu/hg/neuron/nrn
 		hg clone http://www.neuron.yale.edu/hg/neuron/iv
 		# Change the prefixes for configure when building from hg repo
-		sudo port select --set python python34
+		sudo port select --set python python$pV
 	else	
 		if [[ ! -a $IVver.tar.gz ]]; then
 			curl -O http://www.neuron.yale.edu/ftp/neuron/versions/$NRNv/$IVver.tar.gz		
@@ -265,7 +265,7 @@ if [[ "$pyVer" == "dynamic" ]]; then
 		sudo update-alternatives --set python /usr/bin/python3
 	
 	elif [[ "$OS" == "Darwin" ]]; then
-		sudo port select --set python python34
+		sudo port select --set python python$pV
 	fi
 fi
 
