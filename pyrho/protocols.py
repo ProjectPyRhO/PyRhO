@@ -314,7 +314,7 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
 
         nPulses = pulses.shape[0]
         assert(nPulses == len(phi_ts))
-        nPoints = 10*int(round(endT-begT/self.dt))+1
+        nPoints = 10 * int(round(endT-begT / self.dt)) + 1
         t = np.linspace(begT, endT, nPoints)
 
         if ax == None:
@@ -506,7 +506,7 @@ class protSinusoid(Protocol):
         splineOrder = 2     #[1,5]
 
         trim = 0.1
-        transEndInd = int(self.delDs[0] + round(self.onDs[0]*trim/self.dt))
+        transEndInd = int(self.delDs[0] + round(self.onDs[0] * trim / self.dt))
 
         if self.nRuns > 1:
             #plt.figure(Ifig.number)
@@ -553,7 +553,7 @@ class protSinusoid(Protocol):
             # if transEndInd >= (self.onDs[0])/self.dt: # If transition period is greater than the on period
                 # transEndInd = round((self.delDs[0]+self.onDs[0]/2)/self.dt) # Take the second half of the data
 
-            tTransEnd = transEndInd*self.dt #ts[0][0][0]
+            tTransEnd = transEndInd * self.dt #ts[0][0][0]
             self.axI.axvline(x=tTransEnd, linestyle=':', color='k')
             for phiInd, phiOn in enumerate(self.phis): ### These loops need reconsidering...!!!
                 for vInd, V in enumerate(self.Vs):
@@ -763,7 +763,7 @@ class protChirp(Protocol):
             for p in range(self.nPulses):
                 pStart, pEnd = self.PD.trials[0][0][0].pulses[p]
                 onD = pEnd - pStart
-                nPoints = 10*int(round(onD/self.dt))+1 # 10001
+                nPoints = 10 * int(round(onD / self.dt)) + 1 # 10001
                 tsmooth = np.linspace(0, onD, nPoints)
 
                 if self.linear:
@@ -1012,7 +1012,7 @@ class protRectifier(Protocol):
                 #print(pfV)
 
                 Vrange = max(Vs) - min(Vs)
-                Vsmooth = np.linspace(min(Vs), max(Vs), 1+Vrange/.1) #Prot.dt
+                Vsmooth = np.linspace(min(Vs), max(Vs), 1 + Vrange / .1) #Prot.dt
 
                 E = poptI[2]
             #    E = pfV['E'].value
