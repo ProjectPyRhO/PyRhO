@@ -123,7 +123,8 @@ setup(
     # project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['numpy>=1.8', 'scipy>=0.15', 'matplotlib>=1.3', 'lmfit>=0.9', 'ipython>=4.1', 'brian2'], #'sphinx>=1.3', 
+    # ipython is used for latex repr - remove from requirements and have a fallback repr?
+    install_requires=['numpy>=1.8', 'scipy>=0.15', 'matplotlib>=1.3', 'lmfit>=0.9.3', 'ipython>=4.1', 'brian2>=2.0rc1'], #'sphinx>=1.3', 
     
     # List additional groups of dependencies here (e.g. development dependencies).
     # You can install these using the following syntax, for example:
