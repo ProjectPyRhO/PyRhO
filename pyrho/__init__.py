@@ -71,7 +71,7 @@ if __name__ == '__main__':
 # TODO Move everything except imports elsewhere
 
 
-def runAll(listOfModels=[6]):
+def runAll(listOfModels=[6], simList=['Python']):
     """
     Run all protocols (with Python) on a list of models with default parameters.
 
@@ -93,7 +93,7 @@ def runAll(listOfModels=[6]):
         for prot in protocols:
             ### Select simulation protocol
             Prot = protocols[prot]()
-            for sim in ['Python']:#simulators:
+            for sim in simList: #['Python']:#simulators:
                 Sim = simulators[sim](Prot, RhO)
                 print("\nRunning Protocol '{}' on the {}-state model...".format(prot, model))
                 print(_DASH_LINE, '\n')
