@@ -1479,7 +1479,7 @@ def fitfV(Vs, Iss, params, relaxFact=2, method=defMethod, verbose=config.verbose
         ax2.set_ylabel(r'$f(v)$ $\mathrm{[1]}$', color='g')
         ax2.axvline(x=E, linestyle=':', color='k')
         ymin, ymax = ax2.get_ylim()
-        revString = r'$E = {}\ \mathrm{{[mV]}}$'.format(round_sig(E,3))
+        revString = r'$E = {}\ \mathrm{{[mV]}}$'.format(round_sig(E, 3))
         ax2.text(E, 0.05*(ymax-ymin), revString, ha='center', va='center', fontsize=config.eqSize)
         # ax2.axvline(x=-70, linestyle=':', color='k')
         # ax2.axhline(y=1, linestyle=':', color='k')
@@ -1927,7 +1927,7 @@ def fitModel(dataSet, nStates=3, params=None, postFitOpt=True, relaxFact=2, meth
     assert(Vpmax != params['E'].value)
     g0 = 1e6 * Ipmax / (Vpmax - params['E'].value)
     params['g0'].value = g0
-    print('g0 = {} pS'.format(round_sig(g0, sig=3)))
+    print('g0 = {} pS'.format(round_sig(g0, n=3)))
 
 
 
