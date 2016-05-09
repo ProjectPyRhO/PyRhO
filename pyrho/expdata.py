@@ -1533,13 +1533,13 @@ class ProtocolData(object):
         self.begT, self.endT = min(begTs), max(endTs)
 
         #for run in range(self.nRuns):
-        run = 0 # Arbitrary choice TODO: Reconsider!
+        #run = 0 # Arbitrary choice TODO: Reconsider!
         # Add stimuli
         for p in range(self.nPulses):
             sameStart, sameEnd = False, False
-            if np.allclose(pulseSet[p, 0, run], np.tile(pulseSet[p, 0, 0], (1, 1, self.nRuns))): #pth t_on are the same
+            if np.allclose(pulseSet[p, 0, :], np.tile(pulseSet[p, 0, 0], (1, 1, self.nRuns))): #pth t_on are the same
                 sameStart = True
-            if np.allclose(pulseSet[p, 1, run], np.tile(pulseSet[p, 1, 0], (1, 1, self.nRuns))): #pth t_off are the same
+            if np.allclose(pulseSet[p, 1, :], np.tile(pulseSet[p, 1, 0], (1, 1, self.nRuns))): #pth t_off are the same
                 sameEnd = True
 
             if sameStart and sameEnd: #np.allclose(pulseSet[p,:,run], np.tile(pulseSet[p,:,0], (1,1,self.nRuns))): #pth pulses are the same
@@ -1550,9 +1550,12 @@ class ProtocolData(object):
                     plotLight(np.asarray([pulseSet[p, :, run]]), ax=ax, light=light, lam=470, alpha=0.2)
 
             else: #not (sameStart and sameEnd): # One or the other - xor
-                pass
+                pass # This applies to shortPulse only at present - do not shade!
                 #for run in range(self.nRuns):
                     # Plot bars
+                #for run in range(self.nRuns):
+                #    plotLight(np.asarray([pulseSet[p, :, run]]), ax=ax, light=light, lam=470, alpha=0.2)
+
 
         ### Move to protocols...
         if len(self.Vs) == 1:
