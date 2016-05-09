@@ -92,6 +92,11 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
             else:
                 offD = 0
             self.cycles = np.asarray([[onD, offD]])
+        elif isinstance(self.cycles, (list, tuple, np.ndarray)):
+            if np.isscalar(self.cycles[0]): # not isinstance(self.cycles[0], (list, tuple, np.ndarray):
+                self.cycles = [self.cycles] # Assume only one pulse
+        else:
+            raise TypeError('Unexpected type for cycles - please use a list or array!')
 
         self.cycles = np.asarray(self.cycles)
         self.nPulses = self.cycles.shape[0]
@@ -837,7 +842,8 @@ class protDelta(Protocol):
 
     def prepare(self):
         """Function to set-up additional variables and make parameters consistent after any changes"""
-        self.cycles = np.asarray([[self.onD, self.totT-self.delD]])
+        assert(self.totT >= self.delD + self.onD) # ==> offD >= 0
+        self.cycles = np.asarray([[self.onD, self.totT-self.delD-self.onD]])
         self.nPulses = self.cycles.shape[0]
         self.pulses, self.totT = cycles2times(self.cycles, self.delD)
         self.delDs = np.array([row[0] for row in self.pulses], copy=True) # pulses[:,0]    # Delay Durations
