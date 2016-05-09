@@ -1412,6 +1412,7 @@ def fitfV(Vs, Iss, params, relaxFact=2, method=defMethod, verbose=config.verbose
         # pfV['E'].max = pfV['E'].value - 1e-9#/ 2
 
     pfV['v1'].expr = '(70+E)/(exp((70+E)/v0)-1)'
+    # Bug with Python 3.5 and lmfit 0.9.2 when calling print(pfV) after setting expr
     pfV['E'].vary = True # Required since Powell algorithm errors with only 1 d.f.
     #setBounds(pfV['E'], relaxFact)
     pfV['E'].min = pfV['E'].value + 1e-9
@@ -1436,7 +1437,7 @@ def fitfV(Vs, Iss, params, relaxFact=2, method=defMethod, verbose=config.verbose
     gNorm = gs / gm70 # Normalised conductance relative to V=-70
 
     if verbose > 2:
-        print(np.c_[Vs,Iss,gs,gNorm]) #np.asarray(Vs)-E
+        print(np.c_[Vs, Iss, gs, gNorm]) #np.asarray(Vs)-E
 
     if params['v0'].vary or params['v1'].vary:
         fVmin = minimize(errfV, pfV, args=(Vs, gNorm), method=method)#, tol=1e-12)
