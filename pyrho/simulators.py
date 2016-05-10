@@ -19,7 +19,7 @@ import matplotlib as mpl
 from matplotlib import pyplot as plt
 
 from pyrho.parameters import *
-from pyrho.parameters import PyRhOobject
+from pyrho.parameters import PyRhOobject, modelUnits, ms
 from pyrho.utilities import * # cycles2times, plotLight
 from pyrho.expdata import *
 from pyrho.models import *
@@ -38,6 +38,7 @@ class Simulator(PyRhOobject):  # object
     Prot = None
     RhO = None
     simulator = None
+    clampProts = ['rectifier']
     
     @abc.abstractmethod
     def __init__(self, Prot, RhO, params=None):
@@ -60,7 +61,7 @@ class Simulator(PyRhOobject):  # object
     def checkDt(self, dt):
         """Function to compare simulator's timestep to the timestep required by the protocol"""
         if dt < self.dt:
-            self.dt = dt #min(self.h.dt, dt)
+            self.dt_prev, self.dt = self.dt, dt #min(self.h.dt, dt)
             if config.verbose > 0:
                 print('Time step reduced to {}ms by protocol!'.format(self.dt))
         return self.dt
@@ -141,10 +142,18 @@ class Simulator(PyRhOobject):  # object
                         print('Run=#{}/{}; phiInd=#{}/{}; vInd=#{}/{}; Irange=[{:.3g},{:.3g}]'.format(run, Prot.nRuns, phiInd, Prot.nPhis, vInd, Prot.nVs, PC.range_[0], PC.range_[1]))
 
         Prot.finish(PC, RhO)
+        # self.finish() # Reset dt and Vclamp
 
         if Prot.saveData:
             Prot.dataTag = str(RhO.nStates)+"s"
             saveData(Prot.PD, Prot.protocol+Prot.dataTag)
+
+        # Reset any variables overridden by the protocol
+        if hasattr(self, 'dt_prev') and self.dt_prev is not None:
+            self.dt, self.dt_prev = self.dt_prev, None
+        if hasattr(self, 'Vclamp_prev') and self.Vclamp_prev is not None:
+            self.Vclamp, self.Vclamp_prev = self.Vclamp_prev, None
+            self.h.Vcl.rs = 1e9 # TODO; Find a way to fully remove SEClamp
 
         self.runTime = wallTime() - t0
         if verbose > 0:
@@ -473,6 +482,9 @@ class simNEURON(Simulator):
         self.h.dt = self.dt
 
         # Include code to set Vclamp = False if Prot.Vs=[None]
+        if Prot.protocol in self.clampProts:
+            self.Vclamp_prev, self.Vclamp = self.Vclamp, True
+            warnings.warn('Voltage clamp set for protocol: {}'.format(Prot.protocol))
         if self.Vclamp is False:
             Prot.Vs = [None]
             Prot.nVs = 1
@@ -579,6 +591,7 @@ class simNEURON(Simulator):
     def addVclamp(self):
         self.h('objref Vcl')
         self.h.Vcl = self.h.SEClamp(0.5)
+        self.h.Vcl.rs = 1 # Set to default in case it has been increased to disable it
 
     def setVclamp(self, Vhold=-70):
         self.h.Vcl.dur1 = self.h.tstop
@@ -894,15 +907,41 @@ class simNEURON(Simulator):
                     for vInd, V in enumerate(Prot.Vs):      # Loop over clamp voltage ### N.B. solution variables are not currently dependent on V
                         col, style = Prot.getLineProps(run, vInd, phiInd)
                         Vm = self.Vms[run][phiInd][vInd]
-                        t = self.t - delD ### HACK Change me!!!
+                        #t = self.t - delD ### HACK Change me!!!
+                        pc = Prot.PD.trials[run][phiInd][vInd]
+                        t = pc.t
+                        pulses = pc.pulses
+                        #print(t.shape, Vm.shape)
                         plt.plot(t, Vm, color=col, ls=style) #plt.plot(t, Vm, color='g')
                         #if times is not None:
                         #    plotLight(times)
                         if run == 0 and phiInd == 0 and vInd == 0:
-                            plotLight(pulses-delD) ### HACK
+                        #    #plotLight(pulses-delD) ### HACK
+                            plotLight(pulses)
 
+            # TODO: Plot extra pulses and refactor
+            #self.begT, self.endT = min(begTs), max(endTs)
+            # Add stimuli
+            #for p in range(self.nPulses):
+            #    sameStart, sameEnd = False, False
+            #    if np.allclose(pulseSet[p, 0, :], np.tile(pulseSet[p, 0, 0], (1, 1, self.nRuns))): #pth t_on are the same
+            #        sameStart = True
+            #    if np.allclose(pulseSet[p, 1, :], np.tile(pulseSet[p, 1, 0], (1, 1, self.nRuns))): #pth t_off are the same
+            #        sameEnd = True
+
+            #    if sameStart and sameEnd: #np.allclose(pulseSet[p,:,run], np.tile(pulseSet[p,:,0], (1,1,self.nRuns))): #pth pulses are the same
+            #        plotLight(np.asarray([pulseSet[p, :, 0]]), ax=ax, light=light, lam=470, alpha=0.2)
+
+            #    elif not sameStart and not sameEnd: # No overlap
+            #        for run in range(self.nRuns):
+            #            plotLight(np.asarray([pulseSet[p, :, run]]), ax=ax, light=light, lam=470, alpha=0.2)
+
+            #    else: #not (sameStart and sameEnd): # One or the other - xor
+            #        pass # This applies to shortPulse only at present - do not shade!
+            
             plt.ylabel('$\mathrm{Membrane\ Potential\ [mV]}$') #axV.set_ylabel('Voltage [mV]')
-            axV.set_xlim((-delD, self.h.tstop - delD)) ### HACK
+            #axV.set_xlim((-delD, self.h.tstop - delD)) ### HACK
+            axV.set_xlim((t[0], t[-1]))
             plt.xlabel('$\mathrm{Time\ [ms]}$', position=(config.xLabelPos,0), ha='right')
 
             setCrossAxes(axV, zeroX=False) # Zeroing x-axis caused the plot to become too big!
@@ -997,7 +1036,7 @@ class simBrian(Simulator):
         Prot.prepare()
         dt = Prot.getShortestPeriod()
         Prot.dt = self.checkDt(dt)
-        self.br.defaultclock.dt = self.dt*ms
+        self.br.defaultclock.dt = self.dt * ms
         self.rasters = Prot.genContainer()
         self.Vms = Prot.genContainer()
         # Skip last state value since this is defined as 1 - sum(states) not as an ODE
@@ -1287,7 +1326,7 @@ class simBrian(Simulator):
                     self.plotRasters(spikeSets=spikeMonitors, times=pulses, totT=totT, offset=delD, figName=figName)
         return
 
-    def plotVm(self, Vmonitor, times=None, totT=None, offset=0, figName=None): ### REVISE!!!
+    def plotVm(self, Vmonitor, times=None, totT=None, offset=0, figName=None): ### TODO: REVISE (esp. offset)!!!
         Prot = self.Prot
         RhO = self.RhO
         Vfig = plt.figure()
