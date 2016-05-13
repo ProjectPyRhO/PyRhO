@@ -391,7 +391,7 @@ def setFigOutput(figDisplay='screen', width=None):
 
     # http://matplotlib.org/users/customizing.html
     if figDisplay == 'screen':
-        dpi = 300 #mpl.rcParams['savefig.dpi'] #300
+        dpi = 80 #300 #mpl.rcParams['savefig.dpi'] #300
         #figFormat = 'retina'
         saveFigFormat = 'png'
         if width is None:
@@ -408,6 +408,24 @@ def setFigOutput(figDisplay='screen', width=None):
         addTitles = True
         addStimulus = True
 
+    elif figDisplay == 'nb' or figDisplay == 'notebook':
+        mpl.use('nbagg') # Switch backend - TODO: Move this to __init__ before import matplotlib.pyplot
+        dpi = 80
+        saveFigFormat = 'png'
+        if width is None:
+            width = 12
+        figWidth = width
+        figHeight = figWidth / golden_ratio
+        tickSize = 14
+        labelSize = 12
+        legendSize = 8
+        titleSize = 'small' #'x-large'
+        eqSize = 12
+        linewidth = 1.5
+        markerSize = 6 # Default: 6
+        addTitles = True
+        addStimulus = True
+        
     elif figDisplay == 'paper':
         #http://www.nature.com/nature/authors/gta/3c_Final_artwork.pdf
         #http://www.plosone.org/static/figureSpecifications
@@ -432,6 +450,7 @@ def setFigOutput(figDisplay='screen', width=None):
 
         mpl.rcParams['savefig.dpi'] = dpi        # http://nbviewer.ipython.org/gist/minrk/3301035
                                                 # http://wiki.scipy.org/Cookbook/Matplotlib/AdjustingImageSize
+                                                # https://github.com/matplotlib/matplotlib/issues/5945
 
     else:
         warnings.warn('Warning: Unknown display type selected - using matplotlib defaults!')
