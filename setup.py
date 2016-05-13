@@ -140,16 +140,14 @@ setup(
     
     include_package_data=True,
     # If there are data files included in your packages that need to be
-    # installed, specify them here.  If using Python 2.6 or less, then these
+    # installed, specify them here. If using Python 2.6 or less, then these
     # have to be included in MANIFEST.in as well.
     package_data={
         #'pyrho': ['NEURON/*.mod', 'NEURON/*.hoc', 'NEURON/*.sh', 'gui/*.png', 'datasets/*.pkl'],
-        # Try this without MANIFEST
+        # TODO: Try this without MANIFEST
         'NEURON'    : ['*.mod', '*.hoc', '*.sh'],
         'gui'       : ['*.png'],
         'datasets'  : ['*.pkl'],
-        #'datasets': ['*.pkl']
-        #'sample': ['package_data.dat'],
     },
     
 
