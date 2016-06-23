@@ -23,7 +23,7 @@ import numpy as np
 
 __all__ = ['setupGUI', 'simAvailable', 'setupNEURON', 'setupBrian', 'check_package',
            'setFigOutput', 'setFigStyle', 'resetPlot', 'setOutput']
-# 'wallTime', 
+# 'wallTime',
 # TODO: Place in dict i.e. CONFIG_PARAMS['dDir'] or class with setter methods e.g. to call setOutput
 #, 'colours', 'styles', 'verbose', 'dDir', 'fDir', 'DASH_LINE', 'DOUB_DASH_LINE'
 
@@ -63,7 +63,7 @@ _DOUB_DASH_LINE = '=' * 80
 #global verbose
 #if 'verbose' not in vars() or 'verbose' not in globals() or verbose is None:
 verbose = 1 # Text notification output level [0,1,2]
-logLevels = [logging.CRITICAL, logging.ERROR, logging.WARNING, 
+logLevels = [logging.CRITICAL, logging.ERROR, logging.WARNING,
              logging.INFO, logging.DEBUG, logging.NOTSET]
 
 logger = logging.getLogger(__name__)
@@ -107,18 +107,18 @@ if 'fDir' not in vars() or 'fDir' not in globals() or fDir is None:
 GUIdir = 'gui'
 
 def setupGUI(path=None):
-    
+
     """
     Setup the Jupyter notebook GUI.
-    
+
     Parameters
     ----------
     path : str, optional
-        Specify the path for where to set up the GUI folders. 
+        Specify the path for where to set up the GUI folders.
         Defaults to the current working directory
-    
+
     """
-    
+
     if path is None: # Copy image folders to home directory
         path = os.path.join(os.getcwd(), GUIdir)
 
@@ -130,14 +130,14 @@ def setupGUI(path=None):
 
     return
 
-def simAvailable(sim, test=False):
-    
+def simAvailable(simName, test=False):
+
     """
-    Check if a simulator is available. 
-    
+    Check if a simulator is available.
+
     Parameters
     ----------
-    sim : str {'python', 'neuron', 'brian', 'brian2'}
+    simName : str {'python', 'neuron', 'brian', 'brian2'}
         Specify the simulator to check
     test : bool, optional
         Specify whether to run the simulator's test suite (the default is False)
@@ -147,13 +147,13 @@ def simAvailable(sim, test=False):
     bool
         True if the simulator is available, otherwise False
     """
-    
-    sim = sim.lower()
-    if sim is 'python':
+
+    simName = simName.lower()
+    if simName is 'python':
         return True
-    elif sim is 'neuron':
+    elif simName is 'neuron':
         return checkNEURON(test)
-    elif sim is 'brian' or sim is 'brian2':
+    elif simName is 'brian' or simName is 'brian2':
         return checkBrian(test)
     else:
         return False
@@ -197,10 +197,10 @@ def checkNEURON(test=False):
 
 
 def setupNEURON(path=None): # , NEURONpath=None):
-    
+
     """
     Setup the NEURON simulator to work with PyRhO.
-    
+
     Parameters
     ----------
     path : str, optional
@@ -211,7 +211,7 @@ def setupNEURON(path=None): # , NEURONpath=None):
     #    Path to PyRhO's working directory containing hoc and mod files (default=pwd)
     #NEURONpath : str, optional
     #    Path to NEURON installation directory containing nrn (and iv)
-    
+
     cwd = os.getcwd()
     # Boiler plates to expand '~'
     if path is not None:
@@ -371,18 +371,18 @@ if latexInstalled:
 xLabelPos = 0.98
 
 def setFigOutput(figDisplay='screen', width=None):
-    
+
     """
-    Set figure plotting options. 
-    
+    Set figure plotting options.
+
     Parameters
     ----------
     figDisplay : str, {'screen', 'paper'}, optional
         Specify the output medium to set figure properties for
     width : int or float, optional
-        Figure width in inches. Default depends on figDisplay. 
+        Figure width in inches. Default depends on figDisplay.
     """
-    
+
     golden_ratio = (1.0 + np.sqrt(5)) / 2.0
     global saveFigFormat
     global addTitles
@@ -425,7 +425,7 @@ def setFigOutput(figDisplay='screen', width=None):
         markerSize = 6 # Default: 6
         addTitles = True
         addStimulus = True
-        
+
     elif figDisplay == 'paper':
         #http://www.nature.com/nature/authors/gta/3c_Final_artwork.pdf
         #http://www.plosone.org/static/figureSpecifications
@@ -479,10 +479,12 @@ fancyPlots = False #True
 def setFigStyle(): #fancyPlots=False): # Merge this with setFigOutput
     """Set figure style"""
     global fancyPlots
+    global colours
     if fancyPlots:
         try:
             import seaborn as sns
-            cp = sns.color_palette()
+            #cp = sns.color_palette()
+            colours = sns.color_palette()
         except ImportError:
             warnings.warn('Seaborn not found - using default plotting scheme.')
         else: # Try another package?
@@ -526,4 +528,3 @@ else: # and IPython. See also get_ipython()
 # Long    Scientific
 # 1e-4    1e-5
 # 1e15    1e16
-
