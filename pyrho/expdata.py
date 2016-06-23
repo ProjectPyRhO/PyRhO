@@ -54,26 +54,26 @@ def loadMatFile(filename):
 class PhotoCurrent(object):
     """
     Data storage class for an individual Photocurrent and its associated properties
-    
+
     Attributes
     ----------
     I : ndarray(float)
         Array of photocurrent values in nanoamps [nA].
     t : ndarray(float)
-        Array of time values in milliseconds [ms] corresponding to ``I``. 
+        Array of time values in milliseconds [ms] corresponding to ``I``.
     pulses : array, shape = [n_pulses, 2]
         Pairs of time points describing the beginning and end of stimulation
-        e.g. [[t_on0, t_off0], [t_on1, t_off1], ..., [t_onN-1, t_offN-1]]. 
+        e.g. [[t_on0, t_off0], [t_on1, t_off1], ..., [t_onN-1, t_offN-1]].
     phi : float
-        Stimulating flux (max) [ph*mm^-2*s^-1]. 
+        Stimulating flux (max) [ph*mm^-2*s^-1].
     V : float or ``None``
-        Voltage clamp potential [mV] or ``None`` if no clamp was used. 
+        Voltage clamp potential [mV] or ``None`` if no clamp was used.
     stimuli : ndarray(float) or ``None``, optional
-        Optional array of flux values corresponding to ``I``. Expect nStimuli x nSamples row vectors. 
+        Optional array of flux values corresponding to ``I``. Expect nStimuli x nSamples row vectors.
     states : ndarray(float) or ``None``, optional
-        Optional array of model state variables if the data are synthetic (shape=nStates x nSamples). 
+        Optional array of model state variables if the data are synthetic (shape=nStates x nSamples).
     stateLabels : list(str) or ``None``, optional
-        Optional list of LaTeX strings labelling each of the state variables. 
+        Optional list of LaTeX strings labelling each of the state variables.
     """
     #pulses : list(list(float))
     '''
@@ -82,7 +82,7 @@ class PhotoCurrent(object):
     sr          # Sampling rate [Hz] [samples/s]    sr_
     begT        # t[0]          HIDE
     endT        # t[-1]         HIDE
-    totT        # t[-1] - t[0]  
+    totT        # t[-1] - t[0]
     nStimuli    # Number of stimuli
     nStates     # Number of model states
     synthetic   # Modelling data
@@ -119,9 +119,9 @@ class PhotoCurrent(object):
     alignPoint  # {0:=t_on, 1:=t_peak, 2:=t_off}
     p0          # Time shift
     '''
-    
+
     # Move states (and Vm, stimuli) into .extras['states']...
-    
+
     # TODO: Make this a setter which calls findPeakInds and findSteadyState when changed
     overlap = True  # Periods are up to *and including* the start of the next e.g. onPhase := t[onInd] <= t <? t[offInd]
 
@@ -133,7 +133,7 @@ class PhotoCurrent(object):
         V       := Voltage clamp potential [mV]
         pulses  := Pairs of time points describing the beginning and end of stimulation
                     e.g. [[t_on1,t_off1],[t_on2,t_off2],...]
-        
+
         # I = [0., 0., 0., ..., -0.945, ..., 0.]
         # t = [0, 0.1, 0.2, ..., tmax]
         # pulses = [[100, 250], [300, 500]]
@@ -357,17 +357,17 @@ class PhotoCurrent(object):
     #TODO: Finish this - avoid circular imports or move to fitting.py!
     def fitKinetics(self, p=0, method='powell'): # trim=0.1, # defMethod
         r"""
-        Fit exponentials to a photocurrent to find time constants of kinetics. 
-        
-        Plot the time-constants along with the photocurrent: 
+        Fit exponentials to a photocurrent to find time constants of kinetics.
+
+        Plot the time-constants along with the photocurrent:
             * :math:`\tau_{act} :=` The activation time-constant of :math:`[I_{on}:I_{peak}]`
             * :math:`\tau_{inact} :=` The inactivation time-constant of :math:`[I_{peak}:I_{off}]`
-            * :math:`\tau_{deact} :=` The deactivation time-constant(s) of :math:`[I_{off}:]`. A single and double exponential function are fit the the off-curve. 
-        
+            * :math:`\tau_{deact} :=` The deactivation time-constant(s) of :math:`[I_{off}:]`. A single and double exponential function are fit the the off-curve.
+
         Parameters
         ----------
         p : int
-            Specify which pulse to use (default=0) ``0 <= p < nPulses``. 
+            Specify which pulse to use (default=0) ``0 <= p < nPulses``.
         method : str
             Optimisation method (default=defMethod)
         """
@@ -671,14 +671,14 @@ class PhotoCurrent(object):
     def findPeakInds(self): #, pulse=0):
         """
         Find the indicies of the photocurrent peaks for each pulse
-        
+
         Returns
         -------
         ndarry(int)
             Array of peak indexes for each pulse (shape=nPulses)
             np.array([peakInd_0, peakInd_1, ..., peakInd_n-1])
         """
-        
+
         offsetInd = len(self.getDelayPhase()[0]) - int(self.overlap) #1
         peakInds = np.zeros((self.nPulses,), dtype=np.int)
         for p in range(self.nPulses):
@@ -744,7 +744,7 @@ class PhotoCurrent(object):
             from pyrho.parameters import p0inact
             from pyrho.utilities import expDecay
             from scipy.optimize import curve_fit
-            
+
             t = self.t[postPeak]
             I = self.I[postPeak]
             shift = t[0]
@@ -914,10 +914,10 @@ class PhotoCurrent(object):
                 # plt.text(self.tpeaks_[p], 1.02*self.peaks_[p], '$I_{{peak}} = {:.3g}\mathrm{{nA}};\ t_{{lag}} = {:.3g}\mathrm{{ms}}$'.format(self.peaks_[p], self.lags_[0]), ha='left', va='top', fontsize=eqSize)
 
                 if self.peaks_[p] is not None:
-                    ax.annotate(r'$I_{{peak}} = {:.3g}\mathrm{{nA}};\ t_{{lag}} = {:.3g}\mathrm{{ms}}$'.format(self.peaks_[p], self.lags_[0]), 
-                                xy=(self.tpeaks_[p], self.peaks_[p]), 
-                                xytext=(toffset+self.tpeaks_[p], self.peaks_[p]), 
-                                arrowprops=dict(arrowstyle="wedge,tail_width=0.6", shrinkA=5, shrinkB=5, facecolor='red'), 
+                    ax.annotate(r'$I_{{peak}} = {:.3g}\mathrm{{nA}};\ t_{{lag}} = {:.3g}\mathrm{{ms}}$'.format(self.peaks_[p], self.lags_[0]),
+                                xy=(self.tpeaks_[p], self.peaks_[p]),
+                                xytext=(toffset+self.tpeaks_[p], self.peaks_[p]),
+                                arrowprops=dict(arrowstyle="wedge,tail_width=0.6", shrinkA=5, shrinkB=5, facecolor='red'),
                                 horizontalalignment='left', verticalalignment='center', fontsize=config.eqSize)
 
                 # Add pointer to steady-state currents
@@ -925,9 +925,9 @@ class PhotoCurrent(object):
                     #plt.text(1.1*self.pulses[p,1], self.ss_, '$I_{{ss}} = {:.3g}\mathrm{{nA}}$'.format(self.ss_), ha='left', va='center', fontsize=eqSize)
                     #if toffset+self.pulses[p,1] > self.endT:
                     #xPos = 0
-                    ax.annotate(r'$I_{{ss}} = {:.3g}\mathrm{{nA}}$'.format(self.sss_[p]), xy=(self.pulses[p, 1], self.sss_[p]), 
-                                xytext=(toffset+self.pulses[p, 1], self.sss_[p]), 
-                                arrowprops=dict(arrowstyle="wedge,tail_width=0.6", shrinkA=5, shrinkB=5), 
+                    ax.annotate(r'$I_{{ss}} = {:.3g}\mathrm{{nA}}$'.format(self.sss_[p]), xy=(self.pulses[p, 1], self.sss_[p]),
+                                xytext=(toffset+self.pulses[p, 1], self.sss_[p]),
+                                arrowprops=dict(arrowstyle="wedge,tail_width=0.6", shrinkA=5, shrinkB=5),
                                 horizontalalignment='left', verticalalignment='center', fontsize=config.eqSize)
 
                 # Add labels for on and off phases
@@ -941,24 +941,24 @@ class PhotoCurrent(object):
                 texty = -round(0.1 * self.peak_)
                 arrowy = 1.5 * texty
                 #awidth=10
-                ax.annotate('', xy=(self.pulses[p,0], arrowy), 
-                            xytext=(self.pulses[p,1], arrowy), 
+                ax.annotate('', xy=(self.pulses[p,0], arrowy),
+                            xytext=(self.pulses[p,1], arrowy),
                             arrowprops=dict(arrowstyle='<->', color='blue', shrinkA=0, shrinkB=0))
-                plt.text(self.pulses[p,0]+self.onDs[p]/2, texty, 
-                         r'$\Delta t_{{on_{}}}={:.3g}\mathrm{{ms}}$'.format(p, self.onDs[p]), 
+                plt.text(self.pulses[p,0]+self.onDs[p]/2, texty,
+                         r'$\Delta t_{{on_{}}}={:.3g}\mathrm{{ms}}$'.format(p, self.onDs[p]),
                         ha='center', va='bottom', fontsize=config.eqSize)
                 if p < self.nPulses-1:
                     end = self.pulses[p+1,0]
                 else:
                     end = self.endT
-                ax.annotate('', xy=(self.pulses[p,1], arrowy), xytext=(end, arrowy), 
+                ax.annotate('', xy=(self.pulses[p,1], arrowy), xytext=(end, arrowy),
                             arrowprops=dict(arrowstyle='<->', color='green', shrinkA=0, shrinkB=0))
-                plt.text(self.pulses[p,1]+self.offDs[p]/2, texty, 
-                         r'$\Delta t_{{off_{}}}={:.3g}\mathrm{{ms}}$'.format(p, self.offDs[p]), 
+                plt.text(self.pulses[p,1]+self.offDs[p]/2, texty,
+                         r'$\Delta t_{{off_{}}}={:.3g}\mathrm{{ms}}$'.format(p, self.offDs[p]),
                         ha='center', va='bottom', fontsize=config.eqSize)
 
         #plt.show()
-        
+
         return # ax
 
 
@@ -1044,6 +1044,7 @@ class PhotoCurrent(object):
 
 
         if plotPies:
+            #TODO: Remove this again and fix bug with piechart sns colours
             #if config.fancyPlots and check_package('seaborn'):
             #    import seaborn as sns
             #    cp = sns.color_palette()
@@ -1184,7 +1185,7 @@ class PhotoCurrent(object):
 class ProtocolData(object):
     """
     Container for PhotoCurrent data from parameter variations in the same protocol
-    
+
     Attributes
     ----------
     protocol : str
@@ -1203,7 +1204,7 @@ class ProtocolData(object):
         Nested lists of the PhotoCurrents for each protocol condition.
         nRuns x nPhis x nVs
     runLabels : list[str]
-        List of series labels specifying the independent variable for each run. 
+        List of series labels specifying the independent variable for each run.
     """
 
     # TODO: Replace lists with dictionaries or pandas data structures
@@ -1237,7 +1238,7 @@ class ProtocolData(object):
         self._phis = phis
         self.nPhis = len(phis)
     '''
-    
+
     def __str__(self):
         return 'Protocol data set: [nRuns={}, nPhis={}, nVs={}]'.format(self.nRuns, self.nPhis, self.nVs)
 
@@ -1271,16 +1272,16 @@ class ProtocolData(object):
 
     def addTrials(self, photocurrents, run=0):
         """
-        Add a photocurrent to the ProtocolData object without the need to specify the phi or V index. 
-        
+        Add a photocurrent to the ProtocolData object without the need to specify the phi or V index.
+
         Parameters
         ----------
         photocurrents : list[PhotoCurrent] or PhotoCurrent
-            PhotoCurrent or list of PhotoCurrent data to add to the ProtocolData object. 
+            PhotoCurrent or list of PhotoCurrent data to add to the ProtocolData object.
         run : int, optional
             Specify the run index, as this is not apparent from the PhotoCurrent (default=0).
         """
-        
+
         assert(0 <= run < self.nRuns)
 
         if not isinstance(photocurrents, (list, tuple)):
@@ -1463,23 +1464,23 @@ class ProtocolData(object):
 
     def plot(self, ax=None, light='shade', addFeatures=True):
         """
-        Convenience method to plot the data set. 
-        
+        Convenience method to plot the data set.
+
         Parameters
         ----------
         ax : axis, optional
-            Existing axis on which to plot the PhotoCurrent data (default=None). 
-            If `None`, create a new axis. 
+            Existing axis on which to plot the PhotoCurrent data (default=None).
+            If `None`, create a new axis.
         light : str {'shade', ...}, optional
-            Specify the light style to plot. 
+            Specify the light style to plot.
         addFeatures : bool, optional
             Flag to pass to PhotoCurrent.plot for adding extra features e.g. peak and steady-state
-        
+
         See Also
         --------
         utilities.plotLight
         """
-        
+
         if ax == None:
             ax = plt.gca()
         else:
@@ -1593,14 +1594,14 @@ class ProtocolData(object):
     def getIpmax(self, vInd=None):
         """
         Find the maximum peak current for the whole data set.
-        
+
         This is useful when the 'delta' protocol is absent.
-        
+
         Parameters
         ----------
         vInd : int, optional
-            Optionally restrict the search to a particular membrane potential (default=None). 
-        
+            Optionally restrict the search to a particular membrane potential (default=None).
+
         Returns
         -------
         Ipmax_ : float
@@ -1635,11 +1636,11 @@ class ProtocolData(object):
     def getProtPeaks(self):
         """
         Return the set of maximum absolute (most extreme) peak currents across a whole set of photocurrents
-        
+
         Returns
         -------
         Ipeaks : list[list[list[float]]]
-            Nested lists of peak values: nRuns x nPhis x nVs. 
+            Nested lists of peak values: nRuns x nPhis x nVs.
         tpeaks : list[list[list[float]]]
             Nested lists of peak value times: nRuns x nPhis x nVs.
         """
@@ -1669,25 +1670,25 @@ class ProtocolData(object):
 
     def getSteadyStates(self, run=0, phiInd=None):
         """
-        Return Iss, Vss. 
-        
-        Find the steady-state currents and the corresponding voltage clamp potentials. 
+        Return Iss, Vss.
+
+        Find the steady-state currents and the corresponding voltage clamp potentials.
 
         Parameters
         ----------
         run : int, optional
-            Specify the run index to collect the data from (default=0). 
+            Specify the run index to collect the data from (default=0).
         phiInd : int, optional
-            Specify the phi index to collect the data from or collect from all flux values (default=None). 
-        
+            Specify the phi index to collect the data from or collect from all flux values (default=None).
+
         Returns
         -------
         Iss : list[list[float]] or list[float]
-            Nested lists of peak values: len == nPhis x nVs or nVs. 
+            Nested lists of peak values: len == nPhis x nVs or nVs.
         Vss : list[list[float]] or list[float]
             Nested lists of steady-state membrane potentials: len == nPhis x nVs or nVs
         """
-        
+
         assert(self.nVs > 1)
         if phiInd is None: # Return 2D array
             self.Isss_ = np.zeros((self.nPhis, self.nVs))
