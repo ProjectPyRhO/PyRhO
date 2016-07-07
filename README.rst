@@ -15,7 +15,7 @@ The module is written in Python with an additional IPython/Jupyter notebook base
 
 If you use PyRhO please cite our paper: 
 
-Evans, B. D., Jarvis, S., Schultz, S. R. & Nikolic K. (2016) "PyRhO: A Multiscale Optogenetics Simulation Platform", *Front. Neuroinform., 10* (8). `doi:10.3389/fninf.2016.00008 <https://dx.doi.org/10.3389/fninf.2016.00008>`_
+Evans, B. D., Jarvis, S., Schultz, S. R. & Nikolic K. (2016) "PyRhO: A Multiscale Optogenetics Simulation Platform", *Frontiers in Neuroinformatics, 10* (8). `doi:10.3389/fninf.2016.00008 <https://dx.doi.org/10.3389/fninf.2016.00008>`_
 
 The PyRhO project website with additional documentation may be found here: `www.imperial.ac.uk/bio-modelling/pyrho <http://www.imperial.ac.uk/a-z-research/bio-modelling/pyrho>`_
 
@@ -34,7 +34,7 @@ Alternatively, to install the latest code from Github (including the GUI) use th
 
     pip install git+https://github.com/ProjectPyRhO/PyRhO.git#egg=PyRhO[full]
 
-Currently PyRhO only supports Python 3. To use PyRhO with the `NEURON simulator <http://www.neuron.yale.edu/neuron/>`_, NEURON must be compiled from its source code so that it works with Python 3. An installation script is provided for doing this on Mac OS X or Linux.  
+To use PyRhO with the `NEURON simulator <http://www.neuron.yale.edu/neuron/>`_ in a Python 3 environment, NEURON must be compiled from its source code. An installation script is provided for doing this on Mac OS X or Linux. The resultant installation will also work with Python 2. If you only wish to use PyRhO/NEURON with Python 2 however, a standard NEURON installation should be sufficient. 
 The shell script may be called after importing PyRhO with the following function:
 ::
 
