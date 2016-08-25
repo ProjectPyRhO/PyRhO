@@ -21,6 +21,17 @@ The PyRhO project website with additional documentation may be found here: `www.
 
 Follow us on twitter: `@ProjectPyRhO <https://twitter.com/ProjectPyRhO>`_!
 
+Prometheus
+----------
+
+If you would like to try PyRhO before installing it, go to `try.projectpyrho.org <http://try.projectpyrho.org>`_ to launch a fully configured Jupyter notebook in your browser. 
+
+Docker
+------
+
+If you wish to use PyRhO in a Docker container, a Dockerfile is provided in the accompanying Prometheus repository: https://github.com/ProjectPyRhO/Prometheus
+The Docerfile will build a full installation including the NEURON and Brian2 simulators and the Jupyter notebook GUI. See the repository's README file for instructions. 
+
 Installation
 ------------
 
@@ -44,9 +55,3 @@ The shell script may be called after importing PyRhO with the following function
 This will attempt to compile NEURON from source, copy the supplied ``mod`` and ``hoc`` files into place (the current working directory by default) finally compiling the ``mod`` files describing the opsin models ready for inclusion in simulations. 
 
 The `Brian simulator <http://briansimulator.org/>`_ is included with the PyRhO installation for modelling networks of optogenetically transfected spiking neurons. 
-
-Docker
-------
-
-If you wish to use PyRhO in a Docker container, a Dockerfile is provided in the accompanying Prometheus repository: https://github.com/ProjectPyRhO/Prometheus
-The Docerfile will build a full installation including the NEURON and Brian2 simulators and the Jupyter notebook GUI. See the repository's README file for instructions. 
