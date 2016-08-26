@@ -659,13 +659,21 @@ class PyRhOobject(object):
     def setParams(self, params):
         """Set all model parameters from a Parameters() object"""
         #for param, value in params.items():
+        #for p in params.keys():
+        #    self.__dict__[p] = params[p].value #vars(self())[p]
         for p in params.keys():
-            self.__dict__[p] = params[p].value #vars(self())[p]
+            setattr(self, p, params[p].value)
+        #for name, value in params.items():
+        #    setattr(self, name, value)
     
     def updateParams(self, params):
         """Update model parameters which already exist"""
         pDict = params.valuesdict()
         count = 0
+        for name, value in pDict:
+            if hasattr(self, name):
+                setattr(self, name, value)
+                count == 1
         for p, v in pDict.items():
             if p in self.__dict__: # Added to allow dummy variables in fitting parameters
                 self.__dict__[p] = v #vars(self())[p]
