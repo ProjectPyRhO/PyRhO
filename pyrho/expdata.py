@@ -80,8 +80,8 @@ class PhotoCurrent(object):
     overlap     # Periods are up to *and including* the start of the next phase
     dt          # Sampling time step                dt_
     sr          # Sampling rate [Hz] [samples/s]    sr_
-    begT        # t[0]          HIDE
-    endT        # t[-1]         HIDE
+    begT        # t[0]          HIDE _begT_
+    endT        # t[-1]         HIDE _endT_
     totT        # t[-1] - t[0]
     nStimuli    # Number of stimuli
     nStates     # Number of model states
@@ -93,21 +93,21 @@ class PhotoCurrent(object):
     onDs        # On-phase durations
     IPIs        # Inter-pulse-intervals t_off <-> t_on
     offDs       # Off-phase durations
-    pulseInds   # Indexes for the start of each on- and off-phase
+    pulseInds   # Indexes for the start of each on- and off-phases  HIDE
     clamped     # Membrane potential was clamped
     lam         # Stimulus wavelength       RETHINK c.f. stimuli
     isFiltered  # Data hase been filtered               HIDE
-    Iorig       # Original photocurrent (unfiltered)    HIDE
-    Iprev       # Previous photocurrent                 HIDE
+    Iorig       # Original photocurrent (unfiltered)    HIDE _Iorig_
+    Iprev       # Previous photocurrent                 HIDE _Iprev_
     offset_     # Current offset calculated to zero dark current    HIDE
     on_         # Current at t_on[:]        REMOVE
     off_        # Current at t_off[:]       REMOVE
     range_      # [Imin, Imax]
     span_       # Imax - Imin
-    peakInd_    # Index of biggest current peak
+    peakInd_    # Index of biggest current peak                     HIDE
     tpeak_      # Time of biggest current peak
     peak_       # Biggest current peak
-    peakInds_   # Indexes of current peaks in each pulse
+    peakInds_   # Indexes of current peaks in each pulse            HIDE
     tpeaks_     # Times of current peaks in each pulse
     peaks_      # Current peaks in each pulse
     lags_       # t_lag = t_peak - t_on
