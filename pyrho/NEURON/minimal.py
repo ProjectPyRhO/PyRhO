@@ -1,4 +1,5 @@
 # minNEURON.py
+from neuron import h
 
 cell = h.SectionList()
 soma = h.Section(name='soma') #create soma
@@ -36,4 +37,4 @@ h.pop_section()
 
 
 
-return cell
+#return cell
