@@ -228,7 +228,7 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
                     for vInd in range(self.nVs):
                         pc = self.PD.trials[run][phiInd][vInd]
                         fileName = '{}States{}s-{}-{}-{}'.format(self.protocol, pc.nStates, run, phiInd, vInd) # RhO.nStates
-                        #RhO.plotStates(pc.t, pc.states, pc.pulses, RhO.stateLabels, phi, pc.peakInds_, fileName)
+                        #RhO.plotStates(pc.t, pc.states, pc.pulses, RhO.stateLabels, phi, pc._idx_peaks_, fileName)
                         pc.plotStates(name=fileName)
                         logging.info('Plotting states to: {}'.format(fileName))
 

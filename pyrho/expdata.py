@@ -106,9 +106,9 @@ class PhotoCurrent(object):
     range_      # [Imin, Imax]
     span_       # Imax - Imin
     peakInd_    # Index of biggest current peak                     HIDE
-    t_peak_      # Time of biggest current peak
+    t_peak_      # Time of biggest current peak     Replace with t_peaks_[0]?
     peak_       # Biggest current peak
-    peakInds_   # Indexes of current peaks in each pulse            HIDE
+    _idx_peaks_   # Indexes of current peaks in each pulse            HIDE
     t_peaks_     # Times of current peaks in each pulse
     peaks_      # Current peaks in each pulse
     lags_       # t_lag = t_peak - t_on
@@ -281,10 +281,10 @@ class PhotoCurrent(object):
         self.t_peak_ = self.t[self.peakInd_]
         self.peak_ = self.I[self.peakInd_]
 
-        #self.peakInds_ = np.array([np.argmax(abs(self.getCycle(p)[0])) for p in range(self.nPulses)]) #np.searchsorted(self.I, self.Ipeaks)
-        self.peakInds_ = self.findPeakInds()
-        self.t_peaks_ = self.t[self.peakInds_]
-        self.peaks_ = self.I[self.peakInds_]
+        #self._idx_peaks_ = np.array([np.argmax(abs(self.getCycle(p)[0])) for p in range(self.nPulses)]) #np.searchsorted(self.I, self.Ipeaks)
+        self._idx_peaks_ = self.findPeakInds()
+        self.t_peaks_ = self.t[self._idx_peaks_]
+        self.peaks_ = self.I[self._idx_peaks_]
 
         self.lags_ = np.array([self.t_peaks_[p] - self.pulses[p, 0] for p in range(self.nPulses)]) # t_lag = t_peak - t_on
         self.lag_ = self.lags_[0]
@@ -643,7 +643,7 @@ class PhotoCurrent(object):
             self.t_start = self.t[0]       # Beginning Time of Trial
             self.t_end = self.t[-1]      # End Time of Trial
             self.t_peak_ = self.t[self.peakInd_]
-            self.t_peaks_ = self.t[self.peakInds_]
+            self.t_peaks_ = self.t[self._idx_peaks_]
             self.pulseAligned = True
             self.alignPoint = alignPoint
 
@@ -665,7 +665,7 @@ class PhotoCurrent(object):
         self.t_start = self.t[0]       # Beginning Time of Trial
         self.t_end = self.t[-1]      # End Time of Trial
         self.t_peak_ = self.t[self.peakInd_]
-        self.t_peaks_ = self.t[self.peakInds_]
+        self.t_peaks_ = self.t[self._idx_peaks_]
         self.pulseAligned = False
 
 
@@ -738,7 +738,7 @@ class PhotoCurrent(object):
 
         elif method == 1: # Theoretical: Fit curve from peak to end of on phase
 
-            postPeak = slice(self.peakInds_[pulse], self.pulseInds[pulse, 1]+int(self.overlap)) #1 # t_peak : t_off+1
+            postPeak = slice(self._idx_peaks_[pulse], self.pulseInds[pulse, 1]+int(self.overlap)) #1 # t_peak : t_off+1
             #popt = fitPeaks(self.t[postPeak], self.I[postPeak], expDecay, p0inact, '$I_{{inact}} = {:.3}e^{{-t/{:g}}} {:+.3}$','')
             #Iss = popt[2]
 
@@ -832,14 +832,14 @@ class PhotoCurrent(object):
     def getActivation(self, pulse=0):
         """Return I [nA] and t [ms] arrays from beginning of the on-phase to the peak for a given pulse"""
         assert(0 <= pulse < self.nPulses)
-        actSlice = slice(self.pulseInds[pulse, 0], self.peakInds_[pulse]+int(self.overlap))
+        actSlice = slice(self.pulseInds[pulse, 0], self._idx_peaks_[pulse]+int(self.overlap))
         return (self.I[actSlice], self.t[actSlice])
 
 
     def getDeactivation(self, pulse=0): # Inactivation, Deactivation, Desensitisation???
         """Return I [nA] and t [ms] arrays from the peak to the end of the on-phase for a given pulse"""
         assert(0 <= pulse < self.nPulses)
-        deactSlice = slice(self.peakInds_[pulse], self.pulseInds[pulse, 1]+int(self.overlap))
+        deactSlice = slice(self._idx_peaks_[pulse], self.pulseInds[pulse, 1]+int(self.overlap))
         return (self.I[deactSlice], self.t[deactSlice])
 
 
@@ -969,7 +969,7 @@ class PhotoCurrent(object):
         t = self.t
         states = self.states
         pulses = self.pulses
-        peakInds = self.peakInds_
+        peakInds = self._idx_peaks_
         labels = self.stateLabels
 
         plotSum = False
