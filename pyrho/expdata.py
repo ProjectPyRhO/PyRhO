@@ -100,7 +100,7 @@ class PhotoCurrent(object):
     isFiltered  # Data hase been filtered               HIDE
     _I_orig       # Original photocurrent (unfiltered)    HIDE __I_orig_
     _I_prev       # Previous photocurrent                 HIDE __I_prev_
-    offset_     # Current offset calculated to zero dark current    HIDE
+    _offset_     # Current offset calculated to zero dark current    HIDE
     on_         # Current at t_on[:]        REMOVE
     off_        # Current at t_off[:]       REMOVE
     range_      # [Imin, Imax]
@@ -244,7 +244,7 @@ class PhotoCurrent(object):
             self.I -= I_offset
             if config.verbose > 0:
                 print("Photocurrent recalibrated by {} [nA]".format(I_offset))
-            self.offset_ = I_offset
+            self._offset_ = I_offset
 
         #if pulses[0][0] > 0: # Check for an initial delay period
         #    onInd = self._idx_pulses_[0,0]
