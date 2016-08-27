@@ -103,7 +103,7 @@ class PhotoCurrent(object):
     _offset_     # Current offset calculated to zero dark current    HIDE
     on_         # Current at t_on[:]        REMOVE
     off_        # Current at t_off[:]       REMOVE
-    range_      # [Imin, Imax]
+    I_range_      # [Imin, Imax]
     span_       # Imax - Imin
     _idx_peak_    # Index of biggest current peak                     HIDE
     t_peak_      # Time of biggest current peak     Replace with t_peaks_[0]?
@@ -266,8 +266,8 @@ class PhotoCurrent(object):
         self.off_ = np.array([self.I[pInd[1]] for pInd in self._idx_pulses_])    # Current at t_off[:]
 
         # Add this to findPeaks
-        self.range_ = [min(self.I), max(self.I)]
-        self.span_ = self.range_[1] - self.range_[0]
+        self.I_range_ = [min(self.I), max(self.I)]
+        self.span_ = self.I_range_[1] - self.I_range_[0]
         #if abs(self.Irange[0]) > abs(self.Irange[1]):
         #    self.Ipeak = self.Irange[0] # Min
         #    self.Ipeaks = np.asarray([min(self.getCycle(p)) for p in range(self.nPulses)]) # Peak may occur after stimulation #np.asarray([min(self.I[self._idx_pulses_[p,0]:self._idx_pulses_[p,1]]) for p in range(self.nPulses)])
@@ -307,7 +307,7 @@ class PhotoCurrent(object):
         #self.findKinetics()
 
         if config.verbose > 1:
-            print("Photocurrent data loaded! nPulses={}; Total time={}ms; Range={}nA".format(self.nPulses, self.Dt_tot, str(self.range_)))
+            print("Photocurrent data loaded! nPulses={}; Total time={}ms; Range={}nA".format(self.nPulses, self.Dt_tot, str(self.I_range_)))
 
 
     def __len__(self):

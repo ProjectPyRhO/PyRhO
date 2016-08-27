@@ -139,7 +139,7 @@ class Simulator(PyRhOobject):  # object
                     self.saveExtras(run, phiInd, vInd)
 
                     if verbose > 1:
-                        print('Run=#{}/{}; phiInd=#{}/{}; vInd=#{}/{}; Irange=[{:.3g},{:.3g}]'.format(run, Prot.nRuns, phiInd, Prot.nPhis, vInd, Prot.nVs, PC.range_[0], PC.range_[1]))
+                        print('Run=#{}/{}; phiInd=#{}/{}; vInd=#{}/{}; Irange=[{:.3g},{:.3g}]'.format(run, Prot.nRuns, phiInd, Prot.nPhis, vInd, Prot.nVs, PC.I_range_[0], PC.I_range_[1]))
 
         Prot.finish(PC, RhO)
         # self.finish() # Reset dt and Vclamp
