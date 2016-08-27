@@ -234,7 +234,7 @@ class RhodopsinModel(PyRhOobject):
         fig = plt.figure(figsize=(figWidth, 1.5*figHeight))
         gs = plt.GridSpec(3, 3)
 
-        begT, endT = t[0], t[-1]
+        t_start, endT = t[0], t[-1]
 
         # Plot line graph of states
         axLine = fig.add_subplot(gs[0,:])
@@ -248,7 +248,7 @@ class RhodopsinModel(PyRhOobject):
         else:
             plt.legend(labels, loc=6)
         plt.ylabel('$\mathrm{State\ occupancy}$')
-        plt.xlim((begT, endT))
+        plt.xlim((t_start, endT))
         #plt.ylim((-0.1,1.1))
         plt.ylim((0, 1))
         if config.addTitles:
@@ -271,7 +271,7 @@ class RhodopsinModel(PyRhOobject):
         axStack = fig.add_subplot(gs[1,:], sharex=axLine)
         plt.stackplot(t, states.T)
         plt.ylim((0,1))
-        plt.xlim((begT, endT))
+        plt.xlim((t_start, endT))
         plotLight(pulses, axStack, 'borders')
         if config.addTitles:
             axStack.title.set_visible(False)

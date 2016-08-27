@@ -81,7 +81,7 @@ class PhotoCurrent(object):
     overlap     # Periods are up to *and including* the start of the next phase
     dt          # Sampling time step                dt_
     sr          # Sampling rate [Hz] [samples/s]    sr_
-    begT        # t[0]          HIDE _begT_
+    t_start        # t[0]          HIDE _t_start_
     endT        # t[-1]         HIDE _endT_
     Dt_tot        # t[-1] - t[0]
     nStimuli    # Number of stimuli
@@ -160,9 +160,9 @@ class PhotoCurrent(object):
             raise ValueError("Dimension mismatch: |t|={}; |I|={}. t must be either an array of the same length as I or a scalar defining the timestep!".format(len(t), len(I)))
 
 
-        self.begT = self.t[0]                   # Beginning trial time
+        self.t_start = self.t[0]                   # Beginning trial time
         self.endT = self.t[-1]                  # Last trial time point
-        self.Dt_tot = self.endT - self.begT       # Total trial time #max(self.t) # Handles negative delays
+        self.Dt_tot = self.endT - self.t_start       # Total trial time #max(self.t) # Handles negative delays
 
         if stimuli is not None:
             # TODO: Remove stimuli and make it equivalent to t i.e. float or array
@@ -205,8 +205,8 @@ class PhotoCurrent(object):
         self.nPulses = self.pulses.shape[0]
         self.pulseCycles, _ = times2cycles(self.pulses, self.endT) #self.Dt_tot)
 
-        self.delD = self.pulses[0, 0] - self.begT                   # Handles negative delays
-        self.delDs = np.array(self.pulses[:, 0] - self.begT)        # Delay Durations
+        self.delD = self.pulses[0, 0] - self.t_start                   # Handles negative delays
+        self.delDs = np.array(self.pulses[:, 0] - self.t_start)        # Delay Durations
         self.onDs = np.array(self.pulses[:, 1] - self.pulses[:, 0]) # Pulse Durations
         #if self.nPulses > 1:
         #    self.IPIs = np.zeros(self.nPulses - 1)
@@ -640,7 +640,7 @@ class PhotoCurrent(object):
                 raise NotImplementedError
             self.t -= self.p0           # Time array
             self.pulses -= self.p0      # Pulse times
-            self.begT = self.t[0]       # Beginning Time of Trial
+            self.t_start = self.t[0]       # Beginning Time of Trial
             self.endT = self.t[-1]      # End Time of Trial
             self.tpeak_ = self.t[self.peakInd_]
             self.tpeaks_ = self.t[self.peakInds_]
@@ -662,7 +662,7 @@ class PhotoCurrent(object):
         #    self.p0 = self.t[0]
         self.t -= self.p0           # Time array
         self.pulses -= self.p0      # Pulse times
-        self.begT = self.t[0]       # Beginning Time of Trial
+        self.t_start = self.t[0]       # Beginning Time of Trial
         self.endT = self.t[-1]      # End Time of Trial
         self.tpeak_ = self.t[self.peakInd_]
         self.tpeaks_ = self.t[self.peakInds_]
@@ -891,7 +891,7 @@ class PhotoCurrent(object):
         plotLight(self.pulses, ax=ax, light=light, dark=dark, lam=470, alpha=0.2)
 
         plt.xlabel(r'$\mathrm{Time\ [ms]}$', position=(config.xLabelPos, 0), ha='right')
-        plt.xlim((self.begT, self.endT))
+        plt.xlim((self.t_start, self.endT))
         plt.ylabel(r'$\mathrm{Photocurrent\ [nA]}$')
 
         setCrossAxes(ax)
@@ -998,7 +998,7 @@ class PhotoCurrent(object):
         fig = plt.figure(figsize=(figWidth, (1+nPulses/2)*figHeight)) # 1.5*
         gs = plt.GridSpec(2+nPulses, count)
 
-        begT, endT = t[0], t[-1] # self.begT, self.endT
+        t_start, endT = t[0], t[-1] # self.t_start, self.endT
 
         # Plot line graph of states
         axLine = fig.add_subplot(gs[0,:])
@@ -1013,7 +1013,7 @@ class PhotoCurrent(object):
             plt.legend(labels, loc=6)
 
         plt.ylabel(r'$\mathrm{State\ occupancy}$')
-        plt.xlim((begT, endT))
+        plt.xlim((t_start, endT))
         #plt.ylim((-0.1,1.1))
         plt.ylim((0, 1))
         if config.addTitles:
@@ -1036,7 +1036,7 @@ class PhotoCurrent(object):
         axStack = fig.add_subplot(gs[1,:], sharex=axLine)
         plt.stackplot(t, states.T)
         plt.ylim((0, 1))
-        plt.xlim((begT, endT))
+        plt.xlim((t_start, endT))
         plotLight(pulses, axStack, 'borders')
         if config.addTitles:
             axStack.title.set_visible(False)
@@ -1489,7 +1489,7 @@ class ProtocolData(object):
         self.legLabels = []
 
         #onDs = []
-        begTs, endTs = [], []
+        t_starts, endTs = [], []
         #pulseSet = [[[None for v in range(self.nVs)] for p in range(self.nPhis)] for r in range(self.nRuns)]
         self.nPulses = self.trials[0][0][0].nPulses # Assume all trials have the same number
         pulseSet = np.zeros((self.nPulses, 2, self.nRuns))
@@ -1498,7 +1498,7 @@ class ProtocolData(object):
                 for vInd, V in enumerate(self.Vs):
                     pc = self.trials[run][phiInd][vInd]
                     #pc.alignToPulse()
-                    begTs.append(pc.begT)
+                    t_starts.append(pc.t_start)
                     endTs.append(pc.endT)
                     #pulseSet[run][phiInd][vInd] = pc.pulses
                     pulseSet[:, :, run] = pc.pulses
@@ -1515,7 +1515,7 @@ class ProtocolData(object):
                     self.legLabels.append(label)
 
                     # if run==0 and phiInd==0 and vInd==0:
-                        # #self.begT, self.endT = pc.begT, pc.endT
+                        # #self.t_start, self.endT = pc.t_start, pc.endT
                         # pulses = pc.pulses
                         # plotLight(pulses, ax=ax, light=light, lam=470, alpha=0.2)
                     # else:
@@ -1526,13 +1526,13 @@ class ProtocolData(object):
                                 # pass
                             # else:
                                 # plotLight(np.asarray([pc.pulses[p]]), ax=ax, light=light, lam=470, alpha=0.2)
-                    # if pc.begT < self.begT:
-                        # self.begT = pc.begT
-                    # if pc.endT > self.begT:
+                    # if pc.t_start < self.t_start:
+                        # self.t_start = pc.t_start
+                    # if pc.endT > self.t_start:
                         # self.endT = pc.endT
                     #plotLight(pc.pulses, ax=ax, light=light, lam=470, alpha=0.2)
 
-        self.begT, self.endT = min(begTs), max(endTs)
+        self.t_start, self.endT = min(t_starts), max(endTs)
 
         #for run in range(self.nRuns):
         #run = 0 # Arbitrary choice TODO: Reconsider!
@@ -1573,7 +1573,7 @@ class ProtocolData(object):
 
         #tickLabels = [item.get_text() for item in ax.get_yticklabels(which='both')]
         ax.set_xlabel(r'$\mathrm{Time\ [ms]}$', position=(config.xLabelPos, 0), ha='right')
-        plt.xlim((self.begT, self.endT))
+        plt.xlim((self.t_start, self.endT))
         ax.set_ylabel(r'$\mathrm{Photocurrent\ [nA]}$')
 
         setCrossAxes(ax)

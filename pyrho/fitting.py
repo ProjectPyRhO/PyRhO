@@ -264,7 +264,7 @@ def plotFit(PC, nStates, params, fitRates=False, index=None):
     V = PC.V
     ### Plot experimental curve
     # Dt_tot = t[-1] - t[0] #max(t)
-    begT, endT = PC.begT, PC.endT  # PC.t[0], PC.t[-1]
+    t_start, endT = PC.t_start, PC.endT  # PC.t[0], PC.t[-1]
     I = PC.I
     t = PC.t
 
@@ -273,7 +273,7 @@ def plotFit(PC, nStates, params, fitRates=False, index=None):
 
     axFit = Ifig.add_subplot(gsPL[:-1, :])
     plotLight(PC.pulses, axFit)
-    axFit.set_xlim((begT, endT))
+    axFit.set_xlim((t_start, endT))
     plt.setp(axFit.get_xticklabels(), visible=False)
     axFit.set_ylabel(r'$\mathrm{Photocurrent\ [nA]}$')
     axFit.plot(t, I, color='g', label=r'$\mathrm{Experimental\ Data}$')
@@ -1393,7 +1393,7 @@ def fitfV(Vs, Iss, params, relaxFact=2, method=defMethod):  #, verbose=config.ve
     setBounds(pfV['v0'], relaxFact)
 
     if plotResult:
-        #nPoints = 10*int(round(endT-begT/self.dt))+1
+        #nPoints = 10*int(round(endT-t_start/self.dt))+1
         Vsmooth = np.linspace(min(Vs), max(Vs), 10*round(max(Vs)-min(Vs))+1) #1+(max(Vs)-min(Vs))/.1
         fig, ax1 = plt.subplots()
         ax1.plot(Vsmooth, errFV(pfV, Vsmooth), 'b', label='$I_{ss}$')

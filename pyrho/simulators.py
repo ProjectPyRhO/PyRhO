@@ -944,7 +944,7 @@ class simNEURON(Simulator):
                                         axV.axvline(x=t_on, linestyle=':', c='k')
                                         axV.axvline(x=t_off, linestyle=':', c=colour)
             # TODO: Plot extra pulses and refactor
-            #self.begT, self.endT = min(begTs), max(endTs)
+            #self.t_start, self.endT = min(t_starts), max(endTs)
             # Add stimuli
             #for p in range(self.nPulses):
             #    sameStart, sameEnd = False, False
@@ -1402,7 +1402,7 @@ class simBrian(Simulator):
             Dt_tot = self.Prot.Dt_tot
 
         #t = spikeMonitors[0].t/ms - offset
-        #begT, endT = t[0], t[-1]
+        #t_start, endT = t[0], t[-1]
 
         Rfig = plt.figure()
         gs = plt.GridSpec(nLayers, 1)
@@ -1450,7 +1450,7 @@ class simBrian(Simulator):
             Dt_tot = self.Prot.Dt_tot
 
         #t = spikeMonitors[0].t/ms - offset
-        #begT, endT = t[0], t[-1]
+        #t_start, endT = t[0], t[-1]
 
         Rfig = plt.figure()
         gs = plt.GridSpec(nLayers, 1)
