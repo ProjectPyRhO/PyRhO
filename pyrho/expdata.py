@@ -6,8 +6,8 @@ import logging
 import copy
 
 import numpy as np
-import scipy.io as sio # Use for Matlab files < v7.3
-#import h5py
+# import scipy.io as sio # Use for Matlab files < v7.3
+# import h5py
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
@@ -35,20 +35,19 @@ __all__ = ['PhotoCurrent', 'ProtocolData']
 # array([[ 0.,  1.],
        # [ 2.,  3.]])
 
-
-def loadMatFile(filename):
+# This should be left to the user
+#def loadMatFile(filename):
     ### Extend to load pkl files too
     #try:
     #import scipy.io as sio # Use for Matlab files < v7.3
     #sio.whosmat(filename)
-    data = sio.loadmat(filename)
+#    data = sio.loadmat(filename)
     #except:
     #    import h5py
     #    fh = h5py.File(filename,'r')
     #    data = fh.get("var")
     #    fh.close()
-    return data
-
+#    return data
 
 
 class PhotoCurrent(object):
@@ -76,6 +75,8 @@ class PhotoCurrent(object):
         Optional list of LaTeX strings labelling each of the state variables.
     """
     #pulses : list(list(float))
+
+    # TODO: Prefer "reverse notation". e.g. t_end, t_beg
     '''
     overlap     # Periods are up to *and including* the start of the next phase
     dt          # Sampling time step                dt_
