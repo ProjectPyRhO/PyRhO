@@ -107,14 +107,14 @@ class PhotoCurrent(object):
     I_span_       # Imax - Imin
     _idx_peak_    # Index of biggest current peak                     HIDE
     t_peak_      # Time of biggest current peak     Replace with t_peaks_[0]?
-    I_peak_       # Biggest current peak
+    I_peak_       # Biggest current peak                        (.peak_ published)
     _idx_peaks_   # Indexes of current peaks in each pulse            HIDE
     t_peaks_     # Times of current peaks in each pulse
     I_peaks_      # Current peaks in each pulse
     lags_       # t_lag = t_peak - t_on
     lag_        # Lag of first pulse      REMOVE
     I_sss_        # Steady-state currents for each pulse
-    I_ss_         # Steady-state current of first pulse   REMOVE
+    I_ss_         # Steady-state current of first pulse   REMOVE (.ss_ published)
     type        # Polarity of current     RENAME
     pulseAligned# Aligned to (a) pulse    RETHINK...
     alignPoint  # {0:=t_on, 1:=t_peak, 2:=t_off}
@@ -123,7 +123,7 @@ class PhotoCurrent(object):
 
     # Move states (and Vm, stimuli) into .extras['states']...
 
-    # TODO: Make this a setter which calls findPeakInds and findSteadyState when changed
+    # TODO: Make this a setter which calls _find_idx_peaks and findSteadyState when changed
     overlap = True  # Periods are up to *and including* the start of the next e.g. onPhase := t[onInd] <= t <? t[offInd]
 
     def __init__(self, I, t, pulses, phi, V, stimuli=None, states=None, stateLabels=None, label=None):
@@ -282,7 +282,7 @@ class PhotoCurrent(object):
         self.I_peak_ = self.I[self._idx_peak_]
 
         #self._idx_peaks_ = np.array([np.argmax(abs(self.getCycle(p)[0])) for p in range(self.nPulses)]) #np.searchsorted(self.I, self.Ipeaks)
-        self._idx_peaks_ = self.findPeakInds()
+        self._idx_peaks_ = self._find_idx_peaks()
         self.t_peaks_ = self.t[self._idx_peaks_]
         self.I_peaks_ = self.I[self._idx_peaks_]
 
@@ -294,9 +294,9 @@ class PhotoCurrent(object):
         self.I_ss_ = self.I_sss_[0]
 
         if self.I_peak_ < 0 and self.I_ss_ < 0:
-            self.type = 'excitatory' # Depolarising
+            self.type = 'excitatory'  # Depolarising
         else:
-            self.type = 'inhibitory' # Hyperpolarising
+            self.type = 'inhibitory'  # Hyperpolarising
 
         # Align t_0 to the start of the first pulse
         self.pulseAligned = False
@@ -669,7 +669,7 @@ class PhotoCurrent(object):
         self.pulseAligned = False
 
 
-    def findPeakInds(self): #, pulse=0):
+    def _find_idx_peaks(self): #, pulse=0):
         """
         Find the indicies of the photocurrent peaks for each pulse
 
