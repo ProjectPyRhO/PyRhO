@@ -9,7 +9,6 @@
 # Optimisation routine initial parameters
 # ...
 from __future__ import print_function, division
-#from copy import deepcopy
 from collections import OrderedDict, defaultdict
 import logging
 import abc
@@ -83,13 +82,13 @@ pOffDoub.add('Gd2', value=0.01)#, vary=True) #, expr='Gd1')#, min=1e-9)
 
 ### Default model parameters
 
-modelParams = OrderedDict([('3',Parameters()),('4',Parameters()),('6',Parameters())])
-modelList = list(modelParams) # List of keys: list(modelParams.keys()) #This could be removed
-stateLabs = {3:'Three', '3':'Three', 4:'Four', '4':'Four', 6:'Six', '6':'Six'}
+modelParams = OrderedDict([('3', Parameters()), ('4', Parameters()), ('6', Parameters())])
+modelList = list(modelParams)  # List of keys: list(modelParams.keys()) #This could be removed
+stateLabs = {3: 'Three', '3': 'Three', 4: 'Four', '4': 'Four', 6: 'Six', '6': 'Six'}
 
-modelFits = OrderedDict([   ('3', OrderedDict([('ChR2',Parameters()), ('NpHR',Parameters()), ('ArchT',Parameters())])),
-                            ('4', OrderedDict([('ChR2',Parameters())])),
-                            ('6', OrderedDict([('ChR2',Parameters())]))])
+modelFits = OrderedDict([   ('3', OrderedDict([('ChR2', Parameters()), ('NpHR', Parameters()), ('ArchT', Parameters())])),
+                            ('4', OrderedDict([('ChR2', Parameters())])),
+                            ('6', OrderedDict([('ChR2', Parameters())]))])
 
 ### Replace with defaultdict with default=key
 modelLabels = OrderedDict([('E','E'), ('g0','g_0'), ('p','p'), ('k_a','k_a'), ('k_r','k_r'), ('phi_m','\phi_m'), ('Gd','G_d'), ('Gr0','G_{r0}'), ('v0','v_0'), ('v1','v_1'),
@@ -113,7 +112,7 @@ unitLabels = OrderedDict([('g0','pS'), ('gam',''), ('k_a','ms^-1'), ('k_r','ms^-
 ####|###10####|###20####|###30####|###40####|###50####|###60####|###70####|###80
 
 #               (Name,    Value,  Vary, Min,  Max,  Expr=Units)
-modelFits['3']['ChR2'].add_many( # Depolarising: passively transports Na+, H+, K+ and Ca2+ down their electrochemical gradients
+modelFits['3']['ChR2'].add_many(  # Depolarising: passively transports Na+, H+, K+ and Ca2+ down their electrochemical gradients
                 ('g0',    1.57e5, True, 0.001,  1e6,  None),
                 ('phi_m', 5e17,   True, 1e15,   1e19, None),
                 ('k_a',   5,      True, 0.001,  1000, None),
@@ -126,14 +125,14 @@ modelFits['3']['ChR2'].add_many( # Depolarising: passively transports Na+, H+, K
                 ('v0',    43,     True, -1e15,  1e15, None),
                 ('v1',    17.1,   True, -1e15,  1e15, None))
 
-modelFits['3']['NpHR'].add_many( # Hyperpolarising: pumps chloride ions into the cell
+modelFits['3']['NpHR'].add_many(  # Hyperpolarising: pumps chloride ions into the cell
                 ('g0',    1.57e5, True, 0.001,  1e6,  None),
-                ('phi_m',  1.32e18,True, 1e15,   1e19, None),
-                ('k_a',     0.01,   True, 0.001,  1000, None),
-                ('k_r',     0.01,   True, 0.001,  1000, None),
+                ('phi_m', 1.32e18,True, 1e15,   1e19, None),
+                ('k_a',   0.01,   True, 0.001,  1000, None),
+                ('k_r',   0.01,   True, 0.001,  1000, None),
                 ('p',     0.793,  True, 0.1,    5,    None),
                 ('q',     0.793,  True, 0.1,    5,    None),
-                ('Gd',    0.1,  True, 0.0001, 1,    None),
+                ('Gd',    0.1,    True, 0.0001, 1,    None),
                 ('Gr0',   0.0002, True, 0.0001, 0.1,  None),
                 ('E',     -400,   True, -1000,  1000, None),
                 ('v0',    43,     True, -1e15,  1e15, None),
@@ -141,14 +140,14 @@ modelFits['3']['NpHR'].add_many( # Hyperpolarising: pumps chloride ions into the
 
 modelFits['3']['ArchT'].add_many( # Hyperpolarising: actively extrudes Hydrogen ions
                 ('g0',    1.57e5, True, 0.001,  1e6,  None),
-                ('phi_m',  1.32e18,True, 1e15,   1e19, None),
-                ('k_a',     0.01,   True, 0.001,  1000, None),
-                ('k_r',     0.01,   True, 0.001,  1000, None),
+                ('phi_m', 1.32e18,True, 1e15,   1e19, None),
+                ('k_a',   0.01,   True, 0.001,  1000, None),
+                ('k_r',   0.01,   True, 0.001,  1000, None),
                 ('p',     0.793,  True, 0.1,    5,    None),
                 ('q',     0.793,  True, 0.1,    5,    None),
-                ('Gd',    0.1,  True, 0.0001, 1,    None),
-                ('Gr0',   0.001, True, 0.0001, 0.1,  None),
-                ('E',     0,   True, -1000,  1000, None),
+                ('Gd',    0.1,    True, 0.0001, 1,    None),
+                ('Gr0',   0.001,  True, 0.0001, 0.1,  None),
+                ('E',     0,      True, -1000,  1000, None),
                 ('v0',    43,     True, -1e15,  1e15, None),
                 ('v1',    17.1,   True, -1e15,  1e15, None))
 
@@ -196,12 +195,12 @@ modelFits['6']['ChR2'].add_many(
 
 
 defaultOpsinType = 'ChR2'
-rhoType = defaultOpsinType # Set this when selecting
+rhoType = defaultOpsinType  # Set this when selecting
 modelParams['3'] = modelFits['3'][defaultOpsinType]
 modelParams['4'] = modelFits['4'][defaultOpsinType]
 modelParams['6'] = modelFits['6'][defaultOpsinType]
 
-unitPrefixes = {} ### Use a units library to convert between different prefixes
+unitPrefixes = {}  # Use a units library to convert between different prefixes
 
 
 #Params = OrderedDict([('model', OrderedDict()), ('protocol', OrderedDict()), ('simulator', OrderedDict())])
@@ -223,9 +222,9 @@ class PyRhOparameters(Parameters):
         for key, par in self.items():
             if isinstance(par, PyRhOparameter):
                 param = PyRhOparameter(name=par.name,
-                                        value=par.value,
-                                        min=par.min,
-                                        max=par.max)
+                                       value=par.value,
+                                       min=par.min,
+                                       max=par.max)
                 #param.vary = par.vary
                 #param.stderr = par.stderr
                 #param.correl = par.correl
@@ -291,7 +290,8 @@ class PyRhOparameters(Parameters):
 
 class PyRhOparameter(object):
 
-    def __init__(self, name=None, value=None, min=-np.inf, max=np.inf, units=None, latex=None, descr=None): #, unitsLabel=None
+    def __init__(self, name=None, value=None, min=-np.inf, max=np.inf,
+                 units=None, latex=None, descr=None):  # , unitsLabel=None
         self.name = name
         self._val = value
         self._min = -np.inf
@@ -306,7 +306,6 @@ class PyRhOparameter(object):
         self.descr = descr
         self.constant = True
         self._init_bounds()
-
 
     def set(self, value=None, vary=None, min=None, max=None, expr=None):
         """
@@ -353,17 +352,17 @@ class PyRhOparameter(object):
                     self._val = self.max
                 if self.min is not None and self._val < self.min:
                     self._val = self.min
-        elif self.min is not None: #and self._expr is None:
+        elif self.min is not None:  # and self._expr is None:
             self._val = self.min
-        elif self.max is not None: #and self._expr is None:
+        elif self.max is not None:  # and self._expr is None:
             self._val = self.max
-        #self.setup_bounds()
+        # self.setup_bounds()
 
     def _clipList(self, values):
         for ind, val in enumerate(values):
             if isinstance(val, str):
                 return
-            elif isinstance(val, (list, tuple)): # Nested list e.g. cycles
+            elif isinstance(val, (list, tuple)):  # Nested list e.g. cycles
                 self._clipList(val)
             else:
                 if self.max is not None and val > self.max:
@@ -398,14 +397,12 @@ class PyRhOparameter(object):
     min = property(get_min, set_min)
     max = property(get_max, set_max)
 
-
-
     def _getval(self):
         return self._val
 
     @property
     def value(self):
-        return self._getval() # self._val #
+        return self._getval()  # self._val #
 
     @value.setter
     def value(self, val):
@@ -467,31 +464,39 @@ class PyRhOparameter(object):
 
 #protParams = OrderedDict([('step',Parameters()), ('delta',Parameters()), ('sinusoid',Parameters()), ('chirp',Parameters()), ('ramp',Parameters()), ('rectifier',Parameters()), ('shortPulse',Parameters()), ('recovery',Parameters()), ('custom',Parameters())])
 
-protParams = OrderedDict([('step',PyRhOparameters()), ('delta',PyRhOparameters()), ('sinusoid',PyRhOparameters()), ('chirp',PyRhOparameters()), ('ramp',PyRhOparameters()), ('rectifier',PyRhOparameters()), ('shortPulse',PyRhOparameters()), ('recovery',PyRhOparameters()), ('custom',PyRhOparameters())])
+protParams = OrderedDict([('step', PyRhOparameters()),
+                          ('delta', PyRhOparameters()),
+                          ('sinusoid', PyRhOparameters()),
+                          ('chirp', PyRhOparameters()),
+                          ('ramp', PyRhOparameters()),
+                          ('rectifier', PyRhOparameters()),
+                          ('shortPulse', PyRhOparameters()),
+                          ('recovery', PyRhOparameters()),
+                          ('custom', PyRhOparameters())])
 
-protList = list(protParams) # List of keys #This could be removed
+protList = list(protParams)  # List of keys #This could be removed
 
-protParamLabels = OrderedDict([ ('phis', '\mathbf{\phi}'),
-                                ('Vs', '\mathbf{\mathrm{V}}'),
-                                ('delD', '\Delta t_{delay}'),
-                                ('onD', '\Delta t_{on}'),
-                                ('totT', 'T_{total}'),
-                                ('cycles', 'cycles'),
-                                ('phi0', '\phi_0'),
-                                ('fs', '\mathbf{f}'),
-                                ('f0', 'f_0'),
-                                ('fT', 'f_T'),
-                                ('linear', 'linear'),
-                                ('startOn', '\phi_{t=0}>0'),
-                                #('phi_ton', '\phi_{t=0}'),
-                                ('pDs', '\mathbf{\Delta t_{on}}'),
-                                ('IPIs', '\mathbf{\Delta t_{off}}'),
-                                ('phi_ft', '\phi(t)') ])
+protParamLabels = OrderedDict([('phis', '\mathbf{\phi}'),
+                               ('Vs', '\mathbf{\mathrm{V}}'),
+                               ('delD', '\Delta t_{delay}'),
+                               ('onD', '\Delta t_{on}'),
+                               ('totT', 'T_{total}'),
+                               ('cycles', 'cycles'),
+                               ('phi0', '\phi_0'),
+                               ('fs', '\mathbf{f}'),
+                               ('f0', 'f_0'),
+                               ('fT', 'f_T'),
+                               ('linear', 'linear'),
+                               ('startOn', '\phi_{t=0}>0'),
+                               #('phi_ton', '\phi_{t=0}'),
+                               ('pDs', '\mathbf{\Delta t_{on}}'),
+                               ('IPIs', '\mathbf{\Delta t_{off}}'),
+                               ('phi_ft', '\phi(t)')])
 
 protUnitLabels = defaultdict(lambda: '')
 protUnitLabels['phis'] = 'ph./mm^2/s'
 protUnitLabels['phi0'] = 'ph./mm^2/s'
-#protUnitLabels['phi_ton'] = 'ph./mm^2/s' ### Revise!!!
+# protUnitLabels['phi_ton'] = 'ph./mm^2/s' ### Revise!!!
 protUnitLabels['Vs'] = 'mV'
 protUnitLabels['delD'] = 'ms'
 protUnitLabels['onD'] = 'ms'
@@ -503,7 +508,7 @@ protUnitLabels['fs'] = 'Hz'
 protUnitLabels['f0'] = 'Hz'
 protUnitLabels['fT'] = 'Hz'
 
-protParamNotes = OrderedDict([ (prot, defaultdict(lambda: '')) for prot in protList])
+protParamNotes = OrderedDict([(prot, defaultdict(lambda: '')) for prot in protList])
 for prot in protList:
     protParamNotes[prot]['phis'] = 'List of flux values'
     protParamNotes[prot]['Vs'] = 'List of voltage clamp values (if applied)'
@@ -693,7 +698,7 @@ class PyRhOobject(object):
         count = 0
         for p, v in self.__dict__.items():
             if p in params:
-                params[p].value = v #self.__dict__[p]
+                params[p].value = v  # self.__dict__[p]
                 count += 1
         return count
 
