@@ -998,7 +998,7 @@ def getRecoveryPeaks(recData, phiInd=None, vInd=None, usePeakTime=False):
             tpeaks1.append(recData.trials[run][phiInd][vInd].t_peaks_[1]) # Time of second peak
         else:
             tpeaks1.append(recData.trials[run][phiInd][vInd].pulses[1,0]) # Time of second pulse
-        Ipeaks1.append(recData.trials[run][phiInd][vInd].peaks_[1])
+        Ipeaks1.append(recData.trials[run][phiInd][vInd].I_peaks_[1])
 
     # Check for sorting...
 
@@ -1006,7 +1006,7 @@ def getRecoveryPeaks(recData, phiInd=None, vInd=None, usePeakTime=False):
     run = 0 # Take comparators from the first run's first pulse
     #tss0 = recData.trials[run][phiInd][vInd].pulses[0,1]
     Iss0 = recData.trials[run][phiInd][vInd].sss_[0]
-    Ipeak0 = recData.trials[run][phiInd][vInd].peaks_[0]
+    Ipeak0 = recData.trials[run][phiInd][vInd].I_peaks_[0]
     ### This would be correct except that O->C transitions confound the first ~500ms
     #t_peaks = np.r_[tss0, tpeaks1]
     #I_peaks = np.r_[Iss0, Ipeaks1]

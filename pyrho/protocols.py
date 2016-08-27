@@ -925,7 +925,7 @@ class protDelta(Protocol):
                     #Ip = pc.I_peak_
                     #tp = pc.t_peak_
                     for p in range(self.nPulses):
-                        Ip = pc.peaks_[p]
+                        Ip = pc.I_peaks_[p]
                         tp = pc.t_peaks_[p]
                         tlag = pc.lags_[p]
                         self.axI.axvline(x=tp, linestyle=':', color='k')
@@ -1241,13 +1241,13 @@ class protShortPulse(Protocol):
                     self.axI.axvline(x=t_on, linestyle=':', c='k')
                     self.axI.axvline(x=t_off, linestyle=':', c=colour)
 
-                    self.axI.plot(PC.t_peaks_, PC.peaks_, marker='*', ms=peakMarkerSize, c=colour)
+                    self.axI.plot(PC.t_peaks_, PC.I_peaks_, marker='*', ms=peakMarkerSize, c=colour)
 
                     ### Plot figure to show time of Ipeak vs time of light off c.f. Nikolic et al. 2009 Fig 2b
                     self.axLag.plot(self.pDs[run], PC.lags_[0], marker='*', ms=peakMarkerSize, c=colour)
 
                     ### Plot figure to show current peak vs time of light off c.f. Nikolic et al. 2009 Fig 2c
-                    self.axPeak.plot(self.pDs[run], PC.peaks_, marker='*', ms=peakMarkerSize, c=colour)
+                    self.axPeak.plot(self.pDs[run], PC.I_peaks_, marker='*', ms=peakMarkerSize, c=colour)
 
         # axLag.axis('equal')
         tmax = max(self.pDs)*1.25
@@ -1328,7 +1328,7 @@ class protRecovery(Protocol):
                 for vInd in range(self.nVs):
                     PC = self.PD.trials[run][phiInd][vInd]
                     PC.alignToPulse(pulse=0, alignPoint=2) # End of the first pulse
-                    self.PD.IPIpeaks_[run][phiInd][vInd] = PC.peaks_[1]
+                    self.PD.IPIpeaks_[run][phiInd][vInd] = PC.I_peaks_[1]
                     self.PD.tIPIpeaks_[run][phiInd][vInd] = PC.t_peaks_[1]
 
         if config.verbose > 1:

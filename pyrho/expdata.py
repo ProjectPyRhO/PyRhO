@@ -110,7 +110,7 @@ class PhotoCurrent(object):
     I_peak_       # Biggest current peak
     _idx_peaks_   # Indexes of current peaks in each pulse            HIDE
     t_peaks_     # Times of current peaks in each pulse
-    peaks_      # Current peaks in each pulse
+    I_peaks_      # Current peaks in each pulse
     lags_       # t_lag = t_peak - t_on
     lag_        # Lag of first pulse      REMOVE
     sss_        # Steady-state currents for each pulse
@@ -284,7 +284,7 @@ class PhotoCurrent(object):
         #self._idx_peaks_ = np.array([np.argmax(abs(self.getCycle(p)[0])) for p in range(self.nPulses)]) #np.searchsorted(self.I, self.Ipeaks)
         self._idx_peaks_ = self.findPeakInds()
         self.t_peaks_ = self.t[self._idx_peaks_]
-        self.peaks_ = self.I[self._idx_peaks_]
+        self.I_peaks_ = self.I[self._idx_peaks_]
 
         self.lags_ = np.array([self.t_peaks_[p] - self.pulses[p, 0] for p in range(self.nPulses)]) # t_lag = t_peak - t_on
         self.lag_ = self.lags_[0]
@@ -900,24 +900,24 @@ class PhotoCurrent(object):
 
             #p = 0
             #plt.axvline(x=self.t_peaks_[p], linestyle=':', color='k')
-            #plt.axhline(y=self.peaks_[p], linestyle=':', color='k')
+            #plt.axhline(y=self.I_peaks_[p], linestyle=':', color='k')
 
             toffset = round(0.1 * self.t_end)
 
             for p in range(self.nPulses):
                 # Add Pointer to peak currents
-                #ax.arrow(self.t_peaks_[p], 0.8*self.peaks_[p], 0, 0.05*self.peaks_[p], head_width=0.05, head_length=0.1, fc='k', ec='k')
-                # ax.annotate("", xy=(self.t_peaks_[p], self.peaks_[p]), xycoords='data',
-                    # xytext=(self.t_peaks_[p], 0.9*self.peaks_[p]), textcoords='data', #textcoords='axes fraction',
+                #ax.arrow(self.t_peaks_[p], 0.8*self.I_peaks_[p], 0, 0.05*self.I_peaks_[p], head_width=0.05, head_length=0.1, fc='k', ec='k')
+                # ax.annotate("", xy=(self.t_peaks_[p], self.I_peaks_[p]), xycoords='data',
+                    # xytext=(self.t_peaks_[p], 0.9*self.I_peaks_[p]), textcoords='data', #textcoords='axes fraction',
                     # arrowprops=dict(arrowstyle="wedge,tail_width=1.", facecolor='red', shrinkB=10), #, shrinkB=5 , shrink=0.05
                     # horizontalalignment='center', verticalalignment='top')
 
-                # plt.text(self.t_peaks_[p], 1.02*self.peaks_[p], '$I_{{peak}} = {:.3g}\mathrm{{nA}};\ t_{{lag}} = {:.3g}\mathrm{{ms}}$'.format(self.peaks_[p], self.lags_[0]), ha='left', va='top', fontsize=eqSize)
+                # plt.text(self.t_peaks_[p], 1.02*self.I_peaks_[p], '$I_{{peak}} = {:.3g}\mathrm{{nA}};\ t_{{lag}} = {:.3g}\mathrm{{ms}}$'.format(self.I_peaks_[p], self.lags_[0]), ha='left', va='top', fontsize=eqSize)
 
-                if self.peaks_[p] is not None:
-                    ax.annotate(r'$I_{{peak}} = {:.3g}\mathrm{{nA}};\ t_{{lag}} = {:.3g}\mathrm{{ms}}$'.format(self.peaks_[p], self.lags_[0]),
-                                xy=(self.t_peaks_[p], self.peaks_[p]),
-                                xytext=(toffset+self.t_peaks_[p], self.peaks_[p]),
+                if self.I_peaks_[p] is not None:
+                    ax.annotate(r'$I_{{peak}} = {:.3g}\mathrm{{nA}};\ t_{{lag}} = {:.3g}\mathrm{{ms}}$'.format(self.I_peaks_[p], self.lags_[0]),
+                                xy=(self.t_peaks_[p], self.I_peaks_[p]),
+                                xytext=(toffset+self.t_peaks_[p], self.I_peaks_[p]),
                                 arrowprops=dict(arrowstyle="wedge,tail_width=0.6", shrinkA=5, shrinkB=5, facecolor='red'),
                                 horizontalalignment='left', verticalalignment='center', fontsize=config.eqSize)
 
