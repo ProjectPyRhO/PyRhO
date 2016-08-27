@@ -93,7 +93,7 @@ class PhotoCurrent(object):
     Dt_delays       # Total delay before each pulse
     Dt_ons        # On-phase durations
     IPIs        # Inter-pulse-intervals t_off <-> t_on
-    offDs       # Off-phase durations
+    Dt_offs       # Off-phase durations
     pulseInds   # Indexes for the start of each on- and off-phases  HIDE
     clamped     # Membrane potential was clamped
     lam         # Stimulus wavelength       RETHINK c.f. stimuli
@@ -213,8 +213,8 @@ class PhotoCurrent(object):
         #    for p in range(0, self.nPulses-1):
         #        self.IPIs[p] = self.pulses[p+1,0] - self.pulses[p,1]
         self.IPIs = np.array([self.pulses[p+1, 0] - self.pulses[p, 1] for p in range(self.nPulses-1)]) # end <-> start
-        self.offDs = np.append(self.IPIs, self.t_end-self.pulses[-1, 1])
-        # self.offDs = [self.Dt_tot-((Dt_on+pOff)*nPulses)-Dt_delay for pOff in pulseCycles[:,1]]
+        self.Dt_offs = np.append(self.IPIs, self.t_end-self.pulses[-1, 1])
+        # self.Dt_offs = [self.Dt_tot-((Dt_on+pOff)*nPulses)-Dt_delay for pOff in pulseCycles[:,1]]
 
         #for p in self.nPulses: # List comprehension instead?
         #   self.pulseInds[p,0] = np.searchsorted(self.t, pulses[p,0], side="left")  # CHECK: last index where value <= t_on
@@ -607,7 +607,7 @@ class PhotoCurrent(object):
             ### Fit curve for tau_off (bi-exponential)
             if verbose > 1:
                 print('Analysing off-phase decay...')
-    #                 endInd = -1 #np.searchsorted(t,offD+Dt_on+Dt_delay,side="right") #Dt_tot
+    #                 endInd = -1 #np.searchsorted(t,Dt_off+Dt_on+Dt_delay,side="right") #Dt_tot
             popt, _, _ = self.fitPeaks(t[onEndInd:], I_RhO[onEndInd:], biExpDecay, p0off, '$I_{{off}} = {:.3}e^{{-t/{:g}}} {:+.3}e^{{-t/{:g}}} {:+.3}$','')
             ### Plot tau_off vs Irrad (for curves of V)
             ### Plot tau_off vs V (for curves of Irrad)
@@ -954,8 +954,8 @@ class PhotoCurrent(object):
                     end = self.t_end
                 ax.annotate('', xy=(self.pulses[p,1], arrowy), xytext=(end, arrowy),
                             arrowprops=dict(arrowstyle='<->', color='green', shrinkA=0, shrinkB=0))
-                plt.text(self.pulses[p,1]+self.offDs[p]/2, texty,
-                         r'$\Delta t_{{off_{}}}={:.3g}\mathrm{{ms}}$'.format(p, self.offDs[p]),
+                plt.text(self.pulses[p,1]+self.Dt_offs[p]/2, texty,
+                         r'$\Delta t_{{off_{}}}={:.3g}\mathrm{{ms}}$'.format(p, self.Dt_offs[p]),
                         ha='center', va='bottom', fontsize=config.eqSize)
 
         #plt.show()

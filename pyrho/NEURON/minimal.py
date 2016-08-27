@@ -26,7 +26,7 @@ for sec in h.allsec():
 #h.rho.Er = Prot.phis[0]
 #setattr(h.rho, 'del', Prot.pulses[0][0]) # rho.del will not work because del is reserved word in python
 #h.rho.ton = Prot.Dt_ons[0]
-#h.rho.toff = Prot.offDs[0]
+#h.rho.toff = Prot.Dt_offs[0]
 #h.rho.num = Prot.nPulses
 #h.rho.gbar = RhO.g/20000
 

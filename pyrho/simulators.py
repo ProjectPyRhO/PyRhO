@@ -230,7 +230,7 @@ class simPython(Simulator):
                 Vstr = ''
             info = "Simulating experiment at phi = {:.3g}photons/mm^2/s, {}pulse cycles: [Dt_delay={:.4g}ms".format(phiOn, Vstr, Dt_delay)
             for p in range(nPulses):
-                info += "; [Dt_on={:.4g}ms; offD={:.4g}ms]".format(cycles[p,0], cycles[p,1])
+                info += "; [Dt_on={:.4g}ms; Dt_off={:.4g}ms]".format(cycles[p,0], cycles[p,1])
             info += "]"
             print(info)
 
@@ -338,8 +338,8 @@ class simPython(Simulator):
         for p in range(0, nPulses):
             RhO.s_on = soln[-1,:]
             start = end
-            Dt_on, offD = cycles[p,0], cycles[p,1]
-            end = start + Dt_on + offD
+            Dt_on, Dt_off = cycles[p,0], cycles[p,1]
+            end = start + Dt_on + Dt_off
 
             onInd = len(RhO.t) - 1              # Start of on-phase
             offInd = onInd + int(round(Dt_on/dt)) # Start of off-phase
@@ -358,7 +358,7 @@ class simPython(Simulator):
                 soln = odeint(RhO.solveStates, RhO.s_on, t, args=(phi_t,), Dfun=RhO.jacobian)
 
             RhO.storeStates(soln[1:], t[1:]) # Skip first values to prevent duplicating initial conditions and times
-            RhO.ssInf.append(RhO.calcSteadyState(phi_t(end-offD)))
+            RhO.ssInf.append(RhO.calcSteadyState(phi_t(end-Dt_off)))
 
             if verbose > 1:
                 print('t_pulse{} = [{}, {}]'.format(p, RhO.t[onInd], RhO.t[offInd]))
@@ -597,12 +597,12 @@ class simNEURON(Simulator):
         self.h.Vcl.dur1 = self.h.tstop
         self.h.Vcl.amp1 = Vhold
 
-    def setPulses(self, phiOn, Dt_delay, Dt_on, offD, nPulses):
+    def setPulses(self, phiOn, Dt_delay, Dt_on, Dt_off, nPulses):
         for rho in self.rhoList:
             rho.phiOn = phiOn
             rho.Dt_delay = Dt_delay
             rho.Dt_on = Dt_on
-            rho.offD = offD
+            rho.Dt_off = Dt_off
             rho.nPulses = nPulses
 
     def runTrial(self, RhO, phiOn, V, Dt_delay, cycles, dt, verbose=config.verbose):
@@ -638,13 +638,13 @@ class simNEURON(Simulator):
                     #self.Prot.squarePulse = False
                     #self.runTrialPhi_t(self, RhO, self.Prot.genPhiFuncs(), V, Dt_delay, cycles, dt)
                     #return
-            Dt_on, offD, padD = cycles[0,0], cycles[0,1], 0   # HACK!!! Use first pulse timing only...
+            Dt_on, Dt_off, padD = cycles[0,0], cycles[0,1], 0   # HACK!!! Use first pulse timing only...
 
             if verbose > 0:
                 Vstr = '' if V is None else 'V = {:+}mV, '.format(V)
-                info = "Simulating experiment at phi = {:.3g}photons/mm^2/s, {}pulse cycles: [Dt_delay={:.4g}ms; Dt_on={:.4g}ms; offD={:.4g}ms]".format(phiOn,Vstr,Dt_delay,Dt_on,offD+padD)
+                info = "Simulating experiment at phi = {:.3g}photons/mm^2/s, {}pulse cycles: [Dt_delay={:.4g}ms; Dt_on={:.4g}ms; Dt_off={:.4g}ms]".format(phiOn,Vstr,Dt_delay,Dt_on,Dt_off+padD)
 
-            self.setPulses(phiOn, Dt_delay, Dt_on, offD, nPulses)
+            self.setPulses(phiOn, Dt_delay, Dt_on, Dt_off, nPulses)
             self.h.init() #self.neuron.init()
             #self.h.finitialize()
 
@@ -656,9 +656,9 @@ class simNEURON(Simulator):
             # padD = 0
             # for p in range(nPulses):
                 # delay = Dt_delay if p==0 else 0
-                # Dt_on, offD = cycles[p]
-                # self.setPulses(phiOn, delay, Dt_on, offD, 1)
-                # progress += (Dt_on + offD)
+                # Dt_on, Dt_off = cycles[p]
+                # self.setPulses(phiOn, delay, Dt_on, Dt_off, 1)
+                # progress += (Dt_on + Dt_off)
                 # #tstop = delay + np.sum(cycles[p])
                 # self.h.tstop = progress # tstop #delay + np.sum(cycles[p])
                 # #while self.h.t<tstop:
@@ -676,28 +676,28 @@ class simNEURON(Simulator):
             while p < nPulses:
                 delay = Dt_delay if p==0 else 0
                 identPulses = 1
-                Dt_on, offD = cycles[p]
-                #prevOffD = offD
+                Dt_on, Dt_off = cycles[p]
+                #prevOffD = Dt_off
                 for pCheck in range(p+1, nPulses):
-                    if (cycles[pCheck,0] == Dt_on) and (cycles[pCheck,1] == offD):
+                    if (cycles[pCheck,0] == Dt_on) and (cycles[pCheck,1] == Dt_off):
                         identPulses += 1
                         p += 1
                     else:
                         break
-                progress += ((Dt_on + offD) * identPulses)
+                progress += ((Dt_on + Dt_off) * identPulses)
                 if verbose > 0:
-                    print(" [Dt_on={:.4g}ms; offD={:.4g}ms] x {}".format(Dt_on, offD, identPulses))
+                    print(" [Dt_on={:.4g}ms; Dt_off={:.4g}ms] x {}".format(Dt_on, Dt_off, identPulses))
 
 
-                self.setPulses(phiOn, delay, Dt_on, offD, nPulses)
+                self.setPulses(phiOn, delay, Dt_on, Dt_off, nPulses)
 
                 if firstRun:
-                    #self.setPulses(phiOn, delay, Dt_on, offD, identPulses+1)
+                    #self.setPulses(phiOn, delay, Dt_on, Dt_off, identPulses+1)
                     self.h.tstop = progress
                     self.h.run()
                     firstRun = False
                 else:
-                    #self.setPulses(phiOn, prevOffD, Dt_on, offD, identPulses+1)
+                    #self.setPulses(phiOn, prevOffD, Dt_on, Dt_off, identPulses+1)
                     self.h.continuerun(progress)
                 p+=1
 
@@ -801,12 +801,12 @@ class simNEURON(Simulator):
                 Vstr = ''
             info = "Simulating experiment {}pulse cycles: [Dt_delay={:.4g}ms".format(Vstr, Dt_delay)
             for p in range(nPulses):
-                info += "; [Dt_on={:.4g}ms; offD={:.4g}ms]".format(cycles[p,0], cycles[p,1])
+                info += "; [Dt_on={:.4g}ms; Dt_off={:.4g}ms]".format(cycles[p,0], cycles[p,1])
             info += "]"
             print(info)
 
         # Set simulation run time
-        self.h.tstop = Dt_tot #Dt_delay + np.sum(cycles) #nPulses*(Dt_on+offD) + padD
+        self.h.tstop = Dt_tot #Dt_delay + np.sum(cycles) #nPulses*(Dt_on+Dt_off) + padD
 
         ### Delay phase (to allow the system to settle)
         phi = 0
@@ -824,8 +824,8 @@ class simNEURON(Simulator):
         discontinuities = np.asarray([len(t) - 1]) # -1?
         for p in range(nPulses):
             start = end
-            Dt_on, offD = cycles[p,0], cycles[p,1]
-            end = start + Dt_on + offD
+            Dt_on, Dt_off = cycles[p,0], cycles[p,1]
+            end = start + Dt_on + Dt_off
             nSteps = int(round(((end-start)/dt)+1))
             tPulse = np.linspace(start, end, nSteps, endpoint=True)
             phi_t = phi_ts[p]
@@ -839,7 +839,7 @@ class simNEURON(Simulator):
             t = np.r_[t, tPulse[1:]]
             phi_tV = np.r_[phi_tV, phiPulse[1:]]
 
-            RhO.ssInf.append(RhO.calcSteadyState(phi_t(end-offD)))
+            RhO.ssInf.append(RhO.calcSteadyState(phi_t(end-Dt_off)))
 
         tvec = self.h.Vector(t)
         tvec.label('Time [ms]')
@@ -1125,7 +1125,7 @@ class simBrian(Simulator):
                 Vstr = ''
             info = "Simulating experiment at phi = {:.3g}photons/mm^2/s, {}pulse cycles: [Dt_delay={:.4g}ms".format(phiOn, Vstr, Dt_delay)
             for p in range(nPulses):
-                info += "; [Dt_on={:.4g}ms; offD={:.4g}ms]".format(cycles[p,0], cycles[p,1])
+                info += "; [Dt_on={:.4g}ms; Dt_off={:.4g}ms]".format(cycles[p,0], cycles[p,1])
             info += "]"
             print(info)
 
@@ -1241,7 +1241,7 @@ class simBrian(Simulator):
                 Vstr = ''
             info = "Simulating experiment {}pulse cycles: [Dt_delay={:.4g}ms".format(Vstr, Dt_delay)
             for p in range(nPulses):
-                info += "; [Dt_on={:.4g}ms; offD={:.4g}ms]".format(cycles[p,0], cycles[p,1])
+                info += "; [Dt_on={:.4g}ms; Dt_off={:.4g}ms]".format(cycles[p,0], cycles[p,1])
             info += "]"
             print(info)
 
@@ -1270,8 +1270,8 @@ class simBrian(Simulator):
         for p in range(nPulses):
 
             start = end
-            Dt_on, offD = cycles[p,0], cycles[p,1]
-            end = start + Dt_on + offD
+            Dt_on, Dt_off = cycles[p,0], cycles[p,1]
+            end = start + Dt_on + Dt_off
 
             nSteps = int(round(((end-start)/dt)+1))
             tPulse = np.linspace(start, end, nSteps, endpoint=True)
@@ -1285,7 +1285,7 @@ class simBrian(Simulator):
             t = np.r_[t, tPulse[1:]]
             phi_tV = np.r_[phi_tV, phiPulse[1:]]
 
-            RhO.ssInf.append(RhO.calcSteadyState(phi_t(end-offD)))
+            RhO.ssInf.append(RhO.calcSteadyState(phi_t(end-Dt_off)))
 
 
         phi_tV[np.ma.where(phi_tV < 0)] = 0 # Safeguard for negative phi values # np.clip(phi_tV, 0, phiMax)?

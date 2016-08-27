@@ -88,10 +88,10 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
         if np.isscalar(self.cycles): # Only 'on' duration specified
             Dt_on = self.cycles
             if hasattr(self, 'Dt_tot'):
-                offD = self.Dt_tot - Dt_on - self.Dt_delay
+                Dt_off = self.Dt_tot - Dt_on - self.Dt_delay
             else:
-                offD = 0
-            self.cycles = np.asarray([[Dt_on, offD]])
+                Dt_off = 0
+            self.cycles = np.asarray([[Dt_on, Dt_off]])
         elif isinstance(self.cycles, (list, tuple, np.ndarray)):
             if np.isscalar(self.cycles[0]): # not isinstance(self.cycles[0], (list, tuple, np.ndarray):
                 self.cycles = [self.cycles] # Assume only one pulse
@@ -103,7 +103,7 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
         self.pulses, self.Dt_tot = cycles2times(self.cycles, self.Dt_delay)
         self.Dt_delays = np.array([pulse[0] for pulse in self.pulses], copy=True) # pulses[:,0]    # Delay Durations #self.Dt_delays = np.array([self.Dt_delay] * self.nRuns)
         self.Dt_ons = np.array(self.cycles[:,0])  #self.Dt_ons = np.array([cycle[0] for cycle in self.cycles])
-        self.offDs = np.array(self.cycles[:,1]) #self.offDs = np.array([cycle[1] for cycle in self.cycles])
+        self.Dt_offs = np.array(self.cycles[:,1]) #self.Dt_offs = np.array([cycle[1] for cycle in self.cycles])
 
         if np.isscalar(self.phis):
             self.phis = [self.phis] #np.asarray([self.phis])
@@ -191,8 +191,8 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
 
         for p in range(nPulses):
             start = end
-            Dt_on, offD = cycles[p,0], cycles[p,1]
-            end = start + Dt_on + offD
+            Dt_on, Dt_off = cycles[p,0], cycles[p,1]
+            end = start + Dt_on + Dt_off
             nSteps = int(round(((end-start)/dt)+1))
             tPulse = np.linspace(start, end, nSteps, endpoint=True)
             phi_t = phi_ts[p]
@@ -645,7 +645,7 @@ class protDualTone(Protocol):
         # self.nPulses = self.pulses.shape[0]
         # self.Dt_delays = [row[0] for row in self.pulses] # pulses[:,0]    # Delay Durations
         # self.Dt_ons = [row[1]-row[0] for row in self.pulses] # pulses[:,1] - pulses[:,0]   # Pulse Durations
-        # self.offDs = np.append(self.pulses[1:,0],self.Dt_tot) - self.pulses[:,1]
+        # self.Dt_offs = np.append(self.pulses[1:,0],self.Dt_tot) - self.pulses[:,1]
 
         #self.Dt_tot = Dt_tot
         #self.dt=dt
@@ -659,8 +659,8 @@ class protDualTone(Protocol):
         for fA,fB in itertools.product(self.fAs,self.fBs):
             print(fA+fB)
         self.nRuns = len(self.ws) # Modify...
-        self.cycles=np.column_stack((self.Dt_ons,self.offDs))
-        #self.cycles=np.tile(np.column_stack((self.Dt_ons,self.offDs)),(self.nRuns,1))
+        self.cycles=np.column_stack((self.Dt_ons,self.Dt_offs))
+        #self.cycles=np.tile(np.column_stack((self.Dt_ons,self.Dt_offs)),(self.nRuns,1))
         #self.padDs = np.zeros(self.nRuns)
 
         if (1000)/min(self.fs) > min(self.Dt_ons):
@@ -693,7 +693,7 @@ class protChirp(Protocol):
 
         self.sr = max(10000, int(round(10 * max(self.f0, self.fT)))) # Nyquist frequency - sampling rate (10*f) >= 2*f
         self.nRuns = 1 #len(self.ws)
-        #self.cycles = np.column_stack((self.Dt_ons,self.offDs))
+        #self.cycles = np.column_stack((self.Dt_ons,self.Dt_offs))
         #ws = 2 * np.pi * np.logspace(-4,10,num=7) # Frequencies [rads/s]
 
         if (1000)/self.f0 > min(self.Dt_ons): #1/10**self.fs[0] > self.Dt_tot:
@@ -790,7 +790,7 @@ class protRamp(Protocol):
     def extraPrep(self):
         'Function to set-up additional variables and make parameters consistent after any changes'
         self.nRuns = 1 #nRuns # Make len(phi_ton)?
-        self.cycles = np.column_stack((self.Dt_ons,self.offDs))
+        self.cycles = np.column_stack((self.Dt_ons,self.Dt_offs))
         self.phi_ts = self.genPulseSet()
 
     def createLayout(self, Ifig=None, vInd=0):
@@ -842,13 +842,13 @@ class protDelta(Protocol):
 
     def prepare(self):
         """Function to set-up additional variables and make parameters consistent after any changes"""
-        assert(self.Dt_tot >= self.Dt_delay + self.Dt_on) # ==> offD >= 0
+        assert(self.Dt_tot >= self.Dt_delay + self.Dt_on) # ==> Dt_off >= 0
         self.cycles = np.asarray([[self.Dt_on, self.Dt_tot-self.Dt_delay-self.Dt_on]])
         self.nPulses = self.cycles.shape[0]
         self.pulses, self.Dt_tot = cycles2times(self.cycles, self.Dt_delay)
         self.Dt_delays = np.array([row[0] for row in self.pulses], copy=True) # pulses[:,0]    # Delay Durations
         self.Dt_ons = [row[1]-row[0] for row in self.pulses] # pulses[:,1] - pulses[:,0]   # Pulse Durations
-        self.offDs = np.append(self.pulses[1:,0], self.Dt_tot) - self.pulses[:,1]
+        self.Dt_offs = np.append(self.pulses[1:,0], self.Dt_tot) - self.pulses[:,1]
 
         if np.isscalar(self.phis):
             self.phis = np.asarray([self.phis])
@@ -1197,8 +1197,8 @@ class protShortPulse(Protocol):
         self.nRuns = len(self.pDs)
         self.Dt_delays = np.ones(self.nRuns)*self.Dt_delay
         self.Dt_ons = self.pDs
-        self.offDs = (np.ones(self.nRuns)*self.Dt_tot) - self.Dt_delays - self.Dt_ons
-        self.cycles = np.column_stack((self.Dt_ons,self.offDs))
+        self.Dt_offs = (np.ones(self.nRuns)*self.Dt_tot) - self.Dt_delays - self.Dt_ons
+        self.cycles = np.column_stack((self.Dt_ons,self.Dt_offs))
         self.phis.sort(reverse=True)
         self.Vs.sort(reverse=True)
         self.nPhis = len(self.phis)
@@ -1208,7 +1208,7 @@ class protShortPulse(Protocol):
 
 
     def getRunCycles(self, run):
-        return np.asarray([[self.Dt_ons[run],self.offDs[run]]]), self.Dt_delays[run]
+        return np.asarray([[self.Dt_ons[run],self.Dt_offs[run]]]), self.Dt_delays[run]
 
 
     def createLayout(self, Ifig=None, vInd=0):
@@ -1282,13 +1282,13 @@ class protRecovery(Protocol):
         self.nRuns = len(self.IPIs)
         self.Dt_delays = np.ones(self.nRuns)*self.Dt_delay
         self.Dt_ons = np.ones(self.nRuns)*self.Dt_on
-        self.offDs = self.IPIs
-        self.cycles = np.column_stack((self.Dt_ons, self.offDs)) # [:,0] = on phase duration; [:,1] = off phase duration
+        self.Dt_offs = self.IPIs
+        self.cycles = np.column_stack((self.Dt_ons, self.Dt_offs)) # [:,0] = on phase duration; [:,1] = off phase duration
 
         self.pulses, _ = cycles2times(self.cycles, self.Dt_delay)
         self.runCycles = np.zeros((self.nPulses, 2, self.nRuns))
         for run in range(self.nRuns):
-            self.runCycles[:,:,run] = np.asarray([[self.Dt_ons[run],self.offDs[run]],[self.Dt_ons[run],self.offDs[run]]])
+            self.runCycles[:,:,run] = np.asarray([[self.Dt_ons[run],self.Dt_offs[run]],[self.Dt_ons[run],self.Dt_offs[run]]])
 
         self.t_start = 0
         self.t_end = self.Dt_tot

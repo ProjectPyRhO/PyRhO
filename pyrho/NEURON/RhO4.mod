@@ -5,7 +5,7 @@ NEURON {
     NONSPECIFIC_CURRENT i
     RANGE i, E, gam, v0, v1, g0 :, fphi, fv
     RANGE k1, k2, kf, kb, Gf0, Gb0, Gd1, Gd2, Gr0, p, q
-    RANGE phiOn, phi, phi_m, Dt_delay, Dt_on, offD, nPulses
+    RANGE phiOn, phi, phi_m, Dt_delay, Dt_on, Dt_off, nPulses
 }
 
 
@@ -23,8 +23,8 @@ PARAMETER { : Initialise parameters to defaults. These may be changed through ho
 : Illumination
     phiOn   = 1e18 :ph/s/mm^2 :(mW/mm2)                                      _______
     Dt_delay    = 25    (ms)    <0, 1e9>        : delay before ON phase         |  ON   |  OFF
-    Dt_on     = 100   (ms)    <0, 1e9>        : duration of ON phase  <-Dt_delay->|<-Dt_on->|<-offD->
-    offD    = 50    (ms)    <0, 1e9>        : duration of OFF phase ________|       |________
+    Dt_on     = 100   (ms)    <0, 1e9>        : duration of ON phase  <-Dt_delay->|<-Dt_on->|<-Dt_off->
+    Dt_off    = 50    (ms)    <0, 1e9>        : duration of OFF phase ________|       |________
     nPulses = 1     (1)     <0, 1e3>        : num pulses to deliver         <-- one pulse -->
 
 : Illumination constants   
@@ -155,7 +155,7 @@ NET_RECEIVE (w) {
     } else { : Turn the light off
         phi = 0
         if (tally > 0) { : Schedule the next on phase
-            net_send(offD, 1)
+            net_send(Dt_off, 1)
             tally = tally - 1
         }
     }
