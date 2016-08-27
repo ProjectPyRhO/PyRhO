@@ -113,7 +113,7 @@ class PhotoCurrent(object):
     I_peaks_      # Current peaks in each pulse
     lags_       # t_lag = t_peak - t_on
     lag_        # Lag of first pulse      REMOVE
-    sss_        # Steady-state currents for each pulse
+    I_sss_        # Steady-state currents for each pulse
     ss_         # Steady-state current of first pulse   REMOVE
     type        # Polarity of current     RENAME
     pulseAligned# Aligned to (a) pulse    RETHINK...
@@ -290,8 +290,8 @@ class PhotoCurrent(object):
         self.lag_ = self.lags_[0]
         # For Go: t[peakInds[0]]-self.pulses[0,1]
 
-        self.sss_ = np.array([self.findSteadyState(p) for p in range(self.nPulses)])
-        self.ss_ = self.sss_[0]
+        self.I_sss_ = np.array([self.findSteadyState(p) for p in range(self.nPulses)])
+        self.ss_ = self.I_sss_[0]
 
         if self.I_peak_ < 0 and self.ss_ < 0:
             self.type = 'excitatory' # Depolarising
@@ -922,12 +922,12 @@ class PhotoCurrent(object):
                                 horizontalalignment='left', verticalalignment='center', fontsize=config.eqSize)
 
                 # Add pointer to steady-state currents
-                if self.sss_[p] is not None:
+                if self.I_sss_[p] is not None:
                     #plt.text(1.1*self.pulses[p,1], self.ss_, '$I_{{ss}} = {:.3g}\mathrm{{nA}}$'.format(self.ss_), ha='left', va='center', fontsize=eqSize)
                     #if toffset+self.pulses[p,1] > self.t_end:
                     #xPos = 0
-                    ax.annotate(r'$I_{{ss}} = {:.3g}\mathrm{{nA}}$'.format(self.sss_[p]), xy=(self.pulses[p, 1], self.sss_[p]),
-                                xytext=(toffset+self.pulses[p, 1], self.sss_[p]),
+                    ax.annotate(r'$I_{{ss}} = {:.3g}\mathrm{{nA}}$'.format(self.I_sss_[p]), xy=(self.pulses[p, 1], self.I_sss_[p]),
+                                xytext=(toffset+self.pulses[p, 1], self.I_sss_[p]),
                                 arrowprops=dict(arrowstyle="wedge,tail_width=0.6", shrinkA=5, shrinkB=5),
                                 horizontalalignment='left', verticalalignment='center', fontsize=config.eqSize)
 

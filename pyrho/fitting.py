@@ -1005,7 +1005,7 @@ def getRecoveryPeaks(recData, phiInd=None, vInd=None, usePeakTime=False):
     # Prepend t_off0 and Iss0
     run = 0 # Take comparators from the first run's first pulse
     #tss0 = recData.trials[run][phiInd][vInd].pulses[0,1]
-    Iss0 = recData.trials[run][phiInd][vInd].sss_[0]
+    Iss0 = recData.trials[run][phiInd][vInd].I_sss_[0]
     Ipeak0 = recData.trials[run][phiInd][vInd].I_peaks_[0]
     ### This would be correct except that O->C transitions confound the first ~500ms
     #t_peaks = np.r_[tss0, tpeaks1]
