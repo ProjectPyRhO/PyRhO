@@ -271,7 +271,7 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
 
         colours = config.colours
         styles = config.styles
-        
+
         if config.verbose > 1 and (self.nRuns>len(colours) or len(self.phis)>len(colours) or len(self.Vs)>len(colours)):
             warnings.warn("Warning: only {} line colours are available!".format(len(colours)))
         if config.verbose > 0 and self.nRuns>1 and len(self.phis)>1 and len(self.Vs)>1:
@@ -1003,10 +1003,9 @@ class protRectifier(Protocol):
 
                 ### New routines
                 pfV = Parameters()
-                pfV.add_many(
-                ('E',   0,           True, -100 , 100,  None),
-                ('v0',  50,          True, -1e12, 1e12, None),
-                ('v1',  calcV1(0,50),True, -1e9 , 1e9,  None))
+                pfV.add_many(('E',  0,              True, -100,  100,  None),
+                             ('v0', 50,             True, -1e12, 1e12, None),
+                             ('v1', calcV1(0, 50),  True, -1e9,  1e9,  None))
 
                 pfV = fitfV(Vs, Iss, pfV)
                 #print(pfV)
@@ -1351,7 +1350,7 @@ class protRecovery(Protocol):
                 for vInd in range(self.nVs):
                     col, style = self.getLineProps(run, vInd, phiInd)
                     pulses = self.PD.trials[run][phiInd][vInd].pulses
-                    plt.annotate('', (pulses[0,1], (run+1)*pos), (pulses[1,0], (run+1)*pos), 
+                    plt.annotate('', (pulses[0,1], (run+1)*pos), (pulses[1,0], (run+1)*pos),
                                  arrowprops={'arrowstyle':'<->', 'color':col, 'shrinkA':0, 'shrinkB':0})
 
                     if run == 0:    ### Fit peak recovery
@@ -1366,8 +1365,8 @@ class protRecovery(Protocol):
 
 
 from collections import OrderedDict
-protocols = OrderedDict([('step', protStep), ('delta', protDelta), ('sinusoid', protSinusoid), 
-                         ('chirp', protChirp), ('ramp', protRamp), ('recovery', protRecovery), 
+protocols = OrderedDict([('step', protStep), ('delta', protDelta), ('sinusoid', protSinusoid),
+                         ('chirp', protChirp), ('ramp', protRamp), ('recovery', protRecovery),
                          ('rectifier', protRectifier), ('shortPulse', protShortPulse), ('custom', protCustom)])
 
 # E.g.
