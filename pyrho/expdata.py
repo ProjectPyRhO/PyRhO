@@ -99,7 +99,7 @@ class PhotoCurrent(object):
     lam         # Stimulus wavelength       RETHINK c.f. stimuli
     isFiltered  # Data hase been filtered               HIDE
     _I_orig       # Original photocurrent (unfiltered)    HIDE __I_orig_
-    Iprev       # Previous photocurrent                 HIDE _Iprev_
+    _I_prev       # Previous photocurrent                 HIDE __I_prev_
     offset_     # Current offset calculated to zero dark current    HIDE
     on_         # Current at t_on[:]        REMOVE
     off_        # Current at t_off[:]       REMOVE
@@ -234,7 +234,7 @@ class PhotoCurrent(object):
 
         self.isFiltered = False
         self._I_orig = None
-        self.Iprev = None
+        self._I_prev = None
         #self.filterData()              # Smooth the data with a moving average
 
         ### Calibrate - correct any current offset in experimental recordings
@@ -1174,8 +1174,8 @@ class PhotoCurrent(object):
             self.isFiltered = True
             I = self._I_orig
         else:
-            self.Iprev = np.copy(self.I)
-            I = self.Iprev
+            self._I_prev = np.copy(self.I)
+            I = self._I_prev
 
         # Moving average
         nPoints = int(round(t_window/self.dt))
