@@ -52,7 +52,7 @@ __all__ = ['PhotoCurrent', 'ProtocolData']
 
 class PhotoCurrent(object):
     """
-    Data storage class for an individual Photocurrent and its associated properties
+    Data storage class for an individual Photocurrent and associated properties
 
     Attributes
     ----------
