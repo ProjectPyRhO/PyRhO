@@ -976,9 +976,9 @@ class protRectifier(Protocol):
                 #RhO.calcSteadyState(phiOn) ##################################### Is this necessary? Only for adjusting the gain (g)
                 #print(self.IssVals[run][phiInd][:])
                 #popt, pcov, eqString = self.fitfV(Vs,self.IssVals[run][phiInd][:],calcIssfromfV,p0fV,RhO,ax)#,eqString)
-                #popt, pcov, eqString = self.fitfV(self.Vs, self.PD.ss_[run][phiInd][:], calcIssfromfV, p0fV, RhO, ax)#,eqString)
+                #popt, pcov, eqString = self.fitfV(self.Vs, self.PD.I_ss_[run][phiInd][:], calcIssfromfV, p0fV, RhO, ax)#,eqString)
 
-                Iss = self.PD.ss_[run][phiInd][:]
+                Iss = self.PD.I_ss_[run][phiInd][:]
 
                 ### Original routines
                 ##popt, pcov, eqString = fitFV(self.Vs, Iss, p0FV, ax=ax)

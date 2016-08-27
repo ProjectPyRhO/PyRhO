@@ -114,7 +114,7 @@ class PhotoCurrent(object):
     lags_       # t_lag = t_peak - t_on
     lag_        # Lag of first pulse      REMOVE
     I_sss_        # Steady-state currents for each pulse
-    ss_         # Steady-state current of first pulse   REMOVE
+    I_ss_         # Steady-state current of first pulse   REMOVE
     type        # Polarity of current     RENAME
     pulseAligned# Aligned to (a) pulse    RETHINK...
     alignPoint  # {0:=t_on, 1:=t_peak, 2:=t_off}
@@ -291,9 +291,9 @@ class PhotoCurrent(object):
         # For Go: t[peakInds[0]]-self.pulses[0,1]
 
         self.I_sss_ = np.array([self.findSteadyState(p) for p in range(self.nPulses)])
-        self.ss_ = self.I_sss_[0]
+        self.I_ss_ = self.I_sss_[0]
 
-        if self.I_peak_ < 0 and self.ss_ < 0:
+        if self.I_peak_ < 0 and self.I_ss_ < 0:
             self.type = 'excitatory' # Depolarising
         else:
             self.type = 'inhibitory' # Hyperpolarising
@@ -412,7 +412,7 @@ class PhotoCurrent(object):
 
         pOn = Parameters()
 
-        Iss = self.ss_
+        Iss = self.I_ss_
         #Ipeak = self.I_peak_
 
         if Iss < 0: # Excitatory
@@ -453,7 +453,7 @@ class PhotoCurrent(object):
         # t0 = t_off
         # t=0 :     I = a0 + a1 + a2 = Iss
 
-        Iss = self.ss_ #fpOn['a0'].value + fpOn['a1'].value
+        Iss = self.I_ss_ #fpOn['a0'].value + fpOn['a1'].value
         Ioff, toff = self.getOffPhase(p)
 
         # Single exponential
@@ -923,7 +923,7 @@ class PhotoCurrent(object):
 
                 # Add pointer to steady-state currents
                 if self.I_sss_[p] is not None:
-                    #plt.text(1.1*self.pulses[p,1], self.ss_, '$I_{{ss}} = {:.3g}\mathrm{{nA}}$'.format(self.ss_), ha='left', va='center', fontsize=eqSize)
+                    #plt.text(1.1*self.pulses[p,1], self.I_ss_, '$I_{{ss}} = {:.3g}\mathrm{{nA}}$'.format(self.I_ss_), ha='left', va='center', fontsize=eqSize)
                     #if toffset+self.pulses[p,1] > self.t_end:
                     #xPos = 0
                     ax.annotate(r'$I_{{ss}} = {:.3g}\mathrm{{nA}}$'.format(self.I_sss_[p]), xy=(self.pulses[p, 1], self.I_sss_[p]),
@@ -1696,13 +1696,13 @@ class ProtocolData(object):
             self.Vss_ = np.zeros((self.nPhis, self.nVs))
             for phiInd, phi in enumerate(self.phis):
                 for vInd, V in enumerate(self.Vs):
-                    self.Isss_[phiInd, vInd] = self.trials[run][phiInd][vInd].ss_ # Variations along runs are not useful here
+                    self.Isss_[phiInd, vInd] = self.trials[run][phiInd][vInd].I_ss_ # Variations along runs are not useful here
                     self.Vss_[phiInd, vInd] = self.trials[run][phiInd][vInd].V
         else:
             self.Isss_ = np.zeros(self.nVs)
             self.Vss_ = np.zeros(self.nVs)
             for vInd, V in enumerate(self.Vs):
-                self.Isss_[vInd] = self.trials[run][phiInd][vInd].ss_
+                self.Isss_[vInd] = self.trials[run][phiInd][vInd].I_ss_
                 self.Vss_[vInd] = self.trials[run][phiInd][vInd].V
         return self.Isss_, self.Vss_
 

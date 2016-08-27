@@ -353,9 +353,9 @@ def plotFit(PC, nStates, params, fitRates=False, index=None):
     #    axRes.plot(tcycle, minObj.residual)
     #else:
     #plt.plot(t[onInd:],I[onInd:]-Ifit)
-    PCofSS = bool(PC.ss_ is not None)
+    PCofSS = bool(PC.I_ss_ is not None)
     if PCofSS:
-        axRes.plot(t, (I-Ifit)*100/abs(PC.ss_))
+        axRes.plot(t, (I-Ifit)*100/abs(PC.I_ss_))
         axRes.set_ylabel(r'$\mathrm{Error\ (\%\ I_{ss})}$') # relative error')
     else:
         axRes.plot(t, I-Ifit)
