@@ -473,9 +473,9 @@ def times2cycles(times, Dt_tot):       # TODO revise to handle negative delay ti
     #nPulses = times.shape[0]
     assert(times.shape[1] <= 2)
     Dt_delay = times[0, 0] # This assumes that the times have not been shifted
-    onDs = [row[1]-row[0] for row in times] # pulses[:,1] - pulses[:,0]   # Pulse Durations
+    Dt_ons = [row[1]-row[0] for row in times] # pulses[:,1] - pulses[:,0]   # Pulse Durations
     offDs = np.append(times[1:, 0], Dt_tot) - times[:, 1]
-    cycles = np.vstack((onDs, offDs)).transpose()
+    cycles = np.vstack((Dt_ons, offDs)).transpose()
     return (cycles, Dt_delay)
 
 

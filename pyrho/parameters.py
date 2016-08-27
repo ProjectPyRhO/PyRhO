@@ -502,7 +502,7 @@ protList = list(protParams)  # List of keys #This could be removed
 protParamLabels = OrderedDict([('phis', '\mathbf{\phi}'),
                                ('Vs', '\mathbf{\mathrm{V}}'),
                                ('Dt_delay', '\Delta t_{delay}'),
-                               ('onD', '\Delta t_{on}'),
+                               ('Dt_on', '\Delta t_{on}'),
                                ('Dt_tot', 'T_{total}'),
                                ('cycles', 'cycles'),
                                ('phi0', '\phi_0'),
@@ -522,7 +522,7 @@ protUnitLabels['phi0'] = 'ph./mm^2/s'
 # protUnitLabels['phi_ton'] = 'ph./mm^2/s' ### Revise!!!
 protUnitLabels['Vs'] = 'mV'
 protUnitLabels['Dt_delay'] = 'ms'
-protUnitLabels['onD'] = 'ms'
+protUnitLabels['Dt_on'] = 'ms'
 protUnitLabels['cycles'] = 'ms'
 protUnitLabels['pDs'] = 'ms'
 protUnitLabels['IPIs'] = 'ms'
@@ -553,13 +553,13 @@ protParamNotes['ramp']['phis'] = 'List of ending flux values'
 #protParamNotes['ramp']['phi_ton'] = 'Starting flux value'
 protParamNotes['ramp']['phi0'] = 'Constant offset for flux values'
 protParamNotes['delta']['cycles'] = ''
-protParamNotes['delta']['onD'] = 'On-phase duration'
+protParamNotes['delta']['Dt_on'] = 'On-phase duration'
 protParamNotes['delta']['Dt_tot'] = 'Total simulation duration'
 protParamNotes['shortPulse']['cycles'] = ''
 protParamNotes['shortPulse']['pDs'] = 'List of pulse on-phase durations' #'List of cycle on-phase durations'
 protParamNotes['shortPulse']['Dt_tot'] = 'Total simulation duration'
 protParamNotes['recovery']['cycles'] = ''
-protParamNotes['recovery']['onD'] = 'Pulse on-phase duration' #'Cycle on-phase duration'
+protParamNotes['recovery']['Dt_on'] = 'Pulse on-phase duration' #'Cycle on-phase duration'
 protParamNotes['recovery']['IPIs'] = 'List of pulse off-phase durations' #'List of cycle off-phase durations'
 protParamNotes['recovery']['Dt_tot'] = 'Total simulation duration'
 
@@ -605,7 +605,7 @@ protParams['ramp'].add_many(('phis',    [1e16,1e17,1e18],   None,   None,   mole
 protParams['delta'].add_many(('phis',   [1e20],             None,   None,   mole*mm**-2*second**-1, '\mathbf{\phi}', 'List of flux values'), # 'photons/s/mm^2'
                             ('Vs',      [-70],              None,   None,   mV, '\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'), # 'mV'
                             ('Dt_delay',    5,                  0,      1e9,    ms, '\Delta t_{delay}', 'Delay duration before the first pulse'), # 'ms'
-                            ('onD',     1e-3,               0,      1e9,    ms, '\Delta t_{on}',    'On-phase duration'), # 'ms'
+                            ('Dt_on',     1e-3,               0,      1e9,    ms, '\Delta t_{on}',    'On-phase duration'), # 'ms'
                             ('Dt_tot',    25.,                0,      None,   ms, 'T_{total}',        'Total simulation duration')) # 'ms'
 
 protParams['rectifier'].add_many(('phis',[1e16],            None,   None,   mole*mm**-2*second**-1, '\mathbf{\phi}', 'List of flux values'), # 'photons/s/mm^2' # Change to 1e17?
@@ -622,7 +622,7 @@ protParams['shortPulse'].add_many(('phis',[1.5e15],         None,   None,   mole
 protParams['recovery'].add_many(('phis',[1e17],             None,   None,   mole*mm**-2*second**-1, '\mathbf{\phi}', 'List of flux values'), # 'photons/s/mm^2'
                             ('Vs',      [-70],              None,   None,   mV, '\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'), # 'mV'
                             ('Dt_delay',    100,                0,      None,   ms, '\Delta t_{delay}', 'Delay duration before the first pulse'), # 'ms'
-                            ('onD',     100,                0,      None,   ms, '\Delta t_{on}',    'On-phase duration'), # 'ms'
+                            ('Dt_on',     100,                0,      None,   ms, '\Delta t_{on}',    'On-phase duration'), # 'ms'
                             ('IPIs',[500,1000,1500,2500,5000,7500,10000],None,None,ms,  '\mathbf{\Delta t_{off}}', 'List of pulse off-phase durations'), # 'ms'
                             #('IPIs',[0.5,1,1.5,2.5,5,7.5,10],None,None,seconds), # 'ms'
                             ('Dt_tot',    12000,              0,      None,   ms, 'T_{total}',        'Total simulation duration')) # 'ms'

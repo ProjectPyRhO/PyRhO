@@ -396,7 +396,7 @@ class RhO_3states(RhodopsinModel):
                [0,0,1],
                [1,0,0]]
 
-    conDir  = [[ 0,-1, 1],
+    cDt_onir  = [[ 0,-1, 1],
                [ 1, 0,-1],
                [-1, 1, 0]]
 

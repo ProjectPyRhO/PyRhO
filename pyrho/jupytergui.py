@@ -243,7 +243,7 @@ def loadGUI(IPythonWorkspace=None):
     '''
     
     #dataSet = None
-    def onDataLoad(name):
+    def Dt_onataLoad(name):
         global dataSet
         print('Loading: "', dataVar.value, '"...', end=' ')
         #print(vars())
@@ -726,7 +726,7 @@ def loadGUI(IPythonWorkspace=None):
     ### Create Data set entry
     dataVar = widgets.Text(placeholder='<Data Set>') #description='Data Set: ',
     dataLoad = widgets.Button(description='Load')
-    dataLoad.on_click(onDataLoad)
+    dataLoad.on_click(Dt_onataLoad)
     
     dataBox = widgets.HBox(children=[dataVar]) #dataLoad
     

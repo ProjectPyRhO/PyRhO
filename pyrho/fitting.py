@@ -883,9 +883,9 @@ def fit6states(fluxSet, quickSet, run, vInd, params, method=defMethod):  # , ver
         #[pc.alignToTime() for pc in PCs]
 
         #tpeaks = np.asarray([PD.trials[p][0][0].tpeak for p in range(PD.nRuns)]) # - PD.trials[p][0][0].t[0]
-        #tpulses = np.asarray([PD.trials[p][0][0].onDs[0] for p in range(PD.nRuns)])
+        #tpulses = np.asarray([PD.trials[p][0][0].Dt_ons[0] for p in range(PD.nRuns)])
         tpeaks = np.asarray([pc.tpeak_ for pc in PCs])
-        tpulses = np.asarray([pc.onDs[0] for pc in PCs])
+        tpulses = np.asarray([pc.Dt_ons[0] for pc in PCs])
 
         devFunc = lambda tpulses, t0, k: tpulses + t0 * np.exp(-k*tpulses)
         p0 = (0,1)
@@ -1957,10 +1957,10 @@ def fitModel(dataSet, nStates=3, params=None, postFitOpt=True, relaxFact=2, meth
         quickSet = dataSet['delta']
     else: # Consider just fixing Go1 and Go2
         q = 0
-        onD = dataSet[fluxKey].trials[q][0][0].onDs[0]
+        Dt_on = dataSet[fluxKey].trials[q][0][0].Dt_ons[0]
         qI = dataSet[fluxKey].trials[q][0][0]
         for run in range(1, setPC.nRuns): # Skip the first run
-            if setPC.trials[q][0][0].onDs[0] < onD:
+            if setPC.trials[q][0][0].Dt_ons[0] < Dt_on:
                 q = run
                 qI = setPC.trials[q][0][0]
         quickSet = ProtocolData(setPC.trials[q][0][0], nRuns=1, phis=[qI.phi], Vs=[qI.V])

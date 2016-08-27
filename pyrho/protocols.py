@@ -86,12 +86,12 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
         """Function to set-up additional variables and make parameters consistent after any changes"""
 
         if np.isscalar(self.cycles): # Only 'on' duration specified
-            onD = self.cycles
+            Dt_on = self.cycles
             if hasattr(self, 'Dt_tot'):
-                offD = self.Dt_tot - onD - self.Dt_delay
+                offD = self.Dt_tot - Dt_on - self.Dt_delay
             else:
                 offD = 0
-            self.cycles = np.asarray([[onD, offD]])
+            self.cycles = np.asarray([[Dt_on, offD]])
         elif isinstance(self.cycles, (list, tuple, np.ndarray)):
             if np.isscalar(self.cycles[0]): # not isinstance(self.cycles[0], (list, tuple, np.ndarray):
                 self.cycles = [self.cycles] # Assume only one pulse
@@ -102,7 +102,7 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
         self.nPulses = self.cycles.shape[0]
         self.pulses, self.Dt_tot = cycles2times(self.cycles, self.Dt_delay)
         self.Dt_delays = np.array([pulse[0] for pulse in self.pulses], copy=True) # pulses[:,0]    # Delay Durations #self.Dt_delays = np.array([self.Dt_delay] * self.nRuns)
-        self.onDs = np.array(self.cycles[:,0])  #self.onDs = np.array([cycle[0] for cycle in self.cycles])
+        self.Dt_ons = np.array(self.cycles[:,0])  #self.Dt_ons = np.array([cycle[0] for cycle in self.cycles])
         self.offDs = np.array(self.cycles[:,1]) #self.offDs = np.array([cycle[1] for cycle in self.cycles])
 
         if np.isscalar(self.phis):
@@ -191,15 +191,15 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
 
         for p in range(nPulses):
             start = end
-            onD, offD = cycles[p,0], cycles[p,1]
-            end = start + onD + offD
+            Dt_on, offD = cycles[p,0], cycles[p,1]
+            end = start + Dt_on + offD
             nSteps = int(round(((end-start)/dt)+1))
             tPulse = np.linspace(start, end, nSteps, endpoint=True)
             phi_t = phi_ts[p]
             phiPulse = phi_t(tPulse) # -tPulse[0] # Align time vector to 0 for phi_t to work properly
 
             #onInd = len(t) - 1 # Start of on-phase
-            #offInd = onInd + int(round(onD/dt))
+            #offInd = onInd + int(round(Dt_on/dt))
             #pulseInds = np.vstack((pulseInds, [onInd,offInd]))
 
             #t = np.r_[t, tPulse[1:]]
@@ -434,7 +434,7 @@ class protSinusoid(Protocol):
         #self.dt = 1000/self.sr # dt is set by simulator but used for plotting
         self.nRuns = len(self.ws)
 
-        if (1000)/min(self.fs) > min(self.onDs):
+        if (1000)/min(self.fs) > min(self.Dt_ons):
             warnings.warn('Warning: The period of the lowest frequency is longer than the stimulation time!')
 
         if isinstance(self.phi0, (int, float, complex)):
@@ -456,8 +456,8 @@ class protSinusoid(Protocol):
 
     def genPulse(self, run, phi, pulse):
         pStart, pEnd = pulse
-        onD = pEnd - pStart
-        t = np.linspace(0.0, onD, int(round((onD*self.sr/1000))+1), endpoint=True) # Create smooth series of time points to interpolate between
+        Dt_on = pEnd - pStart
+        t = np.linspace(0.0, Dt_on, int(round((Dt_on*self.sr/1000))+1), endpoint=True) # Create smooth series of time points to interpolate between
         if self.startOn: # Generalise to phase offset
             phi_t = spline(pStart + t, self.phi0[run] + 0.5*phi*(1+np.cos(self.ws[run]*t)), ext=1, k=5)
         else:
@@ -506,7 +506,7 @@ class protSinusoid(Protocol):
         splineOrder = 2     #[1,5]
 
         trim = 0.1
-        transEndInd = int(self.Dt_delays[0] + round(self.onDs[0] * trim / self.dt))
+        transEndInd = int(self.Dt_delays[0] + round(self.Dt_ons[0] * trim / self.dt))
 
         if self.nRuns > 1:
             #plt.figure(Ifig.number)
@@ -550,8 +550,8 @@ class protSinusoid(Protocol):
             # fstar_p = max(max(fstars))
             # transD = buffer * np.ceil(1000/fstar_p) # [ms]
             # transEndInd = round((self.Dt_delays[0]+transD)/self.dt)
-            # if transEndInd >= (self.onDs[0])/self.dt: # If transition period is greater than the on period
-                # transEndInd = round((self.Dt_delays[0]+self.onDs[0]/2)/self.dt) # Take the second half of the data
+            # if transEndInd >= (self.Dt_ons[0])/self.dt: # If transition period is greater than the on period
+                # transEndInd = round((self.Dt_delays[0]+self.Dt_ons[0]/2)/self.dt) # Take the second half of the data
 
             tTransEnd = transEndInd * self.dt #ts[0][0][0]
             self.axI.axvline(x=tTransEnd, linestyle=':', color='k')
@@ -644,7 +644,7 @@ class protDualTone(Protocol):
         # self.pulses = np.asarray(self.pulses)
         # self.nPulses = self.pulses.shape[0]
         # self.Dt_delays = [row[0] for row in self.pulses] # pulses[:,0]    # Delay Durations
-        # self.onDs = [row[1]-row[0] for row in self.pulses] # pulses[:,1] - pulses[:,0]   # Pulse Durations
+        # self.Dt_ons = [row[1]-row[0] for row in self.pulses] # pulses[:,1] - pulses[:,0]   # Pulse Durations
         # self.offDs = np.append(self.pulses[1:,0],self.Dt_tot) - self.pulses[:,1]
 
         #self.Dt_tot = Dt_tot
@@ -659,11 +659,11 @@ class protDualTone(Protocol):
         for fA,fB in itertools.product(self.fAs,self.fBs):
             print(fA+fB)
         self.nRuns = len(self.ws) # Modify...
-        self.cycles=np.column_stack((self.onDs,self.offDs))
-        #self.cycles=np.tile(np.column_stack((self.onDs,self.offDs)),(self.nRuns,1))
+        self.cycles=np.column_stack((self.Dt_ons,self.offDs))
+        #self.cycles=np.tile(np.column_stack((self.Dt_ons,self.offDs)),(self.nRuns,1))
         #self.padDs = np.zeros(self.nRuns)
 
-        if (1000)/min(self.fs) > min(self.onDs):
+        if (1000)/min(self.fs) > min(self.Dt_ons):
             warnings.warn('Warning: The period of the lowest frequency is longer than the stimulation time!')
             #print('Warning: The period of the lowest frequency is longer than the total simulation time!')
 
@@ -693,10 +693,10 @@ class protChirp(Protocol):
 
         self.sr = max(10000, int(round(10 * max(self.f0, self.fT)))) # Nyquist frequency - sampling rate (10*f) >= 2*f
         self.nRuns = 1 #len(self.ws)
-        #self.cycles = np.column_stack((self.onDs,self.offDs))
+        #self.cycles = np.column_stack((self.Dt_ons,self.offDs))
         #ws = 2 * np.pi * np.logspace(-4,10,num=7) # Frequencies [rads/s]
 
-        if (1000)/self.f0 > min(self.onDs): #1/10**self.fs[0] > self.Dt_tot:
+        if (1000)/self.f0 > min(self.Dt_ons): #1/10**self.fs[0] > self.Dt_tot:
             warnings.warn('Warning: The period of the lowest frequency is longer than the stimulation time!')
 
         if isinstance(self.phi0, (int, float, complex)):
@@ -716,12 +716,12 @@ class protChirp(Protocol):
 
     def genPulse(self, run, phi, pulse):
         pStart, pEnd = pulse
-        onD = pEnd - pStart
-        t = np.linspace(0.0, onD, (onD*self.sr/1000)+1, endpoint=True) # Create smooth series of time points to interpolate between
+        Dt_on = pEnd - pStart
+        t = np.linspace(0.0, Dt_on, (Dt_on*self.sr/1000)+1, endpoint=True) # Create smooth series of time points to interpolate between
         if self.linear: # Linear sweep
-            ft = self.f0 + (self.fT-self.f0)*(t/onD)
+            ft = self.f0 + (self.fT-self.f0)*(t/Dt_on)
         else:           # Exponential sweep
-            ft = self.f0 * (self.fT/self.f0)**(t/onD)
+            ft = self.f0 * (self.fT/self.f0)**(t/Dt_on)
         ft /= 1000 # Convert to frequency in ms
         if self.startOn:
             phi_t = spline(pStart + t, self.phi0[run] + 0.5*phi*(1+np.cos(ft*t)), ext=1, k=5)
@@ -762,14 +762,14 @@ class protChirp(Protocol):
             pc = self.PD.trials[0][0][0]
             for p in range(self.nPulses):
                 pStart, pEnd = self.PD.trials[0][0][0].pulses[p]
-                onD = pEnd - pStart
-                nPoints = 10 * int(round(onD / self.dt)) + 1 # 10001
-                tsmooth = np.linspace(0, onD, nPoints)
+                Dt_on = pEnd - pStart
+                nPoints = 10 * int(round(Dt_on / self.dt)) + 1 # 10001
+                tsmooth = np.linspace(0, Dt_on, nPoints)
 
                 if self.linear:
-                    ft = self.f0 + (self.fT-self.f0)*(tsmooth/onD)
+                    ft = self.f0 + (self.fT-self.f0)*(tsmooth/Dt_on)
                 else: # Exponential
-                    ft = self.f0 * (self.fT/self.f0)**(tsmooth/onD)
+                    ft = self.f0 * (self.fT/self.f0)**(tsmooth/Dt_on)
                 self.axF.plot(tsmooth+pStart, ft, 'g')
             self.axF.set_ylabel(r'$f\ \mathrm{[Hz]}$')
         else:
@@ -790,7 +790,7 @@ class protRamp(Protocol):
     def extraPrep(self):
         'Function to set-up additional variables and make parameters consistent after any changes'
         self.nRuns = 1 #nRuns # Make len(phi_ton)?
-        self.cycles = np.column_stack((self.onDs,self.offDs))
+        self.cycles = np.column_stack((self.Dt_ons,self.offDs))
         self.phi_ts = self.genPulseSet()
 
     def createLayout(self, Ifig=None, vInd=0):
@@ -833,21 +833,21 @@ class protRamp(Protocol):
 
 class protDelta(Protocol):
     # One very short, saturation intensity pulse e.g. 10 ns @ 100 mW*mm^-2 for wild type ChR
-    # Used to calculate gbar, assuming that O(1)-->1 as onD-->0 and phi-->inf
+    # Used to calculate gbar, assuming that O(1)-->1 as Dt_on-->0 and phi-->inf
     protocol = 'delta'
     squarePulse = True
     nRuns = 1
 
-    onD = 0
+    Dt_on = 0
 
     def prepare(self):
         """Function to set-up additional variables and make parameters consistent after any changes"""
-        assert(self.Dt_tot >= self.Dt_delay + self.onD) # ==> offD >= 0
-        self.cycles = np.asarray([[self.onD, self.Dt_tot-self.Dt_delay-self.onD]])
+        assert(self.Dt_tot >= self.Dt_delay + self.Dt_on) # ==> offD >= 0
+        self.cycles = np.asarray([[self.Dt_on, self.Dt_tot-self.Dt_delay-self.Dt_on]])
         self.nPulses = self.cycles.shape[0]
         self.pulses, self.Dt_tot = cycles2times(self.cycles, self.Dt_delay)
         self.Dt_delays = np.array([row[0] for row in self.pulses], copy=True) # pulses[:,0]    # Delay Durations
-        self.onDs = [row[1]-row[0] for row in self.pulses] # pulses[:,1] - pulses[:,0]   # Pulse Durations
+        self.Dt_ons = [row[1]-row[0] for row in self.pulses] # pulses[:,1] - pulses[:,0]   # Pulse Durations
         self.offDs = np.append(self.pulses[1:,0], self.Dt_tot) - self.pulses[:,1]
 
         if np.isscalar(self.phis):
@@ -1196,9 +1196,9 @@ class protShortPulse(Protocol):
         self.pDs = np.sort(np.array(self.pDs))
         self.nRuns = len(self.pDs)
         self.Dt_delays = np.ones(self.nRuns)*self.Dt_delay
-        self.onDs = self.pDs
-        self.offDs = (np.ones(self.nRuns)*self.Dt_tot) - self.Dt_delays - self.onDs
-        self.cycles = np.column_stack((self.onDs,self.offDs))
+        self.Dt_ons = self.pDs
+        self.offDs = (np.ones(self.nRuns)*self.Dt_tot) - self.Dt_delays - self.Dt_ons
+        self.cycles = np.column_stack((self.Dt_ons,self.offDs))
         self.phis.sort(reverse=True)
         self.Vs.sort(reverse=True)
         self.nPhis = len(self.phis)
@@ -1208,7 +1208,7 @@ class protShortPulse(Protocol):
 
 
     def getRunCycles(self, run):
-        return np.asarray([[self.onDs[run],self.offDs[run]]]), self.Dt_delays[run]
+        return np.asarray([[self.Dt_ons[run],self.offDs[run]]]), self.Dt_delays[run]
 
 
     def createLayout(self, Ifig=None, vInd=0):
@@ -1269,7 +1269,7 @@ class protRecovery(Protocol):
     squarePulse = True
     nPulses = 2 # Fixed at 2 for this protocol
 
-    onD = 0
+    Dt_on = 0
     # def __next__(self):
         # if self.run >= self.nRuns:
             # raise StopIteration
@@ -1281,18 +1281,18 @@ class protRecovery(Protocol):
 
         self.nRuns = len(self.IPIs)
         self.Dt_delays = np.ones(self.nRuns)*self.Dt_delay
-        self.onDs = np.ones(self.nRuns)*self.onD
+        self.Dt_ons = np.ones(self.nRuns)*self.Dt_on
         self.offDs = self.IPIs
-        self.cycles = np.column_stack((self.onDs, self.offDs)) # [:,0] = on phase duration; [:,1] = off phase duration
+        self.cycles = np.column_stack((self.Dt_ons, self.offDs)) # [:,0] = on phase duration; [:,1] = off phase duration
 
         self.pulses, _ = cycles2times(self.cycles, self.Dt_delay)
         self.runCycles = np.zeros((self.nPulses, 2, self.nRuns))
         for run in range(self.nRuns):
-            self.runCycles[:,:,run] = np.asarray([[self.onDs[run],self.offDs[run]],[self.onDs[run],self.offDs[run]]])
+            self.runCycles[:,:,run] = np.asarray([[self.Dt_ons[run],self.offDs[run]],[self.Dt_ons[run],self.offDs[run]]])
 
         self.t_start = 0
         self.t_end = self.Dt_tot
-        IPIminD = max(self.Dt_delays) + (2*max(self.onDs)) + max(self.IPIs)
+        IPIminD = max(self.Dt_delays) + (2*max(self.Dt_ons)) + max(self.IPIs)
         if self.t_end < IPIminD:
             warnings.warn("Insufficient run time for all stimulation periods!")
         else:

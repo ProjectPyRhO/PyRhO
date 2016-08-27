@@ -7,7 +7,7 @@ NEURON {
     NONSPECIFIC_CURRENT i :IRhO     : This could be changed to update a specific ion
     RANGE i, E, gam, v0, v1, g0 :, fphi, fv, i :IRhO :iChR   : , gbar
     RANGE k1, Go1, Gf0, kf, Gd2, Gr0, Gd1, Gb0, kb, Go2, k2, p, q
-    RANGE phiOn, phi, phi_m, Dt_delay, onD, offD, nPulses :phi0,
+    RANGE phiOn, phi, phi_m, Dt_delay, Dt_on, offD, nPulses :phi0,
 }
 
 
@@ -25,7 +25,7 @@ PARAMETER { : Initialise parameters to defaults. These may be changed through ho
 : Illumination
     phiOn   = 1e18  :(photons/s mm2):(mW/mm2): irradiance                _______
     Dt_delay    = 25    (ms)    <0, 1e9>    : delay before ON phase         |  ON   |  OFF
-    onD     = 100   (ms)    <0, 1e9>    : duration of ON phase  <-Dt_delay->|<-onD->|<-offD->
+    Dt_on     = 100   (ms)    <0, 1e9>    : duration of ON phase  <-Dt_delay->|<-Dt_on->|<-offD->
     offD    = 50    (ms)    <0, 1e9>    : duration of OFF phase ________|       |________
     nPulses = 1     (1)     <0, 1e3>    : num pulses to deliver         <-- one pulse -->
 
@@ -216,7 +216,7 @@ NET_RECEIVE (w) {
     :    if (on == 0) { : Turn the light on 
             phi = phiOn :flux = Er 
     :        on = 1
-            net_send(onD, 0) :net_send(onD, 1) : Schedule the next off phase
+            net_send(Dt_on, 0) :net_send(Dt_on, 1) : Schedule the next off phase
         } else { : Turn the light off
             phi = 0 :flux = 0
     :        on = 0

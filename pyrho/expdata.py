@@ -91,7 +91,7 @@ class PhotoCurrent(object):
     pulseCycles # Pulse durations # TODO: Rename cycles to durations
     Dt_delay        # Delay duration before the first pulse
     Dt_delays       # Total delay before each pulse
-    onDs        # On-phase durations
+    Dt_ons        # On-phase durations
     IPIs        # Inter-pulse-intervals t_off <-> t_on
     offDs       # Off-phase durations
     pulseInds   # Indexes for the start of each on- and off-phases  HIDE
@@ -207,14 +207,14 @@ class PhotoCurrent(object):
 
         self.Dt_delay = self.pulses[0, 0] - self.t_start                   # Handles negative delays
         self.Dt_delays = np.array(self.pulses[:, 0] - self.t_start)        # Delay Durations
-        self.onDs = np.array(self.pulses[:, 1] - self.pulses[:, 0]) # Pulse Durations
+        self.Dt_ons = np.array(self.pulses[:, 1] - self.pulses[:, 0]) # Pulse Durations
         #if self.nPulses > 1:
         #    self.IPIs = np.zeros(self.nPulses - 1)
         #    for p in range(0, self.nPulses-1):
         #        self.IPIs[p] = self.pulses[p+1,0] - self.pulses[p,1]
         self.IPIs = np.array([self.pulses[p+1, 0] - self.pulses[p, 1] for p in range(self.nPulses-1)]) # end <-> start
         self.offDs = np.append(self.IPIs, self.t_end-self.pulses[-1, 1])
-        # self.offDs = [self.Dt_tot-((onD+pOff)*nPulses)-Dt_delay for pOff in pulseCycles[:,1]]
+        # self.offDs = [self.Dt_tot-((Dt_on+pOff)*nPulses)-Dt_delay for pOff in pulseCycles[:,1]]
 
         #for p in self.nPulses: # List comprehension instead?
         #   self.pulseInds[p,0] = np.searchsorted(self.t, pulses[p,0], side="left")  # CHECK: last index where value <= t_on
@@ -595,7 +595,7 @@ class PhotoCurrent(object):
             ### Fit curve for tau_inact
             if verbose > 1:
                 print('Analysing inactivation-phase decay...')
-            onEndInd = np.searchsorted(t,onD+Dt_delay,side="left") # Add one since upper bound is not included in slice
+            onEndInd = np.searchsorted(t,Dt_on+Dt_delay,side="left") # Add one since upper bound is not included in slice
             popt, _, _ = self.fitPeaks(t[peakInds[0]:onEndInd + 1], I_RhO[peakInds[0]:onEndInd + 1], expDecay, p0inact, '$I_{{inact}} = {:.3}e^{{-t/{:g}}} {:+.3}$','')
             if verbose > 1:
                 print("$\tau_{{inact}} = {}$; $I_{{ss}} = {}$".format(popt[1],popt[2]))
@@ -607,7 +607,7 @@ class PhotoCurrent(object):
             ### Fit curve for tau_off (bi-exponential)
             if verbose > 1:
                 print('Analysing off-phase decay...')
-    #                 endInd = -1 #np.searchsorted(t,offD+onD+Dt_delay,side="right") #Dt_tot
+    #                 endInd = -1 #np.searchsorted(t,offD+Dt_on+Dt_delay,side="right") #Dt_tot
             popt, _, _ = self.fitPeaks(t[onEndInd:], I_RhO[onEndInd:], biExpDecay, p0off, '$I_{{off}} = {:.3}e^{{-t/{:g}}} {:+.3}e^{{-t/{:g}}} {:+.3}$','')
             ### Plot tau_off vs Irrad (for curves of V)
             ### Plot tau_off vs V (for curves of Irrad)
@@ -698,9 +698,9 @@ class PhotoCurrent(object):
         """Find the steady-state current either as the last ``tail`` proportion of the on-phase or by fitting a decay function"""
         assert(0 <= pulse < self.nPulses)
 
-        #offInd = self.pulseInds[pulse][1] #np.searchsorted(t,onD+Dt_delay,side="left")
+        #offInd = self.pulseInds[pulse][1] #np.searchsorted(t,Dt_on+Dt_delay,side="left")
 
-        #if self.onDs[pulse] < window:
+        #if self.Dt_ons[pulse] < window:
         #    raise ValueError('Error: The plateau buffer must be shorter than the on phase!')
             #windowInd = int(round(p*len(I_phi))) #np.searchsorted(t,t[onEndInd]-100,side="left") # Generalise
             #I_ss = np.mean(I_phi[-windowInd:])
@@ -945,8 +945,8 @@ class PhotoCurrent(object):
                 ax.annotate('', xy=(self.pulses[p,0], arrowy),
                             xytext=(self.pulses[p,1], arrowy),
                             arrowprops=dict(arrowstyle='<->', color='blue', shrinkA=0, shrinkB=0))
-                plt.text(self.pulses[p,0]+self.onDs[p]/2, texty,
-                         r'$\Delta t_{{on_{}}}={:.3g}\mathrm{{ms}}$'.format(p, self.onDs[p]),
+                plt.text(self.pulses[p,0]+self.Dt_ons[p]/2, texty,
+                         r'$\Delta t_{{on_{}}}={:.3g}\mathrm{{ms}}$'.format(p, self.Dt_ons[p]),
                         ha='center', va='bottom', fontsize=config.eqSize)
                 if p < self.nPulses-1:
                     end = self.pulses[p+1,0]
@@ -1488,7 +1488,7 @@ class ProtocolData(object):
             plt.sca(ax)
         self.legLabels = []
 
-        #onDs = []
+        #Dt_ons = []
         t_starts, t_ends = [], []
         #pulseSet = [[[None for v in range(self.nVs)] for p in range(self.nPhis)] for r in range(self.nRuns)]
         self.nPulses = self.trials[0][0][0].nPulses # Assume all trials have the same number
@@ -1502,7 +1502,7 @@ class ProtocolData(object):
                     t_ends.append(pc.t_end)
                     #pulseSet[run][phiInd][vInd] = pc.pulses
                     pulseSet[:, :, run] = pc.pulses
-                    #onDs.append(pc.onDs)
+                    #Dt_ons.append(pc.Dt_ons)
                     col, style = self.getLineProps(run, phiInd, vInd)
                     pc.plot(ax=ax, light=None, addFeatures=False, colour=col, linestyle=style)
                     label = ''
@@ -1579,8 +1579,8 @@ class ProtocolData(object):
         setCrossAxes(ax)
 
         #ax.set_yticklabels(tickLabels)
-        #if np.all([onD == onDs[0] for onD in onDs]):
-        #if np.allclose(onDs, onDs[0] * np.ones(len(onDs))):
+        #if np.all([Dt_on == Dt_ons[0] for Dt_on in Dt_ons]):
+        #if np.allclose(Dt_ons, Dt_ons[0] * np.ones(len(Dt_ons))):
         #plotLight(pc.pulses, ax=ax, light=light, lam=470, alpha=0.2)
         #else:
             # Plot bars for on periods
@@ -1724,7 +1724,7 @@ class DataSet():
         # # elif protocol == recovery:
             # # self.Is = Is
             # # self.ts = ts
-            # # pulseCycles=np.column_stack((onD*np.ones(len(IPIs)),[IPI-onD for IPI in IPIs])) # [:,0] = on phase duration; [:,1] = off phase duration
+            # # pulseCycles=np.column_stack((Dt_on*np.ones(len(IPIs)),[IPI-Dt_on for IPI in IPIs])) # [:,0] = on phase duration; [:,1] = off phase duration
 
     def addData(self, photoData, protocol):
         self.data[protocol].append(photoData)

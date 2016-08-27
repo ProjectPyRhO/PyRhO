@@ -5,7 +5,7 @@ NEURON  {
     NONSPECIFIC_CURRENT i
     RANGE i, E, v0, v1, g0 :, fphi, fv
     RANGE k_a, k_r, Gd, Gr0, p, q
-    RANGE phiOn, phi, phi_m, Dt_delay, onD, offD, nPulses
+    RANGE phiOn, phi, phi_m, Dt_delay, Dt_on, offD, nPulses
 }
 
 
@@ -23,7 +23,7 @@ PARAMETER { : Initialise parameters to defaults. These may be changed through ho
 : Illumination
     phiOn   = 1e18      :(photons/sec mm2)  : Flux [Irradiance :(mW/mm^2)]       _______
     Dt_delay    = 25        (ms)    <0, 1e9>    : delay before ON phase             |  ON   |  OFF
-    onD     = 100       (ms)    <0, 1e9>    : duration of each ON phase <-Dt_delay->|<-onD->|<-offD->
+    Dt_on     = 100       (ms)    <0, 1e9>    : duration of each ON phase <-Dt_delay->|<-Dt_on->|<-offD->
     offD    = 50        (ms)    <0, 1e9>    : duration of each OFF phase________|       |________
     nPulses = 1         (1)     <0, 1e3>    : num pulses to deliver             <-- one pulse -->
 
@@ -121,7 +121,7 @@ PROCEDURE rates(phi) {          : Define equations for calculating transition ra
 : NET_RECEIVE (next (ms), phiNext) {
 :   if (flag == 1) {            : Switch light on
 :        phi = phiNext
-:        net_send(next, 0)       : Schedule an off event at t+onD
+:        net_send(next, 0)       : Schedule an off event at t+Dt_on
 :    } else {                    : Switch light off
 :        phi = 0
 :        if (tally > 0) {        : More pulses to deliver
@@ -134,7 +134,7 @@ PROCEDURE rates(phi) {          : Define equations for calculating transition ra
 NET_RECEIVE (w) {
     if (flag == 1) {            : Switch light on
         phi = phiOn
-        net_send(onD, 0)        : Schedule an off event at t+onD
+        net_send(Dt_on, 0)        : Schedule an off event at t+Dt_on
     } else {                    : Switch light off
         phi = 0
         if (tally > 0) {        : More pulses to deliver
