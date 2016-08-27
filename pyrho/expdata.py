@@ -107,7 +107,7 @@ class PhotoCurrent(object):
     span_       # Imax - Imin
     _idx_peak_    # Index of biggest current peak                     HIDE
     t_peak_      # Time of biggest current peak     Replace with t_peaks_[0]?
-    peak_       # Biggest current peak
+    I_peak_       # Biggest current peak
     _idx_peaks_   # Indexes of current peaks in each pulse            HIDE
     t_peaks_     # Times of current peaks in each pulse
     peaks_      # Current peaks in each pulse
@@ -279,7 +279,7 @@ class PhotoCurrent(object):
 
         self._idx_peak_ = np.argmax(abs(self.I)) #np.searchsorted(self.I, self.Ipeak)
         self.t_peak_ = self.t[self._idx_peak_]
-        self.peak_ = self.I[self._idx_peak_]
+        self.I_peak_ = self.I[self._idx_peak_]
 
         #self._idx_peaks_ = np.array([np.argmax(abs(self.getCycle(p)[0])) for p in range(self.nPulses)]) #np.searchsorted(self.I, self.Ipeaks)
         self._idx_peaks_ = self.findPeakInds()
@@ -293,7 +293,7 @@ class PhotoCurrent(object):
         self.sss_ = np.array([self.findSteadyState(p) for p in range(self.nPulses)])
         self.ss_ = self.sss_[0]
 
-        if self.peak_ < 0 and self.ss_ < 0:
+        if self.I_peak_ < 0 and self.ss_ < 0:
             self.type = 'excitatory' # Depolarising
         else:
             self.type = 'inhibitory' # Hyperpolarising
@@ -413,7 +413,7 @@ class PhotoCurrent(object):
         pOn = Parameters()
 
         Iss = self.ss_
-        #Ipeak = self.peak_
+        #Ipeak = self.I_peak_
 
         if Iss < 0: # Excitatory
             pOn.add('a_act', value=Iss, min=-1e3, max=1e-9) #1
@@ -525,10 +525,10 @@ class PhotoCurrent(object):
             corrFac = lambda Gact, Gdeact: 1 + Gdeact / Gact
             Gd = max(fpOffd['Gd1'].value, fpOffd['Gd2'].value)
 
-            print('Lag method (tau_deact): Go = {}, cf={} --> g0 = {}'.format(GoA, corrFac(GoA, 1/fpOn['tau_deact'].value), 1e6 * self.peak_ * corrFac(GoA, 1/fpOn['tau_deact'].value) / (self.V - E))) #(1 + 1 / (GoA * pOn['tau_deact'].value))
-            print('Lag method (max(Gd1,Gd2)): Go = {}, cf={} --> g0 = {}'.format(GoB, corrFac(GoB, Gd), 1e6 * self.peak_ * corrFac(GoB, Gd) / (self.V - E))) #(1 + max(pOff['Gd1'].value, pOff['Gd2'].value)/GoB)
-            print('Exp method (tau_deact): Gact = {}, cf={} --> g0 = {}'.format(1/fpOn['tau_act'].value, corrFac(1/fpOn['tau_act'].value, 1/fpOn['tau_deact'].value), 1e6 * self.peak_ * corrFac(1/fpOn['tau_act'].value, 1/fpOn['tau_deact'].value) / (self.V - E))) #(1 + pOn['tau_act'].value / pOn['tau_deact'].value)
-            print('Exp method (max(Gd1,Gd2)): Gact = {}, cf={} --> g0 = {}'.format(1/fpOn['tau_act'].value, corrFac(1/fpOn['tau_act'].value, Gd), 1e6 * self.peak_ * corrFac(1/fpOn['tau_act'].value, Gd) / (self.V - E))) #(1 + pOn['tau_act'].value * max(pOff['Gd1'].value, pOff['Gd2'].value))
+            print('Lag method (tau_deact): Go = {}, cf={} --> g0 = {}'.format(GoA, corrFac(GoA, 1/fpOn['tau_deact'].value), 1e6 * self.I_peak_ * corrFac(GoA, 1/fpOn['tau_deact'].value) / (self.V - E))) #(1 + 1 / (GoA * pOn['tau_deact'].value))
+            print('Lag method (max(Gd1,Gd2)): Go = {}, cf={} --> g0 = {}'.format(GoB, corrFac(GoB, Gd), 1e6 * self.I_peak_ * corrFac(GoB, Gd) / (self.V - E))) #(1 + max(pOff['Gd1'].value, pOff['Gd2'].value)/GoB)
+            print('Exp method (tau_deact): Gact = {}, cf={} --> g0 = {}'.format(1/fpOn['tau_act'].value, corrFac(1/fpOn['tau_act'].value, 1/fpOn['tau_deact'].value), 1e6 * self.I_peak_ * corrFac(1/fpOn['tau_act'].value, 1/fpOn['tau_deact'].value) / (self.V - E))) #(1 + pOn['tau_act'].value / pOn['tau_deact'].value)
+            print('Exp method (max(Gd1,Gd2)): Gact = {}, cf={} --> g0 = {}'.format(1/fpOn['tau_act'].value, corrFac(1/fpOn['tau_act'].value, Gd), 1e6 * self.I_peak_ * corrFac(1/fpOn['tau_act'].value, Gd) / (self.V - E))) #(1 + pOn['tau_act'].value * max(pOff['Gd1'].value, pOff['Gd2'].value))
 
 
 
@@ -939,7 +939,7 @@ class PhotoCurrent(object):
                 #texty = 0.05
 
                 # TODO: Fix positioning - data or axes proportions?
-                texty = -round(0.1 * self.peak_)
+                texty = -round(0.1 * self.I_peak_)
                 arrowy = 1.5 * texty
                 #awidth=10
                 ax.annotate('', xy=(self.pulses[p,0], arrowy),
@@ -1616,8 +1616,8 @@ class ProtocolData(object):
             for run in range(self.nRuns):
                 for phiInd in range(self.nPhis):
                     for vInd in range(self.nVs):
-                        if abs(self.trials[run][phiInd][vInd].peak_) > abs(self.Ipmax_):
-                            self.Ipmax = self.trials[run][phiInd][vInd].peak_
+                        if abs(self.trials[run][phiInd][vInd].I_peak_) > abs(self.Ipmax_):
+                            self.Ipmax = self.trials[run][phiInd][vInd].I_peak_
                             rmax = run
                             pmax = phiInd
                             vmax = vInd
@@ -1625,8 +1625,8 @@ class ProtocolData(object):
             assert(vInd < self.nVs)
             for run in range(self.nRuns):
                 for phiInd in range(self.nPhis):
-                    if abs(self.trials[run][phiInd][vInd].peak_) > abs(self.Ipmax_):
-                        self.Ipmax_ = self.trials[run][phiInd][vInd].peak_
+                    if abs(self.trials[run][phiInd][vInd].I_peak_) > abs(self.Ipmax_):
+                        self.Ipmax_ = self.trials[run][phiInd][vInd].I_peak_
                         rmax = run
                         pmax = phiInd
                         vmax = vInd
@@ -1648,21 +1648,21 @@ class ProtocolData(object):
         if self.nRuns > 1:
             phiInd = 0
             vInd = 0
-            self.IrunPeaks = [self.trials[run][phiInd][vInd].peak_ for run in range(self.nRuns)]
+            self.IrunPeaks = [self.trials[run][phiInd][vInd].I_peak_ for run in range(self.nRuns)]
             self.trunPeaks = [self.trials[run][phiInd][vInd].t_peak_ for run in range(self.nRuns)]
             Ipeaks = self.IrunPeaks
             tpeaks = self.trunPeaks
         if self.nPhis > 1:
             run = 0
             vInd = 0
-            self.IphiPeaks = [self.trials[run][phiInd][vInd].peak_ for phiInd in range(self.nPhis)]
+            self.IphiPeaks = [self.trials[run][phiInd][vInd].I_peak_ for phiInd in range(self.nPhis)]
             self.trunPeaks = [self.trials[run][phiInd][vInd].t_peak_ for phiInd in range(self.nPhis)]
             Ipeaks = self.IphiPeaks
             tpeaks = self.trunPeaks
         if self.nVs > 1:
             run = 0
             phiInd = 0
-            self.IVPeaks = [self.trials[run][phiInd][vInd].peak_ for vInd in range(self.nVs)]
+            self.IVPeaks = [self.trials[run][phiInd][vInd].I_peak_ for vInd in range(self.nVs)]
             self.tVPeaks = [self.trials[run][phiInd][vInd].t_peak_ for vInd in range(self.nVs)]
             Ipeaks = self.IVPeaks
             tpeaks = self.tVPeaks

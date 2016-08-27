@@ -519,8 +519,8 @@ class protSinusoid(Protocol):
                     Ipeaks = np.zeros(self.nRuns)
                     for run in range(self.nRuns):
                         PC = self.PD.trials[run][phiInd][vInd]
-                        Ipeaks[run] = abs(PC.peak_) # Maximum absolute value over all peaks from that trial
-                        Ip = self.PD.trials[np.argmax(Ipeaks)][phiInd][vInd].peak_
+                        Ipeaks[run] = abs(PC.I_peak_) # Maximum absolute value over all peaks from that trial
+                        Ip = self.PD.trials[np.argmax(Ipeaks)][phiInd][vInd].I_peak_
                     col, style = self.getLineProps(run, vInd, phiInd)
                     self.axIp.plot(self.fs, Ipeaks, 'x', color=col)
                     try:
@@ -878,7 +878,7 @@ class protDelta(Protocol):
             return
 
         try: #if V != RhO.E:
-            Gmax = PC.peak_ / (PC.V - RhO.E) #Ipmax / (V - RhO.E) # Assuming [O_p] = 1 ##### Should fV also be used?
+            Gmax = PC.I_peak_ / (PC.V - RhO.E) #Ipmax / (V - RhO.E) # Assuming [O_p] = 1 ##### Should fV also be used?
         except ZeroDivisionError: #else:
             print("The clamp voltage must be different to the reversal potential!")
 
@@ -922,7 +922,7 @@ class protDelta(Protocol):
                 for vInd in range(self.nVs):
                     pc = self.PD.trials[run][phiInd][vInd]
                     # Maximum only...
-                    #Ip = pc.peak_
+                    #Ip = pc.I_peak_
                     #tp = pc.t_peak_
                     for p in range(self.nPulses):
                         Ip = pc.peaks_[p]

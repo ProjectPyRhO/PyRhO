@@ -95,7 +95,7 @@ class Simulator(PyRhOobject):  # object
             print("{{nRuns={}, nPhis={}, nVs={}}}".format(Prot.nRuns, Prot.nPhis, Prot.nVs))
 
         Prot.PD = ProtocolData(Prot.protocol, Prot.nRuns, Prot.phis, Prot.Vs)
-        Prot.PD.peak_ = [[[None for v in range(Prot.nVs)] for p in range(Prot.nPhis)] for r in range(Prot.nRuns)]
+        Prot.PD.I_peak_ = [[[None for v in range(Prot.nVs)] for p in range(Prot.nPhis)] for r in range(Prot.nRuns)]
         Prot.PD.ss_ = [[[None for v in range(Prot.nVs)] for p in range(Prot.nPhis)] for r in range(Prot.nRuns)]
         if hasattr(Prot, 'runLabels'):
             Prot.PD.runLabels = Prot.runLabels
@@ -133,7 +133,7 @@ class Simulator(PyRhOobject):  # object
 
                     PC.ssInf = np.array(RhO.ssInf)
                     Prot.PD.trials[run][phiInd][vInd] = PC
-                    Prot.PD.peak_[run][phiInd][vInd] = PC.peak_
+                    Prot.PD.I_peak_[run][phiInd][vInd] = PC.I_peak_
                     Prot.PD.ss_[run][phiInd][vInd] = PC.ss_
 
                     self.saveExtras(run, phiInd, vInd)

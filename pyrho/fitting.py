@@ -784,7 +784,7 @@ def fit6states(fluxSet, quickSet, run, vInd, params, method=defMethod):  # , ver
 
         Icycles.append(I[onInd:])
         nfs.append(I[offInd])
-        #nfs.append(targetPC.peak_)
+        #nfs.append(targetPC.I_peak_)
 
 
     ### OFF PHASE
@@ -1915,7 +1915,7 @@ def fitModel(dataSet, nStates=3, params=None, postFitOpt=True, relaxFact=2, meth
                 # vIndSat = np.searchsorted(dataSet['delta'].Vs, -70)
             Vsat = dataSet['delta'].trials[rsat][psat][vsat].V
         elif isinstance(dataSet['delta'], PhotoCurrent):
-            Ipsat = dataSet['delta'].peak_
+            Ipsat = dataSet['delta'].I_peak_
             Vsat = dataSet['delta'].V
         else:
             warnings.warn("Unknown data type for 'delta'!")
