@@ -98,7 +98,7 @@ class PhotoCurrent(object):
     clamped     # Membrane potential was clamped
     lam         # Stimulus wavelength       RETHINK c.f. stimuli
     isFiltered  # Data hase been filtered               HIDE
-    Iorig       # Original photocurrent (unfiltered)    HIDE _Iorig_
+    _I_orig       # Original photocurrent (unfiltered)    HIDE __I_orig_
     Iprev       # Previous photocurrent                 HIDE _Iprev_
     offset_     # Current offset calculated to zero dark current    HIDE
     on_         # Current at t_on[:]        REMOVE
@@ -233,7 +233,7 @@ class PhotoCurrent(object):
         self.label = copy.copy(label)   # Optional trial label e.g. "saturate"
 
         self.isFiltered = False
-        self.Iorig = None
+        self._I_orig = None
         self.Iprev = None
         #self.filterData()              # Smooth the data with a moving average
 
@@ -351,7 +351,7 @@ class PhotoCurrent(object):
         if self.stimuli is not None:
             df['stimuli'] = self.stimuli # TODO: Check this works with matrices
         if self.isFiltered:
-            df['Iorig'] = self.Iorig
+            df['_I_orig'] = self._I_orig
         return df
 
 
@@ -1170,9 +1170,9 @@ class PhotoCurrent(object):
         """
 
         if not self.isFiltered:
-            self.Iorig = np.copy(self.I) # TODO: Put in __init__
+            self._I_orig = np.copy(self.I) # TODO: Put in __init__
             self.isFiltered = True
-            I = self.Iorig
+            I = self._I_orig
         else:
             self.Iprev = np.copy(self.I)
             I = self.Iprev
