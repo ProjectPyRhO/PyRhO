@@ -62,19 +62,19 @@ pOn.add('tau_deact', value=50, min=1e-9)
 pOffSing = Parameters() # copy.deepcopy(pOn)
 
 # Single exponential
-pOffSing.add('a0', value=0)#, expr='{}-a1-a2'.format(Iss))
+pOffSing.add('a0', value=0)  # , expr='{}-a1-a2'.format(Iss))
 pOffSing.add('a1', value=0, vary=True)
 pOffSing.add('a2', value=-0, vary=False)
-pOffSing.add('Gd1', value=0.1)#, min=1e-9)
-pOffSing.add('Gd2', value=0, vary=False) #, expr='Gd1')#, min=1e-9)
+pOffSing.add('Gd1', value=0.1)  # , min=1e-9)
+pOffSing.add('Gd2', value=0, vary=False)  # , expr='Gd1')#, min=1e-9)
 
 # Double exponential
 pOffDoub = Parameters()
 pOffDoub.add('a0', value=0, vary=False)
 pOffDoub.add('a1', value=0.1)
-pOffDoub.add('a2', value=-0.1)#, expr='{}-a0-a1'.format(Iss))
-pOffDoub.add('Gd1', value=0.1)#, min=1e-9)
-pOffDoub.add('Gd2', value=0.01)#, vary=True) #, expr='Gd1')#, min=1e-9)
+pOffDoub.add('a2', value=-0.1)  # , expr='{}-a0-a1'.format(Iss))
+pOffDoub.add('Gd1', value=0.1)  # , min=1e-9)
+pOffDoub.add('Gd2', value=0.01)  # , vary=True) #, expr='Gd1')#, min=1e-9)
 
 
 
@@ -84,29 +84,51 @@ pOffDoub.add('Gd2', value=0.01)#, vary=True) #, expr='Gd1')#, min=1e-9)
 
 modelParams = OrderedDict([('3', Parameters()), ('4', Parameters()), ('6', Parameters())])
 modelList = list(modelParams)  # List of keys: list(modelParams.keys()) #This could be removed
-stateLabs = {3: 'Three', '3': 'Three', 4: 'Four', '4': 'Four', 6: 'Six', '6': 'Six'}
+stateLabs = {3: 'Three', '3': 'Three',
+             4: 'Four', '4': 'Four',
+             6: 'Six', '6': 'Six'}
 
-modelFits = OrderedDict([   ('3', OrderedDict([('ChR2', Parameters()), ('NpHR', Parameters()), ('ArchT', Parameters())])),
-                            ('4', OrderedDict([('ChR2', Parameters())])),
-                            ('6', OrderedDict([('ChR2', Parameters())]))])
+modelFits = OrderedDict([('3', OrderedDict([('ChR2', Parameters()),
+                                            ('NpHR', Parameters()),
+                                            ('ArchT', Parameters())])),
+                         ('4', OrderedDict([('ChR2', Parameters())])),
+                         ('6', OrderedDict([('ChR2', Parameters())]))])
 
 ### Replace with defaultdict with default=key
-modelLabels = OrderedDict([('E','E'), ('g0','g_0'), ('p','p'), ('k_a','k_a'), ('k_r','k_r'), ('phi_m','\phi_m'), ('Gd','G_d'), ('Gr0','G_{r0}'), ('v0','v_0'), ('v1','v_1'),
-                            ('gam','\gamma'), ('k1','k_1'), ('k2','k_2'), ('Gf0','G_{f0}'), ('Gb0','G_{b0}'), ('k_f','k_f'), ('k_b','k_b'), ('q','q'),
-                            ('Gd1','G_{d1}'), ('Gd2','G_{d2}'), ('Go1','G_{o1}'), ('Go2','G_{o2}'),
-                            ('phi','\phi'), ('v','v')])
+modelLabels = OrderedDict([('E', 'E'), ('g0', 'g_0'), ('p', 'p'),
+                           ('k_a', 'k_a'), ('k_r', 'k_r'), ('phi_m', '\phi_m'),
+                           ('Gd', 'G_d'), ('Gr0', 'G_{r0}'),
+                           ('v0', 'v_0'), ('v1', 'v_1'),
+                           ('gam', '\gamma'), ('k1', 'k_1'), ('k2', 'k_2'),
+                           ('Gf0', 'G_{f0}'), ('Gb0', 'G_{b0}'),
+                           ('k_f', 'k_f'), ('k_b', 'k_b'), ('q', 'q'),
+                           ('Gd1', 'G_{d1}'), ('Gd2', 'G_{d2}'),
+                           ('Go1', 'G_{o1}'), ('Go2', 'G_{o2}'),
+                           ('phi', '\phi'), ('v', 'v')])
 
 
-modelUnits = OrderedDict([('g0',pS), ('gam',1), ('k_a',ms**-1), ('k_r',ms**-1), ('phi_m',mm**-2*second**-1), ('p',1), ('Gd',ms**-1), ('Gr0',ms**-1),
-                            ('k1',ms**-1), ('k2',ms**-1), ('Gf0',ms**-1), ('Gb0',ms**-1), ('k_f',ms**-1), ('k_b',ms**-1), ('q',1),
-                            ('Gd1',ms**-1), ('Gd2',ms**-1), ('Go1',ms**-1), ('Go2',ms**-1), ('E',mV), ('v0',mV), ('v1',mV),
-                            ('phi',mm**-2*second**-1), ('v',mV)])
+modelUnits = OrderedDict([('g0', pS), ('gam', 1), ('k_a', ms**-1), ('k_r', ms**-1),
+                          ('phi_m', mm**-2*second**-1), ('p', 1),
+                          ('Gd', ms**-1), ('Gr0', ms**-1),
+                          ('k1', ms**-1), ('k2', ms**-1),
+                          ('Gf0', ms**-1), ('Gb0', ms**-1),
+                          ('k_f', ms**-1), ('k_b', ms**-1), ('q', 1),
+                          ('Gd1', ms**-1), ('Gd2', ms**-1),
+                          ('Go1', ms**-1), ('Go2', ms**-1),
+                          ('E', mV), ('v0', mV), ('v1', mV),
+                          ('phi', mm**-2*second**-1), ('v', mV)])
 
 #paramUnits
-unitLabels = OrderedDict([('g0','pS'), ('gam',''), ('k_a','ms^-1'), ('k_r','ms^-1'), ('phi_m','ph./mm^2/s'), ('p',''), ('Gd','ms^-1'), ('Gr0','ms^-1'), #, ('k','ms^-1'), ('Gr1','ms^-1')
-                            ('k1','ms^-1'), ('k2','ms^-1'), ('Gf0','ms^-1'), ('Gb0','ms^-1'), ('k_f','ms^-1'), ('k_b','ms^-1'), ('q',''),
-                            ('Gd1','ms^-1'), ('Gd2','ms^-1'), ('Go1','ms^-1'), ('Go2','ms^-1'), ('E','mV'), ('v0','mV'), ('v1','mV'),
-                            ('phi','ph./mm^2/s'), ('v','mV')])
+unitLabels = OrderedDict([('g0', 'pS'), ('gam', ''), ('k_a', 'ms^-1'), ('k_r', 'ms^-1'),
+                          ('phi_m', 'ph./mm^2/s'), ('p', ''),
+                          ('Gd', 'ms^-1'), ('Gr0', 'ms^-1'),  # , ('k','ms^-1'), ('Gr1','ms^-1')
+                          ('k1', 'ms^-1'), ('k2', 'ms^-1'),
+                          ('Gf0', 'ms^-1'), ('Gb0', 'ms^-1'),
+                          ('k_f', 'ms^-1'), ('k_b', 'ms^-1'), ('q', ''),
+                          ('Gd1', 'ms^-1'), ('Gd2', 'ms^-1'),
+                          ('Go1', 'ms^-1'), ('Go2', 'ms^-1'),
+                          ('E', 'mV'), ('v0', 'mV'), ('v1', 'mV'),
+                          ('phi', 'ph./mm^2/s'), ('v', 'mV')])
 
 
 ####|###10####|###20####|###30####|###40####|###50####|###60####|###70####|###80
@@ -138,7 +160,7 @@ modelFits['3']['NpHR'].add_many(  # Hyperpolarising: pumps chloride ions into th
                 ('v0',    43,     True, -1e15,  1e15, None),
                 ('v1',    17.1,   True, -1e15,  1e15, None))
 
-modelFits['3']['ArchT'].add_many( # Hyperpolarising: actively extrudes Hydrogen ions
+modelFits['3']['ArchT'].add_many(  # Hyperpolarising: actively extrudes Hydrogen ions
                 ('g0',    1.57e5, True, 0.001,  1e6,  None),
                 ('phi_m', 1.32e18,True, 1e15,   1e19, None),
                 ('k_a',   0.01,   True, 0.001,  1000, None),
@@ -208,8 +230,7 @@ unitPrefixes = {}  # Use a units library to convert between different prefixes
 # phi_m: Hill constant
 
 
-
-### This needs serious refactoring! Create a superclass which hands off attribute/method calls to a Parameter(s)() attribute by default or looks in self for other properties
+#TODO: This needs serious refactoring! Create a superclass which hands off attribute/method calls to a Parameter(s)() attribute by default or looks in self for other properties
 #class Parameters(OrderedDict):
 class PyRhOparameters(Parameters):
     '''These classes are adapted from LMFIT since changes between
@@ -288,6 +309,7 @@ class PyRhOparameters(Parameters):
 
         return OrderedDict(((p.name, p.value) for p in self.values()))
 
+
 class PyRhOparameter(object):
 
     def __init__(self, name=None, value=None, min=-np.inf, max=np.inf,
@@ -300,8 +322,8 @@ class PyRhOparameter(object):
         self.max = max
 
         self.units = units
-        #self.label = label
-        self.unitsLabel = str(self.units) #unitsLabel
+        # self.label = label
+        self.unitsLabel = str(self.units)  # unitsLabel
         self.latex = latex
         self.descr = descr
         self.constant = True
@@ -322,7 +344,7 @@ class PyRhOparameter(object):
             Upper bound for value(s). To remove an upper bound you must use np.inf
         """
 
-        #self.__set_expression(expr)
+        # self.__set_expression(expr)
         if value is not None:
             self._val = value
         if vary is not None:
@@ -451,7 +473,8 @@ class PyRhOparameter(object):
     def latex(self):
         from IPython.display import Math
         return Math(self._repr_latex_())
-#Params['g0'] = PyRhOparameter('g0', 2.5e4, psiemens, 'pS', 'g_0', 'Biological scaling factor for rhodopsin conductance')
+# Params['g0'] = PyRhOparameter('g0', 2.5e4, psiemens, 'pS', 'g_0',
+# 'Biological scaling factor for rhodopsin conductance')
 
 
 ####|###10####|###20####|###30####|###40####|###50####|###60####|###70####|###80
@@ -619,11 +642,13 @@ simParamNotes['CVode'] = 'Use variable timestep integrator'
 simParamNotes['dt'] = 'Numerical integration timestep'
 
 #simParams = OrderedDict([('Python',Parameters()), ('NEURON',Parameters()), ('Brian',Parameters())])
-simParams = OrderedDict([('Python',PyRhOparameters()), ('NEURON',PyRhOparameters()), ('Brian',PyRhOparameters())])
+simParams = OrderedDict([('Python', PyRhOparameters()),
+                         ('NEURON', PyRhOparameters()),
+                         ('Brian', PyRhOparameters())])
 simList = list(simParams)
 
 
-simParams['Python'].add_many(('dt', 0.1, 0, None)) #'ms'
+simParams['Python'].add_many(('dt', 0.1, 0, None))  # 'ms'
 
 # atol
 simParams['NEURON'].add_many(('cell',   ['minimal.hoc'], None, None), #'morphology'
