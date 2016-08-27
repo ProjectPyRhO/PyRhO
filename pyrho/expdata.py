@@ -109,7 +109,7 @@ class PhotoCurrent(object):
     tpeak_      # Time of biggest current peak
     peak_       # Biggest current peak
     peakInds_   # Indexes of current peaks in each pulse            HIDE
-    tpeaks_     # Times of current peaks in each pulse
+    t_peaks_     # Times of current peaks in each pulse
     peaks_      # Current peaks in each pulse
     lags_       # t_lag = t_peak - t_on
     lag_        # Lag of first pulse      REMOVE
@@ -283,10 +283,10 @@ class PhotoCurrent(object):
 
         #self.peakInds_ = np.array([np.argmax(abs(self.getCycle(p)[0])) for p in range(self.nPulses)]) #np.searchsorted(self.I, self.Ipeaks)
         self.peakInds_ = self.findPeakInds()
-        self.tpeaks_ = self.t[self.peakInds_]
+        self.t_peaks_ = self.t[self.peakInds_]
         self.peaks_ = self.I[self.peakInds_]
 
-        self.lags_ = np.array([self.tpeaks_[p] - self.pulses[p, 0] for p in range(self.nPulses)]) # t_lag = t_peak - t_on
+        self.lags_ = np.array([self.t_peaks_[p] - self.pulses[p, 0] for p in range(self.nPulses)]) # t_lag = t_peak - t_on
         self.lag_ = self.lags_[0]
         # For Go: t[peakInds[0]]-self.pulses[0,1]
 
@@ -633,7 +633,7 @@ class PhotoCurrent(object):
             if alignPoint == 0:         # Start
                 self.p0 = self.pulses[pulse, 0]
             elif alignPoint == 1:       # Peak
-                self.p0 = self.tpeaks_[pulse]
+                self.p0 = self.t_peaks_[pulse]
             elif alignPoint == 2:       # End
                 self.p0 = self.pulses[pulse, 1]
             else:
@@ -643,7 +643,7 @@ class PhotoCurrent(object):
             self.t_start = self.t[0]       # Beginning Time of Trial
             self.t_end = self.t[-1]      # End Time of Trial
             self.tpeak_ = self.t[self.peakInd_]
-            self.tpeaks_ = self.t[self.peakInds_]
+            self.t_peaks_ = self.t[self.peakInds_]
             self.pulseAligned = True
             self.alignPoint = alignPoint
 
@@ -665,7 +665,7 @@ class PhotoCurrent(object):
         self.t_start = self.t[0]       # Beginning Time of Trial
         self.t_end = self.t[-1]      # End Time of Trial
         self.tpeak_ = self.t[self.peakInd_]
-        self.tpeaks_ = self.t[self.peakInds_]
+        self.t_peaks_ = self.t[self.peakInds_]
         self.pulseAligned = False
 
 
@@ -899,25 +899,25 @@ class PhotoCurrent(object):
         if addFeatures:
 
             #p = 0
-            #plt.axvline(x=self.tpeaks_[p], linestyle=':', color='k')
+            #plt.axvline(x=self.t_peaks_[p], linestyle=':', color='k')
             #plt.axhline(y=self.peaks_[p], linestyle=':', color='k')
 
             toffset = round(0.1 * self.t_end)
 
             for p in range(self.nPulses):
                 # Add Pointer to peak currents
-                #ax.arrow(self.tpeaks_[p], 0.8*self.peaks_[p], 0, 0.05*self.peaks_[p], head_width=0.05, head_length=0.1, fc='k', ec='k')
-                # ax.annotate("", xy=(self.tpeaks_[p], self.peaks_[p]), xycoords='data',
-                    # xytext=(self.tpeaks_[p], 0.9*self.peaks_[p]), textcoords='data', #textcoords='axes fraction',
+                #ax.arrow(self.t_peaks_[p], 0.8*self.peaks_[p], 0, 0.05*self.peaks_[p], head_width=0.05, head_length=0.1, fc='k', ec='k')
+                # ax.annotate("", xy=(self.t_peaks_[p], self.peaks_[p]), xycoords='data',
+                    # xytext=(self.t_peaks_[p], 0.9*self.peaks_[p]), textcoords='data', #textcoords='axes fraction',
                     # arrowprops=dict(arrowstyle="wedge,tail_width=1.", facecolor='red', shrinkB=10), #, shrinkB=5 , shrink=0.05
                     # horizontalalignment='center', verticalalignment='top')
 
-                # plt.text(self.tpeaks_[p], 1.02*self.peaks_[p], '$I_{{peak}} = {:.3g}\mathrm{{nA}};\ t_{{lag}} = {:.3g}\mathrm{{ms}}$'.format(self.peaks_[p], self.lags_[0]), ha='left', va='top', fontsize=eqSize)
+                # plt.text(self.t_peaks_[p], 1.02*self.peaks_[p], '$I_{{peak}} = {:.3g}\mathrm{{nA}};\ t_{{lag}} = {:.3g}\mathrm{{ms}}$'.format(self.peaks_[p], self.lags_[0]), ha='left', va='top', fontsize=eqSize)
 
                 if self.peaks_[p] is not None:
                     ax.annotate(r'$I_{{peak}} = {:.3g}\mathrm{{nA}};\ t_{{lag}} = {:.3g}\mathrm{{ms}}$'.format(self.peaks_[p], self.lags_[0]),
-                                xy=(self.tpeaks_[p], self.peaks_[p]),
-                                xytext=(toffset+self.tpeaks_[p], self.peaks_[p]),
+                                xy=(self.t_peaks_[p], self.peaks_[p]),
+                                xytext=(toffset+self.t_peaks_[p], self.peaks_[p]),
                                 arrowprops=dict(arrowstyle="wedge,tail_width=0.6", shrinkA=5, shrinkB=5, facecolor='red'),
                                 horizontalalignment='left', verticalalignment='center', fontsize=config.eqSize)
 

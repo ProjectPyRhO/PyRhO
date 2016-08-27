@@ -995,7 +995,7 @@ def getRecoveryPeaks(recData, phiInd=None, vInd=None, usePeakTime=False):
         PC = recData.trials[run][phiInd][vInd]
         PC.alignToPulse(pulse=0, alignPoint=2) # End of the first pulse
         if usePeakTime:
-            tpeaks1.append(recData.trials[run][phiInd][vInd].tpeaks_[1]) # Time of second peak
+            tpeaks1.append(recData.trials[run][phiInd][vInd].t_peaks_[1]) # Time of second peak
         else:
             tpeaks1.append(recData.trials[run][phiInd][vInd].pulses[1,0]) # Time of second pulse
         Ipeaks1.append(recData.trials[run][phiInd][vInd].peaks_[1])
