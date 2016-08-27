@@ -39,7 +39,7 @@ class Simulator(PyRhOobject):  # object
     RhO = None
     simulator = None
     clampProts = ['rectifier']
-    
+
     @abc.abstractmethod
     def __init__(self, Prot, RhO, params=None):
         pass
@@ -127,7 +127,7 @@ class Simulator(PyRhOobject):  # object
                         phi_ts = Prot.phi_ts[run][phiInd][:]
                         I_RhO, t, soln = self.runTrialPhi_t(RhO, phi_ts, V, delD, cycles, self.dt, verbose)
 
-                    stim = Prot.getStimArray(run, phiInd, self.dt) # phi_ts, delD, cycles, 
+                    stim = Prot.getStimArray(run, phiInd, self.dt) # phi_ts, delD, cycles,
                     PC = PhotoCurrent(I_RhO, t, pulses, phiOn, V, stimuli=stim, states=soln, stateLabels=RhO.stateLabels, label=Prot.protocol)
                     #PC.alignToTime()
 
@@ -728,7 +728,7 @@ class simNEURON(Simulator):
         self.h.Iphi.resize(0)
         self.h.Vm.clear()
         self.h.Vm.resize(0)
-        
+
         # NEURON changes the timestep! Set the actual timestep for plotting stimuli
         self.dt = self.h.dt
         self.Prot.dt = self.h.dt
@@ -915,10 +915,34 @@ class simNEURON(Simulator):
                         plt.plot(t, Vm, color=col, ls=style) #plt.plot(t, Vm, color='g')
                         #if times is not None:
                         #    plotLight(times)
-                        if run == 0 and phiInd == 0 and vInd == 0:
+                        if run == 0 and phiInd == 0 and vInd == 0 and Prot.protocol is not 'shortPulse':
                         #    #plotLight(pulses-delD) ### HACK
                             plotLight(pulses)
 
+            if Prot.protocol is 'shortPulse':  # TODO: Refactor
+                for run in range(Prot.nRuns):                   # Loop over the number of runs...   ### Place within V & phi loops to test protocols at different V & phi?
+                    cycles, delD = Prot.getRunCycles(run)
+                    pulses, totT = cycles2times(cycles, delD)
+                    for phiInd, phiOn in enumerate(Prot.phis):  # Loop over light intensity...
+                        for vInd, V in enumerate(Prot.Vs):      # Loop over clamp voltage ### N.B. solution variables are not currently dependent on V
+
+                            # Plot bars for pulses
+                            ymin, ymax = plt.ylim()
+                            pos = 0.02 * abs(ymax-ymin)
+                            plt.ylim(ymin, pos*(self.nRuns+1)) # Allow extra space for thick lines
+                            lightBarWidth = 2 * mpl.rcParams['lines.linewidth']
+                            #peakMarkerSize = 1.5 * mpl.rcParams['lines.markersize']
+
+                            for run in range(self.nRuns):
+                                for phiInd in range(self.nPhis):
+                                    for vInd in range(self.nVs):
+                                        colour, style = self.getLineProps(run, vInd, phiInd)
+                                        PC = self.PD.trials[run][phiInd][vInd]
+                                        t_on, t_off = PC.pulses[0, :]
+
+                                        axV.hlines(y=(run+1)*pos, xmin=t_on, xmax=t_off, lw=lightBarWidth, color=colour)
+                                        axV.axvline(x=t_on, linestyle=':', c='k')
+                                        axV.axvline(x=t_off, linestyle=':', c=colour)
             # TODO: Plot extra pulses and refactor
             #self.begT, self.endT = min(begTs), max(endTs)
             # Add stimuli
@@ -938,7 +962,7 @@ class simNEURON(Simulator):
 
             #    else: #not (sameStart and sameEnd): # One or the other - xor
             #        pass # This applies to shortPulse only at present - do not shade!
-            
+
             plt.ylabel('$\mathrm{Membrane\ Potential\ [mV]}$') #axV.set_ylabel('Voltage [mV]')
             #axV.set_xlim((-delD, self.h.tstop - delD)) ### HACK
             axV.set_xlim((t[0], t[-1]))
@@ -1166,14 +1190,14 @@ class simBrian(Simulator):
         ### Calculate photocurrent
 
         '''
-        There are two subtly different ways to get the values for specific neurons: 
-        you can either index the 2D array stored in the attribute with the variable name (as in the example above) 
-        or you can index the monitor itself. The former will use an index relative to the recorded neurons 
-        (e.g. M.v[1] will return the values for the second recorded neuron which is the neuron with the index 10 
-        whereas M.v[10] would raise an error because only three neurons have been recorded), 
-        whereas the latter will use an absolute index corresponding to the recorded group 
-        (e.g. M[1].v will raise an error because the neuron with the index 1 has not been recorded 
-        and M[10].v will return the values for the neuron with the index 10). 
+        There are two subtly different ways to get the values for specific neurons:
+        you can either index the 2D array stored in the attribute with the variable name (as in the example above)
+        or you can index the monitor itself. The former will use an index relative to the recorded neurons
+        (e.g. M.v[1] will return the values for the second recorded neuron which is the neuron with the index 10
+        whereas M.v[10] would raise an error because only three neurons have been recorded),
+        whereas the latter will use an absolute index corresponding to the recorded group
+        (e.g. M[1].v will raise an error because the neuron with the index 1 has not been recorded
+        and M[10].v will return the values for the neuron with the index 10).
         If all neurons have been recorded (e.g. with record=True) then both forms give the same result.
         '''
 
