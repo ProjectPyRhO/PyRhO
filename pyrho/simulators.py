@@ -45,11 +45,11 @@ class Simulator(PyRhOobject):  # object
         pass
 
     @abc.abstractmethod
-    def runTrial(self, RhO, phiOn, V, delD, cycles, dt, verbose=config.verbose):
+    def runTrial(self, RhO, phiOn, V, Dt_delay, cycles, dt, verbose=config.verbose):
         pass
 
     @abc.abstractmethod
-    def runTrialPhi_t(self, RhO, phi_ts, V, delD, cycles, dt, verbose=config.verbose):
+    def runTrialPhi_t(self, RhO, phi_ts, V, Dt_delay, cycles, dt, verbose=config.verbose):
         pass
 
     def __str__(self):
@@ -106,8 +106,8 @@ class Simulator(PyRhOobject):  # object
 
         for run in range(Prot.nRuns):                   # Loop over the number of runs...
 
-            cycles, delD = Prot.getRunCycles(run)
-            pulses, Dt_tot = cycles2times(cycles, delD)
+            cycles, Dt_delay = Prot.getRunCycles(run)
+            pulses, Dt_tot = cycles2times(cycles, Dt_delay)
 
             for phiInd, phiOn in enumerate(Prot.phis):  # Loop over light intensity...
 
@@ -122,12 +122,12 @@ class Simulator(PyRhOobject):  # object
 
                     # TODO: Deprecate special square pulse fucntions
                     if Prot.squarePulse and self.simulator is 'Python':
-                        I_RhO, t, soln = self.runTrial(RhO, phiOn, V, delD, cycles, self.dt, verbose)
+                        I_RhO, t, soln = self.runTrial(RhO, phiOn, V, Dt_delay, cycles, self.dt, verbose)
                     else: # Arbitrary functions of time: phi(t)
                         phi_ts = Prot.phi_ts[run][phiInd][:]
-                        I_RhO, t, soln = self.runTrialPhi_t(RhO, phi_ts, V, delD, cycles, self.dt, verbose)
+                        I_RhO, t, soln = self.runTrialPhi_t(RhO, phi_ts, V, Dt_delay, cycles, self.dt, verbose)
 
-                    stim = Prot.getStimArray(run, phiInd, self.dt) # phi_ts, delD, cycles,
+                    stim = Prot.getStimArray(run, phiInd, self.dt) # phi_ts, Dt_delay, cycles,
                     PC = PhotoCurrent(I_RhO, t, pulses, phiOn, V, stimuli=stim, states=soln, stateLabels=RhO.stateLabels, label=Prot.protocol)
                     #PC.alignToTime()
 
@@ -207,7 +207,7 @@ class simPython(Simulator):
         return soln
     '''
 
-    def runTrial(self, RhO, phiOn, V, delD, cycles, dt, verbose=config.verbose):
+    def runTrial(self, RhO, phiOn, V, Dt_delay, cycles, dt, verbose=config.verbose):
         """
         Main routine for simulating a square pulse train
 
@@ -228,7 +228,7 @@ class simPython(Simulator):
                 Vstr = 'V = {:+}mV, '.format(V)
             else:
                 Vstr = ''
-            info = "Simulating experiment at phi = {:.3g}photons/mm^2/s, {}pulse cycles: [delD={:.4g}ms".format(phiOn, Vstr, delD)
+            info = "Simulating experiment at phi = {:.3g}photons/mm^2/s, {}pulse cycles: [Dt_delay={:.4g}ms".format(phiOn, Vstr, Dt_delay)
             for p in range(nPulses):
                 info += "; [onD={:.4g}ms; offD={:.4g}ms]".format(cycles[p,0], cycles[p,1])
             info += "]"
@@ -239,7 +239,7 @@ class simPython(Simulator):
         phi = 0
         RhO.initStates(phi)         # Reset state and time arrays from previous runs
         RhO.s0 = RhO.states[-1,:]   # Store initial state used
-        start, end = RhO.t[0], RhO.t[0]+delD
+        start, end = RhO.t[0], RhO.t[0]+Dt_delay
         nSteps = int(round(((end-start)/dt)+1))
         t = np.linspace(start, end, nSteps, endpoint=True)
 
@@ -316,7 +316,7 @@ class simPython(Simulator):
         return I_RhO, t, states
 
 
-    def runTrialPhi_t(self, RhO, phi_ts, V, delD, cycles, dt, verbose=config.verbose):
+    def runTrialPhi_t(self, RhO, phi_ts, V, Dt_delay, cycles, dt, verbose=config.verbose):
         """Main routine for simulating a pulse train"""
 
         nPulses = cycles.shape[0]
@@ -326,7 +326,7 @@ class simPython(Simulator):
         phi = 0
         RhO.initStates(phi)                     # Reset state and time arrays from previous runs
         RhO.s0 = RhO.states[-1,:]               # Store initial state used
-        start, end = RhO.t[0], RhO.t[0]+delD
+        start, end = RhO.t[0], RhO.t[0]+Dt_delay
         nSteps = int(round(((end-start)/dt)+1))
         t = np.linspace(start, end, nSteps, endpoint=True) # Time vector
         if verbose > 1:
@@ -597,27 +597,27 @@ class simNEURON(Simulator):
         self.h.Vcl.dur1 = self.h.tstop
         self.h.Vcl.amp1 = Vhold
 
-    def setPulses(self, phiOn, delD, onD, offD, nPulses):
+    def setPulses(self, phiOn, Dt_delay, onD, offD, nPulses):
         for rho in self.rhoList:
             rho.phiOn = phiOn
-            rho.delD = delD
+            rho.Dt_delay = Dt_delay
             rho.onD = onD
             rho.offD = offD
             rho.nPulses = nPulses
 
-    def runTrial(self, RhO, phiOn, V, delD, cycles, dt, verbose=config.verbose):
+    def runTrial(self, RhO, phiOn, V, Dt_delay, cycles, dt, verbose=config.verbose):
 
         # Notes on the integrator
         # http://www.neuron.yale.edu/phpbb/viewtopic.php?f=8&t=1330
         # http://www.neuron.yale.edu/neuron/static/new_doc/simctrl/cvode.html
 
-        # Model events: http://www.neuron.yale.edu/neuron/static/new_doc/simctrl/cvode.html#modeldescriptionissues-events
+        # Model events: http://www.neuron.yale.edu/neuron/static/new_doc/simctrl/cvode.html#moDt_delayescriptionissues-events
 
         nPulses = cycles.shape[0]
-        times, Dt_tot = cycles2times(cycles,delD)
+        times, Dt_tot = cycles2times(cycles,Dt_delay)
 
         # phi_ts = self.Prot.phi_ts[0][0][:]#[run][phiInd][:]
-        # self.runTrialPhi_t(self, RhO, self.Prot.genPhiFuncs(), V, delD, cycles, dt)
+        # self.runTrialPhi_t(self, RhO, self.Prot.genPhiFuncs(), V, Dt_delay, cycles, dt)
         # return
 
         RhO.initStates(phi=0) # Reset state and time arrays from previous runs
@@ -636,15 +636,15 @@ class simNEURON(Simulator):
                 if (cycles[p,0] != cycles[p-1,0]) or cycles[p,1] != cycles[p-1,1]:
                     warnings.warn('Warning: Pulse cycles must be identical for NEURON simulations - replicating pulse!')
                     #self.Prot.squarePulse = False
-                    #self.runTrialPhi_t(self, RhO, self.Prot.genPhiFuncs(), V, delD, cycles, dt)
+                    #self.runTrialPhi_t(self, RhO, self.Prot.genPhiFuncs(), V, Dt_delay, cycles, dt)
                     #return
             onD, offD, padD = cycles[0,0], cycles[0,1], 0   # HACK!!! Use first pulse timing only...
 
             if verbose > 0:
                 Vstr = '' if V is None else 'V = {:+}mV, '.format(V)
-                info = "Simulating experiment at phi = {:.3g}photons/mm^2/s, {}pulse cycles: [delD={:.4g}ms; onD={:.4g}ms; offD={:.4g}ms]".format(phiOn,Vstr,delD,onD,offD+padD)
+                info = "Simulating experiment at phi = {:.3g}photons/mm^2/s, {}pulse cycles: [Dt_delay={:.4g}ms; onD={:.4g}ms; offD={:.4g}ms]".format(phiOn,Vstr,Dt_delay,onD,offD+padD)
 
-            self.setPulses(phiOn, delD, onD, offD, nPulses)
+            self.setPulses(phiOn, Dt_delay, onD, offD, nPulses)
             self.h.init() #self.neuron.init()
             #self.h.finitialize()
 
@@ -652,10 +652,10 @@ class simNEURON(Simulator):
 
         else: # Work in progress to simulate variable pulses
 
-            # progress = delD
+            # progress = Dt_delay
             # padD = 0
             # for p in range(nPulses):
-                # delay = delD if p==0 else 0
+                # delay = Dt_delay if p==0 else 0
                 # onD, offD = cycles[p]
                 # self.setPulses(phiOn, delay, onD, offD, 1)
                 # progress += (onD + offD)
@@ -667,14 +667,14 @@ class simNEURON(Simulator):
 
             if verbose > 0:
                 Vstr = '' if V is None else 'V = {:+}mV, '.format(V)
-                print("Simulating experiment at phi = {:.3g}photons/mm^2/s, {}pulse cycles: delD={:.4g}ms;".format(phiOn,Vstr,delD))
+                print("Simulating experiment at phi = {:.3g}photons/mm^2/s, {}pulse cycles: Dt_delay={:.4g}ms;".format(phiOn,Vstr,Dt_delay))
 
-            progress = delD
+            progress = Dt_delay
             self.h.init()
             firstRun = True
             p = 0
             while p < nPulses:
-                delay = delD if p==0 else 0
+                delay = Dt_delay if p==0 else 0
                 identPulses = 1
                 onD, offD = cycles[p]
                 #prevOffD = offD
@@ -736,7 +736,7 @@ class simNEURON(Simulator):
         return I_RhO, t, soln
 
 
-    def runTrialPhi_t(self, RhO, phi_ts, V, delD, cycles, dt, verbose=config.verbose):
+    def runTrialPhi_t(self, RhO, phi_ts, V, Dt_delay, cycles, dt, verbose=config.verbose):
         """Main routine for simulating a pulse train"""
         # TODO: Rename RhOnc.mod to RhOn.mod and RhOn.mod to RhOnD.mod (discrete) and similar for runTrialPhi_t
         # Make RhO.mod a continuous function of light - 9.12: Discontinuities 9.13: Time-dependent parameters p263
@@ -792,21 +792,21 @@ class simNEURON(Simulator):
         nPulses = cycles.shape[0]
         assert(len(phi_ts) == nPulses)
 
-        times, Dt_tot = cycles2times(cycles,delD)
+        times, Dt_tot = cycles2times(cycles,Dt_delay)
 
         if verbose > 1:
             if V is not None:
                 Vstr = 'V = {:+}mV, '.format(V)
             else:
                 Vstr = ''
-            info = "Simulating experiment {}pulse cycles: [delD={:.4g}ms".format(Vstr, delD)
+            info = "Simulating experiment {}pulse cycles: [Dt_delay={:.4g}ms".format(Vstr, Dt_delay)
             for p in range(nPulses):
                 info += "; [onD={:.4g}ms; offD={:.4g}ms]".format(cycles[p,0], cycles[p,1])
             info += "]"
             print(info)
 
         # Set simulation run time
-        self.h.tstop = Dt_tot #delD + np.sum(cycles) #nPulses*(onD+offD) + padD
+        self.h.tstop = Dt_tot #Dt_delay + np.sum(cycles) #nPulses*(onD+offD) + padD
 
         ### Delay phase (to allow the system to settle)
         phi = 0
@@ -816,7 +816,7 @@ class simNEURON(Simulator):
         if verbose > 1:
             print("Trial initial conditions:{}".format(RhO.s0))
 
-        start, end = RhO.t[0], RhO.t[0]+delD #start, end = 0.00, delD
+        start, end = RhO.t[0], RhO.t[0]+Dt_delay #start, end = 0.00, Dt_delay
         nSteps = int(round(((end-start)/dt)+1))
         t = np.linspace(start, end, nSteps, endpoint=True)
         phi_tV = np.zeros_like(t)
@@ -901,13 +901,13 @@ class simNEURON(Simulator):
             Vfig = plt.figure()
             axV = Vfig.add_subplot(111)
             for run in range(Prot.nRuns):                   # Loop over the number of runs...   ### Place within V & phi loops to test protocols at different V & phi?
-                cycles, delD = Prot.getRunCycles(run)
-                pulses, Dt_tot = cycles2times(cycles, delD)
+                cycles, Dt_delay = Prot.getRunCycles(run)
+                pulses, Dt_tot = cycles2times(cycles, Dt_delay)
                 for phiInd, phiOn in enumerate(Prot.phis):  # Loop over light intensity...
                     for vInd, V in enumerate(Prot.Vs):      # Loop over clamp voltage ### N.B. solution variables are not currently dependent on V
                         col, style = Prot.getLineProps(run, vInd, phiInd)
                         Vm = self.Vms[run][phiInd][vInd]
-                        #t = self.t - delD ### HACK Change me!!!
+                        #t = self.t - Dt_delay ### HACK Change me!!!
                         pc = Prot.PD.trials[run][phiInd][vInd]
                         t = pc.t
                         pulses = pc.pulses
@@ -916,13 +916,13 @@ class simNEURON(Simulator):
                         #if times is not None:
                         #    plotLight(times)
                         if run == 0 and phiInd == 0 and vInd == 0 and Prot.protocol is not 'shortPulse':
-                        #    #plotLight(pulses-delD) ### HACK
+                        #    #plotLight(pulses-Dt_delay) ### HACK
                             plotLight(pulses)
 
             if Prot.protocol is 'shortPulse':  # TODO: Refactor
                 for run in range(Prot.nRuns):                   # Loop over the number of runs...   ### Place within V & phi loops to test protocols at different V & phi?
-                    cycles, delD = Prot.getRunCycles(run)
-                    pulses, Dt_tot = cycles2times(cycles, delD)
+                    cycles, Dt_delay = Prot.getRunCycles(run)
+                    pulses, Dt_tot = cycles2times(cycles, Dt_delay)
                     for phiInd, phiOn in enumerate(Prot.phis):  # Loop over light intensity...
                         for vInd, V in enumerate(Prot.Vs):      # Loop over clamp voltage ### N.B. solution variables are not currently dependent on V
 
@@ -964,7 +964,7 @@ class simNEURON(Simulator):
             #        pass # This applies to shortPulse only at present - do not shade!
 
             plt.ylabel('$\mathrm{Membrane\ Potential\ [mV]}$') #axV.set_ylabel('Voltage [mV]')
-            #axV.set_xlim((-delD, self.h.tstop - delD)) ### HACK
+            #axV.set_xlim((-Dt_delay, self.h.tstop - Dt_delay)) ### HACK
             axV.set_xlim((t[0], t[-1]))
             plt.xlabel('$\mathrm{Time\ [ms]}$', position=(config.xLabelPos,0), ha='right')
 
@@ -1113,7 +1113,7 @@ class simBrian(Simulator):
         self.net.add(self.monitors)  # manually add the monitors
     '''
 
-    def runTrial(self, RhO, phiOn, V, delD, cycles, dt, verbose=config.verbose):
+    def runTrial(self, RhO, phiOn, V, Dt_delay, cycles, dt, verbose=config.verbose):
         """Main routine for simulating a square pulse train"""
 
         nPulses = cycles.shape[0]
@@ -1123,7 +1123,7 @@ class simBrian(Simulator):
                 Vstr = 'V = {:+}mV, '.format(V)
             else:
                 Vstr = ''
-            info = "Simulating experiment at phi = {:.3g}photons/mm^2/s, {}pulse cycles: [delD={:.4g}ms".format(phiOn, Vstr, delD)
+            info = "Simulating experiment at phi = {:.3g}photons/mm^2/s, {}pulse cycles: [Dt_delay={:.4g}ms".format(phiOn, Vstr, Dt_delay)
             for p in range(nPulses):
                 info += "; [onD={:.4g}ms; offD={:.4g}ms]".format(cycles[p,0], cycles[p,1])
             info += "]"
@@ -1142,7 +1142,7 @@ class simBrian(Simulator):
         #self.net[self.G_RhO].stimulus = False
 
         RhO.s0 = RhO.states[-1,:]   # Store initial state used
-        #start, end = RhO.t[0], RhO.t[0]+delD
+        #start, end = RhO.t[0], RhO.t[0]+Dt_delay
         #t = np.linspace(start,end,int(round(((end-start)/dt)+1)), endpoint=True) #t_del = np.linspace(start,end,((end-start)/dt)+1, endpoint=True) # Time vector
         if verbose > 1:
             print("Trial initial conditions:{}".format(RhO.s0))
@@ -1156,11 +1156,11 @@ class simBrian(Simulator):
         if verbose > 1:
             print(self.namespace)
 
-        #self.br.Network.run(delD*ms, report)
-        self.net.run(duration=delD*ms, namespace=self.namespace, report=report) #brianNamespace
-        #self.br.run(duration=delD*ms, report=report)
+        #self.br.Network.run(Dt_delay*ms, report)
+        self.net.run(duration=Dt_delay*ms, namespace=self.namespace, report=report) #brianNamespace
+        #self.br.run(duration=Dt_delay*ms, report=report)
 
-        elapsed = delD
+        elapsed = Dt_delay
 
         for p in range(nPulses):
 
@@ -1219,27 +1219,27 @@ class simBrian(Simulator):
             I_RhO = np.squeeze(I_RhO) # Replace with record indexing?
         self.monitors['V'].record_single_timestep()
 
-        #times, Dt_tot = cycles2times(cycles, delD)
+        #times, Dt_tot = cycles2times(cycles, Dt_delay)
         #self.plotRasters(times, Dt_tot)
 
         return I_RhO, t, states
 
 
-    def runTrialPhi_t(self, RhO, phi_ts, V, delD, cycles, dt, verbose=config.verbose):
+    def runTrialPhi_t(self, RhO, phi_ts, V, Dt_delay, cycles, dt, verbose=config.verbose):
         """Main routine for simulating a pulse train"""
         # TimedArray([x1, x2, ...], dt=my_dt), the value x1 will be returned for all 0<=t<my_dt, x2 for my_dt<=t<2*my_dt etc.
 
         nPulses = cycles.shape[0]
         assert(len(phi_ts) == nPulses)
 
-        times, Dt_tot = cycles2times(cycles, delD)
+        times, Dt_tot = cycles2times(cycles, Dt_delay)
 
         if verbose > 1:
             if V is not None:
                 Vstr = 'V = {:+}mV, '.format(V)
             else:
                 Vstr = ''
-            info = "Simulating experiment {}pulse cycles: [delD={:.4g}ms".format(Vstr, delD)
+            info = "Simulating experiment {}pulse cycles: [Dt_delay={:.4g}ms".format(Vstr, Dt_delay)
             for p in range(nPulses):
                 info += "; [onD={:.4g}ms; offD={:.4g}ms]".format(cycles[p,0], cycles[p,1])
             info += "]"
@@ -1262,7 +1262,7 @@ class simBrian(Simulator):
             print(self.namespace)
 
         duration = Dt_tot # self.Dt_tot instead?
-        start, end = RhO.t[0], RhO.t[0]+delD
+        start, end = RhO.t[0], RhO.t[0]+Dt_delay
         nSteps = int(round(((end-start)/dt)+1))
         t = np.linspace(start, end, nSteps, endpoint=True)
         phi_tV = np.zeros_like(t)
@@ -1333,8 +1333,8 @@ class simBrian(Simulator):
         Prot = self.Prot
         RhO = self.RhO
         for run in range(Prot.nRuns):                   # Loop over the number of runs...
-            cycles, delD = Prot.getRunCycles(run)
-            pulses, Dt_tot = cycles2times(cycles, delD)
+            cycles, Dt_delay = Prot.getRunCycles(run)
+            pulses, Dt_tot = cycles2times(cycles, Dt_delay)
             for phiInd, phiOn in enumerate(Prot.phis):  # Loop over light intensity...
                 for vInd, V in enumerate(Prot.Vs):      # Loop over clamp voltage
                     col, style = Prot.getLineProps(run, vInd, phiInd)
@@ -1343,11 +1343,11 @@ class simBrian(Simulator):
 
                     figName = '{}Vm{}s-{}-{}-{}'.format(Prot.protocol, RhO.nStates, run, phiInd, vInd)
                     Vmonitor = self.Vms[run][phiInd][vInd]
-                    self.plotVm(Vmonitor=Vmonitor, times=pulses, Dt_tot=Dt_tot, offset=delD, figName=figName)
+                    self.plotVm(Vmonitor=Vmonitor, times=pulses, Dt_tot=Dt_tot, offset=Dt_delay, figName=figName)
 
                     figName = '{}Spikes{}s-{}-{}-{}'.format(Prot.protocol, RhO.nStates, run, phiInd, vInd)
                     spikeMonitors = self.rasters[run][phiInd][vInd]
-                    self.plotRasters(spikeSets=spikeMonitors, times=pulses, Dt_tot=Dt_tot, offset=delD, figName=figName)
+                    self.plotRasters(spikeSets=spikeMonitors, times=pulses, Dt_tot=Dt_tot, offset=Dt_delay, figName=figName)
         return
 
     def plotVm(self, Vmonitor, times=None, Dt_tot=None, offset=0, figName=None): ### TODO: REVISE (esp. offset)!!!

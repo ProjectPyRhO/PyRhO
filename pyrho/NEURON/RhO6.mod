@@ -7,7 +7,7 @@ NEURON {
     NONSPECIFIC_CURRENT i :IRhO     : This could be changed to update a specific ion
     RANGE i, E, gam, v0, v1, g0 :, fphi, fv, i :IRhO :iChR   : , gbar
     RANGE k1, Go1, Gf0, kf, Gd2, Gr0, Gd1, Gb0, kb, Go2, k2, p, q
-    RANGE phiOn, phi, phi_m, delD, onD, offD, nPulses :phi0,
+    RANGE phiOn, phi, phi_m, Dt_delay, onD, offD, nPulses :phi0,
 }
 
 
@@ -24,8 +24,8 @@ PARAMETER { : Initialise parameters to defaults. These may be changed through ho
 
 : Illumination
     phiOn   = 1e18  :(photons/s mm2):(mW/mm2): irradiance                _______
-    delD    = 25    (ms)    <0, 1e9>    : delay before ON phase         |  ON   |  OFF
-    onD     = 100   (ms)    <0, 1e9>    : duration of ON phase  <-delD->|<-onD->|<-offD->
+    Dt_delay    = 25    (ms)    <0, 1e9>    : delay before ON phase         |  ON   |  OFF
+    onD     = 100   (ms)    <0, 1e9>    : duration of ON phase  <-Dt_delay->|<-onD->|<-offD->
     offD    = 50    (ms)    <0, 1e9>    : duration of OFF phase ________|       |________
     nPulses = 1     (1)     <0, 1e3>    : num pulses to deliver         <-- one pulse -->
 
@@ -142,7 +142,7 @@ INITIAL {   : Initialise variables
     :IRhO    = 0
     tally   = nPulses : Set the tally to the number of pulses required 
     if (tally > 0) {
-        net_send(delD, 1)
+        net_send(Dt_delay, 1)
     :    on = 0
         tally = tally - 1
     }

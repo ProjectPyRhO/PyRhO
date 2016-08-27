@@ -472,14 +472,14 @@ def times2cycles(times, Dt_tot):       # TODO revise to handle negative delay ti
     times = np.array(times, copy=True)
     #nPulses = times.shape[0]
     assert(times.shape[1] <= 2)
-    delD = times[0, 0] # This assumes that the times have not been shifted
+    Dt_delay = times[0, 0] # This assumes that the times have not been shifted
     onDs = [row[1]-row[0] for row in times] # pulses[:,1] - pulses[:,0]   # Pulse Durations
     offDs = np.append(times[1:, 0], Dt_tot) - times[:, 1]
     cycles = np.vstack((onDs, offDs)).transpose()
-    return (cycles, delD)
+    return (cycles, Dt_delay)
 
 
-def cycles2times(cycles, delD):
+def cycles2times(cycles, Dt_delay):
     r"""
     Convert pulse cycles (durations) to times (absolute events)
     
@@ -487,7 +487,7 @@ def cycles2times(cycles, delD):
     ----------
     cycles : list or array
         Array of cycles and delay duration e.g. :math:`[[\Delta t_{on,0}, \Delta t_{off,0}], ..., [\Delta t_{on,N-1}, \Delta t_{off,N-1}]], \Delta t_{del}`. 
-    delD : float
+    Dt_delay : float
         Delay duration, :math:`\Delta t_{del}`
     
     Returns
@@ -497,12 +497,12 @@ def cycles2times(cycles, delD):
         e.g. :math:`[[t_{on,0}, t_{off,0}], ..., [t_{on,N-1}, t_{off,N-1}]], \Delta t_{tot}`. 
     """
 
-    # TODO: Generalise to delDs c.f. recovery
+    # TODO: Generalise to Dt_delays c.f. recovery
     cycles = np.array(cycles)
     nPulses = cycles.shape[0]
     assert(cycles.shape[1] <= 2)
-    times = np.zeros((nPulses, 2)) #[delD,delD+cycles[row,0] for row in pulses]
-    lapsed = delD
+    times = np.zeros((nPulses, 2)) #[Dt_delay,Dt_delay+cycles[row,0] for row in pulses]
+    lapsed = Dt_delay
     for p in range(nPulses):
         times[p, 0] = lapsed
         times[p, 1] = lapsed+cycles[p, 0]

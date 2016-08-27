@@ -89,8 +89,8 @@ class PhotoCurrent(object):
     synthetic   # Modelling data
     nPulses     # Number of pulses
     pulseCycles # Pulse durations # TODO: Rename cycles to durations
-    delD        # Delay duration before the first pulse
-    delDs       # Total delay before each pulse
+    Dt_delay        # Delay duration before the first pulse
+    Dt_delays       # Total delay before each pulse
     onDs        # On-phase durations
     IPIs        # Inter-pulse-intervals t_off <-> t_on
     offDs       # Off-phase durations
@@ -205,8 +205,8 @@ class PhotoCurrent(object):
         self.nPulses = self.pulses.shape[0]
         self.pulseCycles, _ = times2cycles(self.pulses, self.t_end) #self.Dt_tot)
 
-        self.delD = self.pulses[0, 0] - self.t_start                   # Handles negative delays
-        self.delDs = np.array(self.pulses[:, 0] - self.t_start)        # Delay Durations
+        self.Dt_delay = self.pulses[0, 0] - self.t_start                   # Handles negative delays
+        self.Dt_delays = np.array(self.pulses[:, 0] - self.t_start)        # Delay Durations
         self.onDs = np.array(self.pulses[:, 1] - self.pulses[:, 0]) # Pulse Durations
         #if self.nPulses > 1:
         #    self.IPIs = np.zeros(self.nPulses - 1)
@@ -214,7 +214,7 @@ class PhotoCurrent(object):
         #        self.IPIs[p] = self.pulses[p+1,0] - self.pulses[p,1]
         self.IPIs = np.array([self.pulses[p+1, 0] - self.pulses[p, 1] for p in range(self.nPulses-1)]) # end <-> start
         self.offDs = np.append(self.IPIs, self.t_end-self.pulses[-1, 1])
-        # self.offDs = [self.Dt_tot-((onD+pOff)*nPulses)-delD for pOff in pulseCycles[:,1]]
+        # self.offDs = [self.Dt_tot-((onD+pOff)*nPulses)-Dt_delay for pOff in pulseCycles[:,1]]
 
         #for p in self.nPulses: # List comprehension instead?
         #   self.pulseInds[p,0] = np.searchsorted(self.t, pulses[p,0], side="left")  # CHECK: last index where value <= t_on
@@ -587,7 +587,7 @@ class PhotoCurrent(object):
                 ### Fit curve for tau_on
                 if verbose > 1:
                     print('Analysing on-phase decay...')
-                onBegInd = np.searchsorted(t,delD,side="left")
+                onBegInd = np.searchsorted(t,Dt_delay,side="left")
                 self.fitPeaks(t[onBegInd:peakInds[0]], I_RhO[onBegInd:peakInds[0]], expDecay, p0on, '$I_{{on}} = {:.3}e^{{-t/{:g}}} {:+.3}$','')
                 ### Plot tau_on vs Irrad (for curves of V)
                 ### Plot tau_on vs V (for curves of Irrad)
@@ -595,7 +595,7 @@ class PhotoCurrent(object):
             ### Fit curve for tau_inact
             if verbose > 1:
                 print('Analysing inactivation-phase decay...')
-            onEndInd = np.searchsorted(t,onD+delD,side="left") # Add one since upper bound is not included in slice
+            onEndInd = np.searchsorted(t,onD+Dt_delay,side="left") # Add one since upper bound is not included in slice
             popt, _, _ = self.fitPeaks(t[peakInds[0]:onEndInd + 1], I_RhO[peakInds[0]:onEndInd + 1], expDecay, p0inact, '$I_{{inact}} = {:.3}e^{{-t/{:g}}} {:+.3}$','')
             if verbose > 1:
                 print("$\tau_{{inact}} = {}$; $I_{{ss}} = {}$".format(popt[1],popt[2]))
@@ -607,7 +607,7 @@ class PhotoCurrent(object):
             ### Fit curve for tau_off (bi-exponential)
             if verbose > 1:
                 print('Analysing off-phase decay...')
-    #                 endInd = -1 #np.searchsorted(t,offD+onD+delD,side="right") #Dt_tot
+    #                 endInd = -1 #np.searchsorted(t,offD+onD+Dt_delay,side="right") #Dt_tot
             popt, _, _ = self.fitPeaks(t[onEndInd:], I_RhO[onEndInd:], biExpDecay, p0off, '$I_{{off}} = {:.3}e^{{-t/{:g}}} {:+.3}e^{{-t/{:g}}} {:+.3}$','')
             ### Plot tau_off vs Irrad (for curves of V)
             ### Plot tau_off vs V (for curves of Irrad)
@@ -698,7 +698,7 @@ class PhotoCurrent(object):
         """Find the steady-state current either as the last ``tail`` proportion of the on-phase or by fitting a decay function"""
         assert(0 <= pulse < self.nPulses)
 
-        #offInd = self.pulseInds[pulse][1] #np.searchsorted(t,onD+delD,side="left")
+        #offInd = self.pulseInds[pulse][1] #np.searchsorted(t,onD+Dt_delay,side="left")
 
         #if self.onDs[pulse] < window:
         #    raise ValueError('Error: The plateau buffer must be shorter than the on phase!')

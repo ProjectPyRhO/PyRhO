@@ -1156,7 +1156,7 @@ def fitRecovery(t_peaks, I_peaks, params, Ipeak0, Iss0, ax=None, method=defMetho
 
 def fitPeaks(self, t_peaks, I_peaks, curveFunc, p0, eqString, fig=None):  # , verbose=config.verbose):
 
-    shift = t_peaks[0] # ~ delD
+    shift = t_peaks[0] # ~ Dt_delay
     popt, pcov = curve_fit(curveFunc, t_peaks-shift, I_peaks, p0=p0) #Needs ball-park guesses (0.3, 125, 0.5)
     peakEq = eqString.format(*[round_sig(p,3) for p in popt]) # *popt rounded to 3s.f.
 
@@ -2100,7 +2100,7 @@ def plotFluxSetFits(fluxSet, nStates, params, runInd=0, vInd=0):
 
             #TODO: Replace with calcCycle, runTrial or similar
 
-            #I_RhO, t, soln = Sim.runTrial(RhO, phi, V, delD, cycles, self.dt, verbose) #self.Dt_tot,
+            #I_RhO, t, soln = Sim.runTrial(RhO, phi, V, Dt_delay, cycles, self.dt, verbose) #self.Dt_tot,
 
             ## Delay phase
             _, tdel = PC.getDelayPhase()#;   tdel -= tdel[0]

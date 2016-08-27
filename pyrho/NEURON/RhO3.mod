@@ -5,7 +5,7 @@ NEURON  {
     NONSPECIFIC_CURRENT i
     RANGE i, E, v0, v1, g0 :, fphi, fv
     RANGE k_a, k_r, Gd, Gr0, p, q
-    RANGE phiOn, phi, phi_m, delD, onD, offD, nPulses
+    RANGE phiOn, phi, phi_m, Dt_delay, onD, offD, nPulses
 }
 
 
@@ -22,8 +22,8 @@ PARAMETER { : Initialise parameters to defaults. These may be changed through ho
 
 : Illumination
     phiOn   = 1e18      :(photons/sec mm2)  : Flux [Irradiance :(mW/mm^2)]       _______
-    delD    = 25        (ms)    <0, 1e9>    : delay before ON phase             |  ON   |  OFF
-    onD     = 100       (ms)    <0, 1e9>    : duration of each ON phase <-delD->|<-onD->|<-offD->
+    Dt_delay    = 25        (ms)    <0, 1e9>    : delay before ON phase             |  ON   |  OFF
+    onD     = 100       (ms)    <0, 1e9>    : duration of each ON phase <-Dt_delay->|<-onD->|<-offD->
     offD    = 50        (ms)    <0, 1e9>    : duration of each OFF phase________|       |________
     nPulses = 1         (1)     <0, 1e3>    : num pulses to deliver             <-- one pulse -->
 
@@ -86,7 +86,7 @@ INITIAL {   : Initialise variables to fully dark-adapted state
     
     tally   = nPulses
     if (tally > 0) {
-        net_send(delD, 1)   : Schedule an on event at t+delD
+        net_send(Dt_delay, 1)   : Schedule an on event at t+Dt_delay
         tally = tally - 1
     }
 }
