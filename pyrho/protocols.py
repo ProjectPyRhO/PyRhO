@@ -56,7 +56,7 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
         self.plotKinetics = False
         self.setParams(params)
         self.prepare()
-        self.t_start, self.endT = 0, self.Dt_tot
+        self.t_start, self.t_end = 0, self.Dt_tot
         self.phi_ts = None
         self.lam = 470 # Default wavelength [nm]
         self.PD = None
@@ -234,7 +234,7 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
 
         plt.figure(self.Ifig.number)
         plt.sca(self.axI)
-        self.axI.set_xlim(self.PD.t_start, self.PD.endT)
+        self.axI.set_xlim(self.PD.t_start, self.PD.t_end)
         # if addTitles:
             # figTitle = self.genTitle()
             # plt.title(figTitle) #'Photocurrent through time'
@@ -310,12 +310,12 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
         pass
 
 
-    def plotStimulus(self, phi_ts, t_start, pulses, endT, ax=None, light='shade', col=None, style=None):
+    def plotStimulus(self, phi_ts, t_start, pulses, t_end, ax=None, light='shade', col=None, style=None):
 
         nPulses = pulses.shape[0]
         assert(nPulses == len(phi_ts))
-        nPoints = 10 * int(round(endT-t_start / self.dt)) + 1
-        t = np.linspace(t_start, endT, nPoints)
+        nPoints = 10 * int(round(t_end-t_start / self.dt)) + 1
+        t = np.linspace(t_start, t_end, nPoints)
 
         if ax == None:
             #fig = plt.figure()
@@ -339,7 +339,7 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
             plotLight(pulses, ax=ax, light=light)
 
         plt.xlabel(r'$\mathrm{Time\ [ms]}$')
-        plt.xlim((t_start, endT))
+        plt.xlim((t_start, t_end))
         plt.ylabel(r'$\mathrm{\phi\ [ph./mm^{2}/s]}$')
 
         return ax
@@ -388,7 +388,7 @@ class protCustom(Protocol):
                 for phiInd in range(self.nPhis):
                     pc = self.PD.trials[run][phiInd][vInd]
                     col, style = self.getLineProps(run, vInd, phiInd)
-                    self.plotStimulus(phi_ts[run][phiInd], pc.t_start, self.pulses, pc.endT, self.axS, light=None, col=col, style=style) #light='spectral'
+                    self.plotStimulus(phi_ts[run][phiInd], pc.t_start, self.pulses, pc.t_end, self.axS, light=None, col=col, style=style) #light='spectral'
             plt.setp(self.axS.get_xticklabels(), visible=False)
             self.axS.set_xlabel('')
         else:
@@ -447,7 +447,7 @@ class protSinusoid(Protocol):
 
         assert(len(self.phi0) == self.nRuns)
 
-        self.t_start, self.endT = 0, self.Dt_tot
+        self.t_start, self.t_end = 0, self.Dt_tot
         self.phi_ts = self.genPulseSet()
         self.runLabels = [r'$f={}\mathrm{{Hz}}$ '.format(round_sig(f,3)) for f in self.fs]
 
@@ -490,7 +490,7 @@ class protSinusoid(Protocol):
                     for phiInd in range(self.nPhis):
                         pc = self.PD.trials[run][phiInd][vInd]
                         col, style = self.getLineProps(run, vInd, phiInd)
-                        self.plotStimulus(phi_ts[run][phiInd], pc.t_start, pc.pulses, pc.endT, self.axS, light='spectral', col=col, style=style)
+                        self.plotStimulus(phi_ts[run][phiInd], pc.t_start, pc.pulses, pc.t_end, self.axS, light='spectral', col=col, style=style)
                 plt.setp(self.axS.get_xticklabels(), visible=False)
                 self.axS.set_xlabel('') #plt.xlabel('')
                 self.axS.set_ylim(self.phi0[0], max(self.phis)) ### phi0[r]
@@ -746,7 +746,7 @@ class protChirp(Protocol):
                 for phiInd in range(self.nPhis):
                     pc = self.PD.trials[run][phiInd][vInd]
                     col, style = self.getLineProps(run, vInd, phiInd)
-                    self.plotStimulus(phi_ts[run][phiInd], pc.t_start, pc.pulses, pc.endT, self.axS, light='spectral', col=col, style=style)
+                    self.plotStimulus(phi_ts[run][phiInd], pc.t_start, pc.pulses, pc.t_end, self.axS, light='spectral', col=col, style=style)
             plt.setp(self.axS.get_xticklabels(), visible=False)
             self.axS.set_xlabel('') #plt.xlabel('')
 
@@ -813,7 +813,7 @@ class protRamp(Protocol):
                 for phiInd in range(self.nPhis):
                     pc = self.PD.trials[run][phiInd][vInd]
                     col, style = self.getLineProps(run, vInd, phiInd)
-                    self.plotStimulus(phi_ts[run][phiInd], pc.t_start, self.pulses, pc.endT, self.axS, light=None, col=col, style=style) #light='spectral'
+                    self.plotStimulus(phi_ts[run][phiInd], pc.t_start, self.pulses, pc.t_end, self.axS, light=None, col=col, style=style) #light='spectral'
             plt.setp(self.axS.get_xticklabels(), visible=False)
             #plt.xlabel('')
             self.axS.set_xlabel('')
@@ -904,7 +904,7 @@ class protDelta(Protocol):
                 for phiInd in range(self.nPhis):
                     pc = self.PD.trials[run][phiInd][vInd]
                     col, style = self.getLineProps(run, vInd, phiInd)
-                    self.plotStimulus(phi_ts[run][phiInd], pc.t_start, pc.pulses, pc.endT, self.axS, light='spectral', col=col, style=style)
+                    self.plotStimulus(phi_ts[run][phiInd], pc.t_start, pc.pulses, pc.t_end, self.axS, light='spectral', col=col, style=style)
             plt.setp(self.axS.get_xticklabels(), visible=False)
             self.axS.set_xlabel('') #plt.xlabel('')
             if max(self.phis) / min(self.phis) >= 100:
@@ -1291,9 +1291,9 @@ class protRecovery(Protocol):
             self.runCycles[:,:,run] = np.asarray([[self.onDs[run],self.offDs[run]],[self.onDs[run],self.offDs[run]]])
 
         self.t_start = 0
-        self.endT = self.Dt_tot
+        self.t_end = self.Dt_tot
         IPIminD = max(self.delDs) + (2*max(self.onDs)) + max(self.IPIs)
-        if self.endT < IPIminD:
+        if self.t_end < IPIminD:
             warnings.warn("Insufficient run time for all stimulation periods!")
         else:
             self.runCycles[-1,1,:] = self.Dt_tot - IPIminD
