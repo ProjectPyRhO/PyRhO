@@ -14,14 +14,14 @@ from collections import OrderedDict, defaultdict
 import logging
 import abc
 
-#from numpy import inf, nan, isfinite 
+#from numpy import inf, nan, isfinite
 import numpy as np
 ### Move this to models.py and add .setParams() method
 from lmfit import Parameters, Parameter
 
 # Units for model parameters (for Brian)
 # Replace with http://pythonhosted.org/NeuroTools/parameters.html
-from brian2.units.allunits import psiemens, second, mole #*
+from brian2.units.allunits import psiemens, second, mole
 from brian2.units.stdunits import *
 pS = psiemens
 sec = second
@@ -31,7 +31,8 @@ sec = second
 #from pyrho.utilities import irrad2flux, flux2irrad
 
 # TODO
-__all__ = ['modelParams', 'modelFits', 'stateLabs', 'defaultOpsinType', 'protParams', 'simParams', 'Parameters', 'Parameter']
+__all__ = ['modelParams', 'modelFits', 'stateLabs', 'defaultOpsinType',
+           'protParams', 'simParams', 'Parameters', 'Parameter']
 
 ### Hyperparameters
 
@@ -86,32 +87,32 @@ modelParams = OrderedDict([('3',Parameters()),('4',Parameters()),('6',Parameters
 modelList = list(modelParams) # List of keys: list(modelParams.keys()) #This could be removed
 stateLabs = {3:'Three', '3':'Three', 4:'Four', '4':'Four', 6:'Six', '6':'Six'}
 
-modelFits = OrderedDict([   ('3', OrderedDict([('ChR2',Parameters()), ('NpHR',Parameters()), ('ArchT',Parameters())])), 
-                            ('4', OrderedDict([('ChR2',Parameters())])), 
+modelFits = OrderedDict([   ('3', OrderedDict([('ChR2',Parameters()), ('NpHR',Parameters()), ('ArchT',Parameters())])),
+                            ('4', OrderedDict([('ChR2',Parameters())])),
                             ('6', OrderedDict([('ChR2',Parameters())]))])
 
 ### Replace with defaultdict with default=key
-modelLabels = OrderedDict([('E','E'), ('g0','g_0'), ('p','p'), ('k_a','k_a'), ('k_r','k_r'), ('phi_m','\phi_m'), ('Gd','G_d'), ('Gr0','G_{r0}'), ('v0','v_0'), ('v1','v_1'), 
-                            ('gam','\gamma'), ('k1','k_1'), ('k2','k_2'), ('Gf0','G_{f0}'), ('Gb0','G_{b0}'), ('k_f','k_f'), ('k_b','k_b'), ('q','q'), 
+modelLabels = OrderedDict([('E','E'), ('g0','g_0'), ('p','p'), ('k_a','k_a'), ('k_r','k_r'), ('phi_m','\phi_m'), ('Gd','G_d'), ('Gr0','G_{r0}'), ('v0','v_0'), ('v1','v_1'),
+                            ('gam','\gamma'), ('k1','k_1'), ('k2','k_2'), ('Gf0','G_{f0}'), ('Gb0','G_{b0}'), ('k_f','k_f'), ('k_b','k_b'), ('q','q'),
                             ('Gd1','G_{d1}'), ('Gd2','G_{d2}'), ('Go1','G_{o1}'), ('Go2','G_{o2}'),
                             ('phi','\phi'), ('v','v')])
 
 
-modelUnits = OrderedDict([('g0',pS), ('gam',1), ('k_a',ms**-1), ('k_r',ms**-1), ('phi_m',mm**-2*second**-1), ('p',1), ('Gd',ms**-1), ('Gr0',ms**-1), 
-                            ('k1',ms**-1), ('k2',ms**-1), ('Gf0',ms**-1), ('Gb0',ms**-1), ('k_f',ms**-1), ('k_b',ms**-1), ('q',1), 
-                            ('Gd1',ms**-1), ('Gd2',ms**-1), ('Go1',ms**-1), ('Go2',ms**-1), ('E',mV), ('v0',mV), ('v1',mV), 
+modelUnits = OrderedDict([('g0',pS), ('gam',1), ('k_a',ms**-1), ('k_r',ms**-1), ('phi_m',mm**-2*second**-1), ('p',1), ('Gd',ms**-1), ('Gr0',ms**-1),
+                            ('k1',ms**-1), ('k2',ms**-1), ('Gf0',ms**-1), ('Gb0',ms**-1), ('k_f',ms**-1), ('k_b',ms**-1), ('q',1),
+                            ('Gd1',ms**-1), ('Gd2',ms**-1), ('Go1',ms**-1), ('Go2',ms**-1), ('E',mV), ('v0',mV), ('v1',mV),
                             ('phi',mm**-2*second**-1), ('v',mV)])
 
 #paramUnits
 unitLabels = OrderedDict([('g0','pS'), ('gam',''), ('k_a','ms^-1'), ('k_r','ms^-1'), ('phi_m','ph./mm^2/s'), ('p',''), ('Gd','ms^-1'), ('Gr0','ms^-1'), #, ('k','ms^-1'), ('Gr1','ms^-1')
-                            ('k1','ms^-1'), ('k2','ms^-1'), ('Gf0','ms^-1'), ('Gb0','ms^-1'), ('k_f','ms^-1'), ('k_b','ms^-1'), ('q',''), 
+                            ('k1','ms^-1'), ('k2','ms^-1'), ('Gf0','ms^-1'), ('Gb0','ms^-1'), ('k_f','ms^-1'), ('k_b','ms^-1'), ('q',''),
                             ('Gd1','ms^-1'), ('Gd2','ms^-1'), ('Go1','ms^-1'), ('Go2','ms^-1'), ('E','mV'), ('v0','mV'), ('v1','mV'),
                             ('phi','ph./mm^2/s'), ('v','mV')])
 
-                            
+
 ####|###10####|###20####|###30####|###40####|###50####|###60####|###70####|###80
 
-#               (Name,    Value,  Vary, Min,  Max,  Expr=Units)                
+#               (Name,    Value,  Vary, Min,  Max,  Expr=Units)
 modelFits['3']['ChR2'].add_many( # Depolarising: passively transports Na+, H+, K+ and Ca2+ down their electrochemical gradients
                 ('g0',    1.57e5, True, 0.001,  1e6,  None),
                 ('phi_m', 5e17,   True, 1e15,   1e19, None),
@@ -124,7 +125,7 @@ modelFits['3']['ChR2'].add_many( # Depolarising: passively transports Na+, H+, K
                 ('E',     0,      True, -1000,  1000, None),
                 ('v0',    43,     True, -1e15,  1e15, None),
                 ('v1',    17.1,   True, -1e15,  1e15, None))
-                
+
 modelFits['3']['NpHR'].add_many( # Hyperpolarising: pumps chloride ions into the cell
                 ('g0',    1.57e5, True, 0.001,  1e6,  None),
                 ('phi_m',  1.32e18,True, 1e15,   1e19, None),
@@ -137,7 +138,7 @@ modelFits['3']['NpHR'].add_many( # Hyperpolarising: pumps chloride ions into the
                 ('E',     -400,   True, -1000,  1000, None),
                 ('v0',    43,     True, -1e15,  1e15, None),
                 ('v1',    17.1,   True, -1e15,  1e15, None))
-                
+
 modelFits['3']['ArchT'].add_many( # Hyperpolarising: actively extrudes Hydrogen ions
                 ('g0',    1.57e5, True, 0.001,  1e6,  None),
                 ('phi_m',  1.32e18,True, 1e15,   1e19, None),
@@ -150,8 +151,8 @@ modelFits['3']['ArchT'].add_many( # Hyperpolarising: actively extrudes Hydrogen 
                 ('E',     0,   True, -1000,  1000, None),
                 ('v0',    43,     True, -1e15,  1e15, None),
                 ('v1',    17.1,   True, -1e15,  1e15, None))
-                
-    
+
+
 modelFits['4']['ChR2'].add_many(
                 ('g0',      1.14e5, True, 0.001,1e15,   None),
                 ('gam',     0.00742,True, 0.0,  1,      None),
@@ -169,10 +170,10 @@ modelFits['4']['ChR2'].add_many(
                 ('Gr0',     0.00033,True, 1e-6, 1,      None), #Gr #0.0004
                 ('E',       0,      True, -1000,1000,   None),
                 ('v0',      43,     True, -1e15,1e15,   None),
-                ('v1',      17.1,   True, -1e15,1e15,   None))    
-              
+                ('v1',      17.1,   True, -1e15,1e15,   None))
 
-modelFits['6']['ChR2'].add_many(                
+
+modelFits['6']['ChR2'].add_many(
                 ('g0',      2.52e4, True, 0.0,  1e15, None),
                 ('gam',     0.0161, True, 0.0,  1,    None), # Max=1 if gO1 >= gO2
                 ('phi_m',   3.54e17,True, 1e15, 1e19, None),
@@ -195,7 +196,7 @@ modelFits['6']['ChR2'].add_many(
 
 
 defaultOpsinType = 'ChR2'
-rhoType = defaultOpsinType # Set this when selecting 
+rhoType = defaultOpsinType # Set this when selecting
 modelParams['3'] = modelFits['3'][defaultOpsinType]
 modelParams['4'] = modelFits['4'][defaultOpsinType]
 modelParams['6'] = modelFits['6'][defaultOpsinType]
@@ -212,7 +213,7 @@ unitPrefixes = {} ### Use a units library to convert between different prefixes
 ### This needs serious refactoring! Create a superclass which hands off attribute/method calls to a Parameter(s)() attribute by default or looks in self for other properties
 #class Parameters(OrderedDict):
 class PyRhOparameters(Parameters):
-    '''These classes are adapted from LMFIT since changes between 
+    '''These classes are adapted from LMFIT since changes between
     0.8.0 and 0.9.2 stopped to ability to set lists as values'''
     def __deepcopy__(self, memo):
         _pars = PyRhOparameters()
@@ -235,7 +236,7 @@ class PyRhOparameters(Parameters):
         _pars.add_many(*parameter_list)
 
         return _pars
-    
+
     def __setitem__(self, key, par):
         #if key not in self:
         #    if not valid_symbol_name(key):
@@ -246,7 +247,7 @@ class PyRhOparameters(Parameters):
         par.name = key
         #par._expr_eval = self._asteval
         #self._asteval.symtable[key] = par.value
-    
+
     def add_many(self, *parlist):
         """
         Convenience function for adding a list of Parameters.
@@ -276,7 +277,7 @@ class PyRhOparameters(Parameters):
             else:
                 param = PyRhOparameter(*para)
                 self.__setitem__(param.name, param)
-    
+
     def valuesdict(self):
         """
         Returns
@@ -287,9 +288,9 @@ class PyRhOparameters(Parameters):
         """
 
         return OrderedDict(((p.name, p.value) for p in self.values()))
-                
+
 class PyRhOparameter(object):
-    
+
     def __init__(self, name=None, value=None, min=-np.inf, max=np.inf, units=None, latex=None, descr=None): #, unitsLabel=None
         self.name = name
         self._val = value
@@ -305,8 +306,8 @@ class PyRhOparameter(object):
         self.descr = descr
         self.constant = True
         self._init_bounds()
-    
-    
+
+
     def set(self, value=None, vary=None, min=None, max=None, expr=None):
         """
         Set or update Parameter attributes (adapted from LMFIT).
@@ -331,13 +332,13 @@ class PyRhOparameter(object):
             self.min = min
         if max is not None:
             self.max = max
-        
-    '''    
+
+    '''
     def set(self, value=None):
         if value is not None:
             self._val = value
     '''
-    
+
     def _init_bounds(self):
         """make sure initial bounds are self-consistent"""
         # _val is None means - infinity.
@@ -357,19 +358,19 @@ class PyRhOparameter(object):
         elif self.max is not None: #and self._expr is None:
             self._val = self.max
         #self.setup_bounds()
-    
+
     def _clipList(self, values):
         for ind, val in enumerate(values):
             if isinstance(val, str):
                 return
             elif isinstance(val, (list, tuple)): # Nested list e.g. cycles
                 self._clipList(val)
-            else:                    
+            else:
                 if self.max is not None and val > self.max:
                     values[ind] = self.max
                 if self.min is not None and val < self.min:
                     values[ind] = self.min
-        
+
     def get_max(self):
         return self._max
 
@@ -396,21 +397,21 @@ class PyRhOparameter(object):
 
     min = property(get_min, set_min)
     max = property(get_max, set_max)
-    
 
-    
+
+
     def _getval(self):
         return self._val
-    
+
     @property
     def value(self):
-        return self._getval() # self._val # 
-        
+        return self._getval() # self._val #
+
     @value.setter
     def value(self, val):
         self._val = val
         self._init_bounds()
-        
+
     def __repr__(self):
         s = []
         if self.name is not None:
@@ -425,10 +426,10 @@ class PyRhOparameter(object):
         #if self._expr is not None:
         #    s.append("expr='%s'" % self.expr)
         return "<Parameter %s>" % ', '.join(s)
-    
+
     def __str__(self):
         return self.__repr__()
-    
+
     def _repr_latex_(self):
         if self.latex is not None:
             s = self.latex
@@ -449,7 +450,7 @@ class PyRhOparameter(object):
             u = self.units._latex()
             s = "\,".join([s, '=', v, u])
         return "$" + s + "$" # texIt(s)
-    
+
     def latex(self):
         from IPython.display import Math
         return Math(self._repr_latex_())
@@ -470,21 +471,21 @@ protParams = OrderedDict([('step',PyRhOparameters()), ('delta',PyRhOparameters()
 
 protList = list(protParams) # List of keys #This could be removed
 
-protParamLabels = OrderedDict([ ('phis', '\mathbf{\phi}'), 
-                                ('Vs', '\mathbf{\mathrm{V}}'), 
-                                ('delD', '\Delta t_{delay}'), 
-                                ('onD', '\Delta t_{on}'), 
-                                ('totT', 'T_{total}'), 
+protParamLabels = OrderedDict([ ('phis', '\mathbf{\phi}'),
+                                ('Vs', '\mathbf{\mathrm{V}}'),
+                                ('delD', '\Delta t_{delay}'),
+                                ('onD', '\Delta t_{on}'),
+                                ('totT', 'T_{total}'),
                                 ('cycles', 'cycles'),
-                                ('phi0', '\phi_0'), 
-                                ('fs', '\mathbf{f}'), 
-                                ('f0', 'f_0'), 
-                                ('fT', 'f_T'), 
-                                ('linear', 'linear'), 
-                                ('startOn', '\phi_{t=0}>0'), 
-                                #('phi_ton', '\phi_{t=0}'), 
-                                ('pDs', '\mathbf{\Delta t_{on}}'), 
-                                ('IPIs', '\mathbf{\Delta t_{off}}'), 
+                                ('phi0', '\phi_0'),
+                                ('fs', '\mathbf{f}'),
+                                ('f0', 'f_0'),
+                                ('fT', 'f_T'),
+                                ('linear', 'linear'),
+                                ('startOn', '\phi_{t=0}>0'),
+                                #('phi_ton', '\phi_{t=0}'),
+                                ('pDs', '\mathbf{\Delta t_{on}}'),
+                                ('IPIs', '\mathbf{\Delta t_{off}}'),
                                 ('phi_ft', '\phi(t)') ])
 
 protUnitLabels = defaultdict(lambda: '')
@@ -502,17 +503,17 @@ protUnitLabels['fs'] = 'Hz'
 protUnitLabels['f0'] = 'Hz'
 protUnitLabels['fT'] = 'Hz'
 
-protParamNotes = OrderedDict([ (prot, defaultdict(lambda: '')) for prot in protList]) 
+protParamNotes = OrderedDict([ (prot, defaultdict(lambda: '')) for prot in protList])
 for prot in protList:
     protParamNotes[prot]['phis'] = 'List of flux values'
     protParamNotes[prot]['Vs'] = 'List of voltage clamp values (if applied)'
     protParamNotes[prot]['delD'] = 'Delay duration before the first pulse' # cycle'
     protParamNotes[prot]['cycles'] = 'List of [on, off] durations for each pulse' # cycle'
-    
+
 
 #Exceptions
 protParamNotes['custom']['phi_ft'] = 'Pulse generation function'
-protParamNotes['sinusoid']['startOn'] = 'Start at maximum flux (else minimum)' # maximum of flux modulation 
+protParamNotes['sinusoid']['startOn'] = 'Start at maximum flux (else minimum)' # maximum of flux modulation
 protParamNotes['sinusoid']['phi0'] = 'Constant offset for modulation'
 protParamNotes['sinusoid']['fs'] = 'List of modulation frequencies'
 protParamNotes['chirp']['linear'] = 'Linear frequency sweep (else exponential)'
@@ -533,11 +534,11 @@ protParamNotes['recovery']['cycles'] = ''
 protParamNotes['recovery']['onD'] = 'Pulse on-phase duration' #'Cycle on-phase duration'
 protParamNotes['recovery']['IPIs'] = 'List of pulse off-phase durations' #'List of cycle off-phase durations'
 protParamNotes['recovery']['totT'] = 'Total simulation duration'
-    
+
 #squarePulses = ['custom', 'delta', 'step', 'rectifier', 'shortPulse', 'recovery'] #{'custom': True, 'delta': True, 'step': True, 'rectifier': True, 'shortPulse': True, 'recovery': True}
 #arbitraryPulses = ['custom', 'sinusoid', 'chirp', 'ramp'] #{'custom': True, 'sinusoid': True, 'chirp': True, 'ramp':True} # Move custom here
 
-smallSignalAnalysis = ['delta', 'step', 'sinusoid'] 
+smallSignalAnalysis = ['delta', 'step', 'sinusoid']
 
 protParams['custom'].add_many(('phis',  [1e16,1e17],        0,      None,   mole*mm**-2*second**-1, '\mathbf{\phi}', 'List of flux values'), #'photons/s/mm^2'
                             ('Vs',      [-70,-20,10],       None,   None,   mV, '\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'), #'mV'
@@ -548,7 +549,7 @@ protParams['step'].add_many(('phis',    [1e16,1e17],        0,      None,   mole
                             ('Vs',      [-70,-40,-10,10,40,70], None,   None,   mV, '\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'), #'mV'
                             ('delD',    25,                 0,      1e9,    ms, '\Delta t_{delay}', 'Delay duration before the first pulse'), #'ms'
                             ('cycles',  [[150.,100.]],      0,      None,   ms, 'cycles',           'List of [on, off] durations for each pulse')) #'ms'
-                            
+
 protParams['sinusoid'].add_many(('phis',[1e12],             0,      None,   mole*mm**-2*second**-1, '\mathbf{\phi}', 'List of flux values'), #'photons/s/mm^2'
                             ('phi0',    [0],                None,   None,   mole*mm**-2*second**-1, '\phi_0',        'Constant offset for flux'), #'photons/s/mm^2'
                             ('startOn', True,               False,  True,   1,  '\phi_{t=0}>0',         'Start at maximum flux (else minimum)'),
@@ -584,7 +585,7 @@ protParams['rectifier'].add_many(('phis',[1e16],            None,   None,   mole
                             ('delD',    50,                 0,      1e9,    ms, '\Delta t_{delay}', 'Delay duration before the first pulse'), # 'ms'
                             ('cycles',  [[250.,100.]],      None,   None,   ms, 'cycles',           'List of [on, off] durations for each pulse')) # 'ms' #,
 
-protParams['shortPulse'].add_many(('phis',[1.5e15],         None,   None,   mole*mm**-2*second**-1, '\mathbf{\phi}', 'List of flux values'), # 'photons/s/mm^2' #1e12 
+protParams['shortPulse'].add_many(('phis',[1.5e15],         None,   None,   mole*mm**-2*second**-1, '\mathbf{\phi}', 'List of flux values'), # 'photons/s/mm^2' #1e12
                             ('Vs',      [-70],              None,   None,   mV, '\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'), # 'mV'
                             ('delD',    25,                 0,      None,   ms, '\Delta t_{delay}', 'Delay duration before the first pulse'), # 'ms'
                             ('pDs',     [1,2,3,5,8,10,20],  0,      None,   ms, '\mathbf{\Delta t_{on}}',   'List of pulse on-phase durations'), # 'ms' # [0.1, 0.2, 0.5, 1, 2, 5, 10]
@@ -594,8 +595,8 @@ protParams['recovery'].add_many(('phis',[1e17],             None,   None,   mole
                             ('Vs',      [-70],              None,   None,   mV, '\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'), # 'mV'
                             ('delD',    100,                0,      None,   ms, '\Delta t_{delay}', 'Delay duration before the first pulse'), # 'ms'
                             ('onD',     100,                0,      None,   ms, '\Delta t_{on}',    'On-phase duration'), # 'ms'
-                            ('IPIs',[500,1000,1500,2500,5000,7500,10000],None,None,ms,  '\mathbf{\Delta t_{off}}', 'List of pulse off-phase durations'), # 'ms' 
-                            #('IPIs',[0.5,1,1.5,2.5,5,7.5,10],None,None,seconds), # 'ms' 
+                            ('IPIs',[500,1000,1500,2500,5000,7500,10000],None,None,ms,  '\mathbf{\Delta t_{off}}', 'List of pulse off-phase durations'), # 'ms'
+                            #('IPIs',[0.5,1,1.5,2.5,5,7.5,10],None,None,seconds), # 'ms'
                             ('totT',    12000,              0,      None,   ms, 'T_{total}',        'Total simulation duration')) # 'ms'
 
 
@@ -629,57 +630,59 @@ simParams['NEURON'].add_many(('cell',   ['minimal.hoc'], None, None), #'morpholo
                              ('dt',     0.1,       0,   None)) # 'ms' #, 0.025
 
 simParams['Brian'].add_many(('dt', 0.1, 0, None)) #, # 'ms'
-                            
+
 
 ### Move somewhere else e.g. base.py
 class PyRhOobject(object):
     """Common base class for all PyRhO objects"""
-    
+
     __metaclass__ = abc.ABCMeta
     # https://docs.python.org/3/reference/datamodel.html#special-method-names
-    
+
     #def __new__(self):
     #    pass
     @abc.abstractmethod
     def __init__(self):
         pass
-        
+
     def __del__(self):
         pass
-    
+
     def __repr__(self):
         return str(self.__class__)
-        
+
     def __str__(self):
         print("PyRhO object: ", self.__class__.__name__)
-    
+
     def __call__(self):
         return
-        
+
     def setParams(self, params):
         """Set all model parameters from a Parameters() object"""
         #for param, value in params.items():
         #for p in params.keys():
         #    self.__dict__[p] = params[p].value #vars(self())[p]
-        for p in params.keys():
-            setattr(self, p, params[p].value)
+        #for p in params.keys():
+        #    setattr(self, p, params[p].value)
+        for name, value in params.valuesdict().items():
+            setattr(self, name, value)
         #for name, value in params.items():
         #    setattr(self, name, value)
-    
+
     def updateParams(self, params):
         """Update model parameters which already exist"""
         pDict = params.valuesdict()
         count = 0
-        for name, value in pDict:
+        for name, value in pDict.items():
             if hasattr(self, name):
                 setattr(self, name, value)
-                count == 1
-        for p, v in pDict.items():
-            if p in self.__dict__: # Added to allow dummy variables in fitting parameters
-                self.__dict__[p] = v #vars(self())[p]
                 count += 1
+        #for p, v in pDict.items():
+        #    if p in self.__dict__: # Added to allow dummy variables in fitting parameters
+        #        self.__dict__[p] = v #vars(self())[p]
+        #        count += 1
         return count
-    
+
     def getParams(self, params):
         """Export parameters to lmfit dictionary"""
         for p in self.__dict__.keys():
@@ -693,7 +696,7 @@ class PyRhOobject(object):
                 params[p].value = v #self.__dict__[p]
                 count += 1
         return count
-            
+
     def printParams(self):
         for p in self.__dict__.keys():
             print(p, ' = ', self.__dict__[p])
@@ -702,21 +705,21 @@ class PyRhOobject(object):
         logging.info(self.__class__.__name__, ' Parameters')
         for p in self.__dict__.keys():
             logging.info(p, ' = ', self.__dict__[p])
-            
+
     def printParamsWithLabels(self):
         for p in self.__dict__.keys():
             if p in unitLabels:
                 print(p, ' = ', self.__dict__[p], ' [', unitLabels[p], ']')
             else:
                 print(p, ' = ', self.__dict__[p])
-    
+
     def printParamsWithUnits(self):
         for p in self.__dict__.keys():
             if p in modelUnits:
                 print(p, ' = ', self.__dict__[p], ' * ', modelUnits[p])
             else:
                 print(p, ' = ', self.__dict__[p])
-    
+
     def getExt(self, var, ext='max'):
         if ext == 'max':
             mVal = max(self.__dict__[var])
@@ -724,4 +727,3 @@ class PyRhOobject(object):
             mVal = min(self.__dict__[var])
         mInd = np.searchsorted(self.__dict__[var], mVal)
         return mVal, mInd
-    
