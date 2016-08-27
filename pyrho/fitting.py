@@ -884,7 +884,7 @@ def fit6states(fluxSet, quickSet, run, vInd, params, method=defMethod):  # , ver
 
         #tpeaks = np.asarray([PD.trials[p][0][0].tpeak for p in range(PD.nRuns)]) # - PD.trials[p][0][0].t[0]
         #tpulses = np.asarray([PD.trials[p][0][0].Dt_ons[0] for p in range(PD.nRuns)])
-        tpeaks = np.asarray([pc.tpeak_ for pc in PCs])
+        tpeaks = np.asarray([pc.t_peak_ for pc in PCs])
         tpulses = np.asarray([pc.Dt_ons[0] for pc in PCs])
 
         devFunc = lambda tpulses, t0, k: tpulses + t0 * np.exp(-k*tpulses)

@@ -106,7 +106,7 @@ class PhotoCurrent(object):
     range_      # [Imin, Imax]
     span_       # Imax - Imin
     peakInd_    # Index of biggest current peak                     HIDE
-    tpeak_      # Time of biggest current peak
+    t_peak_      # Time of biggest current peak
     peak_       # Biggest current peak
     peakInds_   # Indexes of current peaks in each pulse            HIDE
     t_peaks_     # Times of current peaks in each pulse
@@ -278,7 +278,7 @@ class PhotoCurrent(object):
         #np.asarray([max(abs(self.I[self.pulseInds[p,0]:self.pulseInds[p,1]])) for p in range(self.nPulses)])
 
         self.peakInd_ = np.argmax(abs(self.I)) #np.searchsorted(self.I, self.Ipeak)
-        self.tpeak_ = self.t[self.peakInd_]
+        self.t_peak_ = self.t[self.peakInd_]
         self.peak_ = self.I[self.peakInd_]
 
         #self.peakInds_ = np.array([np.argmax(abs(self.getCycle(p)[0])) for p in range(self.nPulses)]) #np.searchsorted(self.I, self.Ipeaks)
@@ -642,7 +642,7 @@ class PhotoCurrent(object):
             self.pulses -= self.p0      # Pulse times
             self.t_start = self.t[0]       # Beginning Time of Trial
             self.t_end = self.t[-1]      # End Time of Trial
-            self.tpeak_ = self.t[self.peakInd_]
+            self.t_peak_ = self.t[self.peakInd_]
             self.t_peaks_ = self.t[self.peakInds_]
             self.pulseAligned = True
             self.alignPoint = alignPoint
@@ -664,7 +664,7 @@ class PhotoCurrent(object):
         self.pulses -= self.p0      # Pulse times
         self.t_start = self.t[0]       # Beginning Time of Trial
         self.t_end = self.t[-1]      # End Time of Trial
-        self.tpeak_ = self.t[self.peakInd_]
+        self.t_peak_ = self.t[self.peakInd_]
         self.t_peaks_ = self.t[self.peakInds_]
         self.pulseAligned = False
 
@@ -1649,21 +1649,21 @@ class ProtocolData(object):
             phiInd = 0
             vInd = 0
             self.IrunPeaks = [self.trials[run][phiInd][vInd].peak_ for run in range(self.nRuns)]
-            self.trunPeaks = [self.trials[run][phiInd][vInd].tpeak_ for run in range(self.nRuns)]
+            self.trunPeaks = [self.trials[run][phiInd][vInd].t_peak_ for run in range(self.nRuns)]
             Ipeaks = self.IrunPeaks
             tpeaks = self.trunPeaks
         if self.nPhis > 1:
             run = 0
             vInd = 0
             self.IphiPeaks = [self.trials[run][phiInd][vInd].peak_ for phiInd in range(self.nPhis)]
-            self.trunPeaks = [self.trials[run][phiInd][vInd].tpeak_ for phiInd in range(self.nPhis)]
+            self.trunPeaks = [self.trials[run][phiInd][vInd].t_peak_ for phiInd in range(self.nPhis)]
             Ipeaks = self.IphiPeaks
             tpeaks = self.trunPeaks
         if self.nVs > 1:
             run = 0
             phiInd = 0
             self.IVPeaks = [self.trials[run][phiInd][vInd].peak_ for vInd in range(self.nVs)]
-            self.tVPeaks = [self.trials[run][phiInd][vInd].tpeak_ for vInd in range(self.nVs)]
+            self.tVPeaks = [self.trials[run][phiInd][vInd].t_peak_ for vInd in range(self.nVs)]
             Ipeaks = self.IVPeaks
             tpeaks = self.tVPeaks
         return Ipeaks, tpeaks

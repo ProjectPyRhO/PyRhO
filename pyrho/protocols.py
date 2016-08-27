@@ -923,7 +923,7 @@ class protDelta(Protocol):
                     pc = self.PD.trials[run][phiInd][vInd]
                     # Maximum only...
                     #Ip = pc.peak_
-                    #tp = pc.tpeak_
+                    #tp = pc.t_peak_
                     for p in range(self.nPulses):
                         Ip = pc.peaks_[p]
                         tp = pc.t_peaks_[p]
