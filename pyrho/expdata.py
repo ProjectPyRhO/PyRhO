@@ -104,7 +104,7 @@ class PhotoCurrent(object):
     on_         # Current at t_on[:]        REMOVE
     off_        # Current at t_off[:]       REMOVE
     I_range_      # [Imin, Imax]
-    span_       # Imax - Imin
+    I_span_       # Imax - Imin
     _idx_peak_    # Index of biggest current peak                     HIDE
     t_peak_      # Time of biggest current peak     Replace with t_peaks_[0]?
     I_peak_       # Biggest current peak
@@ -267,7 +267,7 @@ class PhotoCurrent(object):
 
         # Add this to findPeaks
         self.I_range_ = [min(self.I), max(self.I)]
-        self.span_ = self.I_range_[1] - self.I_range_[0]
+        self.I_span_ = self.I_range_[1] - self.I_range_[0]
         #if abs(self.Irange[0]) > abs(self.Irange[1]):
         #    self.Ipeak = self.Irange[0] # Min
         #    self.Ipeaks = np.asarray([min(self.getCycle(p)) for p in range(self.nPulses)]) # Peak may occur after stimulation #np.asarray([min(self.I[self._idx_pulses_[p,0]:self._idx_pulses_[p,1]]) for p in range(self.nPulses)])
@@ -716,7 +716,7 @@ class PhotoCurrent(object):
             method = 0
 
         dI = Ion[-cutInd+1:] - Ion[-cutInd:-1]
-        if abs(np.mean(dI)) > 0.01 * self.span_:
+        if abs(np.mean(dI)) > 0.01 * self.I_span_:
             logging.warn('Steady-state Convergence Warning: The average step size is larger than 1% of the current span!')
             #return None
             method = 0
