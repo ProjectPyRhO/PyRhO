@@ -263,7 +263,7 @@ def plotFit(PC, nStates, params, fitRates=False, index=None):
     phi = PC.phi
     V = PC.V
     ### Plot experimental curve
-    # totT = t[-1] - t[0] #max(t)
+    # Dt_tot = t[-1] - t[0] #max(t)
     begT, endT = PC.begT, PC.endT  # PC.t[0], PC.t[-1]
     I = PC.I
     t = PC.t
@@ -367,7 +367,7 @@ def plotFit(PC, nStates, params, fitRates=False, index=None):
     axRes.set_xlabel(r'$\mathrm{Time\ [ms]}$') #, position=(1,0), ha='right')
 
     #plt.setp(axRes.get_xticklabels(), visible=False)
-    #plt.xlim((0,totT))
+    #plt.xlim((0,Dt_tot))
 
     plt.axhline(y=0, linestyle=':', color='k')
 
@@ -1112,7 +1112,7 @@ def fitRecovery(t_peaks, I_peaks, params, Ipeak0, Iss0, ax=None, method=defMetho
     xmin, xmax = ax.get_xlim()
     ax.set_xlim(xmin, xmax)
     nPoints = 10*int(round(xmax-xmin)+1)
-    tsmooth = np.linspace(xmin, xmax, nPoints)#1+(xmax-xmin)*10) #totT
+    tsmooth = np.linspace(xmin, xmax, nPoints)#1+(xmax-xmin)*10) #Dt_tot
     Ismooth = errExpRec(pRec, tsmooth) #curveFunc(tsmooth,*popt)
 
     #ax.plot(tsmooth+shift, Ismooth, linestyle=':', color='r')#, linewidth=1.5*mpl.rcParams['lines.linewidth'])
@@ -1166,9 +1166,9 @@ def fitPeaks(self, t_peaks, I_peaks, curveFunc, p0, eqString, fig=None):  # , ve
 #     xspan = t_peaks[-1] - t_peaks[0] + 2*ext
 #     xfit=np.linspace(t_peaks[0]-ext-shift, t_peaks[-1]+ext-shift, xspan/dt)
         plt.plot(t_peaks, I_peaks, linestyle='', color='r', marker='*')
-        #xfit=np.linspace(-shift, self.totT-shift, self.totT/self.dt) #totT
-        nPoints = 10*int(round(self.totT-shift/self.dt))+1 # 1001
-        xfit = np.linspace(-shift, self.totT-shift, nPoints)
+        #xfit=np.linspace(-shift, self.Dt_tot-shift, self.Dt_tot/self.dt) #Dt_tot
+        nPoints = 10*int(round(self.Dt_tot-shift/self.dt))+1 # 1001
+        xfit = np.linspace(-shift, self.Dt_tot-shift, nPoints)
         yfit = curveFunc(xfit,*popt)
 
         plt.plot(xfit+shift, yfit, linestyle=':', color='#aaaaaa', linewidth=1.5*mpl.rcParams['lines.linewidth'])
@@ -1178,7 +1178,7 @@ def fitPeaks(self, t_peaks, I_peaks, curveFunc, p0, eqString, fig=None):  # , ve
         x = 0.8
         y = yfit[-1] #popt[2]
 
-        plt.text(x*self.totT, y, peakEq, ha='center', va='bottom', fontsize=config.eqSize) #, transform=ax.transAxes)
+        plt.text(x*self.Dt_tot, y, peakEq, ha='center', va='bottom', fontsize=config.eqSize) #, transform=ax.transAxes)
 
     print(peakEq)
     if config.verbose > 1:
@@ -2100,7 +2100,7 @@ def plotFluxSetFits(fluxSet, nStates, params, runInd=0, vInd=0):
 
             #TODO: Replace with calcCycle, runTrial or similar
 
-            #I_RhO, t, soln = Sim.runTrial(RhO, phi, V, delD, cycles, self.dt, verbose) #self.totT,
+            #I_RhO, t, soln = Sim.runTrial(RhO, phi, V, delD, cycles, self.dt, verbose) #self.Dt_tot,
 
             ## Delay phase
             _, tdel = PC.getDelayPhase()#;   tdel -= tdel[0]
