@@ -105,7 +105,7 @@ class PhotoCurrent(object):
     off_        # Current at t_off[:]       REMOVE
     range_      # [Imin, Imax]
     span_       # Imax - Imin
-    peakInd_    # Index of biggest current peak                     HIDE
+    _idx_peak_    # Index of biggest current peak                     HIDE
     t_peak_      # Time of biggest current peak     Replace with t_peaks_[0]?
     peak_       # Biggest current peak
     _idx_peaks_   # Indexes of current peaks in each pulse            HIDE
@@ -277,9 +277,9 @@ class PhotoCurrent(object):
             #self.Ipeaks = np.asarray([max(self.I[self._idx_pulses_[p,0]:self._idx_pulses_[p,1]]) for p in range(self.nPulses)])
         #np.asarray([max(abs(self.I[self._idx_pulses_[p,0]:self._idx_pulses_[p,1]])) for p in range(self.nPulses)])
 
-        self.peakInd_ = np.argmax(abs(self.I)) #np.searchsorted(self.I, self.Ipeak)
-        self.t_peak_ = self.t[self.peakInd_]
-        self.peak_ = self.I[self.peakInd_]
+        self._idx_peak_ = np.argmax(abs(self.I)) #np.searchsorted(self.I, self.Ipeak)
+        self.t_peak_ = self.t[self._idx_peak_]
+        self.peak_ = self.I[self._idx_peak_]
 
         #self._idx_peaks_ = np.array([np.argmax(abs(self.getCycle(p)[0])) for p in range(self.nPulses)]) #np.searchsorted(self.I, self.Ipeaks)
         self._idx_peaks_ = self.findPeakInds()
@@ -642,7 +642,7 @@ class PhotoCurrent(object):
             self.pulses -= self.p0      # Pulse times
             self.t_start = self.t[0]       # Beginning Time of Trial
             self.t_end = self.t[-1]      # End Time of Trial
-            self.t_peak_ = self.t[self.peakInd_]
+            self.t_peak_ = self.t[self._idx_peak_]
             self.t_peaks_ = self.t[self._idx_peaks_]
             self.pulseAligned = True
             self.alignPoint = alignPoint
@@ -664,7 +664,7 @@ class PhotoCurrent(object):
         self.pulses -= self.p0      # Pulse times
         self.t_start = self.t[0]       # Beginning Time of Trial
         self.t_end = self.t[-1]      # End Time of Trial
-        self.t_peak_ = self.t[self.peakInd_]
+        self.t_peak_ = self.t[self._idx_peak_]
         self.t_peaks_ = self.t[self._idx_peaks_]
         self.pulseAligned = False
 
@@ -677,7 +677,7 @@ class PhotoCurrent(object):
         -------
         ndarry(int)
             Array of peak indexes for each pulse (shape=nPulses)
-            np.array([peakInd_0, peakInd_1, ..., peakInd_n-1])
+            np.array([_idx_peak_0, _idx_peak_1, ..., _idx_peak_n-1])
         """
 
         offsetInd = len(self.getDelayPhase()[0]) - int(self.overlap) #1
