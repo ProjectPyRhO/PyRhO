@@ -281,7 +281,7 @@ def plotFit(PC, nStates, params, fitRates=False, index=None):
     setCrossAxes(axFit)
 
     ### Plot model-generated curve
-    #onInd, offInd = PC.pulseInds[0,0], PC.pulseInds[0,1]
+    #onInd, offInd = PC._idx_pulses_[0,0], PC._idx_pulses_[0,1]
     #Idel, Ion, Ioff = I[:onInd+1], I[onInd:offInd+1], I[offInd:]
     #tdel, ton, toff = t[:onInd+1], t[onInd:offInd+1]-t[onInd], t[offInd:]-t[offInd]
 
@@ -433,8 +433,8 @@ def fit3states(fluxSet, run, vInd, params, method=defMethod):  # , verbose=confi
         #targetPC.alignToTime()
         I = targetPC.I
         t = targetPC.t
-        onInd = targetPC.pulseInds[0,0] ### Consider multiple pulse scenarios
-        offInd = targetPC.pulseInds[0,1]
+        onInd = targetPC._idx_pulses_[0,0] ### Consider multiple pulse scenarios
+        offInd = targetPC._idx_pulses_[0,1]
         Ions[phiInd] = I[onInd:offInd+1]
         Ioffs[phiInd] = I[offInd:] #[I[offInd:] for I in Is]
         tons[phiInd] = t[onInd:offInd+1]-t[onInd]
@@ -605,8 +605,8 @@ def fit4states(fluxSet, run, vInd, params, method=defMethod):  #, verbose=config
         #targetPC.alignToTime()
         I = targetPC.I
         t = targetPC.t
-        onInd = targetPC.pulseInds[0,0] ### Consider multiple pulse scenarios
-        offInd = targetPC.pulseInds[0,1]
+        onInd = targetPC._idx_pulses_[0,0] ### Consider multiple pulse scenarios
+        offInd = targetPC._idx_pulses_[0,1]
         Ions[phiInd] = I[onInd:offInd+1]
         Ioffs[phiInd] = I[offInd:] #[I[offInd:] for I in Is]
         tons[phiInd] = t[onInd:offInd+1]-t[onInd]
@@ -767,8 +767,8 @@ def fit6states(fluxSet, quickSet, run, vInd, params, method=defMethod):  # , ver
         #targetPC.alignToTime()
         I = targetPC.I
         t = targetPC.t
-        onInd = targetPC.pulseInds[0,0] ### Consider multiple pulse scenarios
-        offInd = targetPC.pulseInds[0,1]
+        onInd = targetPC._idx_pulses_[0,0] ### Consider multiple pulse scenarios
+        offInd = targetPC._idx_pulses_[0,1]
         Ions[phiInd] = I[onInd:offInd+1]
         Ioffs[phiInd] = I[offInd:] #[I[offInd:] for I in Is]
         tons[phiInd] = t[onInd:offInd+1]-t[onInd]
@@ -1999,7 +1999,7 @@ def fitModel(dataSet, nStates=3, params=None, postFitOpt=True, relaxFact=2, meth
     if postFitOpt: # Relax all parameters (except nonOptParams) and reoptimise
         PCs = [setPC.trials[runInd][phiInd][vIndm70] for phiInd in range(setPC.nPhis)]
         Icycles = [pc.getCycle()[0] for pc in PCs]
-        nfs = [pc.I[pc.pulseInds[0,1]] for pc in PCs]
+        nfs = [pc.I[pc._idx_pulses_[0,1]] for pc in PCs]
         tons = [pc.getOnPhase()[1] for pc in PCs]
         toffs = [pc.getOffPhase()[1] for pc in PCs]
         Vs = [pc.V for pc in PCs]

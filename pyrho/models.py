@@ -71,7 +71,7 @@ class RhodopsinModel(PyRhOobject):
     def storeStates(self, soln, t):
         self.states = np.vstack((self.states, soln)) #np.append(self.states, soln, axis=0)
         self.t = np.hstack((self.t, t)) #np.append(self.t, t, axis=1)
-        #self.pulseInd = np.append(self.pulseInd, pulseInds, axis=0)
+        #self.pulseInd = np.append(self.pulseInd, _idx_pulses_, axis=0)
 
     def getStates(self):
         """Returns states, t"""

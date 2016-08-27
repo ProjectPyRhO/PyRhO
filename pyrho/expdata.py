@@ -94,9 +94,9 @@ class PhotoCurrent(object):
     Dt_ons        # On-phase durations
     IPIs        # Inter-pulse-intervals t_off <-> t_on
     Dt_offs       # Off-phase durations
-    pulseInds   # Indexes for the start of each on- and off-phases  HIDE
+    _idx_pulses_   # Indexes for the start of each on- and off-phases  HIDE
     clamped     # Membrane potential was clamped
-    lam         # Stimulus wavelength       RETHINK c.f. stimuli
+    lam         # Stimulus wavelength       RETHINK c.f. stimuli --> phi_lambda
     isFiltered  # Data hase been filtered               HIDE
     _I_orig       # Original photocurrent (unfiltered)    HIDE __I_orig_
     _I_prev       # Previous photocurrent                 HIDE __I_prev_
@@ -217,10 +217,10 @@ class PhotoCurrent(object):
         # self.Dt_offs = [self.Dt_tot-((Dt_on+pOff)*nPulses)-Dt_delay for pOff in pulseCycles[:,1]]
 
         #for p in self.nPulses: # List comprehension instead?
-        #   self.pulseInds[p,0] = np.searchsorted(self.t, pulses[p,0], side="left")  # CHECK: last index where value <= t_on
-        #   self.pulseInds[p,1] = np.searchsorted(self.t, pulses[p,1], side="left")  # CHECK: last index where value <= t_off
-        #self.pulseInds = np.array([[np.searchsorted(self.t, pulses[p,time]) for time in range(2)] for p in range(self.nPulses)])
-        self.pulseInds = np.array([np.searchsorted(self.t, self.pulses[p, :]) for p in range(self.nPulses)], dtype=np.int)
+        #   self._idx_pulses_[p,0] = np.searchsorted(self.t, pulses[p,0], side="left")  # CHECK: last index where value <= t_on
+        #   self._idx_pulses_[p,1] = np.searchsorted(self.t, pulses[p,1], side="left")  # CHECK: last index where value <= t_off
+        #self._idx_pulses_ = np.array([[np.searchsorted(self.t, pulses[p,time]) for time in range(2)] for p in range(self.nPulses)])
+        self._idx_pulses_ = np.array([np.searchsorted(self.t, self.pulses[p, :]) for p in range(self.nPulses)], dtype=np.int)
 
         ### Record Experimental constants
         self.V = copy.copy(V)           # Clamp Voltage [mV]: None if no clamp was used
@@ -247,7 +247,7 @@ class PhotoCurrent(object):
             self.offset_ = I_offset
 
         #if pulses[0][0] > 0: # Check for an initial delay period
-        #    onInd = self.pulseInds[0,0]
+        #    onInd = self._idx_pulses_[0,0]
         #    trim = int(round(0.1*onInd)) # Discount the first and last 10% of the delay period to remove edge effects
         #    offset = np.mean(self.I[trim:onInd-trim+1]) # self.I[:onInd]
         #    if 0.01*abs(offset) > abs(max(self.I) - min(self.I)):
@@ -262,20 +262,20 @@ class PhotoCurrent(object):
 
 
         ### Derive properties from the data
-        self.on_ = np.array([self.I[pInd[0]] for pInd in self.pulseInds])     # Current at t_on[:]
-        self.off_ = np.array([self.I[pInd[1]] for pInd in self.pulseInds])    # Current at t_off[:]
+        self.on_ = np.array([self.I[pInd[0]] for pInd in self._idx_pulses_])     # Current at t_on[:]
+        self.off_ = np.array([self.I[pInd[1]] for pInd in self._idx_pulses_])    # Current at t_off[:]
 
         # Add this to findPeaks
         self.range_ = [min(self.I), max(self.I)]
         self.span_ = self.range_[1] - self.range_[0]
         #if abs(self.Irange[0]) > abs(self.Irange[1]):
         #    self.Ipeak = self.Irange[0] # Min
-        #    self.Ipeaks = np.asarray([min(self.getCycle(p)) for p in range(self.nPulses)]) # Peak may occur after stimulation #np.asarray([min(self.I[self.pulseInds[p,0]:self.pulseInds[p,1]]) for p in range(self.nPulses)])
+        #    self.Ipeaks = np.asarray([min(self.getCycle(p)) for p in range(self.nPulses)]) # Peak may occur after stimulation #np.asarray([min(self.I[self._idx_pulses_[p,0]:self._idx_pulses_[p,1]]) for p in range(self.nPulses)])
         #else:
         #    self.Ipeak = self.Irange[1] # Max
         #    self.Ipeaks = np.asarray([max(self.getCycle(p)) for p in range(self.nPulses)])
-            #self.Ipeaks = np.asarray([max(self.I[self.pulseInds[p,0]:self.pulseInds[p,1]]) for p in range(self.nPulses)])
-        #np.asarray([max(abs(self.I[self.pulseInds[p,0]:self.pulseInds[p,1]])) for p in range(self.nPulses)])
+            #self.Ipeaks = np.asarray([max(self.I[self._idx_pulses_[p,0]:self._idx_pulses_[p,1]]) for p in range(self.nPulses)])
+        #np.asarray([max(abs(self.I[self._idx_pulses_[p,0]:self._idx_pulses_[p,1]])) for p in range(self.nPulses)])
 
         self.peakInd_ = np.argmax(abs(self.I)) #np.searchsorted(self.I, self.Ipeak)
         self.t_peak_ = self.t[self.peakInd_]
@@ -698,7 +698,7 @@ class PhotoCurrent(object):
         """Find the steady-state current either as the last ``tail`` proportion of the on-phase or by fitting a decay function"""
         assert(0 <= pulse < self.nPulses)
 
-        #offInd = self.pulseInds[pulse][1] #np.searchsorted(t,Dt_on+Dt_delay,side="left")
+        #offInd = self._idx_pulses_[pulse][1] #np.searchsorted(t,Dt_on+Dt_delay,side="left")
 
         #if self.Dt_ons[pulse] < window:
         #    raise ValueError('Error: The plateau buffer must be shorter than the on phase!')
@@ -738,7 +738,7 @@ class PhotoCurrent(object):
 
         elif method == 1: # Theoretical: Fit curve from peak to end of on phase
 
-            postPeak = slice(self._idx_peaks_[pulse], self.pulseInds[pulse, 1]+int(self.overlap)) #1 # t_peak : t_off+1
+            postPeak = slice(self._idx_peaks_[pulse], self._idx_pulses_[pulse, 1]+int(self.overlap)) #1 # t_peak : t_off+1
             #popt = fitPeaks(self.t[postPeak], self.I[postPeak], expDecay, p0inact, '$I_{{inact}} = {:.3}e^{{-t/{:g}}} {:+.3}$','')
             #Iss = popt[2]
 
@@ -790,15 +790,15 @@ class PhotoCurrent(object):
 
     def getDelayPhase(self):
         """Return Idel, tdel"""
-        delSlice = slice(0, self.pulseInds[0, 0]+int(self.overlap)) # [:pulseInds[0, 0]+overlap]
+        delSlice = slice(0, self._idx_pulses_[0, 0]+int(self.overlap)) # [:_idx_pulses_[0, 0]+overlap]
         return (self.I[delSlice], self.t[delSlice])
 
 
     def getOnPhase(self, pulse=0):
         """Return I [nA] and t [ms] arrays from the on-phase (Ion, ton) for a given pulse"""
         assert(0 <= pulse < self.nPulses)
-        onSlice = slice(self.pulseInds[pulse, 0], self.pulseInds[pulse, 1]+int(self.overlap)) # [pulseInds[pulse,0]:pulseInds[pulse,1]+overlap]
-        #return (self.I[self.pulseInds[pulse,0]:self.pulseInds[pulse,1]+1], self.t[self.pulseInds[pulse,0]:self.pulseInds[pulse,1]+1])
+        onSlice = slice(self._idx_pulses_[pulse, 0], self._idx_pulses_[pulse, 1]+int(self.overlap)) # [_idx_pulses_[pulse,0]:_idx_pulses_[pulse,1]+overlap]
+        #return (self.I[self._idx_pulses_[pulse,0]:self._idx_pulses_[pulse,1]+1], self.t[self._idx_pulses_[pulse,0]:self._idx_pulses_[pulse,1]+1])
         return (self.I[onSlice], self.t[onSlice])
 
 
@@ -806,11 +806,11 @@ class PhotoCurrent(object):
         """Return I [nA] and t [ms] arrays from the off-phase (Ioff, toff) for a given pulse"""
         assert(0 <= pulse < self.nPulses)
         if 0 <= pulse < self.nPulses-1:
-            offSlice = slice(self.pulseInds[pulse, 1], self.pulseInds[pulse+1, 0]+int(self.overlap))
-            #return self.I[self.pulseInds[pulse,1]:self.pulseInds[pulse+1,0]+1]
+            offSlice = slice(self._idx_pulses_[pulse, 1], self._idx_pulses_[pulse+1, 0]+int(self.overlap))
+            #return self.I[self._idx_pulses_[pulse,1]:self._idx_pulses_[pulse+1,0]+1]
         elif pulse == self.nPulses-1:   # Last Pulse
-            offSlice = slice(self.pulseInds[pulse, 1], None) # [pulseInds[pulse, 1]:]
-            #return self.I[self.pulseInds[pulse,1]:]
+            offSlice = slice(self._idx_pulses_[pulse, 1], None) # [_idx_pulses_[pulse, 1]:]
+            #return self.I[self._idx_pulses_[pulse,1]:]
         else:
             raise IndexError("Error: Selected pulse out of range!")
         return (self.I[offSlice], self.t[offSlice])
@@ -820,11 +820,11 @@ class PhotoCurrent(object):
         """Return I [nA] and t [ms] arrays from the on- and off-phase (Ip, tp) for a given pulse"""
         assert(0 <= pulse < self.nPulses)
         if 0 <= pulse < self.nPulses-1:
-            cycleSlice = slice(self.pulseInds[pulse, 0], self.pulseInds[pulse+1, 0]+int(self.overlap))
-            #return self.I[self.pulseInds[pulse,0]:self.pulseInds[pulse+1,0]+1] # Consider removing the +1
+            cycleSlice = slice(self._idx_pulses_[pulse, 0], self._idx_pulses_[pulse+1, 0]+int(self.overlap))
+            #return self.I[self._idx_pulses_[pulse,0]:self._idx_pulses_[pulse+1,0]+1] # Consider removing the +1
         elif pulse == self.nPulses-1:   # Last Pulse
-            cycleSlice = slice(self.pulseInds[pulse, 0], None)
-            #return self.I[self.pulseInds[pulse,0]:]
+            cycleSlice = slice(self._idx_pulses_[pulse, 0], None)
+            #return self.I[self._idx_pulses_[pulse,0]:]
         else:
             raise IndexError("Error: Selected pulse out of range!")
         return (self.I[cycleSlice], self.t[cycleSlice])
@@ -832,14 +832,14 @@ class PhotoCurrent(object):
     def getActivation(self, pulse=0):
         """Return I [nA] and t [ms] arrays from beginning of the on-phase to the peak for a given pulse"""
         assert(0 <= pulse < self.nPulses)
-        actSlice = slice(self.pulseInds[pulse, 0], self._idx_peaks_[pulse]+int(self.overlap))
+        actSlice = slice(self._idx_pulses_[pulse, 0], self._idx_peaks_[pulse]+int(self.overlap))
         return (self.I[actSlice], self.t[actSlice])
 
 
     def getDeactivation(self, pulse=0): # Inactivation, Deactivation, Desensitisation???
         """Return I [nA] and t [ms] arrays from the peak to the end of the on-phase for a given pulse"""
         assert(0 <= pulse < self.nPulses)
-        deactSlice = slice(self._idx_peaks_[pulse], self.pulseInds[pulse, 1]+int(self.overlap))
+        deactSlice = slice(self._idx_peaks_[pulse], self._idx_pulses_[pulse, 1]+int(self.overlap))
         return (self.I[deactSlice], self.t[deactSlice])
 
 
@@ -1057,7 +1057,7 @@ class PhotoCurrent(object):
                 if plotInit:
                     axS0 = fig.add_subplot(gs[p+2, pieInd])
                     #initialStates = states[0,:] * 100 #self.s0 * 100
-                    initialStates = states[self.pulseInds[p,0],:] * 100
+                    initialStates = states[self._idx_pulses_[p,0],:] * 100
                     if config.verbose > 1:
                         pct = {l:s for l,s in zip(labels, initialStates)}
                         print('Initial state occupancies (%):', sorted(pct.items(), key=lambda x: labels.index(x[0])))
@@ -1102,7 +1102,7 @@ class PhotoCurrent(object):
 
                 if plotSS: #not plotInit: # Plot steady-state proportions
                     axSS = fig.add_subplot(gs[p+2, pieInd])
-                    offInd = self.pulseInds[p, 1] # TODO: Revise
+                    offInd = self._idx_pulses_[p, 1] # TODO: Revise
                     ss = states[offInd,:] * 100
                     if config.verbose > 1:
                         pct = {l:s for l,s in zip(labels, ss)}

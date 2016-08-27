@@ -187,7 +187,7 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
         nSteps = int(round(((end-start)/dt)+1))
         t = np.linspace(start, end, nSteps, endpoint=True)
         phi_tV = np.zeros_like(t)
-        #pulseInds = np.empty([0,2],dtype=int) # Light on and off indexes for each pulse
+        #_idx_pulses_ = np.empty([0,2],dtype=int) # Light on and off indexes for each pulse
 
         for p in range(nPulses):
             start = end
@@ -200,14 +200,14 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
 
             #onInd = len(t) - 1 # Start of on-phase
             #offInd = onInd + int(round(Dt_on/dt))
-            #pulseInds = np.vstack((pulseInds, [onInd,offInd]))
+            #_idx_pulses_ = np.vstack((_idx_pulses_, [onInd,offInd]))
 
             #t = np.r_[t, tPulse[1:]]
 
             phi_tV = np.r_[phi_tV, phiPulse[1:]]
 
         phi_tV[np.ma.where(phi_tV < 0)] = 0 # Safeguard for negative phi values
-        return phi_tV #, t, pulseInds
+        return phi_tV #, t, _idx_pulses_
 
 
     def plot(self, plotStateVars=False):
@@ -558,7 +558,7 @@ class protSinusoid(Protocol):
             for phiInd, phiOn in enumerate(self.phis): ### These loops need reconsidering...!!!
                 for vInd, V in enumerate(self.Vs):
                     PC = self.PD.trials[np.argmax(Ipeaks)][phiInd][vInd]
-                    onBegInd, onEndInd = PC.pulseInds[0]
+                    onBegInd, onEndInd = PC._idx_pulses_[0]
                     t = PC.t
                     self.axI.annotate('', xy=(tTransEnd, Ip), xytext=(t[onEndInd], Ip),
                                         arrowprops={'arrowstyle':'<->','color':'black','shrinkA':0,'shrinkB':0})
@@ -568,7 +568,7 @@ class protSinusoid(Protocol):
                     Iabs = np.zeros(self.nRuns) #[None for r in range(nRuns)]
                     for run in range(self.nRuns):
                         PC = self.PD.trials[run][phiInd][vInd]
-                        onBegInd, onEndInd = PC.pulseInds[0]
+                        onBegInd, onEndInd = PC._idx_pulses_[0]
                         t = PC.t #t = ts[run][phiInd][vInd]
                         I_RhO = PC.I #I_RhO = Is[run][phiInd][vInd]
                         #transEndInd = np.searchsorted(t,Dt_delay+transD,side="left") # Add one since upper bound is not included in slice
