@@ -993,7 +993,8 @@ def getRecoveryPeaks(recData, phiInd=None, vInd=None, usePeakTime=False):
     ### Build array of second peaks
     for run in range(recData.nRuns):
         PC = recData.trials[run][phiInd][vInd]
-        PC.alignToPulse(pulse=0, alignPoint=2) # End of the first pulse
+        #PC.alignToPulse(pulse=0, alignPoint=2) # End of the first pulse
+        PC.align_to(PC.pulses[0, 1])  # End of the first pulse
         if usePeakTime:
             tpeaks1.append(recData.trials[run][phiInd][vInd].t_peaks_[1]) # Time of second peak
         else:
@@ -2076,7 +2077,8 @@ def plotFluxSetFits(fluxSet, nStates, params, runInd=0, vInd=0):
     # Plot experimental data
     for phiInd in range(fluxSet.nPhis):
         PC = fluxSet.trials[runInd][phiInd][vInd]
-        PC.alignToTime()
+        #PC.alignToTime()
+        PC.align_to(PC.t[0])
         phi = PC.phi
         setAx.plot(PC.t, PC.I, color=colours[phiInd%len(colours)],
                    lw=lineWidth, markeredgecolor='None',

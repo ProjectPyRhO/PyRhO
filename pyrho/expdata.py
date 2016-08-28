@@ -107,15 +107,15 @@ class PhotoCurrent(object):
 
     I_peak_       # Biggest current peak                        (.peak_ published)
     I_peaks_      # Current peaks in each pulse
-    I_sss_        # Steady-state currents for each pulse
     I_ss_         # Steady-state current of first pulse   REMOVE (.ss_ published)
-    I_range_      # [Imin, Imax]
+    I_sss_        # Steady-state currents for each pulse
     I_span_       # Imax - Imin
+    I_range_      # [Imin, Imax]
     type        # Polarity of current     RENAME
 
-    pulseAligned# Aligned to (a) pulse    RETHINK...
-    alignPoint  # {0:=t_on, 1:=t_peak, 2:=t_off}
-    p0          # Time shift
+    #pulseAligned# Aligned to (a) pulse    RETHINK...
+    #alignPoint  # {0:=t_on, 1:=t_peak, 2:=t_off}
+    #p0          # Time shift
     overlap     # Periods are up to *and including* the start of the next phase
     dt          # Sampling time step                dt_
     sr          # Sampling rate [Hz] [samples/s]    sr_
@@ -168,7 +168,6 @@ class PhotoCurrent(object):
         else:
             raise ValueError("Dimension mismatch: |t|={}; |I|={}. t must be either an array of the same length as I or a scalar defining the timestep!".format(len(t), len(I)))
 
-
         self.t_start = self.t[0]                   # Beginning trial time
         self.t_end = self.t[-1]                  # Last trial time point
         self.Dt_total = self.t_end - self.t_start       # Total trial time #max(self.t) # Handles negative delays
@@ -216,17 +215,23 @@ class PhotoCurrent(object):
 
         self.Dt_delay = self.pulses[0, 0] - self.t_start                   # Handles negative delays
         self.Dt_delays = np.array(self.pulses[:, 0] - self.t_start)        # Delay Durations
-        self.Dt_ons = np.array(self.pulses[:, 1] - self.pulses[:, 0]) # Pulse Durations
+        self.Dt_ons_ = self.pulseCycles[:, 0]
+        self.Dt_IPIs = self.pulseCycles[:-1, 1]
+        self.Dt_offs_ = self.pulseCycles[:, 1]
+
         #if self.nPulses > 1:
         #    self.Dt_IPIs = np.zeros(self.nPulses - 1)
         #    for p in range(0, self.nPulses-1):
         #        self.Dt_IPIs[p] = self.pulses[p+1,0] - self.pulses[p,1]
+        #self.Dt_ons = np.array(self.pulses[:, 1] - self.pulses[:, 0]) # Pulse Durations
 
         #self.Dt_IPIs = np.array([self.pulses[p+1, 0] - self.pulses[p, 1] for p in range(self.nPulses-1)]) # end <-> start
-        self.Dt_IPIs = self.pulses[1:, 0] - self.pulses[:-1, 1]  # end <-> start
+        #self.Dt_IPIs = self.pulses[1:, 0] - self.pulses[:-1, 1]  # end <-> start
+
         #self.Dt_offs = np.append(self.Dt_IPIs, self.t_end-self.pulses[-1, 1])
-        self.Dt_offs = np.r_[self.pulses[1:, 0], self.t_end] - self.pulses[:, 1]
         # self.Dt_offs = [self.Dt_total-((Dt_on+pOff)*nPulses)-Dt_delay for pOff in pulseCycles[:,1]]
+        #self.Dt_offs = np.r_[self.pulses[1:, 0], self.t_end] - self.pulses[:, 1]
+
 
         #for p in self.nPulses: # List comprehension instead?
         #   self._idx_pulses_[p,0] = np.searchsorted(self.t, pulses[p,0], side="left")  # CHECK: last index where value <= t_on
@@ -314,7 +319,8 @@ class PhotoCurrent(object):
         self.pulseAligned = False
         self.alignPoint = 0
         self.p0 = None
-        self.alignToPulse()
+        #self.alignToPulse()
+        self.align_to(self.pulses[0, 0])
 
         #self.findKinetics()
 
@@ -638,6 +644,18 @@ class PhotoCurrent(object):
 
         return
 
+    def align_to(self, t0):
+        '''
+        e.g. align_to(t[0])
+             align_to(t_ons[p])
+        '''
+        self.t -= t0           # Time array
+        self.pulses -= t0      # Pulse times
+        self.t_start = self.t[0]       # Beginning Time of Trial
+        self.t_end = self.t[-1]      # End Time of Trial
+        self.t_peak_ = self.t[self._idx_peak_]
+        self.t_peaks_ = self.t[self._idx_peaks_]
+        self._t0 = t0
 
     def alignToPulse(self, pulse=0, alignPoint=0):
         """Set time array so that the first pulse occurs at t=0 (with negative delay period)"""
@@ -658,7 +676,6 @@ class PhotoCurrent(object):
             self.t_peaks_ = self.t[self._idx_peaks_]
             self.pulseAligned = True
             self.alignPoint = alignPoint
-
 
     def alignToTime(self, t=None):
         """Set time array so that it begins at t=0 [default] (with the first pulse at t>0)"""

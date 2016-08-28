@@ -1327,7 +1327,8 @@ class protRecovery(Protocol):
             for phiInd in range(self.nPhis):
                 for vInd in range(self.nVs):
                     PC = self.PD.trials[run][phiInd][vInd]
-                    PC.alignToPulse(pulse=0, alignPoint=2) # End of the first pulse
+                    #PC.alignToPulse(pulse=0, alignPoint=2) # End of the first pulse
+                    PC.align_to(PC.pulses[0, 1])  # End of the first pulse
                     self.PD.IPIpeaks_[run][phiInd][vInd] = PC.I_peaks_[1]
                     self.PD.tIPIpeaks_[run][phiInd][vInd] = PC.t_peaks_[1]
 
