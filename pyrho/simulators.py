@@ -107,7 +107,7 @@ class Simulator(PyRhOobject):  # object
         for run in range(Prot.nRuns):                   # Loop over the number of runs...
 
             cycles, Dt_delay = Prot.getRunCycles(run)
-            pulses, Dt_tot = cycles2times(cycles, Dt_delay)
+            pulses, Dt_total = cycles2times(cycles, Dt_delay)
 
             for phiInd, phiOn in enumerate(Prot.phis):  # Loop over light intensity...
 
@@ -614,7 +614,7 @@ class simNEURON(Simulator):
         # Model events: http://www.neuron.yale.edu/neuron/static/new_doc/simctrl/cvode.html#moDt_delayescriptionissues-events
 
         nPulses = cycles.shape[0]
-        times, Dt_tot = cycles2times(cycles,Dt_delay)
+        times, Dt_total = cycles2times(cycles,Dt_delay)
 
         # phi_ts = self.Prot.phi_ts[0][0][:]#[run][phiInd][:]
         # self.runTrialPhi_t(self, RhO, self.Prot.genPhiFuncs(), V, Dt_delay, cycles, dt)
@@ -624,7 +624,7 @@ class simNEURON(Simulator):
         RhO.s0 = RhO.states[-1,:]   # Store initial states for plotting
 
         # Set simulation run time
-        self.h.tstop = Dt_tot
+        self.h.tstop = Dt_total
 
         if self.Vclamp == True:
             self.setVclamp(V)
@@ -792,7 +792,7 @@ class simNEURON(Simulator):
         nPulses = cycles.shape[0]
         assert(len(phi_ts) == nPulses)
 
-        times, Dt_tot = cycles2times(cycles,Dt_delay)
+        times, Dt_total = cycles2times(cycles,Dt_delay)
 
         if verbose > 1:
             if V is not None:
@@ -806,7 +806,7 @@ class simNEURON(Simulator):
             print(info)
 
         # Set simulation run time
-        self.h.tstop = Dt_tot #Dt_delay + np.sum(cycles) #nPulses*(Dt_on+Dt_off) + padD
+        self.h.tstop = Dt_total #Dt_delay + np.sum(cycles) #nPulses*(Dt_on+Dt_off) + padD
 
         ### Delay phase (to allow the system to settle)
         phi = 0
@@ -902,7 +902,7 @@ class simNEURON(Simulator):
             axV = Vfig.add_subplot(111)
             for run in range(Prot.nRuns):                   # Loop over the number of runs...   ### Place within V & phi loops to test protocols at different V & phi?
                 cycles, Dt_delay = Prot.getRunCycles(run)
-                pulses, Dt_tot = cycles2times(cycles, Dt_delay)
+                pulses, Dt_total = cycles2times(cycles, Dt_delay)
                 for phiInd, phiOn in enumerate(Prot.phis):  # Loop over light intensity...
                     for vInd, V in enumerate(Prot.Vs):      # Loop over clamp voltage ### N.B. solution variables are not currently dependent on V
                         col, style = Prot.getLineProps(run, vInd, phiInd)
@@ -922,7 +922,7 @@ class simNEURON(Simulator):
             if Prot.protocol is 'shortPulse':  # TODO: Refactor
                 for run in range(Prot.nRuns):                   # Loop over the number of runs...   ### Place within V & phi loops to test protocols at different V & phi?
                     cycles, Dt_delay = Prot.getRunCycles(run)
-                    pulses, Dt_tot = cycles2times(cycles, Dt_delay)
+                    pulses, Dt_total = cycles2times(cycles, Dt_delay)
                     for phiInd, phiOn in enumerate(Prot.phis):  # Loop over light intensity...
                         for vInd, V in enumerate(Prot.Vs):      # Loop over clamp voltage ### N.B. solution variables are not currently dependent on V
 
@@ -1219,8 +1219,8 @@ class simBrian(Simulator):
             I_RhO = np.squeeze(I_RhO) # Replace with record indexing?
         self.monitors['V'].record_single_timestep()
 
-        #times, Dt_tot = cycles2times(cycles, Dt_delay)
-        #self.plotRasters(times, Dt_tot)
+        #times, Dt_total = cycles2times(cycles, Dt_delay)
+        #self.plotRasters(times, Dt_total)
 
         return I_RhO, t, states
 
@@ -1232,7 +1232,7 @@ class simBrian(Simulator):
         nPulses = cycles.shape[0]
         assert(len(phi_ts) == nPulses)
 
-        times, Dt_tot = cycles2times(cycles, Dt_delay)
+        times, Dt_total = cycles2times(cycles, Dt_delay)
 
         if verbose > 1:
             if V is not None:
@@ -1261,7 +1261,7 @@ class simBrian(Simulator):
         if verbose > 1:
             print(self.namespace)
 
-        duration = Dt_tot # self.Dt_tot instead?
+        duration = Dt_total # self.Dt_total instead?
         start, end = RhO.t[0], RhO.t[0]+Dt_delay
         nSteps = int(round(((end-start)/dt)+1))
         t = np.linspace(start, end, nSteps, endpoint=True)
@@ -1315,7 +1315,7 @@ class simBrian(Simulator):
         #for mon in self.monitors:
         #    mon.record_single_timestep()
 
-        #self.plotRasters(times, Dt_tot)
+        #self.plotRasters(times, Dt_total)
 
         return I_RhO, t, states
 
@@ -1334,7 +1334,7 @@ class simBrian(Simulator):
         RhO = self.RhO
         for run in range(Prot.nRuns):                   # Loop over the number of runs...
             cycles, Dt_delay = Prot.getRunCycles(run)
-            pulses, Dt_tot = cycles2times(cycles, Dt_delay)
+            pulses, Dt_total = cycles2times(cycles, Dt_delay)
             for phiInd, phiOn in enumerate(Prot.phis):  # Loop over light intensity...
                 for vInd, V in enumerate(Prot.Vs):      # Loop over clamp voltage
                     col, style = Prot.getLineProps(run, vInd, phiInd)
@@ -1343,14 +1343,14 @@ class simBrian(Simulator):
 
                     figName = '{}Vm{}s-{}-{}-{}'.format(Prot.protocol, RhO.nStates, run, phiInd, vInd)
                     Vmonitor = self.Vms[run][phiInd][vInd]
-                    self.plotVm(Vmonitor=Vmonitor, times=pulses, Dt_tot=Dt_tot, offset=Dt_delay, figName=figName)
+                    self.plotVm(Vmonitor=Vmonitor, times=pulses, Dt_total=Dt_total, offset=Dt_delay, figName=figName)
 
                     figName = '{}Spikes{}s-{}-{}-{}'.format(Prot.protocol, RhO.nStates, run, phiInd, vInd)
                     spikeMonitors = self.rasters[run][phiInd][vInd]
-                    self.plotRasters(spikeSets=spikeMonitors, times=pulses, Dt_tot=Dt_tot, offset=Dt_delay, figName=figName)
+                    self.plotRasters(spikeSets=spikeMonitors, times=pulses, Dt_total=Dt_total, offset=Dt_delay, figName=figName)
         return
 
-    def plotVm(self, Vmonitor, times=None, Dt_tot=None, offset=0, figName=None): ### TODO: REVISE (esp. offset)!!!
+    def plotVm(self, Vmonitor, times=None, Dt_total=None, offset=0, figName=None): ### TODO: REVISE (esp. offset)!!!
         Prot = self.Prot
         RhO = self.RhO
         Vfig = plt.figure()
@@ -1360,11 +1360,11 @@ class simBrian(Simulator):
         #times -= offset # Do not edit in place or it causes errors in subsequent functions!
         plt.plot(t, Vm, 'g')
         plotLight(times - offset, axV)
-        axV.set_xlim((-offset, Dt_tot - offset))
+        axV.set_xlim((-offset, Dt_total - offset))
 
         plt.ylabel(r'$\mathrm{Membrane\ Potential\ [mV]}$') #axV.set_ylabel('Voltage [mV]')
-        if Dt_tot is None:
-            Dt_tot = Prot.Dt_tot
+        if Dt_total is None:
+            Dt_total = Prot.Dt_total
 
         plt.xlabel(r'$\mathrm{Time\ [ms]}$', position=(config.xLabelPos,0), ha='right')
 
@@ -1390,7 +1390,7 @@ class simBrian(Simulator):
         Vfig.savefig(fileName, format=config.saveFigFormat)
 
 
-    def plotRasters(self, spikeSets, times=None, Dt_tot=None, offset=0, figName=None):
+    def plotRasters(self, spikeSets, times=None, Dt_total=None, offset=0, figName=None):
         """Plot spike rasters for each layer"""
 
         nLayers = len(spikeSets) # self.monitors['spikes']
@@ -1398,8 +1398,8 @@ class simBrian(Simulator):
         #if group is None:
         #    layers = list(range(nLayers))
 
-        if Dt_tot is None:
-            Dt_tot = self.Prot.Dt_tot
+        if Dt_total is None:
+            Dt_total = self.Prot.Dt_total
 
         #t = spikeMonitors[0].t/ms - offset
         #t_start, t_end = t[0], t[-1]
@@ -1426,8 +1426,8 @@ class simBrian(Simulator):
                 #    axes[lay].axvspan(pulse[0], pulse[1], facecolor='y', alpha=0.2)
 
             axes[lay].set_ylim((0, spikeSets[gInd]['n']))
-            axes[lay].set_xlim((-offset, Dt_tot - offset))
-        #plt.xlim((-offset, Dt_tot - offset))
+            axes[lay].set_xlim((-offset, Dt_total - offset))
+        #plt.xlim((-offset, Dt_total - offset))
 
         plt.tight_layout()
         plt.show()
@@ -1438,7 +1438,7 @@ class simBrian(Simulator):
         Rfig.savefig(fileName, format=config.saveFigFormat)
 
 
-    def plotRasters_orig(self, spikeMonitors, times=None, Dt_tot=None, offset=0, figName=None):
+    def plotRasters_orig(self, spikeMonitors, times=None, Dt_total=None, offset=0, figName=None):
         """Plot spike rasters for each layer"""
 
         nLayers = len(spikeMonitors) # self.monitors['spikes']
@@ -1446,8 +1446,8 @@ class simBrian(Simulator):
         #if group is None:
         #    layers = list(range(nLayers))
 
-        if Dt_tot is None:
-            Dt_tot = self.Prot.Dt_tot
+        if Dt_total is None:
+            Dt_total = self.Prot.Dt_total
 
         #t = spikeMonitors[0].t/ms - offset
         #t_start, t_end = t[0], t[-1]
@@ -1471,8 +1471,8 @@ class simBrian(Simulator):
                 plotLight(times - offset, axes[lay])
 
             axes[lay].set_ylim((0, len(spikeMonitors[gInd].spike_trains())))
-            axes[lay].set_xlim((-offset, Dt_tot - offset))
-        #plt.xlim((-offset, Dt_tot - offset))
+            axes[lay].set_xlim((-offset, Dt_total - offset))
+        #plt.xlim((-offset, Dt_total - offset))
 
         plt.tight_layout()
 

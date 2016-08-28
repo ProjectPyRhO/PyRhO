@@ -453,7 +453,7 @@ def _calcgbar(Ip, Vclamp, A=1):
     return gbar * (1e6) # 1e-12 S / (1e-6 m)^2 = (1e-6)*(1e-9 A / 1e-3 V)/(1e-6 m)^2
 
 
-def times2cycles(times, Dt_tot):       # TODO revise to handle negative delay times c.f. PhotoCurrent
+def times2cycles(times, Dt_total):       # TODO revise to handle negative delay times c.f. PhotoCurrent
     r"""
     Convert times (absolute events) to pulse cycles (durations). 
     
@@ -461,7 +461,7 @@ def times2cycles(times, Dt_tot):       # TODO revise to handle negative delay ti
     ----------
     times : list or array
         List of pulse times e.g. :math:`[[t_{on,0}, t_{off,0}], ..., [t_{on,N-1}, t_{off,N-1}]]`. 
-    Dt_tot : float
+    Dt_total : float
         Total protocol time, :math:`t_{tot}`
     
     Returns
@@ -474,7 +474,7 @@ def times2cycles(times, Dt_tot):       # TODO revise to handle negative delay ti
     assert(times.shape[1] <= 2)
     Dt_delay = times[0, 0] # This assumes that the times have not been shifted
     Dt_ons = [row[1]-row[0] for row in times] # pulses[:,1] - pulses[:,0]   # Pulse Durations
-    Dt_offs = np.append(times[1:, 0], Dt_tot) - times[:, 1]
+    Dt_offs = np.append(times[1:, 0], Dt_total) - times[:, 1]
     cycles = np.vstack((Dt_ons, Dt_offs)).transpose()
     return (cycles, Dt_delay)
 

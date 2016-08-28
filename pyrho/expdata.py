@@ -89,7 +89,7 @@ class PhotoCurrent(object):
     t_end        # t[-1]         HIDE _t_end_
     t_peak_      # Time of biggest current peak     Replace with t_peaks_[0]?
     t_peaks_     # Times of current peaks in each pulse
-    Dt_tot        # t[-1] - t[0]
+    Dt_total        # t[-1] - t[0]
     Dt_delay        # Delay duration before the first pulse
     Dt_delays       # Total delay before each pulse
     Dt_ons        # On-phase durations
@@ -107,7 +107,7 @@ class PhotoCurrent(object):
     I_peaks_      # Current peaks in each pulse
 
     Dt_lag_        # Lag of first pulse      REMOVE
-    Dt_lags_       # t_lag = t_peak - t_on
+    Dt_lags_       # t_lag = Dt_act := t_peak - t_on
     I_sss_        # Steady-state currents for each pulse
     I_ss_         # Steady-state current of first pulse   REMOVE (.ss_ published)
     I_range_      # [Imin, Imax]
@@ -172,7 +172,7 @@ class PhotoCurrent(object):
 
         self.t_start = self.t[0]                   # Beginning trial time
         self.t_end = self.t[-1]                  # Last trial time point
-        self.Dt_tot = self.t_end - self.t_start       # Total trial time #max(self.t) # Handles negative delays
+        self.Dt_total = self.t_end - self.t_start       # Total trial time #max(self.t) # Handles negative delays
 
         if stimuli is not None:
             # TODO: Remove stimuli and make it equivalent to t i.e. float or array
@@ -213,7 +213,7 @@ class PhotoCurrent(object):
         ### Load metadata
         self.pulses = np.array(pulses)          # nPulses x 2 array [t_on, t_off] # assumes deepcopy(pulses)
         self.nPulses = self.pulses.shape[0]
-        self.pulseCycles, _ = times2cycles(self.pulses, self.t_end) #self.Dt_tot)
+        self.pulseCycles, _ = times2cycles(self.pulses, self.t_end) #self.Dt_total)
 
         self.Dt_delay = self.pulses[0, 0] - self.t_start                   # Handles negative delays
         self.Dt_delays = np.array(self.pulses[:, 0] - self.t_start)        # Delay Durations
@@ -224,7 +224,7 @@ class PhotoCurrent(object):
         #        self.IPIs[p] = self.pulses[p+1,0] - self.pulses[p,1]
         self.IPIs = np.array([self.pulses[p+1, 0] - self.pulses[p, 1] for p in range(self.nPulses-1)]) # end <-> start
         self.Dt_offs = np.append(self.IPIs, self.t_end-self.pulses[-1, 1])
-        # self.Dt_offs = [self.Dt_tot-((Dt_on+pOff)*nPulses)-Dt_delay for pOff in pulseCycles[:,1]]
+        # self.Dt_offs = [self.Dt_total-((Dt_on+pOff)*nPulses)-Dt_delay for pOff in pulseCycles[:,1]]
 
         #for p in self.nPulses: # List comprehension instead?
         #   self._idx_pulses_[p,0] = np.searchsorted(self.t, pulses[p,0], side="left")  # CHECK: last index where value <= t_on
@@ -317,11 +317,11 @@ class PhotoCurrent(object):
         #self.findKinetics()
 
         if config.verbose > 1:
-            print("Photocurrent data loaded! nPulses={}; Total time={}ms; Range={}nA".format(self.nPulses, self.Dt_tot, str(self.I_range_)))
+            print("Photocurrent data loaded! nPulses={}; Total time={}ms; Range={}nA".format(self.nPulses, self.Dt_total, str(self.I_range_)))
 
 
     def __len__(self):
-        return self.Dt_tot
+        return self.Dt_total
 
     def __str__(self):
         """Print out summary details of the photocurrent"""
@@ -333,7 +333,7 @@ class PhotoCurrent(object):
             clStr = '@ {:.3g} mV'.format(self.V)
         else:
             clStr = '(unclamped)'
-        str = 'Photocurrent with {} pulse{} {} sampled at {:.3g} samples/s over {:.3g} ms {}; {:.3g} ph/s/mm^2'.format(self.nPulses, plural, self.pulses, self.sr, self.Dt_tot, clStr, self.phi)
+        str = 'Photocurrent with {} pulse{} {} sampled at {:.3g} samples/s over {:.3g} ms {}; {:.3g} ph/s/mm^2'.format(self.nPulses, plural, self.pulses, self.sr, self.Dt_total, clStr, self.phi)
         return str
 
     def __call__(self, incTime=False):
@@ -617,7 +617,7 @@ class PhotoCurrent(object):
             ### Fit curve for tau_off (bi-exponential)
             if verbose > 1:
                 print('Analysing off-phase decay...')
-    #                 endInd = -1 #np.searchsorted(t,Dt_off+Dt_on+Dt_delay,side="right") #Dt_tot
+    #                 endInd = -1 #np.searchsorted(t,Dt_off+Dt_on+Dt_delay,side="right") #Dt_total
             popt, _, _ = self.fitPeaks(t[onEndInd:], I_RhO[onEndInd:], biExpDecay, p0off, '$I_{{off}} = {:.3}e^{{-t/{:g}}} {:+.3}e^{{-t/{:g}}} {:+.3}$','')
             ### Plot tau_off vs Irrad (for curves of V)
             ### Plot tau_off vs V (for curves of Irrad)

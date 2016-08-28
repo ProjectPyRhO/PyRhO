@@ -40,7 +40,7 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
     nRuns = None
     Dt_delay = None
     cycles = None
-    Dt_tot = None
+    Dt_total = None
     dt = None
     phis = None
     Vs = None
@@ -56,7 +56,7 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
         self.plotKinetics = False
         self.setParams(params)
         self.prepare()
-        self.t_start, self.t_end = 0, self.Dt_tot
+        self.t_start, self.t_end = 0, self.Dt_total
         self.phi_ts = None
         self.lam = 470 # Default wavelength [nm]
         self.PD = None
@@ -87,8 +87,8 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
 
         if np.isscalar(self.cycles): # Only 'on' duration specified
             Dt_on = self.cycles
-            if hasattr(self, 'Dt_tot'):
-                Dt_off = self.Dt_tot - Dt_on - self.Dt_delay
+            if hasattr(self, 'Dt_total'):
+                Dt_off = self.Dt_total - Dt_on - self.Dt_delay
             else:
                 Dt_off = 0
             self.cycles = np.asarray([[Dt_on, Dt_off]])
@@ -100,7 +100,7 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
 
         self.cycles = np.asarray(self.cycles)
         self.nPulses = self.cycles.shape[0]
-        self.pulses, self.Dt_tot = cycles2times(self.cycles, self.Dt_delay)
+        self.pulses, self.Dt_total = cycles2times(self.cycles, self.Dt_delay)
         self.Dt_delays = np.array([pulse[0] for pulse in self.pulses], copy=True) # pulses[:,0]    # Delay Durations #self.Dt_delays = np.array([self.Dt_delay] * self.nRuns)
         self.Dt_ons = np.array(self.cycles[:,0])  #self.Dt_ons = np.array([cycle[0] for cycle in self.cycles])
         self.Dt_offs = np.array(self.cycles[:,1]) #self.Dt_offs = np.array([cycle[1] for cycle in self.cycles])
@@ -140,7 +140,7 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
         phi_ts = [[[None for pulse in range(self.nPulses)] for phi in range(self.nPhis)] for run in range(self.nRuns)]
         for run in range(self.nRuns):
             cycles, Dt_delay = self.getRunCycles(run)
-            pulses, Dt_tot = cycles2times(cycles, Dt_delay)
+            pulses, Dt_total = cycles2times(cycles, Dt_delay)
             for phiInd, phi in enumerate(self.phis):
                 for pInd, pulse in enumerate(pulses):
                     phi_ts[run][phiInd][pInd] = genPulse(run, phi, pulse)
@@ -163,7 +163,7 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
         phi_ts = [[[None for pulse in range(self.nPulses)] for phi in range(self.nPhis)] for run in range(self.nRuns)]
         for run in range(self.nRuns):
             #cycles, Dt_delay = self.getRunCycles(run)
-            #pulses, Dt_tot = cycles2times(cycles, Dt_delay)
+            #pulses, Dt_total = cycles2times(cycles, Dt_delay)
             for phiInd, phi in enumerate(self.phis):
                 pc = self.PD.trials[run][phiInd][vInd]
                 # if pc.pulseAligned:
@@ -447,7 +447,7 @@ class protSinusoid(Protocol):
 
         assert(len(self.phi0) == self.nRuns)
 
-        self.t_start, self.t_end = 0, self.Dt_tot
+        self.t_start, self.t_end = 0, self.Dt_total
         self.phi_ts = self.genPulseSet()
         self.runLabels = [r'$f={}\mathrm{{Hz}}$ '.format(round_sig(f,3)) for f in self.fs]
 
@@ -645,9 +645,9 @@ class protDualTone(Protocol):
         # self.nPulses = self.pulses.shape[0]
         # self.Dt_delays = [row[0] for row in self.pulses] # pulses[:,0]    # Delay Durations
         # self.Dt_ons = [row[1]-row[0] for row in self.pulses] # pulses[:,1] - pulses[:,0]   # Pulse Durations
-        # self.Dt_offs = np.append(self.pulses[1:,0],self.Dt_tot) - self.pulses[:,1]
+        # self.Dt_offs = np.append(self.pulses[1:,0],self.Dt_total) - self.pulses[:,1]
 
-        #self.Dt_tot = Dt_tot
+        #self.Dt_total = Dt_total
         #self.dt=dt
         self.fAs = np.sort(np.array(self.fs)) # Frequencies [Hz]
         self.fBs = np.sort(np.array(self.fs)) # Frequencies [Hz]
@@ -696,7 +696,7 @@ class protChirp(Protocol):
         #self.cycles = np.column_stack((self.Dt_ons,self.Dt_offs))
         #ws = 2 * np.pi * np.logspace(-4,10,num=7) # Frequencies [rads/s]
 
-        if (1000)/self.f0 > min(self.Dt_ons): #1/10**self.fs[0] > self.Dt_tot:
+        if (1000)/self.f0 > min(self.Dt_ons): #1/10**self.fs[0] > self.Dt_total:
             warnings.warn('Warning: The period of the lowest frequency is longer than the stimulation time!')
 
         if isinstance(self.phi0, (int, float, complex)):
@@ -842,13 +842,13 @@ class protDelta(Protocol):
 
     def prepare(self):
         """Function to set-up additional variables and make parameters consistent after any changes"""
-        assert(self.Dt_tot >= self.Dt_delay + self.Dt_on) # ==> Dt_off >= 0
-        self.cycles = np.asarray([[self.Dt_on, self.Dt_tot-self.Dt_delay-self.Dt_on]])
+        assert(self.Dt_total >= self.Dt_delay + self.Dt_on) # ==> Dt_off >= 0
+        self.cycles = np.asarray([[self.Dt_on, self.Dt_total-self.Dt_delay-self.Dt_on]])
         self.nPulses = self.cycles.shape[0]
-        self.pulses, self.Dt_tot = cycles2times(self.cycles, self.Dt_delay)
+        self.pulses, self.Dt_total = cycles2times(self.cycles, self.Dt_delay)
         self.Dt_delays = np.array([row[0] for row in self.pulses], copy=True) # pulses[:,0]    # Delay Durations
         self.Dt_ons = [row[1]-row[0] for row in self.pulses] # pulses[:,1] - pulses[:,0]   # Pulse Durations
-        self.Dt_offs = np.append(self.pulses[1:,0], self.Dt_tot) - self.pulses[:,1]
+        self.Dt_offs = np.append(self.pulses[1:,0], self.Dt_total) - self.pulses[:,1]
 
         if np.isscalar(self.phis):
             self.phis = np.asarray([self.phis])
@@ -1188,7 +1188,7 @@ class protShortPulse(Protocol):
         # if self.run >= self.nRuns:
             # raise StopIteration
         # #return cycles2times(self.cycles[run], self.Dt_delays[run]) #np.asarray[self.pulses[self.run]]
-        # #return self.cycles[run], self.Dt_tot
+        # #return self.cycles[run], self.Dt_total
         # return self.getRunCycles(self, self.run)
 
     def prepare(self):
@@ -1197,7 +1197,7 @@ class protShortPulse(Protocol):
         self.nRuns = len(self.pDs)
         self.Dt_delays = np.ones(self.nRuns)*self.Dt_delay
         self.Dt_ons = self.pDs
-        self.Dt_offs = (np.ones(self.nRuns)*self.Dt_tot) - self.Dt_delays - self.Dt_ons
+        self.Dt_offs = (np.ones(self.nRuns)*self.Dt_total) - self.Dt_delays - self.Dt_ons
         self.cycles = np.column_stack((self.Dt_ons,self.Dt_offs))
         self.phis.sort(reverse=True)
         self.Vs.sort(reverse=True)
@@ -1291,12 +1291,12 @@ class protRecovery(Protocol):
             self.runCycles[:,:,run] = np.asarray([[self.Dt_ons[run],self.Dt_offs[run]],[self.Dt_ons[run],self.Dt_offs[run]]])
 
         self.t_start = 0
-        self.t_end = self.Dt_tot
+        self.t_end = self.Dt_total
         IPIminD = max(self.Dt_delays) + (2*max(self.Dt_ons)) + max(self.IPIs)
         if self.t_end < IPIminD:
             warnings.warn("Insufficient run time for all stimulation periods!")
         else:
-            self.runCycles[-1,1,:] = self.Dt_tot - IPIminD
+            self.runCycles[-1,1,:] = self.Dt_total - IPIminD
 
         self.IpIPI = np.zeros(self.nRuns)
         self.tpIPI = np.zeros(self.nRuns)

@@ -503,7 +503,7 @@ protParamLabels = OrderedDict([('phis', '\mathbf{\phi}'),
                                ('Vs', '\mathbf{\mathrm{V}}'),
                                ('Dt_delay', '\Delta t_{delay}'),
                                ('Dt_on', '\Delta t_{on}'),
-                               ('Dt_tot', 'T_{total}'),
+                               ('Dt_total', 'T_{total}'),
                                ('cycles', 'cycles'),
                                ('phi0', '\phi_0'),
                                ('fs', '\mathbf{f}'),
@@ -526,7 +526,7 @@ protUnitLabels['Dt_on'] = 'ms'
 protUnitLabels['cycles'] = 'ms'
 protUnitLabels['pDs'] = 'ms'
 protUnitLabels['IPIs'] = 'ms'
-protUnitLabels['Dt_tot'] = 'ms'
+protUnitLabels['Dt_total'] = 'ms'
 protUnitLabels['fs'] = 'Hz'
 protUnitLabels['f0'] = 'Hz'
 protUnitLabels['fT'] = 'Hz'
@@ -554,14 +554,14 @@ protParamNotes['ramp']['phis'] = 'List of ending flux values'
 protParamNotes['ramp']['phi0'] = 'Constant offset for flux values'
 protParamNotes['delta']['cycles'] = ''
 protParamNotes['delta']['Dt_on'] = 'On-phase duration'
-protParamNotes['delta']['Dt_tot'] = 'Total simulation duration'
+protParamNotes['delta']['Dt_total'] = 'Total simulation duration'
 protParamNotes['shortPulse']['cycles'] = ''
 protParamNotes['shortPulse']['pDs'] = 'List of pulse on-phase durations' #'List of cycle on-phase durations'
-protParamNotes['shortPulse']['Dt_tot'] = 'Total simulation duration'
+protParamNotes['shortPulse']['Dt_total'] = 'Total simulation duration'
 protParamNotes['recovery']['cycles'] = ''
 protParamNotes['recovery']['Dt_on'] = 'Pulse on-phase duration' #'Cycle on-phase duration'
 protParamNotes['recovery']['IPIs'] = 'List of pulse off-phase durations' #'List of cycle off-phase durations'
-protParamNotes['recovery']['Dt_tot'] = 'Total simulation duration'
+protParamNotes['recovery']['Dt_total'] = 'Total simulation duration'
 
 #squarePulses = ['custom', 'delta', 'step', 'rectifier', 'shortPulse', 'recovery'] #{'custom': True, 'delta': True, 'step': True, 'rectifier': True, 'shortPulse': True, 'recovery': True}
 #arbitraryPulses = ['custom', 'sinusoid', 'chirp', 'ramp'] #{'custom': True, 'sinusoid': True, 'chirp': True, 'ramp':True} # Move custom here
@@ -606,7 +606,7 @@ protParams['delta'].add_many(('phis',   [1e20],             None,   None,   mole
                             ('Vs',      [-70],              None,   None,   mV, '\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'), # 'mV'
                             ('Dt_delay',    5,                  0,      1e9,    ms, '\Delta t_{delay}', 'Delay duration before the first pulse'), # 'ms'
                             ('Dt_on',     1e-3,               0,      1e9,    ms, '\Delta t_{on}',    'On-phase duration'), # 'ms'
-                            ('Dt_tot',    25.,                0,      None,   ms, 'T_{total}',        'Total simulation duration')) # 'ms'
+                            ('Dt_total',    25.,                0,      None,   ms, 'T_{total}',        'Total simulation duration')) # 'ms'
 
 protParams['rectifier'].add_many(('phis',[1e16],            None,   None,   mole*mm**-2*second**-1, '\mathbf{\phi}', 'List of flux values'), # 'photons/s/mm^2' # Change to 1e17?
                             ('Vs',      [-100,-70,-40,-10,20,50,80],None,None,   mV, '\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'), # 'mV' #[-100,-80,-60,-40,-20,0,20,40,60,80]
@@ -617,7 +617,7 @@ protParams['shortPulse'].add_many(('phis',[1.5e15],         None,   None,   mole
                             ('Vs',      [-70],              None,   None,   mV, '\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'), # 'mV'
                             ('Dt_delay',    25,                 0,      None,   ms, '\Delta t_{delay}', 'Delay duration before the first pulse'), # 'ms'
                             ('pDs',     [1,2,3,5,8,10,20],  0,      None,   ms, '\mathbf{\Delta t_{on}}',   'List of pulse on-phase durations'), # 'ms' # [0.1, 0.2, 0.5, 1, 2, 5, 10]
-                            ('Dt_tot',    100.,               0,      None,   ms, 'T_{total}',        'Total simulation duration')) # 'ms'
+                            ('Dt_total',    100.,               0,      None,   ms, 'T_{total}',        'Total simulation duration')) # 'ms'
 
 protParams['recovery'].add_many(('phis',[1e17],             None,   None,   mole*mm**-2*second**-1, '\mathbf{\phi}', 'List of flux values'), # 'photons/s/mm^2'
                             ('Vs',      [-70],              None,   None,   mV, '\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'), # 'mV'
@@ -625,7 +625,7 @@ protParams['recovery'].add_many(('phis',[1e17],             None,   None,   mole
                             ('Dt_on',     100,                0,      None,   ms, '\Delta t_{on}',    'On-phase duration'), # 'ms'
                             ('IPIs',[500,1000,1500,2500,5000,7500,10000],None,None,ms,  '\mathbf{\Delta t_{off}}', 'List of pulse off-phase durations'), # 'ms'
                             #('IPIs',[0.5,1,1.5,2.5,5,7.5,10],None,None,seconds), # 'ms'
-                            ('Dt_tot',    12000,              0,      None,   ms, 'T_{total}',        'Total simulation duration')) # 'ms'
+                            ('Dt_total',    12000,              0,      None,   ms, 'T_{total}',        'Total simulation duration')) # 'ms'
 
 
 simUnitLabels = defaultdict(lambda: '')
