@@ -913,7 +913,7 @@ def fit6states(fluxSet, quickSet, run, vInd, params, method=defMethod):  # , ver
         #PD = dataSet['delta']
         #PCs = [PD.trials[p][0][0] for p in range(PD.nRuns)]
         PC = quickSet.trials[0][0][0]
-        tlag = PC.lag_ # := lags_[0] ############################### Add to Photocurrent...
+        tlag = PC.Dt_lag_ # := lags_[0] ############################### Add to Photocurrent...
         Go = solveGo(tlag=tlag, Gd=Gd1, Go0=1000, tol=1e-9)
         print('t_lag = {:.3g}; Gd = {:.3g} --> Go = {:.3g}'.format(tlag, Gd1, Go))
 

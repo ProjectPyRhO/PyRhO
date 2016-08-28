@@ -76,49 +76,58 @@ class PhotoCurrent(object):
     """
     #pulses : list(list(float))
 
+    '''
+    Dt_phi      t_phi
+    cycles      times
+    periods     pulses
+    durations
+    '''
     # TODO: Prefer "reverse notation". e.g. t_end, t_beg
     '''
-    overlap     # Periods are up to *and including* the start of the next phase
-    dt          # Sampling time step                dt_
-    sr          # Sampling rate [Hz] [samples/s]    sr_
+
     t_start        # t[0]          HIDE _t_start_
     t_end        # t[-1]         HIDE _t_end_
+    t_peak_      # Time of biggest current peak     Replace with t_peaks_[0]?
+    t_peaks_     # Times of current peaks in each pulse
     Dt_tot        # t[-1] - t[0]
-    nStimuli    # Number of stimuli
-    nStates     # Number of model states
-    synthetic   # Modelling data
-    nPulses     # Number of pulses
-    pulseCycles # Pulse durations # TODO: Rename cycles to durations
     Dt_delay        # Delay duration before the first pulse
     Dt_delays       # Total delay before each pulse
     Dt_ons        # On-phase durations
     IPIs        # Inter-pulse-intervals t_off <-> t_on
     Dt_offs       # Off-phase durations
-    _idx_pulses_   # Indexes for the start of each on- and off-phases  HIDE
+    nPulses     # Number of pulses
+    pulseCycles # Pulse durations # TODO: Rename cycles to durations/periods/Dt_phis
+    nStimuli    # Number of stimuli
+    nStates     # Number of model states
+    synthetic   # Modelling data
     clamped     # Membrane potential was clamped
     lam         # Stimulus wavelength       RETHINK c.f. stimuli --> phi_lambda
+
+    I_peak_       # Biggest current peak                        (.peak_ published)
+    I_peaks_      # Current peaks in each pulse
+    lags_       # t_lag = t_peak - t_on
+    Dt_lag_        # Lag of first pulse      REMOVE
+    I_sss_        # Steady-state currents for each pulse
+    I_ss_         # Steady-state current of first pulse   REMOVE (.ss_ published)
+    I_range_      # [Imin, Imax]
+    I_span_       # Imax - Imin
+    type        # Polarity of current     RENAME
+
+    pulseAligned# Aligned to (a) pulse    RETHINK...
+    alignPoint  # {0:=t_on, 1:=t_peak, 2:=t_off}
+    p0          # Time shift
+    overlap     # Periods are up to *and including* the start of the next phase
+    dt          # Sampling time step                dt_
+    sr          # Sampling rate [Hz] [samples/s]    sr_
+    _idx_peak_    # Index of biggest current peak                     HIDE
+    _idx_peaks_   # Indexes of current peaks in each pulse            HIDE
+    _idx_pulses_   # Indexes for the start of each on- and off-phases  HIDE
     isFiltered  # Data hase been filtered               HIDE
     _I_orig       # Original photocurrent (unfiltered)    HIDE __I_orig_
     _I_prev       # Previous photocurrent                 HIDE __I_prev_
     _offset_     # Current offset calculated to zero dark current    HIDE
     on_         # Current at t_on[:]        REMOVE
     off_        # Current at t_off[:]       REMOVE
-    I_range_      # [Imin, Imax]
-    I_span_       # Imax - Imin
-    _idx_peak_    # Index of biggest current peak                     HIDE
-    t_peak_      # Time of biggest current peak     Replace with t_peaks_[0]?
-    I_peak_       # Biggest current peak                        (.peak_ published)
-    _idx_peaks_   # Indexes of current peaks in each pulse            HIDE
-    t_peaks_     # Times of current peaks in each pulse
-    I_peaks_      # Current peaks in each pulse
-    lags_       # t_lag = t_peak - t_on
-    lag_        # Lag of first pulse      REMOVE
-    I_sss_        # Steady-state currents for each pulse
-    I_ss_         # Steady-state current of first pulse   REMOVE (.ss_ published)
-    type        # Polarity of current     RENAME
-    pulseAligned# Aligned to (a) pulse    RETHINK...
-    alignPoint  # {0:=t_on, 1:=t_peak, 2:=t_off}
-    p0          # Time shift
     '''
 
     # Move states (and Vm, stimuli) into .extras['states']...
@@ -287,7 +296,7 @@ class PhotoCurrent(object):
         self.I_peaks_ = self.I[self._idx_peaks_]
 
         self.lags_ = np.array([self.t_peaks_[p] - self.pulses[p, 0] for p in range(self.nPulses)]) # t_lag = t_peak - t_on
-        self.lag_ = self.lags_[0]
+        self.Dt_lag_ = self.lags_[0]
         # For Go: t[peakInds[0]]-self.pulses[0,1]
 
         self.I_sss_ = np.array([self.findSteadyState(p) for p in range(self.nPulses)])
@@ -519,8 +528,8 @@ class PhotoCurrent(object):
 
             E = 0 ### Find this from fitting fV first!!!
 
-            GoA = solveGo(self.lag_, Gd=1/fpOn['tau_deact'].value)
-            GoB = solveGo(self.lag_, Gd=max(fpOffd['Gd1'].value, fpOffd['Gd2'].value))
+            GoA = solveGo(self.Dt_lag_, Gd=1/fpOn['tau_deact'].value)
+            GoB = solveGo(self.Dt_lag_, Gd=max(fpOffd['Gd1'].value, fpOffd['Gd2'].value))
 
             corrFac = lambda Gact, Gdeact: 1 + Gdeact / Gact
             Gd = max(fpOffd['Gd1'].value, fpOffd['Gd2'].value)
