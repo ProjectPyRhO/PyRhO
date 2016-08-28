@@ -307,12 +307,14 @@ def lam2rgb(wav, gamma=0.8, output='norm'):
     gamma : float, optional
         Gamma correction exponent (default=0.8).
     output : {'norm', 'hex'}, optional
-        Specify whether to return an RGB tuple or hexadecimal string and RGB tuple (default=(RGB)).
+        Specify whether to return an RGB tuple or hexadecimal string and
+        RGB tuple (default=(RGB)).
 
     Returns
     -------
     tuple
-        If 'norm' output an RGB tuple with ints in [0, 255] or if 'hex', output a hexadecimal string followed by an RGB tuple.
+        If 'norm' output an RGB tuple with ints in [0, 255] or if 'hex', output
+        a hexadecimal string followed by an RGB tuple.
     """
 
     # == A few notes about colour ==
@@ -390,7 +392,7 @@ def lam2rgb(wav, gamma=0.8, output='norm'):
         return "#{0:02x}{1:02x}{2:02x}".format(R, G, B), (R, G, B)
 
 
-### Model functions ###
+# Model functions #
 
 # Physical constants
 _h = 6.6260695729e-34    # Planck's constant (Js)
@@ -417,7 +419,7 @@ def irrad2flux(E, lam=470):   # E2phi
     """
 
     Ep = 1e12 * _h * _c / lam  # Energy per photon [mJ] (using lambda in [nm])
-    return E / Ep              # Photon flux (phi) scaled to [photons * s^-1 * mm^-2]
+    return E / Ep              # Photon flux (phi) [photons * s^-1 * mm^-2]
 
 
 def flux2irrad(phi, lam=470):
