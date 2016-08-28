@@ -105,8 +105,9 @@ class PhotoCurrent(object):
 
     I_peak_       # Biggest current peak                        (.peak_ published)
     I_peaks_      # Current peaks in each pulse
-    lags_       # t_lag = t_peak - t_on
+
     Dt_lag_        # Lag of first pulse      REMOVE
+    Dt_lags_       # t_lag = t_peak - t_on
     I_sss_        # Steady-state currents for each pulse
     I_ss_         # Steady-state current of first pulse   REMOVE (.ss_ published)
     I_range_      # [Imin, Imax]
@@ -295,8 +296,8 @@ class PhotoCurrent(object):
         self.t_peaks_ = self.t[self._idx_peaks_]
         self.I_peaks_ = self.I[self._idx_peaks_]
 
-        self.lags_ = np.array([self.t_peaks_[p] - self.pulses[p, 0] for p in range(self.nPulses)]) # t_lag = t_peak - t_on
-        self.Dt_lag_ = self.lags_[0]
+        self.Dt_lags_ = np.array([self.t_peaks_[p] - self.pulses[p, 0] for p in range(self.nPulses)]) # t_lag = t_peak - t_on
+        self.Dt_lag_ = self.Dt_lags_[0]
         # For Go: t[peakInds[0]]-self.pulses[0,1]
 
         self.I_sss_ = np.array([self.findSteadyState(p) for p in range(self.nPulses)])
@@ -921,10 +922,10 @@ class PhotoCurrent(object):
                     # arrowprops=dict(arrowstyle="wedge,tail_width=1.", facecolor='red', shrinkB=10), #, shrinkB=5 , shrink=0.05
                     # horizontalalignment='center', verticalalignment='top')
 
-                # plt.text(self.t_peaks_[p], 1.02*self.I_peaks_[p], '$I_{{peak}} = {:.3g}\mathrm{{nA}};\ t_{{lag}} = {:.3g}\mathrm{{ms}}$'.format(self.I_peaks_[p], self.lags_[0]), ha='left', va='top', fontsize=eqSize)
+                # plt.text(self.t_peaks_[p], 1.02*self.I_peaks_[p], '$I_{{peak}} = {:.3g}\mathrm{{nA}};\ t_{{lag}} = {:.3g}\mathrm{{ms}}$'.format(self.I_peaks_[p], self.Dt_lags_[0]), ha='left', va='top', fontsize=eqSize)
 
                 if self.I_peaks_[p] is not None:
-                    ax.annotate(r'$I_{{peak}} = {:.3g}\mathrm{{nA}};\ t_{{lag}} = {:.3g}\mathrm{{ms}}$'.format(self.I_peaks_[p], self.lags_[0]),
+                    ax.annotate(r'$I_{{peak}} = {:.3g}\mathrm{{nA}};\ t_{{lag}} = {:.3g}\mathrm{{ms}}$'.format(self.I_peaks_[p], self.Dt_lags_[0]),
                                 xy=(self.t_peaks_[p], self.I_peaks_[p]),
                                 xytext=(toffset+self.t_peaks_[p], self.I_peaks_[p]),
                                 arrowprops=dict(arrowstyle="wedge,tail_width=0.6", shrinkA=5, shrinkB=5, facecolor='red'),

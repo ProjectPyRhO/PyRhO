@@ -927,7 +927,7 @@ class protDelta(Protocol):
                     for p in range(self.nPulses):
                         Ip = pc.I_peaks_[p]
                         tp = pc.t_peaks_[p]
-                        tlag = pc.lags_[p]
+                        tlag = pc.Dt_lags_[p]
                         self.axI.axvline(x=tp, linestyle=':', color='k')
                         #plt.axhline(y=I_RhO[peakInds[0]], linestyle=':', color='k')
                         label = r'$I_{{peak}} = {:.3g}\mathrm{{nA;}}\ t_{{lag}} = {:.3g}\mathrm{{ms}}$'.format(Ip, tlag)
@@ -1244,7 +1244,7 @@ class protShortPulse(Protocol):
                     self.axI.plot(PC.t_peaks_, PC.I_peaks_, marker='*', ms=peakMarkerSize, c=colour)
 
                     ### Plot figure to show time of Ipeak vs time of light off c.f. Nikolic et al. 2009 Fig 2b
-                    self.axLag.plot(self.pDs[run], PC.lags_[0], marker='*', ms=peakMarkerSize, c=colour)
+                    self.axLag.plot(self.pDs[run], PC.Dt_lags_[0], marker='*', ms=peakMarkerSize, c=colour)
 
                     ### Plot figure to show current peak vs time of light off c.f. Nikolic et al. 2009 Fig 2c
                     self.axPeak.plot(self.pDs[run], PC.I_peaks_, marker='*', ms=peakMarkerSize, c=colour)
