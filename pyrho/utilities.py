@@ -87,11 +87,11 @@ def compareParams(origParams, newParams):
         ov = ovd[k]
         if origParams[k].vary:
             if isinstance(nv, (int, float, complex)):
-                if ov > 1e-4: #ov != 0:
+                if ov > 1e-4:  # ov != 0:
                     report += '{:>7} = {:8.3g} --> {:8.3g} ({:+.3g}%)\n'.format(k, ov, nv, (nv-ov)*100/ov)
                 else:
                     report += '{:>7} = {:8.3g} --> {:8.3g} (Abs: {:+.3g})\n'.format(k, ov, nv, nv-ov)
-            else: # Check for bool?
+            else:  # TODO: Check for bool?
                 report += '{:>7} = {:8}\n'.format(k, str(nv))
         else:
             report += '{:>7} = {:8.3g} --> {:8.3g}   ~ Fixed ~\n'.format(k, ov, nv)
@@ -283,8 +283,8 @@ def calcV1(E, v0):
     float
         The calculated value of the rectifier scaling parameter :math:`v_1`.
     """
-    return (70+E)/(np.exp((70+E)/v0)-1)
-    #return (-70-E)/(1-np.exp(-(-70-E)/v0))
+    return (70 + E) / (np.exp((70 + E) / v0) - 1)
+    # return (-70-E)/(1-np.exp(-(-70-E)/v0))
 
 
 def lam2rgb(wav, gamma=0.8, output='norm'):
@@ -342,7 +342,7 @@ def lam2rgb(wav, gamma=0.8, output='norm'):
     #     M cone: 533 nm
     #     L cone: 564 nm
     #     rod:    550 nm in bright daylight, 498 nm when dark adapted.
-    #             Rods adapt to low light conditions by becoming more sensitive.
+    #             Rods adapt to low light by becoming more sensitive.
     #             Peak frequency response shifts to 498 nm.
 
     wav = float(wav)
@@ -372,7 +372,7 @@ def lam2rgb(wav, gamma=0.8, output='norm'):
         R = (1.0 * attenuation) ** gamma
         G = 0.0
         B = 0.0
-    else: # Outside the visible spectrum
+    else:  # Outside the visible spectrum
         R = 0.0
         G = 0.0
         B = 0.0
@@ -386,16 +386,17 @@ def lam2rgb(wav, gamma=0.8, output='norm'):
         G = int(max(0, min(round(G), 255)))
         B *= 255
         B = int(max(0, min(round(B), 255)))
-        #return (int(R), int(G), int(B)) # int() truncates towards 0
+        # return (int(R), int(G), int(B)) # int() truncates towards 0
         return "#{0:02x}{1:02x}{2:02x}".format(R, G, B), (R, G, B)
 
 
 ### Model functions ###
 
-### Physical constants
+# Physical constants
 _h = 6.6260695729e-34    # Planck's constant (Js)
 _c = 2.99792458e8        # Speed of light    (m*s^-1)
-#NA = 6.0221413e23      # Avogadro's Number (mol^-1)
+# NA = 6.0221413e23      # Avogadro's Number (mol^-1)
+
 
 def irrad2flux(E, lam=470):   # E2phi
     """
@@ -415,8 +416,8 @@ def irrad2flux(E, lam=470):   # E2phi
         Flux [photons * mm^-2 * s^-1].
     """
 
-    Ep = 1e12 * _h * _c / lam # Energy per photon [mJ] (using lambda in [nm])
-    return E / Ep             # Photon flux (phi) scaled to [photons * s^-1 * mm^-2]
+    Ep = 1e12 * _h * _c / lam  # Energy per photon [mJ] (using lambda in [nm])
+    return E / Ep              # Photon flux (phi) scaled to [photons * s^-1 * mm^-2]
 
 
 def flux2irrad(phi, lam=470):
@@ -437,23 +438,26 @@ def flux2irrad(phi, lam=470):
         Irradiance [mW * mm^-2].
     """
 
-    Ep = 1e12 * _h * _c / lam # Energy per photon [mJ] (using lambda in [nm])
-    return phi * Ep           # Irradiance (E) scaled to [mW * mm^-2]
+    Ep = 1e12 * _h * _c / lam  # Energy per photon [mJ] (using lambda in [nm])
+    return phi * Ep            # Irradiance (E) scaled to [mW * mm^-2]
 
 
 def _calcgbar(Ip, Vclamp, A=1):
     # Unused
-    """Estimate (lower bound) the cell's maximum conductance from its peak current
+    """
+    Estimate (lower bound) the cell's maximum conductance from its peak current
     Ip      :=  Peak current [nA]
     Vclamp  :=  Clamp Voltage [mV]
     A       :=  Cell surface area [um^2]
-    return gbar [pS/um^2]"""
+    return gbar [pS/um^2]
+    """
     Gmax = Ip/Vclamp  # Maximum conductance for the whole cell
     gbar = Gmax/A     # Maximum conductance pS / um^2
-    return gbar * (1e6) # 1e-12 S / (1e-6 m)^2 = (1e-6)*(1e-9 A / 1e-3 V)/(1e-6 m)^2
+    return gbar * (1e6)  # 1e-12 S / (1e-6 m)^2 = (1e-6)*(1e-9 A / 1e-3 V)/(1e-6 m)^2
 
 
-def times2cycles(times, t_end):       # TODO revise to handle negative delay times c.f. PhotoCurrent
+# TODO revise to handle negative delay times c.f. PhotoCurrent
+def times2cycles(times, t_end):
     r"""
     Convert times (absolute events) to pulse cycles (durations).
 
@@ -461,7 +465,7 @@ def times2cycles(times, t_end):       # TODO revise to handle negative delay tim
     ----------
     times : list or array
         List of pulse times aligned at t0 = 0
-        e.g. :math:`[[t_{on,0}, t_{off,0}], ..., [t_{on,N-1}, t_{off,N-1}]]`.
+        i.e. :math:`[[t_{on,0}, t_{off,0}], ..., [t_{on,N-1}, t_{off,N-1}]]`.
     t_end : float
         Ending time of the protocol, :math:`t_{end}`
 
@@ -469,7 +473,7 @@ def times2cycles(times, t_end):       # TODO revise to handle negative delay tim
     -------
     tuple
         Array of cycles and delay duration
-        e.g. :math:`[[\Delta t_{on,0}, \Delta t_{off,0}], ..., [\Delta t_{on,N-1}, \Delta t_{off,N-1}]], \Delta t_{delay}`.
+        i.e. :math:`[[\Delta t_{on,0}, \Delta t_{off,0}], ..., [\Delta t_{on,N-1}, \Delta t_{off,N-1}]], \Delta t_{delay}`.
     """
     # Total protocol time, :math:`\Delta t_{total}`
 
@@ -486,6 +490,7 @@ def times2cycles(times, t_end):       # TODO revise to handle negative delay tim
     return (cycles, Dt_delay)
 
 
+# TODO revise to handle negative delay times c.f. PhotoCurrent
 def cycles2times(cycles, Dt_delay):
     r"""
     Convert pulse cycles (durations) to times (absolute events)
@@ -494,7 +499,7 @@ def cycles2times(cycles, Dt_delay):
     ----------
     cycles : list or array
         Array of cycles and delay duration
-        e.g. :math:`[[\Delta t_{on,0}, \Delta t_{off,0}], ..., [\Delta t_{on,N-1}, \Delta t_{off,N-1}]], \Delta t_{delay}`.
+        i.e. :math:`[[\Delta t_{on,0}, \Delta t_{off,0}], ..., [\Delta t_{on,N-1}, \Delta t_{off,N-1}]], \Delta t_{delay}`.
     Dt_delay : float
         Delay duration, :math:`\Delta t_{delay}`
 
@@ -502,7 +507,7 @@ def cycles2times(cycles, Dt_delay):
     -------
     tuple
         List of pulse times and total protocol time aligned at t0 = 0
-        e.g. :math:`[[t_{on,0}, t_{off,0}], ..., [t_{on,N-1}, t_{off,N-1}]], \Delta t_{total}`.
+        i.e. :math:`[[t_{on,0}, t_{off,0}], ..., [t_{on,N-1}, t_{off,N-1}]], \Delta t_{total}`.
     """
 
     # TODO: Generalise to Dt_delays c.f. recovery
@@ -528,7 +533,8 @@ def plotLight(times, ax=None, light='shade', dark=None, lam=470, alpha=0.2):
     Parameters
     ----------
     times : list or array
-        List of pulse times e.g. :math:`[[t_{on,0}, t_{off,0}], ..., [t_{on,N-1}, t_{off,N-1}]]`.
+        List of pulse times
+        i.e. :math:`[[t_{on,0}, t_{off,0}], ..., [t_{on,N-1}, t_{off,N-1}]]`.
     ax : axes, optional
         Figure axes to plot on [default: gca()]
     light : {'shade', 'borders', 'greyscale', 'hatch', 'spectral'}, optional
@@ -541,7 +547,6 @@ def plotLight(times, ax=None, light='shade', dark=None, lam=470, alpha=0.2):
         Light region's transparency level [0, 1] (default=0.2).
     """
 
-    ### Change plt.axvspan to ax.axvspan etc.
     if ax is None:
         ax = plt.gca()
     else:
@@ -564,23 +569,23 @@ def plotLight(times, ax=None, light='shade', dark=None, lam=470, alpha=0.2):
             ax.axvline(x=times[p][1], linestyle='--', color='k')
     elif light == 'greyscale':
         # Set background to grey and illumination to white
-        ax.set_axis_bgcolor('0.6') #'0.3'
+        ax.set_axis_bgcolor('0.6')  # '0.3'
         for p in range(nPulses):
             ax.axvspan(times[p][0], times[p][1], facecolor='w')
     elif light == 'hatch':
         for p in range(nPulses):
-            ax.axvspan(times[p][0], times[p][1], hatch='/') #'*'
+            ax.axvspan(times[p][0], times[p][1], hatch='/')  # '*'
     elif light == 'spectral':
         # Plot the colour corresponding to the wavelength
         if 380 <= lam <= 750:
             rgb = lam2rgb(lam)
             for p in range(0, nPulses):
                 ax.axvspan(times[p][0], times[p][1], facecolor=rgb, alpha=alpha)
-        else: # Light is not in the visible spectrum - plot borders instead
+        else:  # Light is not in the visible spectrum - plot borders instead
             for p in range(0, nPulses):
                 ax.axvline(x=times[p][0], linestyle='--', color='k')
                 ax.axvline(x=times[p][1], linestyle='--', color='k')
-                ax.axvspan(times[p][0], times[p][1], hatch='/') #'*'
+                ax.axvspan(times[p][0], times[p][1], hatch='/')  # '*'
     elif light == 'None' or light is None:
         pass
     else:
@@ -602,9 +607,9 @@ def setCrossAxes(ax, zeroX=True, zeroY=False):
     ax.spines['right'].set_color('none')
     ax.spines['top'].set_color('none')
     if zeroY:
-        ax.spines['left'].set_position('zero') # y-axis
+        ax.spines['left'].set_position('zero')  # y-axis
     if zeroX:
-        ax.spines['bottom'].set_position('zero') # x-axis
+        ax.spines['bottom'].set_position('zero')  # x-axis
     # 'center' -> ('axes', 0.5)
     # 'zero'   -> ('data', 0.0)
     ax.spines['left'].set_smart_bounds(True)
@@ -633,7 +638,7 @@ def round_sig(x, n=3):
         return round(x, n-int(np.floor(np.log10(abs(x))))-1)
 
 
-### Used in analysing kinetics (protocols) and steady-state (loadData)
+# Used in analysing kinetics (protocols) and steady-state (loadData)
 def expDecay(t, a, b, c):
     r"""
     Calculate single exponential decay function.
@@ -652,9 +657,11 @@ def expDecay(t, a, b, c):
     """
     return a * np.exp(-t/b) + c
 
+
 def biExpDecay(t, a1, tau1, a2, tau2, I_ss):
     """Calculate double exponential decay function"""
     return a1 * np.exp(-t/tau1) + a2 * np.exp(-t/tau2) + I_ss
+
 
 def biExpSum(t, a_act, tau_act, a_deact, tau_deact, a0):
     """Calculate the sum of two opposite exponential functions"""
