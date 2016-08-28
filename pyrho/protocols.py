@@ -1277,12 +1277,12 @@ class protRecovery(Protocol):
 
     def prepare(self):
         """Function to set-up additional variables and make parameters consistent after any changes"""
-        self.IPIs = np.sort(np.asarray(self.IPIs))
+        self.Dt_IPIs = np.sort(np.asarray(self.Dt_IPIs))
 
-        self.nRuns = len(self.IPIs)
+        self.nRuns = len(self.Dt_IPIs)
         self.Dt_delays = np.ones(self.nRuns)*self.Dt_delay
         self.Dt_ons = np.ones(self.nRuns)*self.Dt_on
-        self.Dt_offs = self.IPIs
+        self.Dt_offs = self.Dt_IPIs
         self.cycles = np.column_stack((self.Dt_ons, self.Dt_offs)) # [:,0] = on phase duration; [:,1] = off phase duration
 
         self.pulses, _ = cycles2times(self.cycles, self.Dt_delay)
@@ -1292,7 +1292,7 @@ class protRecovery(Protocol):
 
         self.t_start = 0
         self.t_end = self.Dt_total
-        IPIminD = max(self.Dt_delays) + (2*max(self.Dt_ons)) + max(self.IPIs)
+        IPIminD = max(self.Dt_delays) + (2*max(self.Dt_ons)) + max(self.Dt_IPIs)
         if self.t_end < IPIminD:
             warnings.warn("Insufficient run time for all stimulation periods!")
         else:
@@ -1312,7 +1312,7 @@ class protRecovery(Protocol):
         self.nVs = len(self.Vs)
 
         self.phi_ts = self.genPulseSet()
-        self.runLabels = [r'$\mathrm{{IPI}}={}\mathrm{{ms}}$ '.format(IPI) for IPI in self.IPIs]
+        self.runLabels = [r'$\mathrm{{IPI}}={}\mathrm{{ms}}$ '.format(IPI) for IPI in self.Dt_IPIs]
 
 
     def getRunCycles(self, run):

@@ -513,7 +513,7 @@ protParamLabels = OrderedDict([('phis', '\mathbf{\phi}'),
                                ('startOn', '\phi_{t=0}>0'),
                                #('phi_ton', '\phi_{t=0}'),
                                ('pDs', '\mathbf{\Delta t_{on}}'),
-                               ('IPIs', '\mathbf{\Delta t_{off}}'),
+                               ('Dt_IPIs', '\mathbf{\Delta t_{off}}'),
                                ('phi_ft', '\phi(t)')])
 
 protUnitLabels = defaultdict(lambda: '')
@@ -525,7 +525,7 @@ protUnitLabels['Dt_delay'] = 'ms'
 protUnitLabels['Dt_on'] = 'ms'
 protUnitLabels['cycles'] = 'ms'
 protUnitLabels['pDs'] = 'ms'
-protUnitLabels['IPIs'] = 'ms'
+protUnitLabels['Dt_IPIs'] = 'ms'
 protUnitLabels['Dt_total'] = 'ms'
 protUnitLabels['fs'] = 'Hz'
 protUnitLabels['f0'] = 'Hz'
@@ -560,7 +560,7 @@ protParamNotes['shortPulse']['pDs'] = 'List of pulse on-phase durations' #'List 
 protParamNotes['shortPulse']['Dt_total'] = 'Total simulation duration'
 protParamNotes['recovery']['cycles'] = ''
 protParamNotes['recovery']['Dt_on'] = 'Pulse on-phase duration' #'Cycle on-phase duration'
-protParamNotes['recovery']['IPIs'] = 'List of pulse off-phase durations' #'List of cycle off-phase durations'
+protParamNotes['recovery']['Dt_IPIs'] = 'List of pulse off-phase durations' #'List of cycle off-phase durations'
 protParamNotes['recovery']['Dt_total'] = 'Total simulation duration'
 
 #squarePulses = ['custom', 'delta', 'step', 'rectifier', 'shortPulse', 'recovery'] #{'custom': True, 'delta': True, 'step': True, 'rectifier': True, 'shortPulse': True, 'recovery': True}
@@ -623,8 +623,8 @@ protParams['recovery'].add_many(('phis',[1e17],             None,   None,   mole
                             ('Vs',      [-70],              None,   None,   mV, '\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'), # 'mV'
                             ('Dt_delay',    100,                0,      None,   ms, '\Delta t_{delay}', 'Delay duration before the first pulse'), # 'ms'
                             ('Dt_on',     100,                0,      None,   ms, '\Delta t_{on}',    'On-phase duration'), # 'ms'
-                            ('IPIs',[500,1000,1500,2500,5000,7500,10000],None,None,ms,  '\mathbf{\Delta t_{off}}', 'List of pulse off-phase durations'), # 'ms'
-                            #('IPIs',[0.5,1,1.5,2.5,5,7.5,10],None,None,seconds), # 'ms'
+                            ('Dt_IPIs',[500,1000,1500,2500,5000,7500,10000],None,None,ms,  '\mathbf{\Delta t_{off}}', 'List of pulse off-phase durations'), # 'ms'
+                            #('Dt_IPIs',[0.5,1,1.5,2.5,5,7.5,10],None,None,seconds), # 'ms'
                             ('Dt_total',    12000,              0,      None,   ms, 'T_{total}',        'Total simulation duration')) # 'ms'
 
 

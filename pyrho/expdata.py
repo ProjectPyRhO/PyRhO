@@ -93,7 +93,7 @@ class PhotoCurrent(object):
     Dt_delay        # Delay duration before the first pulse
     Dt_delays       # Total delay before each pulse
     Dt_ons        # On-phase durations
-    IPIs        # Inter-pulse-intervals t_off <-> t_on
+    Dt_IPIs        # Inter-pulse-intervals t_off <-> t_on
     Dt_offs       # Off-phase durations
     nPulses     # Number of pulses
     pulseCycles # Pulse durations # TODO: Rename cycles to durations/periods/Dt_phis
@@ -219,11 +219,11 @@ class PhotoCurrent(object):
         self.Dt_delays = np.array(self.pulses[:, 0] - self.t_start)        # Delay Durations
         self.Dt_ons = np.array(self.pulses[:, 1] - self.pulses[:, 0]) # Pulse Durations
         #if self.nPulses > 1:
-        #    self.IPIs = np.zeros(self.nPulses - 1)
+        #    self.Dt_IPIs = np.zeros(self.nPulses - 1)
         #    for p in range(0, self.nPulses-1):
-        #        self.IPIs[p] = self.pulses[p+1,0] - self.pulses[p,1]
-        self.IPIs = np.array([self.pulses[p+1, 0] - self.pulses[p, 1] for p in range(self.nPulses-1)]) # end <-> start
-        self.Dt_offs = np.append(self.IPIs, self.t_end-self.pulses[-1, 1])
+        #        self.Dt_IPIs[p] = self.pulses[p+1,0] - self.pulses[p,1]
+        self.Dt_IPIs = np.array([self.pulses[p+1, 0] - self.pulses[p, 1] for p in range(self.nPulses-1)]) # end <-> start
+        self.Dt_offs = np.append(self.Dt_IPIs, self.t_end-self.pulses[-1, 1])
         # self.Dt_offs = [self.Dt_total-((Dt_on+pOff)*nPulses)-Dt_delay for pOff in pulseCycles[:,1]]
 
         #for p in self.nPulses: # List comprehension instead?
@@ -1734,7 +1734,7 @@ class DataSet():
         # # elif protocol == recovery:
             # # self.Is = Is
             # # self.ts = ts
-            # # pulseCycles=np.column_stack((Dt_on*np.ones(len(IPIs)),[IPI-Dt_on for IPI in IPIs])) # [:,0] = on phase duration; [:,1] = off phase duration
+            # # pulseCycles=np.column_stack((Dt_on*np.ones(len(Dt_IPIs)),[IPI-Dt_on for IPI in Dt_IPIs])) # [:,0] = on phase duration; [:,1] = off phase duration
 
     def addData(self, photoData, protocol):
         self.data[protocol].append(photoData)
