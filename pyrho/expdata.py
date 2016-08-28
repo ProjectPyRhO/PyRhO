@@ -95,6 +95,8 @@ class PhotoCurrent(object):
     Dt_ons        # On-phase durations
     Dt_IPIs        # Inter-pulse-intervals t_off <-> t_on
     Dt_offs       # Off-phase durations
+    Dt_lag_        # Lag of first pulse      REMOVE
+    Dt_lags_       # t_lag = Dt_act := t_peak - t_on
     nPulses     # Number of pulses
     pulseCycles # Pulse durations # TODO: Rename cycles to durations/periods/Dt_phis
     nStimuli    # Number of stimuli
@@ -106,8 +108,7 @@ class PhotoCurrent(object):
     I_peak_       # Biggest current peak                        (.peak_ published)
     I_peaks_      # Current peaks in each pulse
 
-    Dt_lag_        # Lag of first pulse      REMOVE
-    Dt_lags_       # t_lag = Dt_act := t_peak - t_on
+
     I_sss_        # Steady-state currents for each pulse
     I_ss_         # Steady-state current of first pulse   REMOVE (.ss_ published)
     I_range_      # [Imin, Imax]
@@ -222,7 +223,8 @@ class PhotoCurrent(object):
         #    self.Dt_IPIs = np.zeros(self.nPulses - 1)
         #    for p in range(0, self.nPulses-1):
         #        self.Dt_IPIs[p] = self.pulses[p+1,0] - self.pulses[p,1]
-        self.Dt_IPIs = np.array([self.pulses[p+1, 0] - self.pulses[p, 1] for p in range(self.nPulses-1)]) # end <-> start
+        #self.Dt_IPIs = np.array([self.pulses[p+1, 0] - self.pulses[p, 1] for p in range(self.nPulses-1)]) # end <-> start
+        self.Dt_IPIs = self.pulses[1:, 0] - self.pulses[:-1, 1]  # end <-> start
         self.Dt_offs = np.append(self.Dt_IPIs, self.t_end-self.pulses[-1, 1])
         # self.Dt_offs = [self.Dt_total-((Dt_on+pOff)*nPulses)-Dt_delay for pOff in pulseCycles[:,1]]
 
