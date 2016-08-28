@@ -24,7 +24,7 @@ class Timer:
     """
     Class for timing blocks of code.
     http://preshing.com/20110924/timing-your-code-using-pythons-with-statement/
-    
+
     Examples
     --------
     >>> with Timer() as t:
@@ -107,23 +107,23 @@ def texIt(texString):
 
 def saveData(data, pkl, path=None):
     """
-    Pickle data in ``dDir`` or as specified in optional ``path`` argument. 
-    
+    Pickle data in ``dDir`` or as specified in optional ``path`` argument.
+
     Parameters
     ----------
     data : object
-        Variable to pickle. 
+        Variable to pickle.
     pkl : str
-        Filename to save (without extension). 
+        Filename to save (without extension).
     path : str, optional
-        Optionally specify a path for where to save the file (default=``config.dDir``). 
-    
+        Optionally specify a path for where to save the file (default=``config.dDir``).
+
     Returns
     -------
     str
-        Pickle filename (including extension). 
+        Pickle filename (including extension).
     """
-    
+
     # if pkl is None:
         # pkl = data.__name__
     if path is None:
@@ -138,26 +138,26 @@ def saveData(data, pkl, path=None):
 
 def loadData(pkl, path=None):
     """
-    Load a pickled dataSet. 
+    Load a pickled dataSet.
 
     The function searches paths in the following order:
         1) Optional ``path`` argument
         2) Present working directory
         3) ``config.dDir``
-    
+
     Parameters
     ----------
     pkl : str
         Pickle filename (optionally including the extension)
     path : str, optional
-        Optionally specify a path for where to find the file. 
-    
+        Optionally specify a path for where to find the file.
+
     Returns
     -------
     dataSet
         The unpickled contents of ``pkl``
     """
-    
+
     if pkl.lower().endswith('.pkl'):
         pklFile = pkl
     else:
@@ -176,21 +176,21 @@ def loadData(pkl, path=None):
 
 def getExt(vector, ext='max'):
     """
-    Get the most extreme value from a vector. 
-    
+    Get the most extreme value from a vector.
+
     Parameters
     ----------
     vector : ndarray
-        Array of values. 
+        Array of values.
     ext : {'max', 'min'}, optional
-        Specify whether to find the maximum or minimum value. 
-    
+        Specify whether to find the maximum or minimum value.
+
     Returns
     -------
     tuple
         (mVal := the extreme value, mInd := the index of mVal)
     """
-    
+
     if ext == 'max':
         mVal = max(vector)
     elif ext == 'min':
@@ -202,20 +202,20 @@ def getExt(vector, ext='max'):
 def getIndex(valList, val):
     """
     Return the index of val in valList.
-    
+
     This handles lists containing ``None``.
-    
+
     Parameters
     ----------
     valList : list
-        List of values to search through. 
+        List of values to search through.
     val : int or float
-        Value to index. 
-    
+        Value to index.
+
     Returns
     -------
     int
-        The index of ``val`` in ``valList`` or ``None`` if not found. 
+        The index of ``val`` in ``valList`` or ``None`` if not found.
     """
 
     # valList types: list, array, number
@@ -269,19 +269,19 @@ def getIndex(valList, val):
 
 def calcV1(E, v0):
     """
-    Calculate :math:`v_1` from :math:`v_0` and :math:`E` to satisfy the definition: :math:`f_v(-70):= 1`. 
-    
+    Calculate :math:`v_1` from :math:`v_0` and :math:`E` to satisfy the definition: :math:`f_v(-70):= 1`.
+
     Parameters
     ----------
     E : float
-        The opsin reversal potential in millivolts [mV]. 
+        The opsin reversal potential in millivolts [mV].
     v0 : float
-        The model rectifier parameter :math:`v_0`. 
-    
+        The model rectifier parameter :math:`v_0`.
+
     Returns
     -------
     float
-        The calculated value of the rectifier scaling parameter :math:`v_1`. 
+        The calculated value of the rectifier scaling parameter :math:`v_1`.
     """
     return (70+E)/(np.exp((70+E)/v0)-1)
     #return (-70-E)/(1-np.exp(-(-70-E)/v0))
@@ -289,8 +289,8 @@ def calcV1(E, v0):
 
 def lam2rgb(wav, gamma=0.8, output='norm'):
     """
-    Convert a wavelength [nm] to an RGB colour tuple in the visible spectrum. 
-    
+    Convert a wavelength [nm] to an RGB colour tuple in the visible spectrum.
+
     This converts a given wavelength of light to an
     approximate RGB colour value with edge attenuation.
     The wavelength must be given in nanometres in the
@@ -299,22 +299,22 @@ def lam2rgb(wav, gamma=0.8, output='norm'):
     Adapted from: http://www.noah.org/wiki/Wavelength_to_RGB_in_Python
     Based on code by Dan Bruton
     http://www.physics.sfasu.edu/astro/color/spectra.html
-    
+
     Parameters
     ----------
     wav : int or float
-        Wavelength of light in nanometres [nm]. 
+        Wavelength of light in nanometres [nm].
     gamma : float, optional
-        Gamma correction exponent (default=0.8). 
+        Gamma correction exponent (default=0.8).
     output : {'norm', 'hex'}, optional
-        Specify whether to return an RGB tuple or hexadecimal string and RGB tuple (default=(RGB)). 
-    
+        Specify whether to return an RGB tuple or hexadecimal string and RGB tuple (default=(RGB)).
+
     Returns
     -------
     tuple
-        If 'norm' output an RGB tuple with ints in [0, 255] or if 'hex', output a hexadecimal string followed by an RGB tuple. 
+        If 'norm' output an RGB tuple with ints in [0, 255] or if 'hex', output a hexadecimal string followed by an RGB tuple.
     """
-    
+
     # == A few notes about colour ==
 
     # Color   Wavelength(nm) Frequency(THz)
@@ -396,23 +396,23 @@ def lam2rgb(wav, gamma=0.8, output='norm'):
 _h = 6.6260695729e-34    # Planck's constant (Js)
 _c = 2.99792458e8        # Speed of light    (m*s^-1)
 #NA = 6.0221413e23      # Avogadro's Number (mol^-1)
-    
+
 def irrad2flux(E, lam=470):   # E2phi
     """
     Converts irradiance [mW * mm^-2] and wavelength (default: 470) [nm]
-    to flux [photons * mm^-2 * s^-1]. 
-    
+    to flux [photons * mm^-2 * s^-1].
+
     Parameters
     ----------
     E : float
-        Irradiance [mW * mm^-2]. 
+        Irradiance [mW * mm^-2].
     lam : int or float, optional
-        Wavelength (default=470) [nm]. 
-    
+        Wavelength (default=470) [nm].
+
     Returns
     -------
     float
-        Flux [photons * mm^-2 * s^-1]. 
+        Flux [photons * mm^-2 * s^-1].
     """
 
     Ep = 1e12 * _h * _c / lam # Energy per photon [mJ] (using lambda in [nm])
@@ -422,19 +422,19 @@ def irrad2flux(E, lam=470):   # E2phi
 def flux2irrad(phi, lam=470):
     """
     Converts flux [photons * mm^-2 * s^-1] and wavelength (default: 470) [nm]
-    to irradiance [mW * mm^-2]. 
+    to irradiance [mW * mm^-2].
 
     Parameters
     ----------
     phi : float
-        Flux [photons * mm^-2 * s^-1]. 
+        Flux [photons * mm^-2 * s^-1].
     lam : int or float, optional
-        Wavelength (default=470) [nm]. 
-    
+        Wavelength (default=470) [nm].
+
     Returns
     -------
     float
-        Irradiance [mW * mm^-2]. 
+        Irradiance [mW * mm^-2].
     """
 
     Ep = 1e12 * _h * _c / lam # Energy per photon [mJ] (using lambda in [nm])
@@ -453,81 +453,92 @@ def _calcgbar(Ip, Vclamp, A=1):
     return gbar * (1e6) # 1e-12 S / (1e-6 m)^2 = (1e-6)*(1e-9 A / 1e-3 V)/(1e-6 m)^2
 
 
-def times2cycles(times, Dt_total):       # TODO revise to handle negative delay times c.f. PhotoCurrent
+def times2cycles(times, t_end):       # TODO revise to handle negative delay times c.f. PhotoCurrent
     r"""
-    Convert times (absolute events) to pulse cycles (durations). 
-    
+    Convert times (absolute events) to pulse cycles (durations).
+
     Parameters
     ----------
     times : list or array
-        List of pulse times e.g. :math:`[[t_{on,0}, t_{off,0}], ..., [t_{on,N-1}, t_{off,N-1}]]`. 
-    Dt_total : float
-        Total protocol time, :math:`t_{tot}`
-    
+        List of pulse times aligned at t0 = 0
+        e.g. :math:`[[t_{on,0}, t_{off,0}], ..., [t_{on,N-1}, t_{off,N-1}]]`.
+    t_end : float
+        Ending time of the protocol, :math:`t_{end}`
+
     Returns
     -------
     tuple
-        Array of cycles and delay duration e.g. :math:`[[\Delta t_{on,0}, \Delta t_{off,0}], ..., [\Delta t_{on,N-1}, \Delta t_{off,N-1}]], \Delta t_{del}`. 
+        Array of cycles and delay duration
+        e.g. :math:`[[\Delta t_{on,0}, \Delta t_{off,0}], ..., [\Delta t_{on,N-1}, \Delta t_{off,N-1}]], \Delta t_{delay}`.
     """
+    # Total protocol time, :math:`\Delta t_{total}`
+
     times = np.array(times, copy=True)
-    #nPulses = times.shape[0]
+    nPulses = times.shape[0]
     assert(times.shape[1] <= 2)
-    Dt_delay = times[0, 0] # This assumes that the times have not been shifted
-    Dt_ons = [row[1]-row[0] for row in times] # pulses[:,1] - pulses[:,0]   # Pulse Durations
-    Dt_offs = np.append(times[1:, 0], Dt_total) - times[:, 1]
-    cycles = np.vstack((Dt_ons, Dt_offs)).transpose()
+    Dt_delay = times[0, 0]  # This assumes that the times have not been shifted
+    cycles = np.diff(np.r_[times.ravel(), t_end]).reshape((nPulses, 2))
+    # Dt_ons = [row[1]-row[0] for row in times]  # pulses[:,1] - pulses[:,0]
+    #Dt_ons = np.array(times[:, 1] - times[:, 0])  # Pulse Durations
+    # Dt_offs = np.append(times[1:, 0], Dt_total) - times[:, 1]
+    #Dt_offs = np.r_[times[1:, 0], t_end] - times[:, 1]
+    #cycles = np.vstack((Dt_ons, Dt_offs)).transpose()
     return (cycles, Dt_delay)
 
 
 def cycles2times(cycles, Dt_delay):
     r"""
     Convert pulse cycles (durations) to times (absolute events)
-    
+
     Parameters
     ----------
     cycles : list or array
-        Array of cycles and delay duration e.g. :math:`[[\Delta t_{on,0}, \Delta t_{off,0}], ..., [\Delta t_{on,N-1}, \Delta t_{off,N-1}]], \Delta t_{del}`. 
+        Array of cycles and delay duration
+        e.g. :math:`[[\Delta t_{on,0}, \Delta t_{off,0}], ..., [\Delta t_{on,N-1}, \Delta t_{off,N-1}]], \Delta t_{delay}`.
     Dt_delay : float
-        Delay duration, :math:`\Delta t_{del}`
-    
+        Delay duration, :math:`\Delta t_{delay}`
+
     Returns
     -------
     tuple
-        List of pulse times and total protocol time 
-        e.g. :math:`[[t_{on,0}, t_{off,0}], ..., [t_{on,N-1}, t_{off,N-1}]], \Delta t_{tot}`. 
+        List of pulse times and total protocol time aligned at t0 = 0
+        e.g. :math:`[[t_{on,0}, t_{off,0}], ..., [t_{on,N-1}, t_{off,N-1}]], \Delta t_{total}`.
     """
 
     # TODO: Generalise to Dt_delays c.f. recovery
     cycles = np.array(cycles)
     nPulses = cycles.shape[0]
     assert(cycles.shape[1] <= 2)
-    times = np.zeros((nPulses, 2)) #[Dt_delay,Dt_delay+cycles[row,0] for row in pulses]
-    lapsed = Dt_delay
-    for p in range(nPulses):
-        times[p, 0] = lapsed
-        times[p, 1] = lapsed+cycles[p, 0]
-        lapsed += sum(cycles[p, :])
-    return (times, lapsed)
+    times = np.cumsum(np.r_[Dt_delay, cycles.ravel()])
+    Dt_total = times[-1]
+    times = times[:-1].reshape((nPulses, 2))  # Trim the final Dt_off & reshape
+    #times = np.zeros((nPulses, 2)) #[Dt_delay,Dt_delay+cycles[row,0] for row in pulses]
+    #Dt_total = Dt_delay
+    #for p in range(nPulses):
+    #    times[p, 0] = Dt_total
+    #    times[p, 1] = Dt_total+cycles[p, 0]
+    #    Dt_total += sum(cycles[p, :])
+    return (times, Dt_total)
 
 
 def plotLight(times, ax=None, light='shade', dark=None, lam=470, alpha=0.2):
     """
     Plot light pulse(s)
-    
+
     Parameters
     ----------
     times : list or array
-        List of pulse times e.g. :math:`[[t_{on,0}, t_{off,0}], ..., [t_{on,N-1}, t_{off,N-1}]]`. 
+        List of pulse times e.g. :math:`[[t_{on,0}, t_{off,0}], ..., [t_{on,N-1}, t_{off,N-1}]]`.
     ax : axes, optional
         Figure axes to plot on [default: gca()]
     light : {'shade', 'borders', 'greyscale', 'hatch', 'spectral'}, optional
-        Representation type for plotting the light (default: 'shade'). 
+        Representation type for plotting the light (default: 'shade').
     dark : float, optional
-        Lightness of the background [0 (black), 1 (white)] (default:``None``). 
+        Lightness of the background [0 (black), 1 (white)] (default:``None``).
     lam : float, optional
-        Wavelength [nm] (default=470). 
+        Wavelength [nm] (default=470).
     alpha :float, optional
-        Light region's transparency level [0, 1] (default=0.2). 
+        Light region's transparency level [0, 1] (default=0.2).
     """
 
     ### Change plt.axvspan to ax.axvspan etc.
@@ -580,13 +591,13 @@ def plotLight(times, ax=None, light='shade', dark=None, lam=470, alpha=0.2):
 def setCrossAxes(ax, zeroX=True, zeroY=False):
     """
     Remove box and set axes to run through zero
-    
+
     Parameters
     ----------
     zeroX : bool
-        Set the x-axis to run through y=0 (default=True). 
+        Set the x-axis to run through y=0 (default=True).
     zeroY : bool
-        Set the y-axis to run through x=0 (default=False). 
+        Set the y-axis to run through x=0 (default=False).
     """
     ax.spines['right'].set_color('none')
     ax.spines['top'].set_color('none')
@@ -606,16 +617,16 @@ def setCrossAxes(ax, zeroX=True, zeroY=False):
 
 def round_sig(x, n=3):
     """
-    Round a number to ``n`` significant digits (default=3). 
-    
+    Round a number to ``n`` significant digits (default=3).
+
     Parameters
     ----------
     x : float
-        Number to round. 
+        Number to round.
     n : int, optional
-        Number of significant digits to round to (default=3). 
+        Number of significant digits to round to (default=3).
     """
-    
+
     if abs(x) == 0 or np.isinf(x) or np.isnan(x):
         return x
     else:
@@ -626,14 +637,14 @@ def round_sig(x, n=3):
 def expDecay(t, a, b, c):
     r"""
     Calculate single exponential decay function.
-    
+
     Parameters
     ----------
     t : ndarray
-        Time array. 
+        Time array.
     a, b, c : float
-        Exponential function coefficients. 
-    
+        Exponential function coefficients.
+
     Returns
     -------
     ndarray
@@ -648,4 +659,3 @@ def biExpDecay(t, a1, tau1, a2, tau2, I_ss):
 def biExpSum(t, a_act, tau_act, a_deact, tau_deact, a0):
     """Calculate the sum of two opposite exponential functions"""
     return a0 + a_act*(1-np.exp(-t/tau_act)) + a_deact*np.exp(-t/tau_deact)
-
