@@ -10,7 +10,7 @@
 # ...
 from __future__ import print_function, division
 from collections import OrderedDict, defaultdict
-import logging
+#import logging
 import abc
 
 #from numpy import inf, nan, isfinite
@@ -22,6 +22,7 @@ from lmfit import Parameters, Parameter
 # Replace with http://pythonhosted.org/NeuroTools/parameters.html
 from brian2.units.allunits import psiemens, second, mole
 from brian2.units.stdunits import *
+from pyrho.config import logger
 pS = psiemens
 sec = second
 # Units used: ms, mm, mV, Hz,       # Nonstd: psiemens, second, mole
@@ -732,9 +733,9 @@ class PyRhOobject(object):
             print(p, ' = ', self.__dict__[p])
 
     def logParams(self):
-        logging.info(self.__class__.__name__, ' Parameters')
+        logger.info(self.__class__.__name__, ' Parameters')
         for p in self.__dict__.keys():
-            logging.info(p, ' = ', self.__dict__[p])
+            logger.info(p, ' = ', self.__dict__[p])
 
     def printParamsWithLabels(self):
         for p in self.__dict__.keys():

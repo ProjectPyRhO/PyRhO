@@ -2,7 +2,7 @@
 
 from __future__ import print_function, division
 import warnings
-import logging
+#import logging
 import copy
 
 import numpy as np
@@ -12,7 +12,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 from pyrho.utilities import getIndex, times2cycles, setCrossAxes, round_sig, plotLight
-from pyrho.config import check_package
+from pyrho.config import check_package, logger
 from pyrho import config
 
 __all__ = ['PhotoCurrent', 'ProtocolData']
@@ -68,9 +68,11 @@ class PhotoCurrent(object):
     V : float or ``None``
         Voltage clamp potential [mV] or ``None`` if no clamp was used.
     stimuli : ndarray(float) or ``None``, optional
-        Optional array of flux values corresponding to ``I``. Expect nStimuli x nSamples row vectors.
+        Optional array of flux values corresponding to ``I``.
+        Expect nStimuli x nSamples row vectors.
     states : ndarray(float) or ``None``, optional
-        Optional array of model state variables if the data are synthetic (shape=nStates x nSamples).
+        Optional array of model state variables if the data are synthetic
+        (shape=nStates x nSamples).
     stateLabels : list(str) or ``None``, optional
         Optional list of LaTeX strings labelling each of the state variables.
     """
@@ -746,7 +748,7 @@ class PhotoCurrent(object):
 
         dI = Ion[-cutInd+1:] - Ion[-cutInd:-1]
         if abs(np.mean(dI)) > 0.01 * self.I_span_:
-            logging.warn('Steady-state Convergence Warning: The average step size is larger than 1% of the current span!')
+            logger.warn('Steady-state Convergence Warning: The average step size is larger than 1% of the current span!')
             #return None
             method = 0
 

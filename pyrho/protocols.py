@@ -7,7 +7,7 @@ Stimulation protocols to run on the opsin models
 
 from __future__ import print_function, division
 import warnings
-import logging
+#import logging
 import os
 import abc
 
@@ -230,7 +230,7 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
                         fileName = '{}States{}s-{}-{}-{}'.format(self.protocol, pc.nStates, run, phiInd, vInd) # RhO.nStates
                         #RhO.plotStates(pc.t, pc.states, pc.pulses, RhO.stateLabels, phi, pc._idx_peaks_, fileName)
                         pc.plotStates(name=fileName)
-                        logging.info('Plotting states to: {}'.format(fileName))
+                        logger.info('Plotting states to: {}'.format(fileName))
 
         plt.figure(self.Ifig.number)
         plt.sca(self.axI)

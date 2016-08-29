@@ -22,7 +22,7 @@ import numpy as np
 #import lmfit
 
 __all__ = ['setupGUI', 'simAvailable', 'setupNEURON', 'setupBrian', 'check_package',
-           'setFigOutput', 'setFigStyle', 'resetPlot', 'setOutput']
+           'setFigOutput', 'setFigStyle', 'resetPlot', 'setOutput', 'logger']
 # 'wallTime',
 # TODO: Place in dict i.e. CONFIG_PARAMS['dDir'] or class with setter methods e.g. to call setOutput
 #, 'colours', 'styles', 'verbose', 'dDir', 'fDir', 'DASH_LINE', 'DOUB_DASH_LINE'
@@ -34,7 +34,7 @@ if pyVer < (3, 3):
     if sys.platform == 'win32':
         # On Windows, the best timer is time.clock
         wallTime = time.clock
-    else: #sys.platform.startswith('linux') 'cygwin' 'darwin'
+    else:  # sys.platform.startswith('linux') 'cygwin' 'darwin'
         # On most other platforms the best timer is time.time
         wallTime = time.time
 else:
@@ -59,10 +59,10 @@ _DASH_LINE = '-' * 80
 _DOUB_DASH_LINE = '=' * 80
 
 
-##### Output level settings #####
+# Output level settings #
 #global verbose
 #if 'verbose' not in vars() or 'verbose' not in globals() or verbose is None:
-verbose = 1 # Text notification output level [0,1,2]
+verbose = 1  # Text notification output level [0,1,2]
 logLevels = [logging.CRITICAL, logging.ERROR, logging.WARNING,
              logging.INFO, logging.DEBUG, logging.NOTSET]
 
@@ -73,11 +73,13 @@ def setOutput(level):
     verbose = level
     logging.setLevel(level)
 
+logger.info('Starting PyRhO')
+logger.debug('Initialised Logger')
 home = os.path.expanduser('~')
 pyrhoPath = os.path.dirname(os.path.abspath(__file__)) # modulePath
 
 pyrhoNEURONpath = os.path.join(pyrhoPath, 'NEURON')
-NMODLfiles = ('RhO3c.mod', 'RhO4c.mod', 'RhO6c.mod') #['RhO3.mod', 'RhO4.mod', 'RhO6.mod']
+NMODLfiles = ('RhO3c.mod', 'RhO4c.mod', 'RhO6c.mod')  # ['RhO3.mod', 'RhO4.mod', 'RhO6.mod']
 #HOCfiles = glob.glob("*.hoc")
 HOCfiles = [h for h in os.listdir(pyrhoNEURONpath) if h.endswith('.hoc')]
 #NMODLfilesIncPath = [os.path.join(pyrhoNEURONpath, f) for f in NMODLfiles]

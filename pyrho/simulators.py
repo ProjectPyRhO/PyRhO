@@ -7,7 +7,7 @@ Classes to wrap simulation engines for a uniform interface
 
 from __future__ import print_function, division
 import warnings
-import logging
+#import logging
 import os
 import copy
 import abc
