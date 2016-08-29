@@ -31,18 +31,18 @@ class Timer:
     >>>    run code...
     Execution took <t>s)
     """
-    #interval = 0
+    # interval = 0
     def __init__(self):
         self.start = 0
         self.end = 0
         self.interval = 0
 
     def __enter__(self):
-        self.start = config.wallTime() #time.clock()
+        self.start = config.wallTime()  # time.clock()
         return self
 
     def __exit__(self, *args):
-        self.end = config.wallTime() #time.clock()
+        self.end = config.wallTime()  # time.clock()
         self.interval = self.end - self.start
         print('{:.3g}s'.format(self.interval))
 
@@ -68,7 +68,7 @@ def printParams(params):
     for k, v in vd.items():
         if isinstance(v, (int, float, complex)):
             report += '{:>7} = {:8.3g}\n'.format(k, v)
-        else: # Check for bool?
+        else:  # Check for bool?
             report += '{:>7} = {:8}\n'.format(k, str(v))
     report += '========================\n'
     print(report)
