@@ -949,7 +949,7 @@ class PhotoCurrent(object):
                     ax.annotate(r'$I_{{peak}} = {:.3g}\mathrm{{nA}};\ t_{{lag}} = {:.3g}\mathrm{{ms}}$'.format(self.I_peaks_[p], self.Dt_lags_[0]),
                                 xy=(self.t_peaks_[p], self.I_peaks_[p]),
                                 xytext=(toffset+self.t_peaks_[p], self.I_peaks_[p]),
-                                arrowprops=dict(arrowstyle="wedge,tail_width=0.6", shrinkA=5, shrinkB=5, facecolor='red'),
+                                arrowprops=dict(arrowstyle="wedge,tail_width=0.6", shrinkA=5, shrinkB=5, facecolor=config.colours[2]), #, facecolor='red'),
                                 horizontalalignment='left', verticalalignment='center', fontsize=config.eqSize)
 
                 # Add pointer to steady-state currents
@@ -959,7 +959,7 @@ class PhotoCurrent(object):
                     #xPos = 0
                     ax.annotate(r'$I_{{ss}} = {:.3g}\mathrm{{nA}}$'.format(self.I_sss_[p]), xy=(self.pulses[p, 1], self.I_sss_[p]),
                                 xytext=(toffset+self.pulses[p, 1], self.I_sss_[p]),
-                                arrowprops=dict(arrowstyle="wedge,tail_width=0.6", shrinkA=5, shrinkB=5),
+                                arrowprops=dict(arrowstyle="wedge,tail_width=0.6", shrinkA=5, shrinkB=5, facecolor=config.colours[3]),
                                 horizontalalignment='left', verticalalignment='center', fontsize=config.eqSize)
 
                 # Add labels for on and off phases
@@ -976,8 +976,8 @@ class PhotoCurrent(object):
                 ax.annotate('', xy=(self.pulses[p,0], arrowy),
                             xytext=(self.pulses[p,1], arrowy),
                             arrowprops=dict(arrowstyle='<->', color='blue', shrinkA=0, shrinkB=0))
-                plt.text(self.pulses[p,0]+self.Dt_ons[p]/2, texty,
-                         r'$\Delta t_{{on_{}}}={:.3g}\mathrm{{ms}}$'.format(p, self.Dt_ons[p]),
+                plt.text(self.pulses[p,0]+self.Dt_ons_[p]/2, texty,
+                         r'$\Delta t_{{on_{}}}={:.3g}\mathrm{{ms}}$'.format(p, self.Dt_ons_[p]),
                         ha='center', va='bottom', fontsize=config.eqSize)
                 if p < self.nPulses-1:
                     end = self.pulses[p+1,0]
@@ -985,8 +985,8 @@ class PhotoCurrent(object):
                     end = self.t_end
                 ax.annotate('', xy=(self.pulses[p,1], arrowy), xytext=(end, arrowy),
                             arrowprops=dict(arrowstyle='<->', color='green', shrinkA=0, shrinkB=0))
-                plt.text(self.pulses[p,1]+self.Dt_offs[p]/2, texty,
-                         r'$\Delta t_{{off_{}}}={:.3g}\mathrm{{ms}}$'.format(p, self.Dt_offs[p]),
+                plt.text(self.pulses[p,1]+self.Dt_offs_[p]/2, texty,
+                         r'$\Delta t_{{off_{}}}={:.3g}\mathrm{{ms}}$'.format(p, self.Dt_offs_[p]),
                         ha='center', va='bottom', fontsize=config.eqSize)
 
         #plt.show()
@@ -994,17 +994,17 @@ class PhotoCurrent(object):
         return # ax
 
 
-    def plotStates(self, plotPies=True, pulse=None, name=None): #, verbose=config.verbose):
+    def plotStates(self, plotPies=True, pulse=None, name=None, with_pc=False):
 
         #phi = self.phi # Use the value at t_off if the stimulus if a function of time
         t = self.t
+        t_start, t_end = self.t_start, self.t_end  # t[0], t[-1]
         states = self.states
         pulses = self.pulses
         peakInds = self._idx_peaks_
         labels = self.stateLabels
 
         plotSum = False
-
 
         if pulse is None:
             piePulses = list(range(self.nPulses))
@@ -1018,62 +1018,77 @@ class PhotoCurrent(object):
             plotInit = bool(len(piePulses) > 1)
             plotPeaks = bool(peakInds is not None)
             plotSS = True
-            plotSSinf = hasattr(self, 'ssInf') # not plotInit #
+            plotSSinf = hasattr(self, 'ssInf')  # not plotInit #
             count = sum([plotInit, plotPeaks, plotSS, plotSSinf])
         else:
             count = 1
             piePulses = []
         nPulses = len(piePulses)
 
+
+        # TODO: See below
+        #if ax is None:
+        #    ax = plt.gca()
+        #else:
+        #    plt.sca(ax)
+        #fig = plt.gcf()
+
         figWidth, figHeight = mpl.rcParams['figure.figsize']
-        fig = plt.figure(figsize=(figWidth, (1+nPulses/2)*figHeight)) # 1.5*
+        fig = plt.figure(figsize=(figWidth, (1+nPulses/2)*figHeight))  # 1.5*
         gs = plt.GridSpec(2+nPulses, count)
 
-        t_start, t_end = t[0], t[-1] # self.t_start, self.t_end
+        # TODO: Finish this - plot either the photocurrent or states as lines
+        axLine = fig.add_subplot(gs[0, :])
+        if not with_pc:  # Plot line graph of states
+            plt.plot(t, states)
 
-        # Plot line graph of states
-        axLine = fig.add_subplot(gs[0,:])
-        plt.plot(t, states)
+            if plotSum:
+                sig, = plt.plot(t, np.sum(states, axis=1), color='k', linestyle='--')
+                labelsIncSum = np.append(labels, r'$\Sigma s_i$')
+                plt.legend(labelsIncSum, loc=6)
+            else:
+                plt.legend(labels, loc=6)
+
+            plt.ylabel(r'$\mathrm{State\ occupancy}$')
+
+            if config.addTitles:
+                plt.title(r'$\mathrm{State\ variables\ through\ time}$')
+                #plt.title('State variables through time: $v={} \mathrm{{mV}},\ \phi={:.3g} \mathrm{{photons}} \cdot \mathrm{{s}}^{{-1}} \cdot \mathrm{{cm}}^{{-2}}$'.format(V,phiOn))
+
+            plt.ylim((0, 1))
+            axLine.spines['left'].set_smart_bounds(True)
+            axLine.spines['bottom'].set_smart_bounds(True)
+        else:
+            self.plot(ax=axLine, light=None, addFeatures=True)
+            setCrossAxes(axLine, zeroX=True, zeroY=False)
+
+
+
+        plotLight(pulses, axLine)
+        plt.xlim((t_start, t_end))
         plt.setp(axLine.get_xticklabels(), visible=False)
 
-        if plotSum:
-            sig, = plt.plot(t, np.sum(states,axis=1), color='k', linestyle='--')
-            labelsIncSum = np.append(labels, r'$\Sigma s_i$')
-            plt.legend(labelsIncSum, loc=6)
-        else:
-            plt.legend(labels, loc=6)
-
-        plt.ylabel(r'$\mathrm{State\ occupancy}$')
-        plt.xlim((t_start, t_end))
-        #plt.ylim((-0.1,1.1))
-        plt.ylim((0, 1))
-        if config.addTitles:
-            plt.title(r'$\mathrm{State\ variables\ through\ time}$')
-            #plt.title('State variables through time: $v={} \mathrm{{mV}},\ \phi={:.3g} \mathrm{{photons}} \cdot \mathrm{{s}}^{{-1}} \cdot \mathrm{{cm}}^{{-2}}$'.format(V,phiOn))
-        plotLight(pulses, axLine)
-        ### New plot format (plus change in ylims)
-        #axLine.spines['left'].set_position('zero') # y-axis
-        #axLine.spines['right'].set_color('none')
-        #axLine.spines['bottom'].set_position('zero') # x-axis
-        #axLine.spines['bottom'].set_color('none')
-        #axLine.spines['top'].set_color('none')
-        axLine.spines['left'].set_smart_bounds(True)
-        axLine.spines['bottom'].set_smart_bounds(True)
-        #axLine.xaxis.set_ticks_position('bottom')
-        #axLine.yaxis.set_ticks_position('left')
-
-
-        ### Plot stack plot of state variables
-        axStack = fig.add_subplot(gs[1,:], sharex=axLine)
+        # Plot stack plot of state variables
+        axStack = fig.add_subplot(gs[1, :], sharex=axLine)
         plt.stackplot(t, states.T)
         plt.ylim((0, 1))
         plt.xlim((t_start, t_end))
+        if with_pc:
+            legend = axStack.legend(labels, loc=6, fancybox=True, frameon=True, framealpha=0.3)
+            legend.get_frame().set_facecolor('0.90')
         plotLight(pulses, axStack, 'borders')
         if config.addTitles:
             axStack.title.set_visible(False)
         plt.xlabel(r'$\mathrm{Time\ [ms]}$')
         plt.ylabel(r'$\mathrm{State\ occupancy}$')
 
+
+        if plotPeaks:
+            # TODO: Generalise this - see if plotPies below
+            for p in piePulses:
+                pInd = peakInds[p] # Plot the first peak
+                axLine.axvline(x=t[pInd], linestyle=':', color='k')
+                axStack.axvline(x=t[pInd], linestyle=':', color='k')
 
         if plotPies:
             #TODO: Remove this again and fix bug with piechart sns colours
@@ -1101,15 +1116,15 @@ class PhotoCurrent(object):
                         plt.title(r'$\mathrm{Initial\ state\ occupancies}$')
                     else:
                         #axS0.text(-1, 1, '$t_{0}$')
-                        axS0.annotate('$t_{0}$', xycoords='axes fraction', xy=(0, 1))
+                        axS0.annotate('$t_{0}$', xycoords='axes fraction', xy=(0, 1), fontsize=config.eqSize)
                     if pieInd == 0:
-                        axS0.annotate('$pulse={}$'.format(p), xycoords='axes fraction', xy=(0, 0))
+                        axS0.annotate('$pulse={}$'.format(p), xycoords='axes fraction', xy=(0, 0), fontsize=mpl.rcParams['axes.labelsize'])
                     pieInd += 1
 
                 if plotPeaks: #peakInds is not None: ### Plot peak state proportions
                     pInd = peakInds[p] # Plot the first peak
-                    axLine.axvline(x=t[pInd], linestyle=':', color='k')
-                    axStack.axvline(x=t[pInd], linestyle=':', color='k')
+                    #axLine.axvline(x=t[pInd], linestyle=':', color='k')
+                    #axStack.axvline(x=t[pInd], linestyle=':', color='k')
                     axPeak = fig.add_subplot(gs[p+2, pieInd])
                     sizes = states[pInd,:] * 100
                     #sizes = [s*100 for s in sizes]
@@ -1126,9 +1141,9 @@ class PhotoCurrent(object):
                         plt.title(r'$\mathrm{Simulated\ peak\ state\ occupancies}$')
                     else:
                         #axPeak.text(-1, 1, '$t_{peak}$')
-                        axPeak.annotate('$t_{peak}$', xycoords='axes fraction', xy=(0, 1))
+                        axPeak.annotate('$t_{peak}$', xycoords='axes fraction', xy=(0, 1), fontsize=config.eqSize)
                     if pieInd == 0:
-                        axPeak.annotate('$pulse={}$'.format(p), xycoords='axes fraction', xy=(0, 0))
+                        axPeak.annotate('$pulse={}$'.format(p), xycoords='axes fraction', xy=(0, 0), fontsize=mpl.rcParams['axes.labelsize'])
                     pieInd += 1
 
                 if plotSS: #not plotInit: # Plot steady-state proportions
@@ -1147,7 +1162,7 @@ class PhotoCurrent(object):
                         plt.title(r'$\mathrm{Simulated\ steady-state\ occupancies}$')
                     else:
                         #axSS.text(-1, 1, '$t_{peak}$')
-                        axSS.annotate('$t_{ss}$', xycoords='axes fraction', xy=(0, 1))
+                        axSS.annotate('$t_{ss}$', xycoords='axes fraction', xy=(0, 1), fontsize=config.eqSize)
                     pieInd += 1
 
                 # TODO: Generalise to use phi(t=t_off)
@@ -1167,7 +1182,7 @@ class PhotoCurrent(object):
                         plt.title(r'$\mathrm{Analytic\ steady-state\ occupancies}$')
                     else:
                         #axInf.text(-1, 1, r'$t_{\inf}$')#, fontsize=mpl.rcParams['legend.fontsize'])
-                        axInf.annotate(r'$t_{\infty}$', xycoords='axes fraction', xy=(0, 1))
+                        axInf.annotate(r'$t_{\infty}$', xycoords='axes fraction', xy=(0, 1), fontsize=config.eqSize)
 
         plt.tight_layout()
         plt.show()
