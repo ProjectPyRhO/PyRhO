@@ -404,7 +404,7 @@ def setFigOutput(figDisplay='screen', width=None):
         labelSize = 16
         legendSize = 12
         titleSize = 'small' #'x-large'
-        eqSize = 18
+        eqSize = 18  # General annotations
         linewidth = 1.5
         markerSize = 6 # Default: 6
         addTitles = True
@@ -422,7 +422,7 @@ def setFigOutput(figDisplay='screen', width=None):
         labelSize = 12
         legendSize = 8
         titleSize = 'small' #'x-large'
-        eqSize = 12
+        eqSize = 12  # General annotations
         linewidth = 1.5
         markerSize = 6 # Default: 6
         addTitles = True
@@ -444,7 +444,7 @@ def setFigOutput(figDisplay='screen', width=None):
         labelSize = 10
         legendSize = 10
         titleSize = 'medium'
-        eqSize = 10
+        eqSize = 12  # General annotations
         linewidth = 2
         markerSize = 6
         addTitles = False
