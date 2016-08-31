@@ -914,18 +914,26 @@ class PhotoCurrent(object):
             #plt.sca(axPC)
         '''
 
+        #ax.set_ylim(0, 0, auto=True)
         if colour is None or linestyle is None:
-            plt.plot(self.t, self.I)
+            ax.plot(self.t, self.I)
         else:
-            plt.plot(self.t, self.I, color=colour, linestyle=linestyle)
+            ax.plot(self.t, self.I, color=colour, linestyle=linestyle)
 
         plotLight(self.pulses, ax=ax, light=light, dark=dark, lam=470, alpha=0.2)
 
-        plt.xlabel(r'$\mathrm{Time\ [ms]}$', position=(config.xLabelPos, 0), ha='right')
-        plt.xlim((self.t_start, self.t_end))
-        plt.ylabel(r'$\mathrm{Photocurrent\ [nA]}$')
+        ax.set_xlabel(r'$\mathrm{Time\ [ms]}$', position=(config.xLabelPos, 0), ha='right')
+        ax.set_xlim((self.t_start, self.t_end))
+        ax.set_ylabel(r'$\mathrm{Photocurrent\ [nA]}$')
+        #ax.set_ylim(ax.get_ylim(), auto=True)
+        #ticks = ax.get_yticks()
 
         setCrossAxes(ax)
+        #ymin, ymax = ax.get_ylim()
+        #ax.set_ylim(ymin, max(self.I), auto=True)  # TODO: Rethink this - breaks rectifier
+        #ax.spines['left'].set_bounds(ymin, ymax)
+        #ax.relim()
+        #ax.autoscale_view()
 
         if addFeatures:
 
@@ -973,19 +981,19 @@ class PhotoCurrent(object):
                 texty = -round(0.1 * self.I_peak_)
                 arrowy = 1.5 * texty
                 #awidth=10
-                ax.annotate('', xy=(self.pulses[p,0], arrowy),
-                            xytext=(self.pulses[p,1], arrowy),
+                ax.annotate('', xy=(self.pulses[p, 0], arrowy),
+                            xytext=(self.pulses[p, 1], arrowy),
                             arrowprops=dict(arrowstyle='<->', color='blue', shrinkA=0, shrinkB=0))
-                plt.text(self.pulses[p,0]+self.Dt_ons_[p]/2, texty,
+                ax.text(self.pulses[p, 0]+self.Dt_ons_[p]/2, texty,
                          r'$\Delta t_{{on_{}}}={:.3g}\mathrm{{ms}}$'.format(p, self.Dt_ons_[p]),
                         ha='center', va='bottom', fontsize=config.eqSize)
                 if p < self.nPulses-1:
-                    end = self.pulses[p+1,0]
+                    end = self.pulses[p+1, 0]
                 else:
                     end = self.t_end
-                ax.annotate('', xy=(self.pulses[p,1], arrowy), xytext=(end, arrowy),
+                ax.annotate('', xy=(self.pulses[p, 1], arrowy), xytext=(end, arrowy),
                             arrowprops=dict(arrowstyle='<->', color='green', shrinkA=0, shrinkB=0))
-                plt.text(self.pulses[p,1]+self.Dt_offs_[p]/2, texty,
+                ax.text(self.pulses[p, 1]+self.Dt_offs_[p]/2, texty,
                          r'$\Delta t_{{off_{}}}={:.3g}\mathrm{{ms}}$'.format(p, self.Dt_offs_[p]),
                         ha='center', va='bottom', fontsize=config.eqSize)
 

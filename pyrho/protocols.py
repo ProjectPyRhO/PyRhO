@@ -837,18 +837,17 @@ class protDelta(Protocol):
     protocol = 'delta'
     squarePulse = True
     nRuns = 1
-
     Dt_on = 0
 
     def prepare(self):
         """Function to set-up additional variables and make parameters consistent after any changes"""
-        assert(self.Dt_total >= self.Dt_delay + self.Dt_on) # ==> Dt_off >= 0
+        assert(self.Dt_total >= self.Dt_delay + self.Dt_on)  # ==> Dt_off >= 0
         self.cycles = np.asarray([[self.Dt_on, self.Dt_total-self.Dt_delay-self.Dt_on]])
         self.nPulses = self.cycles.shape[0]
         self.pulses, self.Dt_total = cycles2times(self.cycles, self.Dt_delay)
-        self.Dt_delays = np.array([row[0] for row in self.pulses], copy=True) # pulses[:,0]    # Delay Durations
-        self.Dt_ons = [row[1]-row[0] for row in self.pulses] # pulses[:,1] - pulses[:,0]   # Pulse Durations
-        self.Dt_offs = np.append(self.pulses[1:,0], self.Dt_total) - self.pulses[:,1]
+        self.Dt_delays = np.array([row[0] for row in self.pulses], copy=True)  # pulses[:,0]    # Delay Durations
+        self.Dt_ons = [row[1]-row[0] for row in self.pulses]  # pulses[:,1] - pulses[:,0]   # Pulse Durations
+        self.Dt_offs = np.append(self.pulses[1:, 0], self.Dt_total) - self.pulses[:, 1]
 
         if np.isscalar(self.phis):
             self.phis = np.asarray([self.phis])
@@ -860,60 +859,50 @@ class protDelta(Protocol):
         self.Vs.sort(reverse=True)
         self.nVs = len(self.Vs)
 
+        self.addStimulus = config.addStimulus
         self.extraPrep()
         return
 
     def extraPrep(self):
-        'Function to set-up additional variables and make parameters consistent after any changes'
-
-        self.nRuns = 1 #nRuns
-
+        '''Function to set-up additional variables and make parameters consistent after any changes'''
+        self.nRuns = 1
         self.phi_ts = self.genPulseSet()
-
 
     def finish(self, PC, RhO):
         # Take the max over all runs, phis and Vs?
         # Ipmax = minmax(self.IpVals[run][phiInd][vInd][:])# = I_RhO[peakInds]
         if PC.V is None:
             return
-
-        try: #if V != RhO.E:
-            Gmax = PC.I_peak_ / (PC.V - RhO.E) #Ipmax / (V - RhO.E) # Assuming [O_p] = 1 ##### Should fV also be used?
-        except ZeroDivisionError: #else:
+        try:  # if V != RhO.E:
+            Gmax = PC.I_peak_ / (PC.V - RhO.E)  # Ipmax / (V - RhO.E) # Assuming [O_p] = 1 ##### Should fV also be used?
+        except ZeroDivisionError:
             print("The clamp voltage must be different to the reversal potential!")
-
         gbar_est = Gmax * 1e6
-
         if config.verbose > 0:
-            print("Estimated maximum conductance (g) = {} uS".format(round_sig(gbar_est,3)))
+            print("Estimated maximum conductance (g) = {} uS".format(round_sig(gbar_est, 3)))
 
     def createLayout(self, Ifig=None, vInd=0):
 
-        if Ifig == None:
+        if Ifig is None:
             Ifig = plt.figure()
-
-        self.addStimulus = config.addStimulus
 
         if self.addStimulus:
             phi_ts = self.genPlottingStimuli()
-
-            gsStim = plt.GridSpec(4,1)
-            self.axS = Ifig.add_subplot(gsStim[0,:]) # Stimulus axes
-            self.axI = Ifig.add_subplot(gsStim[1:,:],sharex=self.axS) # Photocurrent axes
+            gsStim = plt.GridSpec(4, 1)
+            self.axS = Ifig.add_subplot(gsStim[0, :])  # Stimulus axes
+            self.axI = Ifig.add_subplot(gsStim[1:, :], sharex=self.axS)  # Photocurrent axes
             for run in range(self.nRuns):
                 for phiInd in range(self.nPhis):
                     pc = self.PD.trials[run][phiInd][vInd]
                     col, style = self.getLineProps(run, vInd, phiInd)
                     self.plotStimulus(phi_ts[run][phiInd], pc.t_start, pc.pulses, pc.t_end, self.axS, light='spectral', col=col, style=style)
             plt.setp(self.axS.get_xticklabels(), visible=False)
-            self.axS.set_xlabel('') #plt.xlabel('')
+            self.axS.set_xlabel('')
             if max(self.phis) / min(self.phis) >= 100:
                 self.axS.set_yscale('log')
         else:
             self.axI = Ifig.add_subplot(111)
-
         #plotLight(self.pulses, self.axI)
-
 
     def addAnnotations(self):
         #plt.figure(Ifig.number)
@@ -940,11 +929,17 @@ class protDelta(Protocol):
                             #plt.axhline(y=I_RhO[peakInds[0]], linestyle=':', color='k')
                             #label = r'$I_{{peak}} = {:.3g}\mathrm{{nA;}}\ t_{{lag}} = {:.3g}\mathrm{{ms}}$'.format(Ip, tlag)
                             #plt.text(1.05*tp, 1.05*Ip, label, ha='left', va='bottom', fontsize=config.eqSize)
-
+        #ymin, ymax = self.axI.get_ylim()
+        #self.axI.set_ylim(ymin, ymax, auto=True)
+        plt.tight_layout()
 
 
 class protRectifier(Protocol):
-    """Protocol to determine the rectification parameters of rhodopsins. Typically they are inward rectifiers where current is more easily passed into the cell than out. """
+    """
+    Protocol to determine the rectification parameters of rhodopsins.
+    Typically they are inward rectifiers where current is more easily passed
+    into the cell than out.
+    """
     # Iss vs Vclamp
     # http://en.wikipedia.org/wiki/Inward-rectifier_potassium_ion_channel
     protocol = 'rectifier'
@@ -957,24 +952,21 @@ class protRectifier(Protocol):
         self.phi_ts = self.genPulseSet()
 
     def createLayout(self, Ifig=None, vInd=0):
-
-        if Ifig == None:
+        if Ifig is None:
             Ifig = plt.figure()
 
         self.addStimulus = config.addStimulus
         #phi_ts = self.genPlottingStimuli()
-
-        self.gsIR = plt.GridSpec(2,3)
-        self.axI = Ifig.add_subplot(self.gsIR[:,0:2])
-        self.axVI = Ifig.add_subplot(self.gsIR[0,-1])#, sharey=self.axI)
-        self.axfV = Ifig.add_subplot(self.gsIR[-1,-1], sharex=self.axVI)
-
+        self.gsIR = plt.GridSpec(2, 3)
+        self.axI = Ifig.add_subplot(self.gsIR[:, 0:2])
+        self.axVI = Ifig.add_subplot(self.gsIR[0, -1])  #, sharey=self.axI)
+        self.axfV = Ifig.add_subplot(self.gsIR[-1, -1], sharex=self.axVI)
 
     def plotExtras(self):
         # TODO: Refactor!!!
         #plt.figure(Ifig.number) #IssVfig = plt.figure()
         colours = config.colours
-        ax = self.axVI #IssVfig.add_subplot(111)
+        ax = self.axVI  #IssVfig.add_subplot(111)
 
         legLabels = [None for p in range(self.nPhis)]
         #eqString = r'$f(v) = \frac{{{v1:.3}}}{{v-{E:+.2f}}} \cdot \left[1-\exp\left({{-\frac{{v-{E:+.2f}}}{{{v0:.3}}}}}\right)\right]$'
@@ -994,10 +986,10 @@ class protRectifier(Protocol):
                 E_i = 0
                 v0_i = 35
                 g0 = 25000 ### Rethink...
-                pseudoV1 = calcV1(E_i, v0_i) * (g0 * 1e-6 * 0.5) # g0*f(phi)*v1 (assuming I in nA and f(phi)=0.5)
+                pseudoV1 = calcV1(E_i, v0_i) * (g0 * 1e-6 * 0.5)  # g0*f(phi)*v1 (assuming I in nA and f(phi)=0.5)
                 p0FV = (v0_i, pseudoV1, E_i)
 
-                poptI, poptg = fitFV(Vs, Iss, p0FV) #, ax=ax)
+                poptI, poptg = fitFV(Vs, Iss, p0FV)  #, ax=ax)
                 '''
                 ### From fitfV() and fitFV() --> poptI
                 def calcRect(V, v0, v1, E): #, gpsi):
