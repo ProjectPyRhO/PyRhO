@@ -9,6 +9,7 @@ import pickle
 from string import Template
 
 import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 from pyrho import config
@@ -16,7 +17,7 @@ from pyrho import config
 
 __all__ = ['Timer', 'saveData', 'loadData', 'getExt', 'getIndex', 'calcV1',
            'lam2rgb', 'irrad2flux', 'flux2irrad', 'times2cycles', 'cycles2times',
-           'plotLight', 'setCrossAxes', 'round_sig']
+           'plotLight', 'plot_light_bar', 'setCrossAxes', 'round_sig']
 # 'printParams', 'compareParams', 'texIt', 'expDecay', 'biExpDecay', 'biExpSum', 'calcgbar'
 
 
@@ -592,6 +593,16 @@ def plotLight(times, ax=None, light='shade', dark=None, lam=470, alpha=0.2):
         pass
     else:
         warnings.warn('Warning: Unrecognised light representation: {}!'.format(light))
+    return
+
+
+def plot_light_bar(ax, times, y, colour):
+    lightBarWidth = 2 * mpl.rcParams['lines.linewidth']
+    for pulse in times:
+        t_on, t_off = pulse
+        light_bar = ax.hlines(y=y, xmin=t_on, xmax=t_off, lw=lightBarWidth, color=colour)
+        ax.axvline(x=t_on, linestyle=':', c='k', label='_nolegend_')
+        ax.axvline(x=t_off, linestyle=':', c=colour, label='_nolegend_')
     return
 
 

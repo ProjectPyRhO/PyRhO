@@ -894,100 +894,81 @@ class simNEURON(Simulator):
         self.Vms[run][phiInd][vInd] = copy.copy(self.Vm)
         return
 
-    def plotExtras(self): ### TODO: REVISE!!!
+    def plotExtras(self):  # TODO: REVISE!!!
+
+        if self.Vclamp:
+            return
+
         Prot = self.Prot
         RhO = self.RhO
-        if not self.Vclamp:
-            Vfig = plt.figure()
-            axV = Vfig.add_subplot(111)
-            for run in range(Prot.nRuns):                   # Loop over the number of runs...   ### Place within V & phi loops to test protocols at different V & phi?
-                cycles, Dt_delay = Prot.getRunCycles(run)
-                pulses, Dt_total = cycles2times(cycles, Dt_delay)
-                for phiInd, phiOn in enumerate(Prot.phis):  # Loop over light intensity...
-                    for vInd, V in enumerate(Prot.Vs):      # Loop over clamp voltage ### N.B. solution variables are not currently dependent on V
-                        col, style = Prot.getLineProps(run, vInd, phiInd)
-                        Vm = self.Vms[run][phiInd][vInd]
-                        #t = self.t - Dt_delay ### HACK Change me!!!
-                        pc = Prot.PD.trials[run][phiInd][vInd]
-                        t = pc.t
-                        pulses = pc.pulses
-                        #print(t.shape, Vm.shape)
-                        plt.plot(t, Vm, color=col, ls=style) #plt.plot(t, Vm, color='g')
-                        #if times is not None:
-                        #    plotLight(times)
-                        if run == 0 and phiInd == 0 and vInd == 0 and Prot.protocol is not 'shortPulse':
-                        #    #plotLight(pulses-Dt_delay) ### HACK
-                            plotLight(pulses)
 
-            if Prot.protocol is 'shortPulse':  # TODO: Refactor
-                for run in range(Prot.nRuns):                   # Loop over the number of runs...   ### Place within V & phi loops to test protocols at different V & phi?
-                    cycles, Dt_delay = Prot.getRunCycles(run)
-                    pulses, Dt_total = cycles2times(cycles, Dt_delay)
-                    for phiInd, phiOn in enumerate(Prot.phis):  # Loop over light intensity...
-                        for vInd, V in enumerate(Prot.Vs):      # Loop over clamp voltage ### N.B. solution variables are not currently dependent on V
+        Vfig = plt.figure()
+        axV = Vfig.add_subplot(111)
+        for run in range(Prot.nRuns):
+            for phiInd, phiOn in enumerate(Prot.phis):
+                for vInd, V in enumerate(Prot.Vs):
+                    colour, style = Prot.getLineProps(run, vInd, phiInd)
+                    Vm = self.Vms[run][phiInd][vInd]
+                    pc = Prot.PD.trials[run][phiInd][vInd]
+                    t = pc.t
+                    pulses = pc.pulses
+                    axV.plot(t, Vm, color=colour, ls=style)
 
-                            # Plot bars for pulses
-                            ymin, ymax = plt.ylim()
+                    if Prot.protocol is 'shortPulse':
+                        if run == 0 and phiInd == 0 and vInd == 0:
+                            ymin, ymax = axV.get_ylim()
                             pos = 0.02 * abs(ymax-ymin)
-                            plt.ylim(ymin, pos*(self.nRuns+1)) # Allow extra space for thick lines
-                            lightBarWidth = 2 * mpl.rcParams['lines.linewidth']
-                            #peakMarkerSize = 1.5 * mpl.rcParams['lines.markersize']
+                            axV.set_ylim(ymin, ymax + pos*(Prot.nRuns+1), auto=True)  # Allow extra space for thick lines
+                        plot_light_bar(axV, pulses, y=ymax+(run+1)*pos, colour=colour)
 
-                            for run in range(self.nRuns):
-                                for phiInd in range(self.nPhis):
-                                    for vInd in range(self.nVs):
-                                        colour, style = self.getLineProps(run, vInd, phiInd)
-                                        PC = self.PD.trials[run][phiInd][vInd]
-                                        t_on, t_off = PC.pulses[0, :]
+                    else:
+                        if run == 0 and phiInd == 0 and vInd == 0:
+                            plotLight(pulses)
+        # TODO: Plot extra pulses and refactor
+        #self.t_start, self.t_end = min(t_starts), max(t_ends)
+        # Add stimuli
+        #for p in range(self.nPulses):
+        #    sameStart, sameEnd = False, False
+        #    if np.allclose(pulseSet[p, 0, :], np.tile(pulseSet[p, 0, 0], (1, 1, self.nRuns))): #pth t_on are the same
+        #        sameStart = True
+        #    if np.allclose(pulseSet[p, 1, :], np.tile(pulseSet[p, 1, 0], (1, 1, self.nRuns))): #pth t_off are the same
+        #        sameEnd = True
 
-                                        axV.hlines(y=(run+1)*pos, xmin=t_on, xmax=t_off, lw=lightBarWidth, color=colour)
-                                        axV.axvline(x=t_on, linestyle=':', c='k')
-                                        axV.axvline(x=t_off, linestyle=':', c=colour)
-            # TODO: Plot extra pulses and refactor
-            #self.t_start, self.t_end = min(t_starts), max(t_ends)
-            # Add stimuli
-            #for p in range(self.nPulses):
-            #    sameStart, sameEnd = False, False
-            #    if np.allclose(pulseSet[p, 0, :], np.tile(pulseSet[p, 0, 0], (1, 1, self.nRuns))): #pth t_on are the same
-            #        sameStart = True
-            #    if np.allclose(pulseSet[p, 1, :], np.tile(pulseSet[p, 1, 0], (1, 1, self.nRuns))): #pth t_off are the same
-            #        sameEnd = True
+        #    if sameStart and sameEnd: #np.allclose(pulseSet[p,:,run], np.tile(pulseSet[p,:,0], (1,1,self.nRuns))): #pth pulses are the same
+        #        plotLight(np.asarray([pulseSet[p, :, 0]]), ax=ax, light=light, lam=470, alpha=0.2)
 
-            #    if sameStart and sameEnd: #np.allclose(pulseSet[p,:,run], np.tile(pulseSet[p,:,0], (1,1,self.nRuns))): #pth pulses are the same
-            #        plotLight(np.asarray([pulseSet[p, :, 0]]), ax=ax, light=light, lam=470, alpha=0.2)
+        #    elif not sameStart and not sameEnd: # No overlap
+        #        for run in range(self.nRuns):
+        #            plotLight(np.asarray([pulseSet[p, :, run]]), ax=ax, light=light, lam=470, alpha=0.2)
 
-            #    elif not sameStart and not sameEnd: # No overlap
-            #        for run in range(self.nRuns):
-            #            plotLight(np.asarray([pulseSet[p, :, run]]), ax=ax, light=light, lam=470, alpha=0.2)
+        #    else: #not (sameStart and sameEnd): # One or the other - xor
+        #        pass # This applies to shortPulse only at present - do not shade!
 
-            #    else: #not (sameStart and sameEnd): # One or the other - xor
-            #        pass # This applies to shortPulse only at present - do not shade!
+        plt.ylabel('$\mathrm{Membrane\ Potential\ [mV]}$') #axV.set_ylabel('Voltage [mV]')
+        #axV.set_xlim((-Dt_delay, self.h.tstop - Dt_delay)) ### HACK
+        axV.set_xlim((t[0], t[-1]))
+        plt.xlabel('$\mathrm{Time\ [ms]}$', position=(config.xLabelPos,0), ha='right')
 
-            plt.ylabel('$\mathrm{Membrane\ Potential\ [mV]}$') #axV.set_ylabel('Voltage [mV]')
-            #axV.set_xlim((-Dt_delay, self.h.tstop - Dt_delay)) ### HACK
-            axV.set_xlim((t[0], t[-1]))
-            plt.xlabel('$\mathrm{Time\ [ms]}$', position=(config.xLabelPos,0), ha='right')
+        setCrossAxes(axV, zeroX=False) # Zeroing x-axis caused the plot to become too big!
+        # #axV.spines['bottom'].set_position('zero') # x-axis # Caused the plot to be too big!
+        axV.get_xaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
+        axV.get_yaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
+        axV.grid(b=True, which='minor', axis='both', linewidth=.2)
+        axV.grid(b=True, which='major', axis='both', linewidth=1)
 
-            setCrossAxes(axV, zeroX=False) # Zeroing x-axis caused the plot to become too big!
-            # #axV.spines['bottom'].set_position('zero') # x-axis # Caused the plot to be too big!
-            axV.get_xaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
-            axV.get_yaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
-            axV.grid(b=True, which='minor', axis='both', linewidth=.2)
-            axV.grid(b=True, which='major', axis='both', linewidth=1)
+        if len(Prot.PD.legLabels) > 0 and Prot.PD.legLabels[0] is not '':
+            plt.legend(Prot.PD.legLabels)
 
-            if len(Prot.PD.legLabels) > 0 and Prot.PD.legLabels[0] is not '':
-                plt.legend(Prot.PD.legLabels)
+        #axV.set_ylim(axV.get_ylim())
+        ymin, ymax = axV.get_ylim()
 
-            #axV.set_ylim(axV.get_ylim())
-            ymin, ymax = axV.get_ylim()
+        plt.tight_layout()
+        plt.show()
 
-            plt.tight_layout()
-            plt.show()
-
-            #figName = '{}Vm{}s-{}-{}-{}'.format(Prot.protocol, RhO.nStates, run, phiInd, vInd)
-            figName = '{}Vm{}s'.format(Prot.protocol, RhO.nStates)
-            fileName = os.path.join(config.fDir, figName+"."+config.saveFigFormat)
-            Vfig.savefig(fileName, format=config.saveFigFormat)
+        #figName = '{}Vm{}s-{}-{}-{}'.format(Prot.protocol, RhO.nStates, run, phiInd, vInd)
+        figName = '{}Vm{}s'.format(Prot.protocol, RhO.nStates)
+        fileName = os.path.join(config.fDir, figName+"."+config.saveFigFormat)
+        Vfig.savefig(fileName, format=config.saveFigFormat)
 
 
 

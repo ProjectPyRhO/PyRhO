@@ -27,6 +27,7 @@ import lmfit
 #    IPY = False
 
 # Place all submodule functions and variables into namespace
+from pyrho import config
 from pyrho.config import *
 from pyrho.config import _DASH_LINE, _DOUB_DASH_LINE
 from pyrho.parameters import *
@@ -80,7 +81,7 @@ def runAll(listOfModels=[6], simList=['Python']):
     listOfModels : int, str, list
         Individual or list of integers or strings specifying the models to run
         e.g. [3, 4, 6], 3, '4', ['4', '6'], modelList
-    
+
     """
 
     if not isinstance(listOfModels, (list, tuple)):
@@ -129,4 +130,3 @@ def printVersions():
     print("Lmfit version: ", lmfit.__version__)
 
     print("PyRhO version: ", __version__)
-

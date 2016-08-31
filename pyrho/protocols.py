@@ -1213,20 +1213,20 @@ class protShortPulse(Protocol):
 
     def createLayout(self, Ifig=None, vInd=0):
 
-        if Ifig == None:
+        if Ifig is None:
             Ifig = plt.figure()
         self.addStimulus = config.addStimulus
-        gsPL = plt.GridSpec(2,3)
-        self.axLag = Ifig.add_subplot(gsPL[0,-1])
-        self.axPeak = Ifig.add_subplot(gsPL[1,-1], sharex=self.axLag)
-        self.axI = Ifig.add_subplot(gsPL[:,:-1])
+        gsPL = plt.GridSpec(2, 3)
+        self.axLag = Ifig.add_subplot(gsPL[0, -1])
+        self.axPeak = Ifig.add_subplot(gsPL[1, -1], sharex=self.axLag)
+        self.axI = Ifig.add_subplot(gsPL[:, :-1])
 
 
     def addAnnotations(self):
         # Freeze axis limits
-        ymin, ymax = plt.ylim()
+        ymin, ymax = self.axI.get_ylim()
         pos = 0.02 * abs(ymax-ymin)
-        plt.ylim(ymin, pos*(self.nRuns+1)) # Allow extra space for thick lines
+        self.axI.set_ylim(ymin, ymax + round(pos*(self.nRuns+1)), auto=True)
         lightBarWidth = 2 * mpl.rcParams['lines.linewidth']
         peakMarkerSize = 1.5 * mpl.rcParams['lines.markersize']
 
@@ -1237,9 +1237,9 @@ class protShortPulse(Protocol):
                     PC = self.PD.trials[run][phiInd][vInd]
                     t_on, t_off = PC.pulses[0,:]
 
-                    self.axI.hlines(y=(run+1)*pos, xmin=t_on, xmax=t_off, lw=lightBarWidth, color=colour)
-                    self.axI.axvline(x=t_on, linestyle=':', c='k')
-                    self.axI.axvline(x=t_off, linestyle=':', c=colour)
+                    self.axI.hlines(y=ymax+(run+1)*pos, xmin=t_on, xmax=t_off, lw=lightBarWidth, color=colour)
+                    self.axI.axvline(x=t_on, linestyle=':', c='k', label='_nolegend_')
+                    self.axI.axvline(x=t_off, linestyle=':', c=colour, label='_nolegend_')
 
                     self.axI.plot(PC.t_peaks_, PC.I_peaks_, marker='*', ms=peakMarkerSize, c=colour)
 
