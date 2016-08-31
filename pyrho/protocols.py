@@ -924,14 +924,22 @@ class protDelta(Protocol):
                     # Maximum only...
                     #Ip = pc.I_peak_
                     #tp = pc.t_peak_
+                    toffset = round(0.1 * pc.t_end)
                     for p in range(self.nPulses):
-                        Ip = pc.I_peaks_[p]
-                        tp = pc.t_peaks_[p]
-                        tlag = pc.Dt_lags_[p]
-                        self.axI.axvline(x=tp, linestyle=':', color='k')
-                        #plt.axhline(y=I_RhO[peakInds[0]], linestyle=':', color='k')
-                        label = r'$I_{{peak}} = {:.3g}\mathrm{{nA;}}\ t_{{lag}} = {:.3g}\mathrm{{ms}}$'.format(Ip, tlag)
-                        plt.text(1.05*tp, 1.05*Ip, label, ha='left', va='bottom', fontsize=config.eqSize)
+                        if pc.I_peaks_[p] is not None:
+                            Ip = pc.I_peaks_[p]
+                            tp = pc.t_peaks_[p]
+                            tlag = pc.Dt_lags_[p]
+
+                            self.axI.annotate(r'$I_{{peak}} = {:.3g}\mathrm{{nA}};\ t_{{lag}} = {:.3g}\mathrm{{ms}}$'.format(Ip, tlag),
+                                        xy=(tp, Ip), xytext=(toffset+tp, Ip),
+                                        arrowprops=dict(arrowstyle="wedge,tail_width=0.6", shrinkA=5, shrinkB=15, facecolor=config.colours[2]),
+                                        horizontalalignment='left', verticalalignment='center', fontsize=config.eqSize)
+
+                            self.axI.axvline(x=tp, linestyle=':', color='k')
+                            #plt.axhline(y=I_RhO[peakInds[0]], linestyle=':', color='k')
+                            #label = r'$I_{{peak}} = {:.3g}\mathrm{{nA;}}\ t_{{lag}} = {:.3g}\mathrm{{ms}}$'.format(Ip, tlag)
+                            #plt.text(1.05*tp, 1.05*Ip, label, ha='left', va='bottom', fontsize=config.eqSize)
 
 
 
