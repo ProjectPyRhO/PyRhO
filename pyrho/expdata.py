@@ -886,7 +886,7 @@ class PhotoCurrent(object):
         linestyle   :=  Specify linestyle for the photocurrent data
         """
 
-        if ax == None:
+        if ax is None:
             ax = plt.gca()
         else:
             plt.sca(ax)
