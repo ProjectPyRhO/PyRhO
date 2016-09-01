@@ -969,7 +969,7 @@ class simNEURON(Simulator):
         figName = '{}Vm{}s'.format(Prot.protocol, RhO.nStates)
         fileName = os.path.join(config.fDir, figName+"."+config.saveFigFormat)
         Vfig.savefig(fileName, format=config.saveFigFormat)
-
+        self.axV = axV
 
 
 
