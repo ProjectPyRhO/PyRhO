@@ -29,6 +29,7 @@ from pyrho.config import verbose
 
 __all__ = ['loadGUI']
 
+has_gui = {'Python': True, 'NEURON': True, 'Brian': False}
 statesDict = OrderedDict([(s, i) for i, s in enumerate(list(modelParams))])  # .keys()
 statesArray = modelList  # statesArray = list(statesDict)
 
@@ -65,7 +66,7 @@ class ParamWidgets(object):
         # pParamsI2K = OrderedDict([(prot,list(protParams[prot])) for prot in protList])
         self.params_protocols = OrderedDict([(prot, list(protParams[prot])) for prot in protList])
 
-        self.sims = [sim for sim in simList if simAvailable(sim)]
+        self.sims = [sim for sim in simList if simAvailable(sim) and has_gui(sim)]
         # sParamsK2I = OrderedDict([(sim,OrderedDict([(p,i) for i,p in enumerate(list(simParams[sim]))])) for sim in simList])
         # sParamsI2K = OrderedDict([(sim,list(simParams[sim])) for sim in simList])
         simParamsList = OrderedDict([(sim, list(simParams[sim])) for sim in simList])
