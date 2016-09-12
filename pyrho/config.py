@@ -95,7 +95,7 @@ def createDir(path):
             raise
 
 
-### Set data and figure directories to defaults
+# Set data and figure directories to defaults
 if 'dDir' not in vars() or 'dDir' not in globals() or dDir is None:
     dDir = 'data' + os.sep
     createDir(dDir)
@@ -105,6 +105,7 @@ if 'fDir' not in vars() or 'fDir' not in globals() or fDir is None:
     createDir(fDir)
 
 GUIdir = 'gui'
+
 
 def setupGUI(path=None):
 
@@ -119,7 +120,7 @@ def setupGUI(path=None):
 
     """
 
-    if path is None: # Copy image folders to home directory
+    if path is None:  # Copy image folders to home directory
         path = os.path.join(os.getcwd(), GUIdir)
 
     createDir(path)
@@ -129,6 +130,7 @@ def setupGUI(path=None):
         shutil.copy2(os.path.join(pyrhoGUIpath, f), path)
 
     return
+
 
 def simAvailable(simName, test=False):
 
@@ -140,7 +142,7 @@ def simAvailable(simName, test=False):
     simName : str {'python', 'neuron', 'brian', 'brian2'}
         Specify the simulator to check
     test : bool, optional
-        Specify whether to run the simulator's test suite (the default is False)
+        Specify whether to run the simulator's test suite (default: False)
 
     Returns
     -------
