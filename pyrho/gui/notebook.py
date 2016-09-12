@@ -27,7 +27,7 @@ from pyrho.utilities import *
 from pyrho import config
 from pyrho.config import verbose
 
-__all__ = ['loadGUI']
+__all__ = ['load']
 
 has_gui = {'Python': True, 'NEURON': True, 'Brian': False}
 statesDict = OrderedDict([(s, i) for i, s in enumerate(list(modelParams))])  # .keys()
@@ -37,6 +37,37 @@ statesArray = modelList  # statesArray = list(statesDict)
 boolDict = OrderedDict([('True', True), ('False', False)])
 visibilityMap = ['hidden', '']  # [False, True]
 displayMap = ['none', '']  # [False, True]
+
+GUIdir = 'gui'
+
+
+def setupGUI(path=None):
+
+    """
+    Setup the Jupyter notebook GUI.
+
+    Parameters
+    ----------
+    path : str, optional
+        Specify the path for where to set up the GUI folders.
+        Defaults to the current working directory
+
+    """
+
+    if path is None:  # Copy image folders to home directory
+        path = os.path.join(os.getcwd(), GUIdir)
+
+    createDir(path)
+    #pyrhoGUIpath = os.path.join(pyrhoPath, GUIdir)
+    #pyrhoGUIpath = os.path.realpath(__file__)
+    pyrhoGUIpath = os.path.dirname(os.path.abspath(__file__))
+    pngFiles = [f for f in os.listdir(pyrhoGUIpath) if f.endswith('.png')]
+    for f in pngFiles:
+        shutil.copy2(os.path.join(pyrhoGUIpath, f), path)
+
+    return
+
+
 
 class ParamWidgets(object):
     """Common base class for all sets of parameter widgets"""
@@ -186,3 +217,15 @@ class ParamWidgets(object):
         pluginParamsTabs.margin = '5px'
 
         return pluginParamsTabs
+
+
+#def load():
+#    '''TODO'''
+path = os.path.join(os.getcwd(), GUIdir)
+if not os.path.isdir(path):
+    setupGUI(path)
+
+if IPythonWorkspace is None:
+    pass
+else:
+    globals().update(IPythonWorkspace)
