@@ -1,7 +1,9 @@
-PyRhO - A Virtual Optogenetics Laboratory
-=========================================
+PyRhO
+=====
 
-A Python module to fit and characterise (rhod)opsin photocurrents. 
+*A Virtual Optogenetics Laboratory*
+
+PyRhO is a Python module to fit, characterise and simulate (rhod)opsin photocurrents. 
 
 Background
 ----------
