@@ -184,7 +184,7 @@ class simPython(Simulator):
         self.Prot = Prot
         self.RhO = RhO
 
-    '''
+
     # Add this into runTrial and fitting routines...
     def run(RhO, t):
         # P = RhO.P; Gd = RhO.Gd; Gr = RhO.Gr
@@ -193,19 +193,24 @@ class simPython(Simulator):
         # else:
             # soln = RhO.calcSoln(t, RhO.states[-1,:])
 
-        try:
-            soln = RhO.calcSoln(t, RhO.states[-1,:])
-        except: # Any exception e.g. NotImplementedError or ValueError
+        if RhO.useAnalyticSoln:  # Leave the ability to manually override
+            try:
+                soln = RhO.calcSoln(t, RhO.states[-1, :])
+            except:  # Any exception e.g. NotImplementedError or ValueError
+                soln = odeint(RhO.solveStates, RhO.states[-1, :], t, Dfun=RhO.jacobian)
+        else:
             soln = odeint(RhO.solveStates, RhO.states[-1,:], t, Dfun=RhO.jacobian)
-
+            #soln = odeint(RhO.solveStates, RhO.s0, t, args=(None,), Dfun=RhO.jacobian)
+        if np.isnan(np.sum(soln)):  # np.any(np.isnan(soln)):
+            warnings.warn('The state solution is undefined')
         # if RhO.useAnalyticSoln:
             # soln = RhO.calcSoln(t, RhO.states[-1,:])
-            # if np.any(np.isnan(soln)):
+            # if np.isnan(np.sum(soln)):  # np.any(np.isnan(soln)):
                 # soln = odeint(RhO.solveStates, RhO.states[-1,:], t, Dfun=RhO.jacobian)
         # else:
             # soln = odeint(RhO.solveStates, RhO.states[-1,:], t, Dfun=RhO.jacobian)
         return soln
-    '''
+
 
     def runTrial(self, RhO, phiOn, V, Dt_delay, cycles, dt, verbose=config.verbose):
         """
@@ -238,7 +243,7 @@ class simPython(Simulator):
         ### Delay phase (to allow the system to settle)
         phi = 0
         RhO.initStates(phi)         # Reset state and time arrays from previous runs
-        RhO.s0 = RhO.states[-1,:]   # Store initial state used
+        RhO.s0 = RhO.states[-1, :]  # Store initial state used
         start, end = RhO.t[0], RhO.t[0]+Dt_delay
         nSteps = int(round(((end-start)/dt)+1))
         t = np.linspace(start, end, nSteps, endpoint=True)
@@ -248,24 +253,24 @@ class simPython(Simulator):
             if verbose > 2:
                 print("Simulating t_del = [{},{}]".format(start,end))
 
-        if RhO.useAnalyticSoln:
-            soln = RhO.calcSoln(t, RhO.s0)
-        else:
-            soln = odeint(RhO.solveStates, RhO.s0, t, args=(None,), Dfun=RhO.jacobian)
-
-        RhO.storeStates(soln[1:],t[1:])
+        #if RhO.useAnalyticSoln:
+        #    soln = RhO.calcSoln(t, RhO.s0)
+        #else:
+        #    soln = odeint(RhO.solveStates, RhO.s0, t, args=(None,), Dfun=RhO.jacobian)
+        soln = self.run(RhO, t)
+        RhO.storeStates(soln[1:], t[1:])
 
         for p in range(0, nPulses):
 
             ### Light on phase
-            RhO.s_on = soln[-1,:]
+            RhO.s_on = soln[-1, :]
             start = end
-            end = start + cycles[p,0]
+            end = start + cycles[p, 0]
             nSteps = int(round(((end-start)/dt)+1))
             t = np.linspace(start, end, nSteps, endpoint=True)
-            onInd = len(RhO.t) - 1      # Start of on-phase
-            offInd = onInd + len(t) - 1 # Start of off-phase
-            RhO.pulseInd = np.vstack((RhO.pulseInd,[onInd,offInd]))
+            onInd = len(RhO.t) - 1       # Start of on-phase
+            offInd = onInd + len(t) - 1  # Start of off-phase
+            RhO.pulseInd = np.vstack((RhO.pulseInd, [onInd, offInd]))
             # Turn on light and set transition rates
             phi = phiOn  # Light flux
             RhO.setLight(phi)
@@ -275,18 +280,19 @@ class simPython(Simulator):
                 if verbose > 2:
                     print("Simulating t_on = [{},{}]".format(start, end))
 
-            if RhO.useAnalyticSoln:
-                soln = RhO.calcSoln(t, RhO.s_on)
-            else:
-                soln = odeint(RhO.solveStates, RhO.s_on, t, args=(None,), Dfun=RhO.jacobian)
+            #if RhO.useAnalyticSoln:
+            #    soln = RhO.calcSoln(t, RhO.s_on)
+            #else:
+            #    soln = odeint(RhO.solveStates, RhO.s_on, t, args=(None,), Dfun=RhO.jacobian)
+            soln = self.run(RhO, t)
 
-            RhO.storeStates(soln[1:], t[1:]) # Skip first values to prevent duplicating initial conditions and times
+            RhO.storeStates(soln[1:], t[1:])  # Skip first values to prevent duplicating initial conditions and times
             RhO.ssInf.append(RhO.calcSteadyState(phi))
 
             ### Light off phase
-            RhO.s_off = soln[-1,:]
+            RhO.s_off = soln[-1, :]
             start = end
-            end = start + cycles[p,1]
+            end = start + cycles[p, 1]
             nSteps = int(round(((end-start)/dt)+1))
             t = np.linspace(start, end, nSteps, endpoint=True)
             # Turn off light and set transition rates
@@ -298,15 +304,16 @@ class simPython(Simulator):
                 if verbose > 2:
                     print("Simulating t_off = [{},{}]".format(start, end))
 
-            if RhO.useAnalyticSoln:
-                soln = RhO.calcSoln(t, RhO.s_off)
-            else:
-                soln = odeint(RhO.solveStates, RhO.s_off, t, args=(None,), Dfun=RhO.jacobian)
+            #if RhO.useAnalyticSoln:
+            #    soln = RhO.calcSoln(t, RhO.s_off)
+            #else:
+            #    soln = odeint(RhO.solveStates, RhO.s_off, t, args=(None,), Dfun=RhO.jacobian)
+            soln = self.run(RhO, t)
 
-            RhO.storeStates(soln[1:], t[1:]) # Skip first values to prevent duplicating initial conditions and times
+            RhO.storeStates(soln[1:], t[1:])  # Skip first values to prevent duplicating initial conditions and times
 
             if verbose > 1:
-                print('t_pulse{} = [{}, {}]'.format(p,RhO.t[onInd],RhO.t[offInd]))
+                print('t_pulse{} = [{}, {}]'.format(p, RhO.t[onInd], RhO.t[offInd]))
 
 
         ### Calculate photocurrent
@@ -336,14 +343,14 @@ class simPython(Simulator):
 
         ### Stimulation phases
         for p in range(0, nPulses):
-            RhO.s_on = soln[-1,:]
+            RhO.s_on = soln[-1, :]
             start = end
-            Dt_on, Dt_off = cycles[p,0], cycles[p,1]
+            Dt_on, Dt_off = cycles[p, 0], cycles[p, 1]
             end = start + Dt_on + Dt_off
 
-            onInd = len(RhO.t) - 1              # Start of on-phase
-            offInd = onInd + int(round(Dt_on/dt)) # Start of off-phase
-            RhO.pulseInd = np.vstack((RhO.pulseInd, [onInd,offInd]))
+            onInd = len(RhO.t) - 1                 # Start of on-phase
+            offInd = onInd + int(round(Dt_on/dt))  # Start of off-phase
+            RhO.pulseInd = np.vstack((RhO.pulseInd, [onInd, offInd]))
             nSteps = int(round(((end-start)/dt)+1))
             t = np.linspace(start, end, nSteps, endpoint=True)
             phi_t = phi_ts[p]
@@ -352,10 +359,12 @@ class simPython(Simulator):
                 print("Pulse initial conditions:{}".format(RhO.s_on))
 
             if verbose > 2:
-                soln, out = odeint(RhO.solveStates, RhO.s_on, t, args=(phi_t,), Dfun=RhO.jacobian, full_output=True)
+                soln, out = odeint(RhO.solveStates, RhO.s_on, t, args=(phi_t,),
+                                   Dfun=RhO.jacobian, full_output=True)
                 print(out)
             else:
-                soln = odeint(RhO.solveStates, RhO.s_on, t, args=(phi_t,), Dfun=RhO.jacobian)
+                soln = odeint(RhO.solveStates, RhO.s_on, t, args=(phi_t,),
+                              Dfun=RhO.jacobian)
 
             RhO.storeStates(soln[1:], t[1:]) # Skip first values to prevent duplicating initial conditions and times
             RhO.ssInf.append(RhO.calcSteadyState(phi_t(end-Dt_off)))
