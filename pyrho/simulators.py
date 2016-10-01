@@ -185,30 +185,21 @@ class simPython(Simulator):
         self.RhO = RhO
 
 
-    # Add this into runTrial and fitting routines...
     def run(RhO, t):
-        # P = RhO.P; Gd = RhO.Gd; Gr = RhO.Gr
-        # if not RhO.useAnalyticSoln or 2*(P*Gd + P*Gr + Gd*Gr) > (P**2 + Gd**2 + Gr**2):
-            # soln = odeint(RhO.solveStates, RhO.states[-1,:], t, Dfun=RhO.jacobian)
-        # else:
-            # soln = RhO.calcSoln(t, RhO.states[-1,:])
 
         if RhO.useAnalyticSoln:  # Leave the ability to manually override
             try:
                 soln = RhO.calcSoln(t, RhO.states[-1, :])
             except:  # Any exception e.g. NotImplementedError or ValueError
-                soln = odeint(RhO.solveStates, RhO.states[-1, :], t, Dfun=RhO.jacobian)
+                soln = odeint(RhO.solveStates, RhO.states[-1, :], t,
+                              args=(None,), Dfun=RhO.jacobian)
         else:
-            soln = odeint(RhO.solveStates, RhO.states[-1,:], t, Dfun=RhO.jacobian)
-            #soln = odeint(RhO.solveStates, RhO.s0, t, args=(None,), Dfun=RhO.jacobian)
+            soln = odeint(RhO.solveStates, RhO.states[-1, :], t,
+                          args=(None,), Dfun=RhO.jacobian)
+
         if np.isnan(np.sum(soln)):  # np.any(np.isnan(soln)):
             warnings.warn('The state solution is undefined')
-        # if RhO.useAnalyticSoln:
-            # soln = RhO.calcSoln(t, RhO.states[-1,:])
-            # if np.isnan(np.sum(soln)):  # np.any(np.isnan(soln)):
-                # soln = odeint(RhO.solveStates, RhO.states[-1,:], t, Dfun=RhO.jacobian)
-        # else:
-            # soln = odeint(RhO.solveStates, RhO.states[-1,:], t, Dfun=RhO.jacobian)
+
         return soln
 
 
@@ -251,14 +242,11 @@ class simPython(Simulator):
         if verbose > 1:
             print("Trial initial conditions:{}".format(RhO.s0))
             if verbose > 2:
-                print("Simulating t_del = [{},{}]".format(start,end))
+                print("Simulating t_del = [{},{}]".format(start, end))
 
-        #if RhO.useAnalyticSoln:
-        #    soln = RhO.calcSoln(t, RhO.s0)
-        #else:
-        #    soln = odeint(RhO.solveStates, RhO.s0, t, args=(None,), Dfun=RhO.jacobian)
         soln = self.run(RhO, t)
         RhO.storeStates(soln[1:], t[1:])
+
 
         for p in range(0, nPulses):
 
@@ -280,14 +268,10 @@ class simPython(Simulator):
                 if verbose > 2:
                     print("Simulating t_on = [{},{}]".format(start, end))
 
-            #if RhO.useAnalyticSoln:
-            #    soln = RhO.calcSoln(t, RhO.s_on)
-            #else:
-            #    soln = odeint(RhO.solveStates, RhO.s_on, t, args=(None,), Dfun=RhO.jacobian)
             soln = self.run(RhO, t)
-
             RhO.storeStates(soln[1:], t[1:])  # Skip first values to prevent duplicating initial conditions and times
             RhO.ssInf.append(RhO.calcSteadyState(phi))
+
 
             ### Light off phase
             RhO.s_off = soln[-1, :]
@@ -304,12 +288,7 @@ class simPython(Simulator):
                 if verbose > 2:
                     print("Simulating t_off = [{},{}]".format(start, end))
 
-            #if RhO.useAnalyticSoln:
-            #    soln = RhO.calcSoln(t, RhO.s_off)
-            #else:
-            #    soln = odeint(RhO.solveStates, RhO.s_off, t, args=(None,), Dfun=RhO.jacobian)
             soln = self.run(RhO, t)
-
             RhO.storeStates(soln[1:], t[1:])  # Skip first values to prevent duplicating initial conditions and times
 
             if verbose > 1:
