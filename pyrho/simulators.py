@@ -103,20 +103,20 @@ class Simulator(PyRhOobject):  # object
             Prot.printParams()
         Prot.logParams()
 
-        for run in range(Prot.nRuns):                   # Loop over the number of runs...
+        for run in range(Prot.nRuns):
 
             cycles, Dt_delay = Prot.getRunCycles(run)
             pulses, Dt_total = cycles2times(cycles, Dt_delay)
 
-            for phiInd, phiOn in enumerate(Prot.phis):  # Loop over light intensity...
+            for phiInd, phiOn in enumerate(Prot.phis):
 
                 if verbose > 1 and (Prot.nPhis > 1 or (run == 0 and phiInd == 0)):
                     RhO.dispRates()
 
-                for vInd, V in enumerate(Prot.Vs):      # Loop over clamp voltage
+                for vInd, V in enumerate(Prot.Vs):
                     # N.B. solution variables are not currently dependent on V
 
-                    ### Reset simulation environment...
+                    # Reset simulation environment...
                     self.initialise()
 
                     # TODO: Deprecate special square pulse fucntions
@@ -184,7 +184,7 @@ class simPython(Simulator):
         self.Prot = Prot
         self.RhO = RhO
 
-    def run(RhO, t):
+    def runSoln(RhO, t):
 
         if RhO.useAnalyticSoln:  # Leave the ability to manually override
             try:
@@ -241,7 +241,7 @@ class simPython(Simulator):
             if verbose > 2:
                 print("Simulating t_del = [{},{}]".format(start, end))
 
-        soln = self.run(RhO, t)
+        soln = self.runSoln(RhO, t)
         RhO.storeStates(soln[1:], t[1:])
 
         for p in range(0, nPulses):
@@ -264,7 +264,7 @@ class simPython(Simulator):
                 if verbose > 2:
                     print("Simulating t_on = [{},{}]".format(start, end))
 
-            soln = self.run(RhO, t)
+            soln = self.runSoln(RhO, t)
             RhO.storeStates(soln[1:], t[1:])  # Skip first values to prevent duplicating initial conditions and times
             RhO.ssInf.append(RhO.calcSteadyState(phi))
 
@@ -284,7 +284,7 @@ class simPython(Simulator):
                 if verbose > 2:
                     print("Simulating t_off = [{},{}]".format(start, end))
 
-            soln = self.run(RhO, t)
+            soln = self.runSoln(RhO, t)
             RhO.storeStates(soln[1:], t[1:])  # Skip first values to prevent duplicating initial conditions and times
 
             if verbose > 1:
@@ -1248,7 +1248,7 @@ class simBrian(Simulator):
         self.namespace.update({'phi': phi})
         self.net.run(duration=duration*ms, namespace=self.namespace, report=report)
 
-        ### Calculate photocurrent
+        # Calculate photocurrent
         assert(self.monitors['states'].n_indices == 1)  # Assumes that only one neuron is recorded
         # Last value is not automatically recorded!
         # https://github.com/brian-team/brian2/issues/452
