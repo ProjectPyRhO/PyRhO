@@ -15,9 +15,7 @@ import pkgutil
 
 import matplotlib as mpl
 import numpy as np
-#import matplotlib as mpl
 #import matplotlib.pyplot as plt
-#import numpy as np
 #import scipy as sp
 #import lmfit
 
