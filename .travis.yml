@@ -8,7 +8,7 @@ python:
 # command to install dependencies
 before_install:
     - sudo apt-get update
-    - sudo apt-get build-dep python-scipy
+    - sudo apt-get build-dep python-scipy python-cython
     # gcc gfortran liblapack-dev libblas-dev libatlas-base-dev libatlas-dev
     - pip install pytest pytest-cov pytest-pep8
 install:
