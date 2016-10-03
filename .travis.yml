@@ -3,7 +3,7 @@ python:
 #  - "2.6"
   - "2.7"
   # shutil.which
-  - "3.1"
+  #- "3.1" # Unsupported by Travis
   - "3.2"
   - "3.3"
   - "3.4"
