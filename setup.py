@@ -134,7 +134,7 @@ setup(
     #    'brian' : ['brian2'],
     # traitlets is a dependency of ipywidgets and can be removed if 4.1 entails traitlets>=4.1
         'GUI' : ['jupyter>=1.0', 'notebook>=4.1', 'ipywidgets>=4.1,<5', 'seaborn>=0.7'],  # , 'traitlets>=4.1,<5'
-        'full': ['jupyter>=1.0', 'notebook>=4.1', 'ipywidgets>=4.1,<5', 'seaborn>=0.7', 'cython>=0.23', 'panads>=0.17'],
+        'full': ['jupyter>=1.0', 'notebook>=4.1', 'ipywidgets>=4.1,<5', 'seaborn>=0.7', 'cython>=0.23', 'pandas>=0.17'],
     },
 
     include_package_data=True,

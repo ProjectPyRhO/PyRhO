@@ -9,4 +9,4 @@ notebook>=4.1
 ipywidgets>=4.1,<5
 seaborn
 cython>=0.23
-panads>=0.17
+pandas>=0.17
