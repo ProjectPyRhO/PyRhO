@@ -44,7 +44,7 @@ if pyVer[0] == 3:
         def check_package(pkg):
             """Test if 'pkg' is available"""
             return importlib.find_loader(pkg) is not None
-    elif pyVer >= (3, 4):
+    else:  # elif pyVer >= (3, 4):
         def check_package(pkg):
             """Test if 'pkg' is available"""
             return importlib.util.find_spec(pkg) is not None
@@ -74,7 +74,7 @@ def setOutput(level):
 logger.info('Starting PyRhO')
 logger.debug('Initialised Logger')
 home = os.path.expanduser('~')
-pyrhoPath = os.path.dirname(os.path.abspath(__file__)) # modulePath
+pyrhoPath = os.path.dirname(os.path.abspath(__file__))  # modulePath
 
 pyrhoNEURONpath = os.path.join(pyrhoPath, 'NEURON')
 NMODLfiles = ('RhO3c.mod', 'RhO4c.mod', 'RhO6c.mod')  # ['RhO3.mod', 'RhO4.mod', 'RhO6.mod']
@@ -106,6 +106,7 @@ if 'fDir' not in vars() or 'fDir' not in globals() or fDir is None:
 
 GUIdir = 'gui'
 
+
 def setupGUI(path=None):
 
     """
@@ -119,7 +120,7 @@ def setupGUI(path=None):
 
     """
 
-    if path is None: # Copy image folders to home directory
+    if path is None:  # Copy image folders to home directory
         path = os.path.join(os.getcwd(), GUIdir)
 
     createDir(path)
@@ -129,6 +130,7 @@ def setupGUI(path=None):
         shutil.copy2(os.path.join(pyrhoGUIpath, f), path)
 
     return
+
 
 def simAvailable(simName, test=False):
 
@@ -140,7 +142,7 @@ def simAvailable(simName, test=False):
     simName : str {'python', 'neuron', 'brian', 'brian2'}
         Specify the simulator to check
     test : bool, optional
-        Specify whether to run the simulator's test suite (the default is False)
+        Specify whether to run the simulator's test suite (default: False)
 
     Returns
     -------
@@ -196,7 +198,7 @@ def checkNEURON(test=False):
     return found
 
 
-def setupNEURON(path=None): # , NEURONpath=None):
+def setupNEURON(path=None):  # , NEURONpath=None):
 
     """
     Setup the NEURON simulator to work with PyRhO.
@@ -241,7 +243,7 @@ def setupNEURON(path=None): # , NEURONpath=None):
                     #NEURONscriptPath = pyrhoNEURONpath
 
                     NEURONscriptIncPath = os.path.join(pyrhoNEURONpath, NEURONinstallScript)
-                    exitcode = subprocess.call([NEURONscriptIncPath, path], shell=True) #NEURONpath # .check_call
+                    exitcode = subprocess.call([NEURONscriptIncPath, path], shell=True)  # NEURONpath # .check_call
                 except:
                     createDir(path)
                     shutil.copy2(os.path.join(pyrhoNEURONpath, NEURONinstallScript), path) #cwd
@@ -291,7 +293,6 @@ def setupNEURON(path=None): # , NEURONpath=None):
         #for f in HOCfiles:
         #    shutil.copy2(pyrhoNEURONpath, path, f)
 
-
     if pyVer >= (3, 3):
         nrnivmodl = shutil.which('nrnivmodl')
     else:
@@ -309,17 +310,18 @@ def setupNEURON(path=None): # , NEURONpath=None):
     try:
         cwd = os.getcwd()
         os.chdir(path)
-        retcode = subprocess.call(nrnivmodl) #nrn/x86_64/bin/nrnivmodl
+        retcode = subprocess.call(nrnivmodl)  # nrn/x86_64/bin/nrnivmodl
         os.chdir(cwd)
         # Use subprocess.run() for Python >= 3.5
         if retcode < 0:
             print('NMODL compilation was terminated by signal', -retcode, file=sys.stderr)
         else:
-            print("NMODL compilation returned", retcode) #, file=sys.stderr)
+            print("NMODL compilation returned", retcode)  # , file=sys.stderr)
     except OSError as e:
         print('NMODL Compilation failed: ', e, file=sys.stderr)
         print('Try setting the NEURON directory as an environment variable or passing it as the `path` argument.') #NEURONpath
     return
+
 
 def checkBrian(test=False):
     """Check for the Brian2 simulator"""
@@ -330,7 +332,7 @@ def checkBrian(test=False):
             print('Brian module found!')
         if test:
             print('Running suite of tests...')
-            br.prefs.codegen.target = 'cython' #'numpy #'auto' #'weave' - Python 2 only
+            br.prefs.codegen.target = 'cython'  # 'numpy #'auto' #'weave' - Python 2 only
             out = br.codegen.cpp_prefs.get_compiler_and_args()
             print(out)
             br.test()
@@ -341,12 +343,13 @@ def checkBrian(test=False):
 
     return found
 
+
 def setupBrian():
     """Setup the Brian2 simulator."""
     if not checkBrian():
         try:
             import pip
-            pip.main(['install', 'brian2']) # pip install brian2
+            pip.main(['install', 'brian2'])  # pip install brian2
         except:
             warnings.warn('Unable to install Brian2 - please run `pip install brian2` from the terminal')
     return
@@ -356,12 +359,12 @@ def setupBrian():
 
 ##### Plot settings #####
 
-figDisplay = 'screen' #'paper'
+figDisplay = 'screen'  # 'paper'
 
 colours = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 styles = ['-', '--', '-.', ':']
 
-latexInstalled = False # Change this!
+latexInstalled = False  # Change this!
 # http://nipunbatra.github.io/2014/08/latexify/
 # http://www.tex.ac.uk/ctan/macros/latex/contrib/pythontex/pythontex_install.py
 if latexInstalled:
@@ -391,7 +394,7 @@ def setFigOutput(figDisplay='screen', width=None):
 
     # http://matplotlib.org/users/customizing.html
     if figDisplay == 'screen':
-        dpi = 80 #300 #mpl.rcParams['savefig.dpi'] #300
+        dpi = 80  # 300 #mpl.rcParams['savefig.dpi'] #300
         #figFormat = 'retina'
         saveFigFormat = 'png'
         if width is None:
@@ -401,10 +404,10 @@ def setFigOutput(figDisplay='screen', width=None):
         tickSize = 14
         labelSize = 16
         legendSize = 12
-        titleSize = 'small' #'x-large'
+        titleSize = 'small'  # 'x-large'
         eqSize = 18  # General annotations
         linewidth = 1.5
-        markerSize = 6 # Default: 6
+        markerSize = 6  # Default: 6
         addTitles = True
         addStimulus = True
 
@@ -419,7 +422,7 @@ def setFigOutput(figDisplay='screen', width=None):
         tickSize = 14
         labelSize = 12
         legendSize = 8
-        titleSize = 'small' #'x-large'
+        titleSize = 'small'  # 'x-large'
         eqSize = 12  # General annotations
         linewidth = 1.5
         markerSize = 6 # Default: 6
@@ -474,9 +477,10 @@ def setFigOutput(figDisplay='screen', width=None):
 setFigOutput(figDisplay)
 
 #global fancyPlots
-fancyPlots = False #True
+fancyPlots = False
 
-def setFigStyle(): #fancyPlots=False): # Merge this with setFigOutput
+
+def setFigStyle():  # fancyPlots=False): # TODO: Merge this with setFigOutput
     """Set figure style"""
     global fancyPlots
     global colours
@@ -487,15 +491,16 @@ def setFigStyle(): #fancyPlots=False): # Merge this with setFigOutput
             colours = sns.color_palette()
         except ImportError:
             warnings.warn('Seaborn not found - using default plotting scheme.')
-        else: # Try another package?
+        else:  # Try another package?
             pass
-        finally: # Always do this last
+        finally:  # Always do this last
             fancyPlots = True
     else:
         if 'seaborn' in sys.modules:
             sns.reset_orig()
         fancyPlots = False
         #setFigOutput(figDisplay)
+
 
 def resetPlot():
     """Reset figure style"""
@@ -511,8 +516,8 @@ try:
     #from IPython import display
 except NameError:
     pass
-else: # and IPython. See also get_ipython()
-    figFormat = 'retina' # 'svg'
+else:  # and IPython. See also get_ipython()
+    figFormat = 'retina'  # 'svg'
     IPython.display.set_matplotlib_formats(figFormat)
     #display.set_matplotlib_formats(figFormat)
     if verbose > 1:
