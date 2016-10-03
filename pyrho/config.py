@@ -27,6 +27,9 @@ __all__ = ['setupGUI', 'simAvailable', 'setupNEURON', 'setupBrian', 'check_packa
 
 pyVer = sys.version_info
 
+if pyVer < (2, 7):
+    raise RuntimeError('Only Python versions >= 2.7 are supported')
+
 # Set timing function
 if pyVer < (3, 3):
     if sys.platform == 'win32':
