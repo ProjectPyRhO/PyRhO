@@ -40,14 +40,14 @@ else:
 
 
 if pyVer[0] == 3:
-    if pyVer <= (3, 3):
-        def check_package(pkg):
-            """Test if 'pkg' is available"""
-            return importlib.find_loader(pkg) is not None
-    else:  # elif pyVer >= (3, 4):
+    if pyVer >= (3, 4):
         def check_package(pkg):
             """Test if 'pkg' is available"""
             return importlib.util.find_spec(pkg) is not None
+    else:  # pyVer <= (3, 3):
+        def check_package(pkg):
+            """Test if 'pkg' is available"""
+            return importlib.find_loader(pkg) is not None
 elif pyVer[0] == 2:
     def check_package(pkg):
         """Test if 'pkg' is available"""
