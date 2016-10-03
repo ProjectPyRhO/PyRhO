@@ -65,8 +65,8 @@ setup(
 
     # The project's main homepage.
     url='https://github.com/ProjectPyRhO/PyRhO/',
-    #download_url='https://github.com/ProjectPyRhO/PyRhO/archive/master.zip',
-    #download_url='https://github.com/ProjectPyRhO/PyRhO/tarball/0.9.4',
+    # download_url='https://github.com/ProjectPyRhO/PyRhO/archive/master.zip',
+    # download_url='https://github.com/ProjectPyRhO/PyRhO/tarball/0.9.4',
 
     # Author details
     author='Benjamin D. Evans',
@@ -123,7 +123,7 @@ setup(
     # https://packaging.python.org/en/latest/requirements.html
     # ipython is used for latex repr - remove from requirements and have a fallback repr?
     install_requires=['numpy>=1.8', 'scipy>=0.15', 'matplotlib>=1.3',
-                      'lmfit>=0.9.3', 'ipython>=4.1', 'brian2>=2.0rc1'], #'sphinx>=1.3',
+                      'lmfit>=0.9.3', 'ipython>=4.1', 'brian2>=2.0'],  #'sphinx>=1.3',
 
     # List additional groups of dependencies here (e.g. development dependencies).
     # You can install these using the following syntax, for example:
