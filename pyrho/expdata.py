@@ -1064,6 +1064,7 @@ class PhotoCurrent(object):
                 #plt.title('State variables through time: $v={} \mathrm{{mV}},\ \phi={:.3g} \mathrm{{photons}} \cdot \mathrm{{s}}^{{-1}} \cdot \mathrm{{cm}}^{{-2}}$'.format(V,phiOn))
 
             plt.ylim((0, 1))
+            #axLine.set_ybound((0, 1))  # TODO: Try this to allow space for thick lines
             axLine.spines['left'].set_smart_bounds(True)
             axLine.spines['bottom'].set_smart_bounds(True)
         else:
@@ -1529,14 +1530,15 @@ class ProtocolData(object):
         light : str {'shade', ...}, optional
             Specify the light style to plot.
         addFeatures : bool, optional
-            Flag to pass to PhotoCurrent.plot for adding extra features e.g. peak and steady-state
+            Flag to pass to PhotoCurrent.plot for adding extra features
+            e.g. peak and steady-state
 
         See Also
         --------
         utilities.plotLight
         """
 
-        if ax == None:
+        if ax is None:
             ax = plt.gca()
         else:
             plt.sca(ax)
@@ -1545,7 +1547,7 @@ class ProtocolData(object):
         #Dt_ons = []
         t_starts, t_ends = [], []
         #pulseSet = [[[None for v in range(self.nVs)] for p in range(self.nPhis)] for r in range(self.nRuns)]
-        self.nPulses = self.trials[0][0][0].nPulses # Assume all trials have the same number
+        self.nPulses = self.trials[0][0][0].nPulses  # Assume all trials have the same number
         pulseSet = np.zeros((self.nPulses, 2, self.nRuns))
         for run in range(self.nRuns):
             for phiInd, phi in enumerate(self.phis):
@@ -1601,12 +1603,12 @@ class ProtocolData(object):
             if sameStart and sameEnd: #np.allclose(pulseSet[p,:,run], np.tile(pulseSet[p,:,0], (1,1,self.nRuns))): #pth pulses are the same
                 plotLight(np.asarray([pulseSet[p, :, 0]]), ax=ax, light=light, lam=470, alpha=0.2)
 
-            elif not sameStart and not sameEnd: # No overlap
+            elif not sameStart and not sameEnd:  # No overlap
                 for run in range(self.nRuns):
                     plotLight(np.asarray([pulseSet[p, :, run]]), ax=ax, light=light, lam=470, alpha=0.2)
 
-            else: #not (sameStart and sameEnd): # One or the other - xor
-                pass # This applies to shortPulse only at present - do not shade!
+            else:  #not (sameStart and sameEnd): # One or the other - xor
+                pass  # This applies to shortPulse only at present - do not shade!
                 #for run in range(self.nRuns):
                     # Plot bars
                 #for run in range(self.nRuns):
@@ -1643,7 +1645,7 @@ class ProtocolData(object):
         #ax.tight_layout()
 
         #plt.show()
-        return # ax
+        return  # ax
 
 
     def getIpmax(self, vInd=None):
