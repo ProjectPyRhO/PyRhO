@@ -4,7 +4,7 @@ python:
   - "2.7"
   # shutil.which
   #- "3.1" # Unsupported by Travis
-  - "3.2"
+  #- "3.2" # Does not support '{1} {0}'.format('one', 'two') >>> two one
   - "3.3"
   - "3.4"
   - "3.5"
