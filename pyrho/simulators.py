@@ -617,9 +617,9 @@ class simNEURON(Simulator):
 
             if verbose > 0:
                 Vstr = '' if V is None else 'V = {:+}mV, '.format(V)
-                info = "Simulating experiment at phi = {:.3g}photons/mm^2/s, "
+                info = ("Simulating experiment at phi = {:.3g}photons/mm^2/s, "
                        "{}pulse cycles: [Dt_delay={:.4g}ms; Dt_on={:.4g}ms; "
-                       "Dt_off={:.4g}ms]".format(phiOn, Vstr, Dt_delay, Dt_on, Dt_off+padD)
+                       "Dt_off={:.4g}ms]".format(phiOn, Vstr, Dt_delay, Dt_on, Dt_off+padD))
 
             self.setPulses(phiOn, Dt_delay, Dt_on, Dt_off, nPulses)
             self.h.init()  # self.neuron.init()
@@ -644,8 +644,7 @@ class simNEURON(Simulator):
 
             if verbose > 0:
                 Vstr = '' if V is None else 'V = {:+}mV, '.format(V)
-                print("Simulating experiment at phi = {:.3g}photons/mm^2/s, "
-                      "{}pulse cycles: Dt_delay={:.4g}ms;".format(phiOn, Vstr, Dt_delay))
+                print("Simulating experiment at phi = {:.3g}photons/mm^2/s, {}pulse cycles: Dt_delay={:.4g}ms;".format(phiOn, Vstr, Dt_delay))
 
             progress = Dt_delay
             self.h.init()
@@ -1081,8 +1080,8 @@ class simBrian(Simulator):
                 Vstr = 'V = {:+}mV, '.format(V)
             else:
                 Vstr = ''
-            info = "Simulating experiment at phi = {:.3g}photons/mm^2/s, "
-                   "{}pulse cycles: [Dt_delay={:.4g}ms".format(phiOn, Vstr, Dt_delay)
+            info = ("Simulating experiment at phi = {:.3g}photons/mm^2/s, "
+                   "{}pulse cycles: [Dt_delay={:.4g}ms".format(phiOn, Vstr, Dt_delay))
             for p in range(nPulses):
                 info += "; [Dt_on={:.4g}ms; Dt_off={:.4g}ms]".format(cycles[p, 0], cycles[p, 1])
             info += "]"
