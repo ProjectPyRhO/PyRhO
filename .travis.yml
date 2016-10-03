@@ -10,7 +10,7 @@ before_install:
     - sudo apt-get update
     # TODO: Move scipy/numpy to anaconda installation
     # https://gist.github.com/dan-blanchard/7045057
-    - sudo apt-get build-essential build-dep python-scipy
+    - sudo apt-get build-dep python-scipy
     # gcc gfortran liblapack-dev libblas-dev libatlas-base-dev libatlas-dev
     - pip install pytest pytest-cov pytest-pep8
 install:
