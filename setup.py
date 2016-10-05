@@ -1,7 +1,7 @@
 """The PyRhO package setup script"""
 
 from __future__ import print_function        # Added for Python 2.x support
-from setuptools import setup, find_packages  # Always prefer setuptools over distutils
+from setuptools import setup, find_packages  # Prefer setuptools over distutils
 from codecs import open                      # To use a consistent encoding
 import os
 
@@ -96,12 +96,12 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
         # 2.6 barriers: OrderedDict, dictionary comprehension, importlib
-        #'Programming Language :: Python :: 2.6',
+        # 'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         # Technically 3.1 and 3.2 should work but are unsupported by Travis
-        #'Programming Language :: Python :: 3.1',
-        #'Programming Language :: Python :: 3.2',
+        # 'Programming Language :: Python :: 3.1',
+        # 'Programming Language :: Python :: 3.2',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
@@ -114,7 +114,7 @@ setup(
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
-    packages=find_packages(exclude=['contrib', 'docs', 'tests*']), # + ['NEURON'],
+    packages=find_packages(exclude=['contrib', 'docs', 'tests*']),  # + ['NEURON'],
 
     #package_dir = {'':'.'},
     #package_dir = {'pyrho': 'pyrho'}, # Relative to this script
@@ -125,7 +125,7 @@ setup(
     # https://packaging.python.org/en/latest/requirements.html
     # ipython is used for latex repr - remove from requirements and have a fallback repr?
     install_requires=['numpy>=1.8', 'scipy>=0.15', 'matplotlib>=1.3',
-                      'lmfit>=0.9.3', 'ipython>=4.1', 'brian2>=2.0'],  #'sphinx>=1.3',
+                      'lmfit>=0.9.3', 'ipython>=4.1', 'brian2>=2.0'],  # 'sphinx>=1.3',
 
     # List additional groups of dependencies here (e.g. development dependencies).
     # You can install these using the following syntax, for example:
