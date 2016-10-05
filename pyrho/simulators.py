@@ -7,7 +7,7 @@ Classes to wrap simulation engines for a uniform interface
 
 from __future__ import print_function, division
 import warnings
-#import logging
+# import logging
 import os
 import copy
 import abc
@@ -31,7 +31,7 @@ __all__ = ['simulators']
 
 
 class Simulator(PyRhOobject):  # object
-    """Common base class for all simulators"""
+    """Common base class for all simulators."""
 
     __metaclass__ = abc.ABCMeta
 
@@ -59,7 +59,7 @@ class Simulator(PyRhOobject):  # object
         return "<PyRhO {} Simulator object>".format(self.simulator)
 
     def checkDt(self, dt):
-        """Function to compare simulator's timestep to the timestep required by the protocol"""
+        """Function to compare simulator's timestep to the timestep required by the protocol."""
         if dt < self.dt:
             self.dt_prev, self.dt = self.dt, dt  # min(self.h.dt, dt)
             if config.verbose > 0:
@@ -67,7 +67,7 @@ class Simulator(PyRhOobject):  # object
         return self.dt
 
     def prepare(self, Prot):
-        """Function to prepare the simulator according to the protocol and rhodopsin"""
+        """Function to prepare the simulator according to the protocol and rhodopsin."""
         Prot.prepare()
         dt = Prot.getShortestPeriod()
         Prot.dt = self.checkDt(dt)
@@ -79,7 +79,7 @@ class Simulator(PyRhOobject):  # object
         pass
 
     def run(self, verbose=config.verbose):
-        """Main routine to run the simulation protocol"""
+        """Main routine to run the simulation protocol."""
 
         t0 = wallTime()
         RhO = self.RhO
@@ -175,7 +175,7 @@ class Simulator(PyRhOobject):  # object
 
 
 class simPython(Simulator):
-    """Class for channel level simulations with Python"""
+    """Class for channel level simulations with Python."""
 
     simulator = 'Python'
 
@@ -203,7 +203,7 @@ class simPython(Simulator):
 
     def runTrial(self, RhO, phiOn, V, Dt_delay, cycles, dt, verbose=config.verbose):
         """
-        Main routine for simulating a square pulse train
+        Main routine for simulating a square pulse train.
 
 
         Returns
@@ -296,7 +296,7 @@ class simPython(Simulator):
         return I_RhO, t, states
 
     def runTrialPhi_t(self, RhO, phi_ts, V, Dt_delay, cycles, dt, verbose=config.verbose):
-        """Main routine for simulating a pulse train"""
+        """Main routine for simulating a pulse train."""
 
         nPulses = cycles.shape[0]
         assert(len(phi_ts) == nPulses)
@@ -356,7 +356,7 @@ class simPython(Simulator):
 
 
 class simNEURON(Simulator):
-    """Class for cellular level simulations with NEURON"""
+    """Class for cellular level simulations with NEURON."""
 
     simulator = 'NEURON'
     mechanisms = {3: 'RhO3c', 4: 'RhO4c', 6: 'RhO6c'}
@@ -429,7 +429,6 @@ class simNEURON(Simulator):
         self.setRecords(self.rhoRec, params['Vcomp'].value, self.RhO)
         self.Vclamp = params['Vclamp'].value
 
-
     def reset(self):
         # TODO
         """Clear any previous models"""
@@ -476,7 +475,8 @@ class simNEURON(Simulator):
         return  # self.h.dt
 
     def buildCell(self, scriptList=[]):
-        """Pass a list of hoc or python files in the order in which they are to be processed"""
+        """Pass a list of hoc or python files in the order in which they are to
+        be processed."""
 
         #import subprocess
         # Check for script in path cwd and then fallback to NRN_NMODL_PATH
@@ -618,8 +618,8 @@ class simNEURON(Simulator):
             if verbose > 0:
                 Vstr = '' if V is None else 'V = {:+}mV, '.format(V)
                 info = ("Simulating experiment at phi = {:.3g}photons/mm^2/s, "
-                       "{}pulse cycles: [Dt_delay={:.4g}ms; Dt_on={:.4g}ms; "
-                       "Dt_off={:.4g}ms]".format(phiOn, Vstr, Dt_delay, Dt_on, Dt_off+padD))
+                        "{}pulse cycles: [Dt_delay={:.4g}ms; Dt_on={:.4g}ms; "
+                        "Dt_off={:.4g}ms]".format(phiOn, Vstr, Dt_delay, Dt_on, Dt_off+padD))
 
             self.setPulses(phiOn, Dt_delay, Dt_on, Dt_off, nPulses)
             self.h.init()  # self.neuron.init()
@@ -712,7 +712,7 @@ class simNEURON(Simulator):
         return I_RhO, t, soln
 
     def runTrialPhi_t(self, RhO, phi_ts, V, Dt_delay, cycles, dt, verbose=config.verbose):
-        """Main routine for simulating a pulse train"""
+        """Main routine for simulating a pulse train."""
         # TODO: Rename RhOnc.mod to RhOn.mod and RhOn.mod to RhOnD.mod (discrete) and similar for runTrialPhi_t
         # Make RhO.mod a continuous function of light - 9.12: Discontinuities 9.13: Time-dependent parameters p263
             #- Did cubic spline interpolation ever get implemented for vec.play(&rangevar, tvec, 1)?
@@ -865,7 +865,7 @@ class simNEURON(Simulator):
         return I_RhO, t, soln
 
     def saveExtras(self, run, phiInd, vInd):
-        ### TODO: Clean up this HACK!!!
+        # TODO: Clean up this HACK!!!
         self.Vms[run][phiInd][vInd] = copy.copy(self.Vm)
         return
 
@@ -919,7 +919,7 @@ class simNEURON(Simulator):
         #    else: #not (sameStart and sameEnd): # One or the other - xor
         #        pass # This applies to shortPulse only at present - do not shade!
 
-        plt.ylabel('$\mathrm{Membrane\ Potential\ [mV]}$') #axV.set_ylabel('Voltage [mV]')
+        plt.ylabel('$\mathrm{Membrane\ Potential\ [mV]}$')  # axV.set_ylabel('Voltage [mV]')
         #axV.set_xlim((-Dt_delay, self.h.tstop - Dt_delay)) ### HACK
         axV.set_xlim((t[0], t[-1]))
         plt.xlabel('$\mathrm{Time\ [ms]}$', position=(config.xLabelPos, 0), ha='right')
@@ -948,7 +948,7 @@ class simNEURON(Simulator):
 
 
 class simBrian(Simulator):
-    """Class for network level simulations with Brian"""
+    """Class for network level simulations with Brian."""
 
     simulator = 'Brian'
 
@@ -1012,7 +1012,7 @@ class simBrian(Simulator):
 
     def prepare(self, Prot):
         """Function to prepare everything for a simulation accounting for
-        changes in protocol parameters
+        changes in protocol parameters.
         """
         Prot.prepare()
         dt = Prot.getShortestPeriod()
@@ -1071,7 +1071,7 @@ class simBrian(Simulator):
     '''
 
     def runTrial(self, RhO, phiOn, V, Dt_delay, cycles, dt, verbose=config.verbose):
-        """Main routine for simulating a square pulse train"""
+        """Main routine for simulating a square pulse train."""
 
         nPulses = cycles.shape[0]
 
@@ -1181,7 +1181,7 @@ class simBrian(Simulator):
 
 
     def runTrialPhi_t(self, RhO, phi_ts, V, Dt_delay, cycles, dt, verbose=config.verbose):
-        """Main routine for simulating a pulse train"""
+        """Main routine for simulating a pulse train."""
         # TimedArray([x1, x2, ...], dt=my_dt), the value x1 will be returned for all 0<=t<my_dt, x2 for my_dt<=t<2*my_dt etc.
 
         nPulses = cycles.shape[0]
@@ -1348,7 +1348,7 @@ class simBrian(Simulator):
         Vfig.savefig(fileName, format=config.saveFigFormat)
 
     def plotRasters(self, spikeSets, times=None, Dt_total=None, offset=0, figName=None):
-        """Plot spike rasters for each layer"""
+        """Plot spike rasters for each layer."""
 
         nLayers = len(spikeSets)  # self.monitors['spikes']
 
