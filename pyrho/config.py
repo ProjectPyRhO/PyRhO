@@ -70,6 +70,7 @@ logLevels = [logging.CRITICAL, logging.ERROR, logging.WARNING,
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename='PyRhO.log', level=logLevels[verbose])
 
+
 def setOutput(level):
     verbose = level
     logging.setLevel(level)
@@ -98,7 +99,7 @@ def createDir(path):
             raise
 
 
-### Set data and figure directories to defaults
+# Set data and figure directories to defaults
 if 'dDir' not in vars() or 'dDir' not in globals() or dDir is None:
     dDir = 'data' + os.sep
     createDir(dDir)
@@ -184,7 +185,9 @@ def checkNEURON(test=False):
                 warnings.warn('Missing hoc files in {}: {}'.format(nmodlPath, set(HOCfiles) - set(hocList)))
 
     else:
-        warnings.warn("'NRN_NMODL_PATH' is not set - add 'export NRN_NMODL_PATH=/path/to/NEURON' to your bash profile.")
+        warnings.warn("'NRN_NMODL_PATH' is not set - add it to environment "
+                      "e.g. add 'export NRN_NMODL_PATH=/path/to/NEURON' "
+                      "to your bash profile.")
 
     try:
         import neuron as nrn
@@ -226,14 +229,14 @@ def setupNEURON(path=None):  # , NEURONpath=None):
 
     # TODO: Add instructions to compile/install for Python 2
     if not checkNEURON():   # Check for a working NEURON installation...
-        if False: # TODO: Make NEURONinstallScript work with subprocess
+        if False:  # TODO: Make NEURONinstallScript work with subprocess
             if sys.platform == 'win32':
                 # TODO: Create bat/cmd script for compiling on Windows
                 warnings.warn('Compilation on Windows is not yet supported - please install NEURON manually and rerun!')
                 return
             else:
                 try:
-                    if path is None: #NEURONpath
+                    if path is None:  # NEURONpath
                         ans = input('The `path` argument was not specified - please enter one or press `Enter` to use the current working directory ({}): '.format(cwd))
                         if ans == '' or ans is None:
                             path = cwd
@@ -249,7 +252,7 @@ def setupNEURON(path=None):  # , NEURONpath=None):
                     exitcode = subprocess.call([NEURONscriptIncPath, path], shell=True)  # NEURONpath # .check_call
                 except:
                     createDir(path)
-                    shutil.copy2(os.path.join(pyrhoNEURONpath, NEURONinstallScript), path) #cwd
+                    shutil.copy2(os.path.join(pyrhoNEURONpath, NEURONinstallScript), path)
                     print('Unable to install NEURON - please install manually with the script copied to {}.'.format(path)) #cwd
         else:
             if path is None:
@@ -261,7 +264,7 @@ def setupNEURON(path=None):  # , NEURONpath=None):
             print("E.g.: ./{} /abs/path/to/install/NEURON/".format(NEURONinstallScript))
             return
 
-    ### To load mod files:
+    # To load mod files:
     # Add os.environ['NRN_NMODL_PATH'] to environment variables. See $NEURONPATH/nrn/lib/python/neuron/__init__.py
     if path is None:
         try:
@@ -270,7 +273,7 @@ def setupNEURON(path=None):  # , NEURONpath=None):
         except KeyError:
             path = cwd
             os.environ['NRN_NMODL_PATH'] = path
-            #os.putenv(key, value) # Direct assignment is preferable
+            # os.putenv(key, value) # Direct assignment is preferable
             print('Using current directory for hoc & nmodl files: ', end='')
     else:
         print('Using suplied path for hoc & nmodl files: ', end='')
@@ -281,7 +284,7 @@ def setupNEURON(path=None):  # , NEURONpath=None):
 
     #print('NEURON module path: ', path)
     print('Copying mod {} and hoc {} files from {}...'.format(NMODLfiles, HOCfiles, pyrhoNEURONpath))
-    if os.path.isdir(path): # Check path
+    if os.path.isdir(path):  # Check path
         NMODLfilesIncPath = [os.path.join(pyrhoNEURONpath, f) for f in NMODLfiles]
         for f in NMODLfilesIncPath:
             shutil.copy2(f, path)
@@ -307,7 +310,7 @@ def setupNEURON(path=None):  # , NEURONpath=None):
         #if NEURONpath is not None:
         #    nrnivmodl = os.path.join(NEURONpath, "nrn", arch, "bin", "nrnivmodl")
         #else:
-        nrnivmodl = os.path.join(path, 'nrn', arch, 'bin', 'nrnivmodl') # Try the hoc/mod path
+        nrnivmodl = os.path.join(path, 'nrn', arch, 'bin', 'nrnivmodl')  # Try the hoc/mod path
 
     print('Compiling mod files with ', nrnivmodl)
     try:
@@ -376,6 +379,7 @@ if latexInstalled:
 
 xLabelPos = 0.98
 
+
 def setFigOutput(figDisplay='screen', width=None):
 
     """
@@ -428,7 +432,7 @@ def setFigOutput(figDisplay='screen', width=None):
         titleSize = 'small'  # 'x-large'
         eqSize = 12  # General annotations
         linewidth = 1.5
-        markerSize = 6 # Default: 6
+        markerSize = 6  # Default: 6
         addTitles = True
         addStimulus = True
 
@@ -438,10 +442,10 @@ def setFigOutput(figDisplay='screen', width=None):
         #http://www.ploscompbiol.org/static/figureSpecifications
         #http://www.frontiersin.org/about/AuthorGuidelines#_FigureandTableGuidelines
         dpi = 300 #1200 # Set DPI 300 - 600
-        saveFigFormat = 'png'#'eps'             # Supported formats: eps, pdf, pgf, png, ps, raw, rgba, svg, svgz.
+        saveFigFormat = 'png' #'eps'             # Supported formats: eps, pdf, pgf, png, ps, raw, rgba, svg, svgz.
         #figFormat = 'eps'
         if width is None:
-            width = 18/2.54 #5#7
+            width = 18/2.54
         figWidth = width
         figHeight = figWidth / golden_ratio
         tickSize = 8
@@ -454,7 +458,7 @@ def setFigOutput(figDisplay='screen', width=None):
         addTitles = False
         addStimulus = True
 
-        mpl.rcParams['savefig.dpi'] = dpi        # http://nbviewer.ipython.org/gist/minrk/3301035
+        mpl.rcParams['savefig.dpi'] = dpi       # http://nbviewer.ipython.org/gist/minrk/3301035
                                                 # http://wiki.scipy.org/Cookbook/Matplotlib/AdjustingImageSize
                                                 # https://github.com/matplotlib/matplotlib/issues/5945
 
@@ -462,7 +466,7 @@ def setFigOutput(figDisplay='screen', width=None):
         warnings.warn('Warning: Unknown display type selected - using matplotlib defaults!')
 
     # http://matplotlib.org/users/customizing.html
-    mpl.rcParams['figure.figsize'] = (figWidth, figHeight) #pylab.rcParams
+    mpl.rcParams['figure.figsize'] = (figWidth, figHeight)  # pylab.rcParams
     mpl.rcParams['figure.dpi'] = dpi
     #mpl.rcParams['savefig.dpi'] = dpi           # http://nbviewer.ipython.org/gist/minrk/3301035
     mpl.rcParams['axes.labelsize'] = labelSize
