@@ -947,7 +947,7 @@ class protRectifier(Protocol):
     nRuns = 1
 
     def extraPrep(self):
-        """Function to set-up additional variables and make parameters consistent after any changes"""
+        """Set-up additional variables and make parameters consistent after any changes"""
         self.nRuns = 1 #nRuns
         self.phi_ts = self.genPulseSet()
 
@@ -966,7 +966,7 @@ class protRectifier(Protocol):
         # TODO: Refactor!!!
         #plt.figure(Ifig.number) #IssVfig = plt.figure()
         colours = config.colours
-        ax = self.axVI  #IssVfig.add_subplot(111)
+        ax = self.axVI  # IssVfig.add_subplot(111)
 
         legLabels = [None for p in range(self.nPhis)]
         #eqString = r'$f(v) = \frac{{{v1:.3}}}{{v-{E:+.2f}}} \cdot \left[1-\exp\left({{-\frac{{v-{E:+.2f}}}{{{v0:.3}}}}}\right)\right]$'
