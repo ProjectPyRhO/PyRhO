@@ -184,7 +184,7 @@ class simPython(Simulator):
         self.Prot = Prot
         self.RhO = RhO
 
-    def runSoln(RhO, t):
+    def runSoln(self, RhO, t):
 
         if RhO.useAnalyticSoln:  # Leave the ability to manually override
             try:
