@@ -100,9 +100,12 @@ def compareParams(origParams, newParams):
     print(report)
 
 
+# $$ is an escape; it is replaced with a single $.
+texTemplate = Template('$${content}$$')
+
+
 def texIt(texString):
     """Function to add '$' signs around a (La)TeX string"""
-    texTemplate = Template('${content}$')
     return texTemplate.substitute(content=texString)
 
 
@@ -270,7 +273,8 @@ def getIndex(valList, val):
 
 def calcV1(E, v0):
     """
-    Calculate :math:`v_1` from :math:`v_0` and :math:`E` to satisfy the definition: :math:`f_v(-70):= 1`.
+    Calculate :math:`v_1` from :math:`v_0` and :math:`E` to satisfy the
+    definition: :math:`f_v(-70):= 1`.
 
     Parameters
     ----------
