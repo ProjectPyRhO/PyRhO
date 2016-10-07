@@ -1020,7 +1020,6 @@ def getRecoveryPeaks(recData, phiInd=None, vInd=None, usePeakTime=False):
 
 def fitRecovery(t_peaks, I_peaks, params, Ipeak0, Iss0, ax=None, method=defMethod):  # , verbose=config.verbose):
 
-
     if not params['Gr0'].vary:
         print('Gr0 fixed at {}'.format(params['Gr0'].value))
         return params
@@ -1071,7 +1070,7 @@ def fitRecovery(t_peaks, I_peaks, params, Ipeak0, Iss0, ax=None, method=defMetho
     if config.verbose > 1:
         chosenFit = recMin.chisqr
         fits = {}
-        for k in iRecPs: # Check all parameters have finite bounds for np.isfinite bug in differential_evolution
+        for k in iRecPs:  # Check all parameters have finite bounds for np.isfinite bug in differential_evolution
             if iRecPs[k].min is None or not np.isfinite(iRecPs[k].min):
                 iRecPs[k].min = -1e15
             if iRecPs[k].max is None or not np.isfinite(iRecPs[k].max):
@@ -1093,17 +1092,19 @@ def fitRecovery(t_peaks, I_peaks, params, Ipeak0, Iss0, ax=None, method=defMetho
 
     eqString = r'$I_{{peak}} = {Ipeak0:+.3} - {a:.3}e^{{-{Gr0:g}\cdot t}}$'
     v = pRec.valuesdict()
-    peakEq = eqString.format(a=round_sig(v['a'],3), Gr0=round_sig(v['Gr0'],3), Ipeak0=round_sig(v['Ipeak0'],3))
+    peakEq = eqString.format(a=round_sig(v['a'], 3),
+                             Gr0=round_sig(v['Gr0'], 3),
+                             Ipeak0=round_sig(v['Ipeak0'], 3))
 
     if config.verbose > 1:
         print(peakEq)
 
     if ax is None:
-        if plotResult:
-            fig = plt.figure()
-            ax = plt.subplot(111)
-        else:
-            return params
+        #if plotResult:
+        #    fig = plt.figure()
+        #    ax = plt.subplot(111)
+        #else:
+        return params
 
     #else:
     ax.scatter(t_peaks, I_peaks, color='r', marker='*')

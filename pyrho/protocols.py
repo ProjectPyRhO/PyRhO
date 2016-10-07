@@ -10,6 +10,7 @@ import warnings
 #import logging
 import os
 import abc
+from collections import OrderedDict
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -1263,11 +1264,13 @@ class protShortPulse(Protocol):
 
 
 class protRecovery(Protocol):
-    '''Two pulse stimulation protocol with varying inter-pulse interval to determine the dark recovery rate'''
+    '''Two pulse stimulation protocol with varying inter-pulse interval to
+    determine the dark recovery rate.
+    '''
     # Vary Inter-Pulse-Interval
     protocol = 'recovery'
     squarePulse = True
-    nPulses = 2 # Fixed at 2 for this protocol
+    nPulses = 2  # Fixed at 2 for this protocol
 
     Dt_on = 0
     # def __next__(self):
@@ -1283,12 +1286,14 @@ class protRecovery(Protocol):
         self.Dt_delays = np.ones(self.nRuns)*self.Dt_delay
         self.Dt_ons = np.ones(self.nRuns)*self.Dt_on
         self.Dt_offs = self.Dt_IPIs
-        self.cycles = np.column_stack((self.Dt_ons, self.Dt_offs)) # [:,0] = on phase duration; [:,1] = off phase duration
+        # [:,0] = on phase duration; [:,1] = off phase duration
+        self.cycles = np.column_stack((self.Dt_ons, self.Dt_offs))
 
         self.pulses, _ = cycles2times(self.cycles, self.Dt_delay)
         self.runCycles = np.zeros((self.nPulses, 2, self.nRuns))
         for run in range(self.nRuns):
-            self.runCycles[:,:,run] = np.asarray([[self.Dt_ons[run],self.Dt_offs[run]],[self.Dt_ons[run],self.Dt_offs[run]]])
+            self.runCycles[:, :, run] = np.asarray([[self.Dt_ons[run], self.Dt_offs[run]],
+                                                    [self.Dt_ons[run], self.Dt_offs[run]]])
 
         self.t_start = 0
         self.t_end = self.Dt_total
@@ -1296,7 +1301,7 @@ class protRecovery(Protocol):
         if self.t_end < IPIminD:
             warnings.warn("Insufficient run time for all stimulation periods!")
         else:
-            self.runCycles[-1,1,:] = self.Dt_total - IPIminD
+            self.runCycles[-1, 1, :] = self.Dt_total - IPIminD
 
         self.IpIPI = np.zeros(self.nRuns)
         self.tpIPI = np.zeros(self.nRuns)
@@ -1312,15 +1317,27 @@ class protRecovery(Protocol):
         self.nVs = len(self.Vs)
 
         self.phi_ts = self.genPulseSet()
-        self.runLabels = [r'$\mathrm{{IPI}}={}\mathrm{{ms}}$ '.format(IPI) for IPI in self.Dt_IPIs]
-
+        self.runLabels = [r'$\mathrm{{IPI}}={}\mathrm{{ms}}$ '.format(IPI)
+                          for IPI in self.Dt_IPIs]
 
     def getRunCycles(self, run):
-        return self.runCycles[:,:,run], self.Dt_delays[run]
+        return self.runCycles[:, :, run], self.Dt_delays[run]
 
+    def fitParams(self):
+        self.PD.params = [[None for vInd in range(self.nVs)] for phiInd in range(self.nPhis)]
+        for phiInd in range(self.nPhis):
+            for vInd in range(self.nVs):
+                # Fit peak recovery
+                t_peaks, I_peaks, Ipeak0, Iss0 = getRecoveryPeaks(self.PD, phiInd, vInd, usePeakTime=True)
+                params = Parameters()
+                params.add('Gr0', value=0.002, min=0.0001, max=0.1)
+                params = fitRecovery(t_peaks, I_peaks, params, Ipeak0, Iss0)
+                if config.verbose > 0:
+                    print("tau_r0 = {} ==> G_r0 = {}".format(1/params['Gr0'].value, params['Gr0'].value))
+                self.PD.params[phiInd][vInd] = params
 
     def finish(self, PC, RhO):
-        ### Build array of second peaks
+        # Build array of second peaks
         self.PD.IPIpeaks_ = np.zeros((self.nRuns, self.nPhis, self.nVs)) #[[[None for v in range(len(Vs))] for p in range(len(phis))] for r in range(nRuns)]
         self.PD.tIPIpeaks_ = np.zeros((self.nRuns, self.nPhis, self.nVs))
         for run in range(self.nRuns):
@@ -1336,6 +1353,7 @@ class protRecovery(Protocol):
             print(self.PD.tIPIpeaks_)
             print(self.PD.IPIpeaks_)
 
+        self.fitParams()
 
     def addAnnotations(self):
 
@@ -1346,15 +1364,16 @@ class protRecovery(Protocol):
         xmin, xmax = plt.xlim()
         plt.xlim(xmin, xmax)
 
+        arrow = {'arrowstyle': '<->', 'color': col, 'shrinkA': 0, 'shrinkB': 0}
         for run in range(self.nRuns):
             for phiInd in range(self.nPhis):
                 for vInd in range(self.nVs):
                     col, style = self.getLineProps(run, vInd, phiInd)
                     pulses = self.PD.trials[run][phiInd][vInd].pulses
-                    plt.annotate('', (pulses[0,1], (run+1)*pos), (pulses[1,0], (run+1)*pos),
-                                 arrowprops={'arrowstyle':'<->', 'color':col, 'shrinkA':0, 'shrinkB':0})
+                    plt.annotate('', (pulses[0, 1], (run+1)*pos),
+                                 (pulses[1, 0], (run+1)*pos), arrowprops=arrow)
 
-                    if run == 0:    ### Fit peak recovery
+                    if run == 0:  # Fit peak recovery
                         t_peaks, I_peaks, Ipeak0, Iss0 = getRecoveryPeaks(self.PD, phiInd, vInd, usePeakTime=True)
                         params = Parameters()
                         params.add('Gr0', value=0.002, min=0.0001, max=0.1)
@@ -1365,10 +1384,16 @@ class protRecovery(Protocol):
 
 
 
-from collections import OrderedDict
-protocols = OrderedDict([('step', protStep), ('delta', protDelta), ('sinusoid', protSinusoid),
-                         ('chirp', protChirp), ('ramp', protRamp), ('recovery', protRecovery),
-                         ('rectifier', protRectifier), ('shortPulse', protShortPulse), ('custom', protCustom)])
+
+protocols = OrderedDict([('step', protStep),
+                         ('delta', protDelta),
+                         ('sinusoid', protSinusoid),
+                         ('chirp', protChirp),
+                         ('ramp', protRamp),
+                         ('recovery', protRecovery),
+                         ('rectifier', protRectifier),
+                         ('shortPulse', protShortPulse),
+                         ('custom', protCustom)])
 
 # E.g.
 # protocols['shortPulse']([1e12], [-70], 25, [1,2,3,5,8,10,20], 100, 0.1)
