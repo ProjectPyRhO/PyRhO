@@ -224,11 +224,11 @@ class simPython(Simulator):
                 Vstr = ''
             info = "Simulating experiment at phi = {:.3g}photons/mm^2/s, {}pulse cycles: [Dt_delay={:.4g}ms".format(phiOn, Vstr, Dt_delay)
             for p in range(nPulses):
-                info += "; [Dt_on={:.4g}ms; Dt_off={:.4g}ms]".format(cycles[p,0], cycles[p,1])
+                info += "; [Dt_on={:.4g}ms; Dt_off={:.4g}ms]".format(cycles[p, 0], cycles[p, 1])
             info += "]"
             print(info)
 
-        ### Delay phase (to allow the system to settle)
+        # Delay phase (to allow the system to settle)
         phi = 0
         RhO.initStates(phi)         # Reset state and time arrays from previous runs
         RhO.s0 = RhO.states[-1, :]  # Store initial state used
@@ -246,7 +246,7 @@ class simPython(Simulator):
 
         for p in range(0, nPulses):
 
-            ### Light on phase
+            # Light on phase
             RhO.s_on = soln[-1, :]
             start = end
             end = start + cycles[p, 0]
@@ -269,7 +269,7 @@ class simPython(Simulator):
             RhO.ssInf.append(RhO.calcSteadyState(phi))
 
 
-            ### Light off phase
+            # Light off phase
             RhO.s_off = soln[-1, :]
             start = end
             end = start + cycles[p, 1]
@@ -290,7 +290,7 @@ class simPython(Simulator):
             if verbose > 1:
                 print('t_pulse{} = [{}, {}]'.format(p, RhO.t[onInd], RhO.t[offInd]))
 
-        ### Calculate photocurrent
+        # Calculate photocurrent
         I_RhO = RhO.calcI(V, RhO.states)
         states, t = RhO.getStates()
         return I_RhO, t, states
@@ -301,19 +301,19 @@ class simPython(Simulator):
         nPulses = cycles.shape[0]
         assert(len(phi_ts) == nPulses)
 
-        ### Delay phase (to allow the system to settle)
+        # Delay phase (to allow the system to settle)
         phi = 0
         RhO.initStates(phi)                     # Reset state and time arrays from previous runs
-        RhO.s0 = RhO.states[-1,:]               # Store initial state used
+        RhO.s0 = RhO.states[-1, :]               # Store initial state used
         start, end = RhO.t[0], RhO.t[0]+Dt_delay
         nSteps = int(round(((end-start)/dt)+1))
-        t = np.linspace(start, end, nSteps, endpoint=True) # Time vector
+        t = np.linspace(start, end, nSteps, endpoint=True)  # Time vector
         if verbose > 1:
             print("Trial initial conditions:{}".format(RhO.s0))
         soln = odeint(RhO.solveStates, RhO.s0, t, args=(None,), Dfun=RhO.jacobian)
         RhO.storeStates(soln[1:], t[1:])
 
-        ### Stimulation phases
+        # Stimulation phases
         for p in range(0, nPulses):
             RhO.s_on = soln[-1, :]
             start = end
@@ -338,13 +338,13 @@ class simPython(Simulator):
                 soln = odeint(RhO.solveStates, RhO.s_on, t, args=(phi_t,),
                               Dfun=RhO.jacobian)
 
-            RhO.storeStates(soln[1:], t[1:]) # Skip first values to prevent duplicating initial conditions and times
+            RhO.storeStates(soln[1:], t[1:])  # Skip first values to prevent duplicating initial conditions and times
             RhO.ssInf.append(RhO.calcSteadyState(phi_t(end-Dt_off)))
 
             if verbose > 1:
                 print('t_pulse{} = [{}, {}]'.format(p, RhO.t[onInd], RhO.t[offInd]))
 
-        ### Calculate photocurrent
+        # Calculate photocurrent
         I_RhO = RhO.calcI(V, RhO.states)
         states, t = RhO.getStates()
 
