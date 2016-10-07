@@ -14,25 +14,26 @@ from collections import OrderedDict
 
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib as mpl # for tick locators
+import matplotlib as mpl  # for tick locators
 from scipy.interpolate import InterpolatedUnivariateSpline as spline
 #from scipy.optimize import curve_fit
 from lmfit import Parameters
 
 from pyrho.parameters import *
 from pyrho.parameters import PyRhOobject, smallSignalAnalysis
-from pyrho.utilities import * # times2cycles, cycles2times, plotLight, round_sig, expDecay, biExpDecay, findPeaks
-from pyrho.expdata import * #import loadData
-from pyrho.fitting import fitFV, errFV, fitfV, errfV, getRecoveryPeaks, fitRecovery
+from pyrho.utilities import *  # times2cycles, cycles2times, plotLight, round_sig, expDecay, biExpDecay, findPeaks
+from pyrho.expdata import *  # import loadData
+from pyrho.fitting import (fitFV, errFV, fitfV, errfV,
+                           getRecoveryPeaks, fitRecovery)
 from pyrho.models import *
-from pyrho.simulators import * # For characterise()
+from pyrho.simulators import *  # For characterise()
 from pyrho.config import *
 from pyrho import config
 
 __all__ = ['protocols', 'selectProtocol', 'characterise']
 
 
-class Protocol(PyRhOobject): #, metaclass=ABCMeta
+class Protocol(PyRhOobject):  # , metaclass=ABCMeta
     """Common base class for all protocols"""
 
     __metaclass__ = abc.ABCMeta
@@ -59,7 +60,7 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
         self.prepare()
         self.t_start, self.t_end = 0, self.Dt_total
         self.phi_ts = None
-        self.lam = 470 # Default wavelength [nm]
+        self.lam = 470  # Default wavelength [nm]
         self.PD = None
         self.Ifig = None
 
@@ -70,23 +71,25 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
         return "<PyRhO {} Protocol object (nRuns={}, nPhis={}, nVs={})>".format(self.protocol, self.nRuns, self.nPhis, self.nVs)
 
     def __iter__(self):
-        """Iterator to return the pulse sequence for the next trial"""
+        """Iterator to return the pulse sequence for the next trial."""
         self.run = 0
         self.phiInd = 0
         self.vInd = 0
         return self
 
     def __next__(self):
-        """Iterator to return the pulse sequence for the next trial"""
+        """Iterator to return the pulse sequence for the next trial."""
         self.run += 1
         if self.run > self.nRuns:
             raise StopIteration
         return self.getRunCycles(self.run - 1)
 
     def prepare(self):
-        """Function to set-up additional variables and make parameters consistent after any changes"""
+        """Function to set-up additional variables and make parameters
+        consistent after any changes.
+        """
 
-        if np.isscalar(self.cycles): # Only 'on' duration specified
+        if np.isscalar(self.cycles):  # Only 'on' duration specified
             Dt_on = self.cycles
             if hasattr(self, 'Dt_total'):
                 Dt_off = self.Dt_total - Dt_on - self.Dt_delay
@@ -94,25 +97,25 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
                 Dt_off = 0
             self.cycles = np.asarray([[Dt_on, Dt_off]])
         elif isinstance(self.cycles, (list, tuple, np.ndarray)):
-            if np.isscalar(self.cycles[0]): # not isinstance(self.cycles[0], (list, tuple, np.ndarray):
-                self.cycles = [self.cycles] # Assume only one pulse
+            if np.isscalar(self.cycles[0]):  # not isinstance(self.cycles[0], (list, tuple, np.ndarray):
+                self.cycles = [self.cycles]  # Assume only one pulse
         else:
             raise TypeError('Unexpected type for cycles - please use a list or array!')
 
         self.cycles = np.asarray(self.cycles)
         self.nPulses = self.cycles.shape[0]
         self.pulses, self.Dt_total = cycles2times(self.cycles, self.Dt_delay)
-        self.Dt_delays = np.array([pulse[0] for pulse in self.pulses], copy=True) # pulses[:,0]    # Delay Durations #self.Dt_delays = np.array([self.Dt_delay] * self.nRuns)
-        self.Dt_ons = np.array(self.cycles[:,0])  #self.Dt_ons = np.array([cycle[0] for cycle in self.cycles])
-        self.Dt_offs = np.array(self.cycles[:,1]) #self.Dt_offs = np.array([cycle[1] for cycle in self.cycles])
+        self.Dt_delays = np.array([pulse[0] for pulse in self.pulses], copy=True)  # pulses[:,0]    # Delay Durations #self.Dt_delays = np.array([self.Dt_delay] * self.nRuns)
+        self.Dt_ons = np.array(self.cycles[:, 0])  # self.Dt_ons = np.array([cycle[0] for cycle in self.cycles])
+        self.Dt_offs = np.array(self.cycles[:, 1])  # self.Dt_offs = np.array([cycle[1] for cycle in self.cycles])
 
         if np.isscalar(self.phis):
-            self.phis = [self.phis] #np.asarray([self.phis])
+            self.phis = [self.phis]  # np.asarray([self.phis])
         self.phis.sort(reverse=True)
         self.nPhis = len(self.phis)
 
         if np.isscalar(self.Vs):
-            self.Vs = [self.Vs] #np.asarray([self.Vs])
+            self.Vs = [self.Vs]  # np.asarray([self.Vs])
         self.Vs.sort(reverse=True)
         self.nVs = len(self.Vs)
 
@@ -126,7 +129,8 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
         return [[[None for v in range(self.nVs)] for p in range(self.nPhis)] for r in range(self.nRuns)]
 
     def getShortestPeriod(self):
-        return np.amin(self.cycles[self.cycles.nonzero()]) #min(self.Dt_delay, min(min(self.cycles)))
+        # min(self.Dt_delay, min(min(self.cycles)))
+        return np.amin(self.cycles[self.cycles.nonzero()])
 
     def finish(self, PC, RhO):
         pass
@@ -135,8 +139,8 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
         return (self.cycles, self.Dt_delay)
 
     def genPulseSet(self, genPulse=None):
-        """Function to generate a set of spline functions to phi(t) simulations"""
-        if genPulse is None: # Default to square pulse generator
+        """Function to generate a set of spline functions to phi(t) simulations."""
+        if genPulse is None:  # Default to square pulse generator
             genPulse = self.genPulse
         phi_ts = [[[None for pulse in range(self.nPulses)] for phi in range(self.nPhis)] for run in range(self.nRuns)]
         for run in range(self.nRuns):
@@ -149,13 +153,13 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
         return phi_ts
 
     def genPulse(self, run, phi, pulse):
-        """Default interpolation function for square pulses"""
+        """Default interpolation function for square pulses."""
         pStart, pEnd = pulse
-        phi_t = spline([pStart,pEnd], [phi,phi], k=1, ext=1)
+        phi_t = spline([pStart, pEnd], [phi, phi], k=1, ext=1)
         return phi_t
 
     def genPlottingStimuli(self, genPulse=None, vInd=0):
-        """Redraw stimulus functions in case data has been realigned"""
+        """Redraw stimulus functions in case data has been realigned."""
         if genPulse is None:
             genPulse = self.genPulse
 
@@ -173,9 +177,10 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
         #self.phi_ts = self.genPulseSet()
         return phi_ts
 
-
-    def getStimArray(self, run, phiInd, dt) : #phi_ts, Dt_delay, cycles, dt):
-        """Return a stimulus array (not spline) with the same sampling rate as the photocurrent"""
+    def getStimArray(self, run, phiInd, dt):  # phi_ts, Dt_delay, cycles, dt):
+        """Return a stimulus array (not spline) with the same sampling rate as
+        the photocurrent.
+        """
 
         cycles, Dt_delay = self.getRunCycles(run)
         phi_ts = self.phi_ts[run][phiInd][:]
@@ -192,12 +197,12 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
 
         for p in range(nPulses):
             start = end
-            Dt_on, Dt_off = cycles[p,0], cycles[p,1]
+            Dt_on, Dt_off = cycles[p, 0], cycles[p, 1]
             end = start + Dt_on + Dt_off
             nSteps = int(round(((end-start)/dt)+1))
             tPulse = np.linspace(start, end, nSteps, endpoint=True)
             phi_t = phi_ts[p]
-            phiPulse = phi_t(tPulse) # -tPulse[0] # Align time vector to 0 for phi_t to work properly
+            phiPulse = phi_t(tPulse)  # -tPulse[0] # Align time vector to 0 for phi_t to work properly
 
             #onInd = len(t) - 1 # Start of on-phase
             #offInd = onInd + int(round(Dt_on/dt))
@@ -207,28 +212,27 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
 
             phi_tV = np.r_[phi_tV, phiPulse[1:]]
 
-        phi_tV[np.ma.where(phi_tV < 0)] = 0 # Safeguard for negative phi values
-        return phi_tV #, t, _idx_pulses_
-
+        phi_tV[np.ma.where(phi_tV < 0)] = 0  # Safeguard for negative phi values
+        return phi_tV  #, t, _idx_pulses_
 
     def plot(self, plotStateVars=False):
-        """Plot protocol"""
+        """Plot protocol."""
         self.Ifig = plt.figure()
         self.createLayout(self.Ifig)
         self.PD.plot(self.axI)
         self.addAnnotations()
         self.plotExtras()
-
         self.plotStateVars = plotStateVars
-
-        #animateStates = True # https://jakevdp.github.io/blog/2013/05/28/a-simple-animation-the-magic-triangle/
+        # TODO: Try producing animated state figures
+        # https://jakevdp.github.io/blog/2013/05/28/a-simple-animation-the-magic-triangle/
+        #animateStates = True
         if self.plotStateVars:
             #RhO = self.RhO
             for run in range(self.nRuns):
-                for phiInd in range(self.nPhis): #, phi in enumerate(self.phis):
+                for phiInd in range(self.nPhis):
                     for vInd in range(self.nVs):
                         pc = self.PD.trials[run][phiInd][vInd]
-                        fileName = '{}States{}s-{}-{}-{}'.format(self.protocol, pc.nStates, run, phiInd, vInd) # RhO.nStates
+                        fileName = '{}States{}s-{}-{}-{}'.format(self.protocol, pc.nStates, run, phiInd, vInd)
                         #RhO.plotStates(pc.t, pc.states, pc.pulses, RhO.stateLabels, phi, pc._idx_peaks_, fileName)
                         pc.plotStates(name=fileName)
                         logger.info('Plotting states to: {}'.format(fileName))
@@ -250,13 +254,11 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
         #    self.Ifig.savefig(figName, bbox_extra_artists=(lgd,), bbox_inches='tight', format=config.saveFigFormat) # Use this to save figures when legend is beside the plot
         #else:
         self.Ifig.savefig(figName, format=config.saveFigFormat)
-
         return
 
-
     def createLayout(self, Ifig=None, vInd=0):
-        """Create axes for protocols with multiple subplots"""
-        if Ifig == None:
+        """Create axes for protocols with multiple subplots."""
+        if Ifig is None:
             Ifig = plt.figure()
 
         self.addStimulus = config.addStimulus
@@ -273,9 +275,9 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
         colours = config.colours
         styles = config.styles
 
-        if config.verbose > 1 and (self.nRuns>len(colours) or len(self.phis)>len(colours) or len(self.Vs)>len(colours)):
+        if config.verbose > 1 and (self.nRuns > len(colours) or len(self.phis) > len(colours) or len(self.Vs) > len(colours)):
             warnings.warn("Warning: only {} line colours are available!".format(len(colours)))
-        if config.verbose > 0 and self.nRuns>1 and len(self.phis)>1 and len(self.Vs)>1:
+        if config.verbose > 0 and self.nRuns > 1 and len(self.phis) > 1 and len(self.Vs) > 1:
             warnings.warn("Warning: Too many changing variables for one plot!")
         if config.verbose > 2:
             print("Run=#{}/{}; phiInd=#{}/{}; vInd=#{}/{}".format(run, self.nRuns, phiInd, len(self.phis), vInd, len(self.Vs)))
@@ -299,10 +301,9 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
                     col = colours[phiInd % len(colours)]
                     style = '-'
                 else:
-                    col = 'b'   ### colours[0]
-                    style = '-' ### styles[0]
+                    col = 'b'    # colours[0]
+                    style = '-'  # styles[0]
         return col, style
-
 
     def plotExtras(self):
         pass
@@ -310,15 +311,13 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
     def addAnnotations(self):
         pass
 
-
     def plotStimulus(self, phi_ts, t_start, pulses, t_end, ax=None, light='shade', col=None, style=None):
-
         nPulses = pulses.shape[0]
         assert(nPulses == len(phi_ts))
         nPoints = 10 * int(round(t_end-t_start / self.dt)) + 1
         t = np.linspace(t_start, t_end, nPoints)
 
-        if ax == None:
+        if ax is None:
             #fig = plt.figure()
             ax = plt.gca()
         else:
@@ -346,13 +345,8 @@ class Protocol(PyRhOobject): #, metaclass=ABCMeta
         return ax
 
 
-
-
-
-
-
 class protCustom(Protocol):
-
+    """Present a time-varying stimulus defined by a spline function. """
     # Class attributes
     protocol = 'custom'
     squarePulse = False
@@ -360,8 +354,10 @@ class protCustom(Protocol):
     phi_ft = None
 
     def extraPrep(self):
-        '''Function to set-up additional variables and make parameters consistent after any changes'''
-        self.nRuns = 1 #nRuns ### Reconsider this...
+        """Function to set-up additional variables and make parameters
+        consistent after any changes.
+        """
+        self.nRuns = 1  # nRuns ### TODO: Reconsider this...
 
         #self.custPulseGenerator = self.phi_ft
         if not hasattr(self, 'phi_ts') or self.phi_ts is None:
@@ -369,20 +365,17 @@ class protCustom(Protocol):
             #self.genPulseSet(self.custPulseGenerator)
             self.genPulseSet(self.phi_ft)
 
-
     def createLayout(self, Ifig=None, vInd=0):
-
-        if Ifig == None:
+        if Ifig is None:
             Ifig = plt.figure()
 
         self.addStimulus = config.addStimulus
 
         if self.addStimulus:
-            phi_ts = self.genPlottingStimuli(self.phi_ft) #self.genPlottingStimuli(self.custPulseGenerator)
-
-            gsStim = plt.GridSpec(4,1)
-            self.axS = Ifig.add_subplot(gsStim[0,:]) # Stimulus axes
-            self.axI = Ifig.add_subplot(gsStim[1:,:],sharex=self.axS) # Photocurrent axes
+            phi_ts = self.genPlottingStimuli(self.phi_ft)  # self.genPlottingStimuli(self.custPulseGenerator)
+            gsStim = plt.GridSpec(4, 1)
+            self.axS = Ifig.add_subplot(gsStim[0, :])  # Stimulus axes
+            self.axI = Ifig.add_subplot(gsStim[1:, :], sharex=self.axS)  # Photocurrent axes
             pc = self.PD.trials[0][0][0]
             plotLight(pc.pulses, ax=self.axS, light='spectral', lam=470, alpha=0.2)
             for run in range(self.nRuns):
@@ -395,13 +388,12 @@ class protCustom(Protocol):
         else:
             self.axI = Ifig.add_subplot(111)
 
-
     def plotExtras(self):
         pass
 
 
 class protStep(Protocol):
-    # Heaviside Pulse
+    """Present a step (Heaviside) Pulse."""
     protocol = 'step'
     squarePulse = True
     nRuns = 1
@@ -419,15 +411,18 @@ class protStep(Protocol):
 
 
 class protSinusoid(Protocol):
-
+    """Present oscillating stimuli over a range of frequencies to find the
+    resonant frequency.
+    """
     protocol = 'sinusoid'
     squarePulse = False
-
     startOn = False
     phi0 = 0
 
     def extraPrep(self):
-        """Function to set-up additional variables and make parameters consistent after any changes"""
+        """Function to set-up additional variables and make parameters
+        consistent after any changes.
+        """
 
         self.fs = np.sort(np.array(self.fs)) # Frequencies [Hz]
         self.ws = 2 * np.pi * self.fs / (1000) # Frequencies [rads/ms] (scaled from /s to /ms
@@ -450,16 +445,16 @@ class protSinusoid(Protocol):
 
         self.t_start, self.t_end = 0, self.Dt_total
         self.phi_ts = self.genPulseSet()
-        self.runLabels = [r'$f={}\mathrm{{Hz}}$ '.format(round_sig(f,3)) for f in self.fs]
+        self.runLabels = [r'$f={}\mathrm{{Hz}}$ '.format(round_sig(f, 3)) for f in self.fs]
 
     def getShortestPeriod(self):
-        return 1000/self.sr # dt [ms]
+        return 1000/self.sr  # dt [ms]
 
     def genPulse(self, run, phi, pulse):
         pStart, pEnd = pulse
         Dt_on = pEnd - pStart
-        t = np.linspace(0.0, Dt_on, int(round((Dt_on*self.sr/1000))+1), endpoint=True) # Create smooth series of time points to interpolate between
-        if self.startOn: # Generalise to phase offset
+        t = np.linspace(0.0, Dt_on, int(round((Dt_on*self.sr/1000))+1), endpoint=True)  # Create smooth series of time points to interpolate between
+        if self.startOn:  # Generalise to phase offset
             phi_t = spline(pStart + t, self.phi0[run] + 0.5*phi*(1+np.cos(self.ws[run]*t)), ext=1, k=5)
         else:
             phi_t = spline(pStart + t, self.phi0[run] + 0.5*phi*(1-np.cos(self.ws[run]*t)), ext=1, k=5)
@@ -467,45 +462,40 @@ class protSinusoid(Protocol):
         return phi_t
 
     def createLayout(self, Ifig=None, vInd=0):
-
-        if Ifig == None:
+        if Ifig is None:
             Ifig = plt.figure()
 
         self.addStimulus = config.addStimulus
 
-        if self.nRuns > 1: #len(phis) > 1:
-            gsSin = plt.GridSpec(2,3)
-            self.axIp = Ifig.add_subplot(gsSin[0,-1])
-            self.axIss = Ifig.add_subplot(gsSin[1,-1], sharex=self.axIp)
-            self.axI = Ifig.add_subplot(gsSin[:,:-1])
+        if self.nRuns > 1:  #len(phis) > 1:
+            gsSin = plt.GridSpec(2, 3)
+            self.axIp = Ifig.add_subplot(gsSin[0, -1])
+            self.axIss = Ifig.add_subplot(gsSin[1, -1], sharex=self.axIp)
+            self.axI = Ifig.add_subplot(gsSin[:, :-1])
         else:
             self.addStimulus = config.addStimulus
 
             if self.addStimulus:
                 phi_ts = self.genPlottingStimuli()
 
-                gsStim = plt.GridSpec(4,1)
-                self.axS = Ifig.add_subplot(gsStim[0,:]) # Stimulus axes
-                self.axI = Ifig.add_subplot(gsStim[1:,:], sharex=self.axS) # Photocurrent axes
+                gsStim = plt.GridSpec(4, 1)
+                self.axS = Ifig.add_subplot(gsStim[0, :])  # Stimulus axes
+                self.axI = Ifig.add_subplot(gsStim[1:, :], sharex=self.axS)  # Photocurrent axes
                 for run in range(self.nRuns):
                     for phiInd in range(self.nPhis):
                         pc = self.PD.trials[run][phiInd][vInd]
                         col, style = self.getLineProps(run, vInd, phiInd)
                         self.plotStimulus(phi_ts[run][phiInd], pc.t_start, pc.pulses, pc.t_end, self.axS, light='spectral', col=col, style=style)
                 plt.setp(self.axS.get_xticklabels(), visible=False)
-                self.axS.set_xlabel('') #plt.xlabel('')
-                self.axS.set_ylim(self.phi0[0], max(self.phis)) ### phi0[r]
+                self.axS.set_xlabel('')  # plt.xlabel('')
+                self.axS.set_ylim(self.phi0[0], max(self.phis))  # phi0[r]
                 if max(self.phis) / min(self.phis) >= 100:
-                    self.axS.set_yscale('log') #plt.yscale('log')
+                    self.axS.set_yscale('log')  # plt.yscale('log')
             else:
                 self.axI = Ifig.add_subplot(111)
 
-
-
     def plotExtras(self):
-
-        splineOrder = 2     #[1,5]
-
+        splineOrder = 2  # [1,5]
         trim = 0.1
         transEndInd = int(self.Dt_delays[0] + round(self.Dt_ons[0] * trim / self.dt))
 
@@ -515,7 +505,7 @@ class protSinusoid(Protocol):
 
             #if len(self.phis) > 1:
             fstars = np.zeros((self.nPhis, self.nVs))
-            for phiInd, phiOn in enumerate(self.phis): ### These loops need reconsidering...!!!
+            for phiInd, phiOn in enumerate(self.phis):  # TODO: These loops need reconsidering...!!!
                 for vInd, V in enumerate(self.Vs):
                     Ipeaks = np.zeros(self.nRuns)
                     for run in range(self.nRuns):
@@ -556,22 +546,23 @@ class protSinusoid(Protocol):
 
             tTransEnd = transEndInd * self.dt #ts[0][0][0]
             self.axI.axvline(x=tTransEnd, linestyle=':', color='k')
-            for phiInd, phiOn in enumerate(self.phis): ### These loops need reconsidering...!!!
+            arrow = {'arrowstyle': '<->', 'color': 'black', 'shrinkA': 0, 'shrinkB': 0}
+            for phiInd, phiOn in enumerate(self.phis):  # TODO: These loops need reconsidering...!!!
                 for vInd, V in enumerate(self.Vs):
                     PC = self.PD.trials[np.argmax(Ipeaks)][phiInd][vInd]
                     onBegInd, onEndInd = PC._idx_pulses_[0]
                     t = PC.t
                     self.axI.annotate('', xy=(tTransEnd, Ip), xytext=(t[onEndInd], Ip),
-                                        arrowprops={'arrowstyle':'<->','color':'black','shrinkA':0,'shrinkB':0})
+                                      arrowprops=arrow)
 
             for phiInd, phiOn in enumerate(self.phis):
                 for vInd, V in enumerate(self.Vs):
-                    Iabs = np.zeros(self.nRuns) #[None for r in range(nRuns)]
+                    Iabs = np.zeros(self.nRuns)  # [None for r in range(nRuns)]
                     for run in range(self.nRuns):
                         PC = self.PD.trials[run][phiInd][vInd]
                         onBegInd, onEndInd = PC._idx_pulses_[0]
-                        t = PC.t #t = ts[run][phiInd][vInd]
-                        I_RhO = PC.I #I_RhO = Is[run][phiInd][vInd]
+                        t = PC.t  # t = ts[run][phiInd][vInd]
+                        I_RhO = PC.I  # I_RhO = Is[run][phiInd][vInd]
                         #transEndInd = np.searchsorted(t,Dt_delay+transD,side="left") # Add one since upper bound is not included in slice
                         #if transEndInd >= len(t): # If transition period is greater than the on period
                         #    transEndInd = round(len(t[onBegInd:onEndInd+1])/2) # Take the second half of the data
@@ -589,7 +580,7 @@ class protSinusoid(Protocol):
 
                     #axI.axvline(x=t[transEndInd],linestyle=':',color='k')
                     #axI.annotate('Search zone', xy=(t[transEndInd], min(I_RhO)), xytext=(t[onEndInd], min(I_RhO)), arrowprops={'arrowstyle':'<->','color':'black'})
-                    col, style = self.getLineProps(run, vInd, phiInd) ### Modify to match colours correctly
+                    col, style = self.getLineProps(run, vInd, phiInd)  # TODO: Modify to match colours correctly
                     self.axIss.plot(self.fs, Iabs, 'x', color=col)
                     try:
                         intIss = spline(self.fs, Iabs, k=splineOrder)
@@ -617,22 +608,23 @@ class protSinusoid(Protocol):
             plt.tight_layout()
 
             self.fstars = fstars
-            if len(self.phis) > 1: # Multiple light amplitudes
+            if len(self.phis) > 1:  # Multiple light amplitudes
                 #for i, phi0 in enumerate(self.phi0):
                 fstarAfig = plt.figure()
                 for vInd, V in enumerate(self.Vs):
-                    if self.phi0[0] > 0: # phi0[r]
-                        plt.plot(np.array(self.phis)/self.phi0[0], fstars[:,vInd])
-                        plt.xlabel(r'$\mathrm{Modulating}\ \phi(t)/\phi_0$') #\phi_1(t)/\phi_0(t)
+                    if self.phi0[0] > 0:  # phi0[r]
+                        plt.plot(np.array(self.phis)/self.phi0[0], fstars[:, vInd])
+                        plt.xlabel(r'$\mathrm{Modulating}\ \phi(t)/\phi_0$')
                     else:
                         plt.plot(np.array(self.phis), fstars[:,vInd])
-                        plt.xlabel(r'$\mathrm{Modulating}\ \phi(t)$') #\phi_1(t)
+                        plt.xlabel(r'$\mathrm{Modulating}\ \phi(t)$')
                 plt.xscale('log')
                 plt.ylabel(r'$f^*\ \mathrm{[Hz]}$')
                 if config.addTitles:
                     plt.title(r'$f^*\ vs.\ \phi_1(t).\ \mathrm{{Background\ illumination:}}\ \phi_0(t)={:.3g}$'.format(self.phi0[0]))
 
-#TODO: Finish Dual Tone protocol
+
+# TODO: Finish Dual Tone protocol
 '''
 class protDualTone(Protocol):
     # http://uk.mathworks.com/products/demos/signaltlbx/dtmf/dtmfdemo.html
@@ -682,7 +674,6 @@ class protChirp(Protocol):
     """Sweep through a range of frequencies from f0 to fT either linearly or exponentially"""
     protocol = 'chirp'
     squarePulse = False
-
     f0 = 0
     fT = 0
     linear = True
@@ -690,14 +681,16 @@ class protChirp(Protocol):
     phi0 = 0
 
     def extraPrep(self):
-        'Function to set-up additional variables and make parameters consistent after any changes'
+        """Function to set-up additional variables and make parameters
+        consistent after any changes.
+        """
 
         self.sr = max(10000, int(round(10 * max(self.f0, self.fT)))) # Nyquist frequency - sampling rate (10*f) >= 2*f
-        self.nRuns = 1 #len(self.ws)
+        self.nRuns = 1  # len(self.ws)
         #self.cycles = np.column_stack((self.Dt_ons,self.Dt_offs))
         #ws = 2 * np.pi * np.logspace(-4,10,num=7) # Frequencies [rads/s]
 
-        if (1000)/self.f0 > min(self.Dt_ons): #1/10**self.fs[0] > self.Dt_total:
+        if (1000)/self.f0 > min(self.Dt_ons):  # 1/10**self.fs[0] > self.Dt_total:
             warnings.warn('Warning: The period of the lowest frequency is longer than the stimulation time!')
 
         if isinstance(self.phi0, (int, float, complex)):
@@ -718,12 +711,12 @@ class protChirp(Protocol):
     def genPulse(self, run, phi, pulse):
         pStart, pEnd = pulse
         Dt_on = pEnd - pStart
-        t = np.linspace(0.0, Dt_on, (Dt_on*self.sr/1000)+1, endpoint=True) # Create smooth series of time points to interpolate between
-        if self.linear: # Linear sweep
+        t = np.linspace(0.0, Dt_on, (Dt_on*self.sr/1000)+1, endpoint=True)  # Create smooth series of time points to interpolate between
+        if self.linear:  # Linear sweep
             ft = self.f0 + (self.fT-self.f0)*(t/Dt_on)
         else:           # Exponential sweep
             ft = self.f0 * (self.fT/self.f0)**(t/Dt_on)
-        ft /= 1000 # Convert to frequency in ms
+        ft /= 1000  # Convert to frequency in ms
         if self.startOn:
             phi_t = spline(pStart + t, self.phi0[run] + 0.5*phi*(1+np.cos(ft*t)), ext=1, k=5)
         else:
@@ -731,32 +724,30 @@ class protChirp(Protocol):
         return phi_t
 
     def createLayout(self, Ifig=None, vInd=0):
-
-        if Ifig == None:
+        if Ifig is None:
             Ifig = plt.figure()
 
         self.addStimulus = config.addStimulus
 
         if self.addStimulus:
             phi_ts = self.genPlottingStimuli()
-
-            gsStim = plt.GridSpec(4,1)
-            self.axS = Ifig.add_subplot(gsStim[0,:]) # Stimulus axes
-            self.axI = Ifig.add_subplot(gsStim[1:,:],sharex=self.axS) # Photocurrent axes
+            gsStim = plt.GridSpec(4, 1)
+            self.axS = Ifig.add_subplot(gsStim[0, :]) # Stimulus axes
+            self.axI = Ifig.add_subplot(gsStim[1:, :], sharex=self.axS)  # Photocurrent axes
             for run in range(self.nRuns):
                 for phiInd in range(self.nPhis):
                     pc = self.PD.trials[run][phiInd][vInd]
                     col, style = self.getLineProps(run, vInd, phiInd)
                     self.plotStimulus(phi_ts[run][phiInd], pc.t_start, pc.pulses, pc.t_end, self.axS, light='spectral', col=col, style=style)
             plt.setp(self.axS.get_xticklabels(), visible=False)
-            self.axS.set_xlabel('') #plt.xlabel('')
+            self.axS.set_xlabel('')  # plt.xlabel('')
 
-            self.axS.set_ylim(self.phi0[0], max(self.phis)) ### phi0[r]
+            self.axS.set_ylim(self.phi0[0], max(self.phis))  # phi0[r]
 
             if max(self.phis) / min(self.phis) >= 100:
-                self.axS.set_yscale('log') #plt.yscale('log')
+                self.axS.set_yscale('log')  # plt.yscale('log')
 
-            ### Overlay instantaneous frequency
+            # Overlay instantaneous frequency
             self.axF = self.axS.twinx()
             if not self.linear:
                 self.axF.set_yscale('log')
@@ -764,12 +755,12 @@ class protChirp(Protocol):
             for p in range(self.nPulses):
                 pStart, pEnd = self.PD.trials[0][0][0].pulses[p]
                 Dt_on = pEnd - pStart
-                nPoints = 10 * int(round(Dt_on / self.dt)) + 1 # 10001
+                nPoints = 10 * int(round(Dt_on / self.dt)) + 1  # 10001
                 tsmooth = np.linspace(0, Dt_on, nPoints)
 
                 if self.linear:
                     ft = self.f0 + (self.fT-self.f0)*(tsmooth/Dt_on)
-                else: # Exponential
+                else:  # Exponential
                     ft = self.f0 * (self.fT/self.f0)**(tsmooth/Dt_on)
                 self.axF.plot(tsmooth+pStart, ft, 'g')
             self.axF.set_ylabel(r'$f\ \mathrm{[Hz]}$')
@@ -780,33 +771,31 @@ class protChirp(Protocol):
 
 
 class protRamp(Protocol):
-    """Linearly increasing pulse"""
-
+    """Linearly increasing pulse."""
     protocol = 'ramp'
     squarePulse = False
     nRuns = 1
-
     phi0 = 0
 
     def extraPrep(self):
-        'Function to set-up additional variables and make parameters consistent after any changes'
-        self.nRuns = 1 #nRuns # Make len(phi_ton)?
+        """Function to set-up additional variables and make parameters
+        consistent after any changes.
+        """
+        self.nRuns = 1  # nRuns # Make len(phi_ton)?
         self.cycles = np.column_stack((self.Dt_ons,self.Dt_offs))
         self.phi_ts = self.genPulseSet()
 
     def createLayout(self, Ifig=None, vInd=0):
-
-        if Ifig == None:
+        if Ifig is None:
             Ifig = plt.figure()
 
         self.addStimulus = config.addStimulus
 
         if self.addStimulus:
             phi_ts = self.genPlottingStimuli()
-
-            gsStim = plt.GridSpec(4,1)
-            self.axS = Ifig.add_subplot(gsStim[0,:]) # Stimulus axes
-            self.axI = Ifig.add_subplot(gsStim[1:,:],sharex=self.axS) # Photocurrent axes
+            gsStim = plt.GridSpec(4, 1)
+            self.axS = Ifig.add_subplot(gsStim[0, :])  # Stimulus axes
+            self.axI = Ifig.add_subplot(gsStim[1:, :], sharex=self.axS)  # Photocurrent axes
             pc = self.PD.trials[0][0][0]
             plotLight(pc.pulses, ax=self.axS, light='spectral', lam=470, alpha=0.2)
             #for p in range(self.nPulses):
@@ -823,10 +812,10 @@ class protRamp(Protocol):
         else:
             self.axI = Ifig.add_subplot(111)
 
-
-
     def genPulse(self, run, phi, pulse):
-        """Generate spline for a particular pulse. phi0 is the offset so decreasing ramps can be created with negative phi values. """
+        """Generate spline for a particular pulse. phi0 is the offset so
+        decreasing ramps can be created with negative phi values.
+        """
         pStart, pEnd = pulse
         phi_t = spline([pStart, pEnd], [self.phi0, self.phi0+phi], k=1, ext=1)
         return phi_t
@@ -841,7 +830,9 @@ class protDelta(Protocol):
     Dt_on = 0
 
     def prepare(self):
-        """Function to set-up additional variables and make parameters consistent after any changes"""
+        """Function to set-up additional variables and make parameters
+        consistent after any changes.
+        """
         assert(self.Dt_total >= self.Dt_delay + self.Dt_on)  # ==> Dt_off >= 0
         self.cycles = np.asarray([[self.Dt_on, self.Dt_total-self.Dt_delay-self.Dt_on]])
         self.nPulses = self.cycles.shape[0]
@@ -865,7 +856,9 @@ class protDelta(Protocol):
         return
 
     def extraPrep(self):
-        '''Function to set-up additional variables and make parameters consistent after any changes'''
+        """Function to set-up additional variables and make parameters
+        consistent after any changes.
+        """
         self.nRuns = 1
         self.phi_ts = self.genPulseSet()
 
@@ -883,10 +876,8 @@ class protDelta(Protocol):
             print("Estimated maximum conductance (g) = {} uS".format(round_sig(gbar_est, 3)))
 
     def createLayout(self, Ifig=None, vInd=0):
-
         if Ifig is None:
             Ifig = plt.figure()
-
         if self.addStimulus:
             phi_ts = self.genPlottingStimuli()
             gsStim = plt.GridSpec(4, 1)
@@ -936,8 +927,7 @@ class protDelta(Protocol):
 
 
 class protRectifier(Protocol):
-    """
-    Protocol to determine the rectification parameters of rhodopsins.
+    """Protocol to determine the rectification parameters of rhodopsins.
     Typically they are inward rectifiers where current is more easily passed
     into the cell than out.
     """
@@ -1082,8 +1072,8 @@ class protRectifier(Protocol):
                 # fVsmooth = self.RhO.calcfV(Vsmooth)
 
                 #pfV['E'].value = E
-                pfV['v0'].value = poptg[0] #v0
-                pfV['v1'].value = poptg[1] #v1
+                pfV['v0'].value = poptg[0]  # v0
+                pfV['v1'].value = poptg[1]  # v1
                 fVsmooth = errfV(pfV, Vsmooth)
 
                 self.axfV.plot(Vsmooth, fVsmooth)
@@ -1114,14 +1104,13 @@ class protRectifier(Protocol):
                 if config.verbose > 0:
                     print('g(v=-70) = ', gm70)
                 #g0[(Vs - E)==0] = None #(v1/v0)
-                gNorm = gs / gm70 # Normalised conductance relative to V=-70
+                gNorm = gs / gm70  # Normalised conductance relative to V=-70
 
                 self.axfV.scatter(Vs, gNorm, marker='x', color=colours, s=markerSize)#,linestyle=''
                 if config.verbose > 1:
                     print(gm70)
                     if config.verbose > 2:
                         print(np.c_[Vs, np.asarray(Vs)-E, Iss, gs, gNorm])
-
 
                 # Add equations to legend
                 if self.nPhis > 1:
@@ -1138,11 +1127,10 @@ class protRectifier(Protocol):
         #ax.spines['left'].set_position('zero')
         setCrossAxes(ax, zeroY=True)
         ax.set_xlim(min(Vs), max(Vs))
-
-        ax.set_ylabel(r'$I_{ss}$ $\mathrm{[nA]}$')#, position=(0.95,0.8)) #plt.xlabel
+        ax.set_ylabel(r'$I_{ss}$ $\mathrm{[nA]}$')  #, position=(0.95,0.8)) #plt.xlabel
 
         ax = self.axfV
-        ax.set_ylabel(r'$f(v)$ $\mathrm{[1]}$')#, position=(0.95,0.8)) #plt.xlabel
+        ax.set_ylabel(r'$f(v)$ $\mathrm{[1]}$')  #, position=(0.95,0.8)) #plt.xlabel
 
         #ax.spines['left'].set_position('zero')
         setCrossAxes(ax, zeroY=True)
@@ -1156,9 +1144,8 @@ class protRectifier(Protocol):
             #ax.legend(legLabels, bbox_to_anchor=(0., 1.01, 1., .101), loc=3, mode="expand", borderaxespad=0., prop={'size':mpl.rcParams['font.size']})
             ax.legend(legLabels, loc='best')
         else:
-            ymin, ymax = ax.get_ylim()
+            #ymin, ymax = ax.get_ylim()
             #ax.set_ylim(ymin, ymax)
-
             ax.text(min(Vs), 0.98*ymax, legLabels[phiInd], ha='left', va='top')#, fontsize=eqSize) #, transform=ax.transAxes)
 
         # ax.axvline(x=-70, linestyle=':', color='k')
@@ -1168,8 +1155,9 @@ class protRectifier(Protocol):
         ax.vlines(x=-70, ymin=0, ymax=1, linestyle=':', color='k')
         ax.hlines(y=1, xmin=-70, xmax=0, linestyle=':', color='k')
 
-        ax.set_xlabel(r'$V_{clamp}$ $\mathrm{[mV]}$', position=(config.xLabelPos,0), ha='right')
-        #plt.xlim((min(Vs),max(Vs)))
+        ax.set_xlabel(r'$V_{clamp}$ $\mathrm{[mV]}$',
+                      position=(config.xLabelPos, 0), ha='right')
+        # plt.xlim((min(Vs), max(Vs)))
 
         self.axI.grid(b=True, which='minor', axis='both', linewidth=.2)
         self.axI.grid(b=True, which='major', axis='both', linewidth=1)
@@ -1177,13 +1165,11 @@ class protRectifier(Protocol):
         plt.tight_layout()
 
 
-
-
 class protShortPulse(Protocol):
-    # Vary pulse length - See Nikolic+++++2009, Fig. 2 & 9
+    # Vary pulse length - See Nikolic et al. 2009, Fig. 2 & 9
     protocol = 'shortPulse'
     squarePulse = True
-    nPulses = 1 # Fixed at 1
+    nPulses = 1  # Fixed at 1
 
     # def __next__(self):
         # if self.run >= self.nRuns:
@@ -1193,13 +1179,15 @@ class protShortPulse(Protocol):
         # return self.getRunCycles(self, self.run)
 
     def prepare(self):
-        """Function to set-up additional variables and make parameters consistent after any changes"""
+        """Function to set-up additional variables and make parameters
+        consistent after any changes.
+        """
         self.pDs = np.sort(np.array(self.pDs))
         self.nRuns = len(self.pDs)
         self.Dt_delays = np.ones(self.nRuns)*self.Dt_delay
         self.Dt_ons = self.pDs
         self.Dt_offs = (np.ones(self.nRuns)*self.Dt_total) - self.Dt_delays - self.Dt_ons
-        self.cycles = np.column_stack((self.Dt_ons,self.Dt_offs))
+        self.cycles = np.column_stack((self.Dt_ons, self.Dt_offs))
         self.phis.sort(reverse=True)
         self.Vs.sort(reverse=True)
         self.nPhis = len(self.phis)
@@ -1207,13 +1195,11 @@ class protShortPulse(Protocol):
         self.phi_ts = self.genPulseSet()
         self.runLabels = [r'$\mathrm{{Pulse}}={}\mathrm{{ms}}$ '.format(pD) for pD in self.pDs]
 
-
     def getRunCycles(self, run):
-        return np.asarray([[self.Dt_ons[run],self.Dt_offs[run]]]), self.Dt_delays[run]
-
+        return (np.asarray([[self.Dt_ons[run], self.Dt_offs[run]]]),
+                self.Dt_delays[run])
 
     def createLayout(self, Ifig=None, vInd=0):
-
         if Ifig is None:
             Ifig = plt.figure()
         self.addStimulus = config.addStimulus
@@ -1222,12 +1208,12 @@ class protShortPulse(Protocol):
         self.axPeak = Ifig.add_subplot(gsPL[1, -1], sharex=self.axLag)
         self.axI = Ifig.add_subplot(gsPL[:, :-1])
 
-
     def addAnnotations(self):
         # Freeze axis limits
         ymin, ymax = self.axI.get_ylim()
         pos = 0.02 * abs(ymax-ymin)
         self.axI.set_ylim(ymin, ymax + round(pos*(self.nRuns+1)), auto=True)
+
         lightBarWidth = 2 * mpl.rcParams['lines.linewidth']
         peakMarkerSize = 1.5 * mpl.rcParams['lines.markersize']
 
@@ -1236,29 +1222,32 @@ class protShortPulse(Protocol):
                 for vInd in range(self.nVs):
                     colour, style = self.getLineProps(run, vInd, phiInd)
                     PC = self.PD.trials[run][phiInd][vInd]
-                    t_on, t_off = PC.pulses[0,:]
+                    t_on, t_off = PC.pulses[0, :]
 
-                    self.axI.hlines(y=ymax+(run+1)*pos, xmin=t_on, xmax=t_off, lw=lightBarWidth, color=colour)
+                    self.axI.hlines(y=ymax+(run+1)*pos, xmin=t_on, xmax=t_off,
+                                    lw=lightBarWidth, color=colour)
                     self.axI.axvline(x=t_on, linestyle=':', c='k', label='_nolegend_')
                     self.axI.axvline(x=t_off, linestyle=':', c=colour, label='_nolegend_')
 
-                    self.axI.plot(PC.t_peaks_, PC.I_peaks_, marker='*', ms=peakMarkerSize, c=colour)
+                    self.axI.plot(PC.t_peaks_, PC.I_peaks_, marker='*',
+                                  ms=peakMarkerSize, c=colour)
 
-                    ### Plot figure to show time of Ipeak vs time of light off c.f. Nikolic et al. 2009 Fig 2b
-                    self.axLag.plot(self.pDs[run], PC.Dt_lags_[0], marker='*', ms=peakMarkerSize, c=colour)
+                    # Plot t_peak vs t_off c.f. Nikolic et al. 2009 Fig 2b
+                    self.axLag.plot(self.pDs[run], PC.Dt_lags_[0], marker='*',
+                                    ms=peakMarkerSize, c=colour)
 
-                    ### Plot figure to show current peak vs time of light off c.f. Nikolic et al. 2009 Fig 2c
-                    self.axPeak.plot(self.pDs[run], PC.I_peaks_, marker='*', ms=peakMarkerSize, c=colour)
+                    # Plot I_peak vs t_off c.f. Nikolic et al. 2009 Fig 2c
+                    self.axPeak.plot(self.pDs[run], PC.I_peaks_, marker='*',
+                                     ms=peakMarkerSize, c=colour)
 
         # axLag.axis('equal')
         tmax = max(self.pDs)*1.25
-        self.axLag.plot([0,tmax], [0,tmax], ls="--", c=".3")
-        self.axLag.set_xlim(0,tmax)
-        self.axLag.set_ylim(0,tmax)
+        self.axLag.plot([0, tmax], [0, tmax], ls="--", c=".3")
+        self.axLag.set_xlim(0, tmax)
+        self.axLag.set_ylim(0, tmax)
         self.axLag.set_ylabel(r'$\mathrm{Time\ of\ peak\ [ms]}$')
         self.axLag.set_aspect('auto')
-
-        self.axPeak.set_xlim(0,tmax)
+        self.axPeak.set_xlim(0, tmax)
         self.axPeak.set_xlabel(r'$\mathrm{Pulse\ duration\ [ms]}$')
         self.axPeak.set_ylabel(r'$\mathrm{Photocurrent\ peak\ [nA]}$')
 
@@ -1279,7 +1268,9 @@ class protRecovery(Protocol):
         # return np.asarray[self.pulses[self.run]]
 
     def prepare(self):
-        """Function to set-up additional variables and make parameters consistent after any changes"""
+        """Function to set-up additional variables and make parameters
+        consistent after any changes.
+        """
         self.Dt_IPIs = np.sort(np.asarray(self.Dt_IPIs))
 
         self.nRuns = len(self.Dt_IPIs)
@@ -1333,18 +1324,18 @@ class protRecovery(Protocol):
                 params.add('Gr0', value=0.002, min=0.0001, max=0.1)
                 params = fitRecovery(t_peaks, I_peaks, params, Ipeak0, Iss0)
                 if config.verbose > 0:
-                    print("tau_r0 = {} ==> G_r0 = {}".format(1/params['Gr0'].value, params['Gr0'].value))
+                    Gr0 = params['Gr0'].value
+                    print("tau_r0 = {} ==> G_r0 = {}".format(1/Gr0, Gr0))
                 self.PD.params[phiInd][vInd] = params
 
     def finish(self, PC, RhO):
         # Build array of second peaks
-        self.PD.IPIpeaks_ = np.zeros((self.nRuns, self.nPhis, self.nVs)) #[[[None for v in range(len(Vs))] for p in range(len(phis))] for r in range(nRuns)]
+        self.PD.IPIpeaks_ = np.zeros((self.nRuns, self.nPhis, self.nVs))
         self.PD.tIPIpeaks_ = np.zeros((self.nRuns, self.nPhis, self.nVs))
         for run in range(self.nRuns):
             for phiInd in range(self.nPhis):
                 for vInd in range(self.nVs):
                     PC = self.PD.trials[run][phiInd][vInd]
-                    #PC.alignToPulse(pulse=0, alignPoint=2) # End of the first pulse
                     PC.align_to(PC.pulses[0, 1])  # End of the first pulse
                     self.PD.IPIpeaks_[run][phiInd][vInd] = PC.I_peaks_[1]
                     self.PD.tIPIpeaks_[run][phiInd][vInd] = PC.t_peaks_[1]
@@ -1356,14 +1347,12 @@ class protRecovery(Protocol):
         self.fitParams()
 
     def addAnnotations(self):
-
         # Freeze axis limits
         ymin, ymax = plt.ylim()
         pos = 0.02 * abs(ymax-ymin)
         plt.ylim(ymin, pos*self.nRuns)
         xmin, xmax = plt.xlim()
         plt.xlim(xmin, xmax)
-
         arrow = {'arrowstyle': '<->', 'color': col, 'shrinkA': 0, 'shrinkB': 0}
         for run in range(self.nRuns):
             for phiInd in range(self.nPhis):
@@ -1372,17 +1361,16 @@ class protRecovery(Protocol):
                     pulses = self.PD.trials[run][phiInd][vInd].pulses
                     plt.annotate('', (pulses[0, 1], (run+1)*pos),
                                  (pulses[1, 0], (run+1)*pos), arrowprops=arrow)
-
+                    # TODO: Refactor this to use self.fitParams
                     if run == 0:  # Fit peak recovery
                         t_peaks, I_peaks, Ipeak0, Iss0 = getRecoveryPeaks(self.PD, phiInd, vInd, usePeakTime=True)
                         params = Parameters()
                         params.add('Gr0', value=0.002, min=0.0001, max=0.1)
                         params = fitRecovery(t_peaks, I_peaks, params, Ipeak0, Iss0, self.axI)
                         if config.verbose > 0:
-                            print("tau_r0 = {} ==> G_r0 = {}".format(1/params['Gr0'].value, params['Gr0'].value))
+                            Gr0 = params['Gr0'].value
+                            print("tau_r0 = {} ==> G_r0 = {}".format(1/Gr0, Gr0))
         return
-
-
 
 
 protocols = OrderedDict([('step', protStep),
@@ -1398,12 +1386,11 @@ protocols = OrderedDict([('step', protStep),
 # E.g.
 # protocols['shortPulse']([1e12], [-70], 25, [1,2,3,5,8,10,20], 100, 0.1)
 
-#squarePulses = [protocol for protocol in protocols if protocol.squarePulse]
-#arbitraryPulses = [protocol for protocol in protocols if not protocol.squarePulse]
-#squarePulses = {'custom': True, 'delta': True, 'step': True, 'rectifier': True, 'shortPulse': True, 'recovery': True}
-#arbitraryPulses = {'custom': True, 'sinusoid': True, 'chirp': True, 'ramp':True} # Move custom here
-#smallSignalAnalysis = {'sinusoid': True, 'step': True, 'delta': True}
-
+# squarePulses = [protocol for protocol in protocols if protocol.squarePulse]
+# arbitraryPulses = [protocol for protocol in protocols if not protocol.squarePulse]
+# squarePulses = {'custom': True, 'delta': True, 'step': True, 'rectifier': True, 'shortPulse': True, 'recovery': True}
+# arbitraryPulses = {'custom': True, 'sinusoid': True, 'chirp': True, 'ramp':True} # Move custom here
+# smallSignalAnalysis = {'sinusoid': True, 'step': True, 'delta': True}
 
 
 def selectProtocol(protocol, params=None, saveData=True):
@@ -1417,10 +1404,10 @@ def selectProtocol(protocol, params=None, saveData=True):
         raise NotImplementedError(protocol)
 
 
-### Protocols to be included in the next version:
-### - Temperature (Q10)
-### - pH (intracellular and extracellular)
-### - Wavelength (lambda)
+# Protocols to be included in the next version:
+# - Temperature (Q10)
+# - pH (intracellular and extracellular)
+# - Wavelength (lambda)
 
 
 def characterise(RhO):
