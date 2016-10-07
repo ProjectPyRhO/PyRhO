@@ -26,7 +26,7 @@ __all__ = ['models', 'selectModel']
 # Model class definitions #
 
 class RhodopsinModel(PyRhOobject):
-    """Common base class for all models"""
+    """Common base class for all models."""
     # This an abstract base class since it is never directly instantiated
     __metaclass__ = abc.ABCMeta
     # TODO: Revise to be stateless and store date in PhotoCurrent objects
@@ -63,7 +63,7 @@ class RhodopsinModel(PyRhOobject):
         return "<PyRhO {}-state {} Model object>".format(stateLabs[self.nStates], self.rhoType)
 
     def __call__(self):
-        """When a rhodopsin is called, return its internal state at that instant"""
+        """When a rhodopsin is called, return its internal state at that instant."""
         return self.calcI(self.V, self.states[-1, :])
 
     def storeStates(self, soln, t):
@@ -73,18 +73,18 @@ class RhodopsinModel(PyRhOobject):
         #self.pulseInd = np.append(self.pulseInd, _idx_pulses_, axis=0)
 
     def getStates(self):
-        """Returns states, t"""
+        """Returns (states, t)."""
         return self.states, self.t
 
     def getRates(self):
-        """Returns an ordered dictionary of all transition rates"""
+        """Returns an ordered dictionary of all transition rates."""
         return OrderedDict([(r, getattr(self, r)) for r in itertools.chain(self.photoRates, self.constRates)])
 
     def reportState(self):
         self.dispRates()
 
     def initStates(self, phi, s0=None):
-        """Clear state arrays and set transition rates"""
+        """Clear state arrays and set transition rates."""
         if s0 is None:
             s0 = self.s_0
         assert(len(s0) == self.nStates)
@@ -97,8 +97,9 @@ class RhodopsinModel(PyRhOobject):
 
     # Implement this universal function
     def calcI(self, V, states=None):
-        r"""
-        Takes Voltage [mV] and open state variables {O} or {O1, O2} to calculate current [nA]
+        r"""Takes Voltage [mV] and open state variables {O} or {O1, O2} to
+        calculate current [nA].
+
         By convention:
         Negative current: positive ions entering the cell (e.g. Na^+ influx).
         Positive current: positive ions exiting (or negative ions entering) the cell (e.g. Cl^- in or K^+ out).
@@ -112,8 +113,14 @@ class RhodopsinModel(PyRhOobject):
         return I_RhO * (1e-6)  # 10^-12 * 10^-3 * 10^-6 (nA)
 
     def calcfV(self, V):
-        """Calculate the voltage-dependent conductance scaling factor, f(v)"""
-        if self.v0 == 0:  # TODO: Finish this! Generalise!!!
+        """Calculate the voltage-dependent conductance scaling factor, f(v)."""
+        # TODO: Try this solution
+        # http://stackoverflow.com/questions/26248654/numpy-return-0-with-divide-by-zero
+        #with np.errstate(divide='ignore', invalid='ignore'):
+        #    fV = (self.v1/(V-self.E))*(1-np.exp(-(V-self.E)/self.v0))
+        #    fV[~ np.isfinite(fV)] = self.v1/self.v0  # -inf inf NaN
+
+        if self.v0 == 0:
             raise ZeroDivisionError("f(V) undefined for v0 = 0")
         try:
             fV = (self.v1/(V-self.E))*(1-np.exp(-(V-self.E)/self.v0))  # Dimensionless
@@ -130,11 +137,9 @@ class RhodopsinModel(PyRhOobject):
 
     #@property
     def calcIss(self, V):
-        """
-        Calculate the steady-state current for a given voltage (and model parameters)
+        """Calculate the steady-state current for a given voltage (and model parameters).
         """
         return self.calcI(V, states=self.calcSteadyState())
-
 
     '''
     @proterty
@@ -173,7 +178,7 @@ class RhodopsinModel(PyRhOobject):
         return
 
     def plotRates(self, phis=np.logspace(12, 21, 1001), logscale='both'):
-        """Plot all activation rates"""
+        """Plot all activation rates."""
         rFig, axR = plt.subplots()
 
         for r, l in zip(self.photoFuncs, self.photoLabels):
@@ -372,6 +377,7 @@ class RhodopsinModel(PyRhOobject):
             figName = path.join(config.fDir, name+'.'+config.saveFigFormat)
             plt.savefig(figName, format=config.saveFigFormat)
         '''
+
 
 class RhO_3states(RhodopsinModel):
     """Class definition for the 3-state model"""
