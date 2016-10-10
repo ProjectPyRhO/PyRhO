@@ -7,7 +7,7 @@ Stimulation protocols to run on the opsin models
 
 from __future__ import print_function, division
 import warnings
-#import logging
+import logging
 import os
 import abc
 from collections import OrderedDict
@@ -32,6 +32,7 @@ from pyrho import config
 
 __all__ = ['protocols', 'selectProtocol', 'characterise']
 
+logger = logging.getLogger(__name__)
 
 class Protocol(PyRhOobject):  # , metaclass=ABCMeta
     """Common base class for all protocols"""

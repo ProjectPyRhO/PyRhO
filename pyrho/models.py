@@ -7,6 +7,7 @@ Rhodopsin model class and functions
 
 from __future__ import print_function, division
 import warnings
+import logging
 import abc
 import itertools
 from collections import OrderedDict
@@ -22,6 +23,7 @@ from pyrho import config
 
 __all__ = ['models', 'selectModel']
 
+logger = logging.getLogger(__name__)
 
 # Model class definitions #
 

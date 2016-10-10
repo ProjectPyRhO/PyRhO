@@ -7,7 +7,7 @@ Classes to wrap simulation engines for a uniform interface
 
 from __future__ import print_function, division
 import warnings
-# import logging
+import logging
 import os
 import copy
 import abc
@@ -29,6 +29,7 @@ from pyrho import config
 
 __all__ = ['simulators']
 
+logger = logging.getLogger(__name__)
 
 class Simulator(PyRhOobject):  # object
     """Common base class for all simulators."""

@@ -21,7 +21,7 @@ import numpy as np
 #from pyrho.__init__ import printVersions
 
 __all__ = ['setupGUI', 'simAvailable', 'setupNEURON', 'setupBrian', 'check_package',
-           'setFigOutput', 'setFigStyle', 'resetPlot']#, 'setOutput', 'logger']
+           'setFigOutput', 'setFigStyle', 'resetPlot']
 # 'wallTime',
 # TODO: Place in dict i.e. CONFIG_PARAMS['dDir'] or class with setter methods e.g. to call setOutput
 #, 'colours', 'styles', 'verbose', 'dDir', 'fDir', 'DASH_LINE', 'DOUB_DASH_LINE'

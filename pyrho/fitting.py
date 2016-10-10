@@ -4,6 +4,7 @@ from __future__ import print_function, division
 import os
 import pickle
 import warnings
+import logging
 import copy
 
 import numpy as np
@@ -26,6 +27,7 @@ from pyrho.config import wallTime
 
 __all__ = ['fitModels', 'plotFluxSetFits', 'reportFit', 'methods', 'defMethod']
 # ['fitModel', 'copyParam', 'getRecoveryPeaks', 'fitRecovery', 'fitfV']
+logger = logging.getLogger(__name__)
 
 methods = ('leastsq', 'nelder', 'lbfgsb', 'powell', 'cg', 'cobyla', 'tnc',
            'slsqp', 'differential_evolution')
