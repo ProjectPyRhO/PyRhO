@@ -18,9 +18,10 @@ import numpy as np
 #import matplotlib.pyplot as plt
 #import scipy as sp
 #import lmfit
+#from pyrho.__init__ import printVersions
 
 __all__ = ['setupGUI', 'simAvailable', 'setupNEURON', 'setupBrian', 'check_package',
-           'setFigOutput', 'setFigStyle', 'resetPlot', 'setOutput', 'logger']
+           'setFigOutput', 'setFigStyle', 'resetPlot']#, 'setOutput', 'logger']
 # 'wallTime',
 # TODO: Place in dict i.e. CONFIG_PARAMS['dDir'] or class with setter methods e.g. to call setOutput
 #, 'colours', 'styles', 'verbose', 'dDir', 'fDir', 'DASH_LINE', 'DOUB_DASH_LINE'
@@ -64,27 +65,7 @@ _DOUB_DASH_LINE = '=' * 80
 #global verbose
 #if 'verbose' not in vars() or 'verbose' not in globals() or verbose is None:
 verbose = 1  # Text notification output level [0,1,2]
-logLevels = [logging.CRITICAL, logging.ERROR, logging.WARNING,
-             logging.INFO, logging.DEBUG, logging.NOTSET]
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
-                    datefmt='%y-%m-%d %H:%M:%S',
-                    filename='PyRhO.log',
-                    filemode='w')
-
-
-def setOutput(logger, level):
-    verbose = level
-    logger.setLevel(level)
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(filename='PyRhO.log', level=logLevels[verbose])
-
-setOutput(logger, verbose)
-
-logger.info('Starting PyRhO')
-logger.debug('Initialised Logger')
 
 home = os.path.expanduser('~')
 pyrhoPath = os.path.dirname(os.path.abspath(__file__))  # modulePath

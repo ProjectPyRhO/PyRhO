@@ -1,41 +1,38 @@
-"""Classes for handling parameters and dictionaries of default values"""
+"""Classes for handling parameters and dictionaries of default values."""
 
-### Fitting Hyper parameters
-
+# Fitting Hyper parameters:
 # Time window for steady-state averaging
 # IPI curve initial parameters
 # fV initial parameters
 # Kinetics initial parameters
 # Optimisation routine initial parameters
 # ...
+
 from __future__ import print_function, division
 from collections import OrderedDict, defaultdict
-#import logging
+import logging
 import abc
 
-#from numpy import inf, nan, isfinite
+# from numpy import inf, nan, isfinite
 import numpy as np
-### Move this to models.py and add .setParams() method
+# TODO: Move this to models.py and add .setParams() method
 from lmfit import Parameters, Parameter
 
 # Units for model parameters (for Brian)
 # Replace with http://pythonhosted.org/NeuroTools/parameters.html
 from brian2.units.allunits import psiemens, second, mole
 from brian2.units.stdunits import *
-from pyrho.config import logger
 pS = psiemens
 sec = second
 # Units used: ms, mm, mV, Hz,       # Nonstd: psiemens, second, mole
                                     #           nS, uS
 
-#from pyrho.utilities import irrad2flux, flux2irrad
-
-# TODO
 __all__ = ['modelParams', 'modelFits', 'stateLabs', 'defaultOpsinType',
            'protParams', 'simParams', 'Parameters', 'Parameter']
 
-### Hyperparameters
+logger = logging.getLogger(__name__)
 
+# Hyperparameters
 #tFromOff = 50  # Time [ms] to start the sample window before the end of the pulse for Iss
 
 # Optimisation initialisation values
@@ -48,8 +45,8 @@ p0on = (-0.1, 2, -1)  # a*exp(-t/b)+c
 p0inact = (-0.5, 25, -0.5)  # a*exp(-t/b)+c
 p0off = (-0.1, 7.5, -0.1, 35, -0.1)  # a1*exp(-t/tau1)+a2*exp(-t/tau2)+I_ss
 
-### Add default kinetics parameters
-### On phase
+# Add default kinetics parameters
+# On phase
 pOn = Parameters()
 # pOn.add('a0', value=0, expr='-a2')
 pOn.add('a1', value=1, min=1e-9)
@@ -58,7 +55,7 @@ pOn.add('a0', value=0, expr='-a2')
 pOn.add('tau_act', value=5, min=1e-9)
 pOn.add('tau_deact', value=50, min=1e-9)
 
-### Off phase
+# Off phase
 # Iss = pOn['a0'].value + pOn['a1'].value
 pOffSing = Parameters()  # copy.deepcopy(pOn)
 
@@ -78,10 +75,7 @@ pOffDoub.add('Gd1', value=0.1)  # , min=1e-9)
 pOffDoub.add('Gd2', value=0.01)  # , vary=True) #, expr='Gd1')#, min=1e-9)
 
 
-
-
-
-### Default model parameters
+# Default model parameters
 
 modelParams = OrderedDict([('3', Parameters()), ('4', Parameters()), ('6', Parameters())])
 modelList = list(modelParams)  # List of keys: list(modelParams.keys()) #This could be removed
@@ -95,7 +89,7 @@ modelFits = OrderedDict([('3', OrderedDict([('ChR2', Parameters()),
                          ('4', OrderedDict([('ChR2', Parameters())])),
                          ('6', OrderedDict([('ChR2', Parameters())]))])
 
-### Replace with defaultdict with default=key
+# Replace with defaultdict with default=key
 modelLabels = OrderedDict([('E', 'E'), ('g0', 'g_0'), ('p', 'p'),
                            ('k_a', 'k_a'), ('k_r', 'k_r'), ('phi_m', '\phi_m'),
                            ('Gd', 'G_d'), ('Gr0', 'G_{r0}'),

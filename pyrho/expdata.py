@@ -2,7 +2,7 @@
 
 from __future__ import print_function, division
 import warnings
-# import logging
+import logging
 import copy
 
 import numpy as np
@@ -13,11 +13,12 @@ import matplotlib.pyplot as plt
 
 from pyrho.utilities import (getIndex, times2cycles, setCrossAxes, round_sig,
                              plotLight)
-from pyrho.config import check_package, logger
+from pyrho.config import check_package
 from pyrho import config
 
 __all__ = ['PhotoCurrent', 'ProtocolData']
 
+logger = logging.getLogger(__name__)
 
 # TODO: Import/Export from/to python electrophysiology modules
 # Neo: http://neuralensemble.org/neo/

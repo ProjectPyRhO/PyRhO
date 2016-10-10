@@ -5,6 +5,7 @@ from __future__ import print_function, division
 import os
 import copy
 import warnings
+import logging
 import pickle
 from string import Template
 
@@ -19,6 +20,8 @@ __all__ = ['Timer', 'saveData', 'loadData', 'getExt', 'getIndex', 'calcV1',
            'lam2rgb', 'irrad2flux', 'flux2irrad', 'times2cycles', 'cycles2times',
            'plotLight', 'plot_light_bar', 'setCrossAxes', 'round_sig']
 # 'printParams', 'compareParams', 'texIt', 'expDecay', 'biExpDecay', 'biExpSum', 'calcgbar'
+
+logger = logging.getLogger(__name__)
 
 
 class Timer:
@@ -51,7 +54,7 @@ class Timer:
         return '{:.3g}s'.format(self.interval)
 
     def reset(self):
-        """Reset timer to 0"""
+        """Reset timer to 0."""
         self.start = 0
         self.end = 0
         self.interval = 0
@@ -60,7 +63,7 @@ class Timer:
 # The following two functions are only used in fitModel
 def printParams(params):
     """
-    Print an LMFIT Parameters object
+    Print an LMFIT Parameters object.
     """
     vd = params.valuesdict()
     report = '------------------------\n'
@@ -77,7 +80,7 @@ def printParams(params):
 
 def compareParams(origParams, newParams):
     """
-    Print two sets of LMFIT Parameters with the percentage (or absolute) difference
+    Print two sets of LMFIT Parameters with the percentage (or absolute) difference.
     """
     ovd = origParams.valuesdict()
     nvd = newParams.valuesdict()
@@ -105,7 +108,7 @@ texTemplate = Template('$${content}$$')
 
 
 def texIt(texString):
-    """Function to add '$' signs around a (La)TeX string"""
+    """Function to add '$' signs around a (La)TeX string."""
     return texTemplate.substitute(content=texString)
 
 
@@ -500,7 +503,7 @@ def times2cycles(times, t_end):
 # TODO revise to handle negative delay times c.f. PhotoCurrent
 def cycles2times(cycles, Dt_delay):
     r"""
-    Convert pulse cycles (durations) to times (absolute events)
+    Convert pulse cycles (durations) to times (absolute events).
 
     Parameters
     ----------
@@ -535,7 +538,7 @@ def cycles2times(cycles, Dt_delay):
 
 def plotLight(times, ax=None, light='shade', dark=None, lam=470, alpha=0.2):
     """
-    Plot light pulse(s)
+    Plot light pulse(s).
 
     Parameters
     ----------
@@ -612,7 +615,7 @@ def plot_light_bar(ax, times, y, colour):
 
 def setCrossAxes(ax, zeroX=True, zeroY=False):
     """
-    Remove box and set axes to run through zero
+    Remove box and set axes to run through zero.
 
     Parameters
     ----------
@@ -676,10 +679,10 @@ def expDecay(t, a, b, c):
 
 
 def biExpDecay(t, a1, tau1, a2, tau2, I_ss):
-    """Calculate double exponential decay function"""
+    """Calculate double exponential decay function."""
     return a1 * np.exp(-t/tau1) + a2 * np.exp(-t/tau2) + I_ss
 
 
 def biExpSum(t, a_act, tau_act, a_deact, tau_deact, a0):
-    """Calculate the sum of two opposite exponential functions"""
+    """Calculate the sum of two opposite exponential functions."""
     return a0 + a_act*(1-np.exp(-t/tau_act)) + a_deact*np.exp(-t/tau_deact)
