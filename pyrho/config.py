@@ -67,16 +67,25 @@ verbose = 1  # Text notification output level [0,1,2]
 logLevels = [logging.CRITICAL, logging.ERROR, logging.WARNING,
              logging.INFO, logging.DEBUG, logging.NOTSET]
 
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+                    datefmt='%y-%m-%d %H:%M:%S',
+                    filename='PyRhO.log',
+                    filemode='w')
+
+
+def setOutput(logger, level):
+    verbose = level
+    logger.setLevel(level)
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename='PyRhO.log', level=logLevels[verbose])
 
-
-def setOutput(level):
-    verbose = level
-    logging.setLevel(level)
+setOutput(logger, verbose)
 
 logger.info('Starting PyRhO')
 logger.debug('Initialised Logger')
+
 home = os.path.expanduser('~')
 pyrhoPath = os.path.dirname(os.path.abspath(__file__))  # modulePath
 

@@ -667,7 +667,7 @@ simParams['Brian'].add_many(('dt', 0.1, 0, None))  # 'ms'
 
 ### Move somewhere else e.g. base.py
 class PyRhOobject(object):
-    """Common base class for all PyRhO objects"""
+    """Common base class for all PyRhO objects."""
 
     __metaclass__ = abc.ABCMeta
     # https://docs.python.org/3/reference/datamodel.html#special-method-names
@@ -691,7 +691,7 @@ class PyRhOobject(object):
         return
 
     def setParams(self, params):
-        """Set all model parameters from a Parameters() object"""
+        """Set all model parameters from a Parameters() object."""
         #for param, value in params.items():
         #for p in params.keys():
         #    self.__dict__[p] = params[p].value #vars(self())[p]
@@ -703,7 +703,7 @@ class PyRhOobject(object):
         #    setattr(self, name, value)
 
     def updateParams(self, params):
-        """Update model parameters which already exist"""
+        """Update model parameters which already exist."""
         pDict = params.valuesdict()
         count = 0
         for name, value in pDict.items():
@@ -717,12 +717,12 @@ class PyRhOobject(object):
         return count
 
     def getParams(self, params):
-        """Export parameters to lmfit dictionary"""
+        """Export parameters to lmfit dictionary."""
         for p in self.__dict__.keys():
             params[p].value = self.__dict__[p]
 
     def exportParams(self, params):
-        """Export parameters which are already in lmfit dictionary"""
+        """Export parameters which are already in lmfit dictionary."""
         count = 0
         for p, v in self.__dict__.items():
             if p in params:
@@ -735,9 +735,10 @@ class PyRhOobject(object):
             print(p, ' = ', self.__dict__[p])
 
     def logParams(self):
-        logger.info(self.__class__.__name__, ' Parameters')
+        """Log parameters."""
+        logger.info('Parameters for ' + self.__class__.__name__)
         for p in self.__dict__.keys():
-            logger.info(p, ' = ', self.__dict__[p])
+            logger.info(' '.join([p, ' = ', str(self.__dict__[p])]))
 
     def printParamsWithLabels(self):
         for p in self.__dict__.keys():
