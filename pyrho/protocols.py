@@ -517,13 +517,14 @@ class protSinusoid(Protocol):
                     try:
                         intIp = spline(self.fs, Ipeaks, k=splineOrder)
                         #nPoints = 10*int(round(abs(np.log10(self.fs[-1])-np.log10(self.fs[0]))+1))
-                        fsmooth = np.logspace(np.log10(self.fs[0]), np.log10(self.fs[-1]), num=1001)
+                        fsmooth = np.logspace(np.log10(self.fs[0]),
+                                              np.log10(self.fs[-1]), num=1001)
                         self.axIp.plot(fsmooth, intIp(fsmooth))
                     except:
                         if config.verbose > 0:
                             print('Unable to plot spline for current peaks!')
                     fstar_p = self.fs[np.argmax(Ipeaks)]
-                    fstars[phiInd,vInd] = fstar_p
+                    fstars[phiInd, vInd] = fstar_p
                     Ap = max(Ipeaks)
                     #fpLabel = r'$f^*_{{peak}}={}$ $\mathrm{{[Hz]}}$'.format(round_sig(fstar_p,3))
                     self.axIp.plot(fstar_p, Ap, '*', markersize=10)
@@ -1353,11 +1354,12 @@ class protRecovery(Protocol):
         plt.ylim(ymin, pos*self.nRuns)
         xmin, xmax = plt.xlim()
         plt.xlim(xmin, xmax)
-        arrow = {'arrowstyle': '<->', 'color': col, 'shrinkA': 0, 'shrinkB': 0}
         for run in range(self.nRuns):
             for phiInd in range(self.nPhis):
                 for vInd in range(self.nVs):
                     col, style = self.getLineProps(run, vInd, phiInd)
+                    arrow = {'arrowstyle': '<->', 'color': col,
+                             'shrinkA': 0, 'shrinkB': 0}
                     pulses = self.PD.trials[run][phiInd][vInd].pulses
                     plt.annotate('', (pulses[0, 1], (run+1)*pos),
                                  (pulses[1, 0], (run+1)*pos), arrowprops=arrow)
