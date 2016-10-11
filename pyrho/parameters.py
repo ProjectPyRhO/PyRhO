@@ -654,7 +654,7 @@ simParams['NEURON'].add_many(('cell',   ['minimal.hoc'], None, None), #'morpholo
                              ('expProb',1.0,       0.,     1.),
                              ('v_init', -65,       None,   None), # 'mV'
                              ('CVode',  False,     False,  True),
-                             ('dt',     0.1,       0,   None)) # 'ms' #, 0.025
+                             ('dt',     0.1,       0,      None)) # 'ms' #, 0.025
 
 simParams['Brian'].add_many(('dt', 0.1, 0, None))  # 'ms'
 

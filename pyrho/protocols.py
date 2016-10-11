@@ -35,7 +35,7 @@ __all__ = ['protocols', 'selectProtocol', 'characterise']
 logger = logging.getLogger(__name__)
 
 class Protocol(PyRhOobject):  # , metaclass=ABCMeta
-    """Common base class for all protocols"""
+    """Common base class for all protocols."""
 
     __metaclass__ = abc.ABCMeta
 
@@ -235,8 +235,8 @@ class Protocol(PyRhOobject):  # , metaclass=ABCMeta
                         pc = self.PD.trials[run][phiInd][vInd]
                         fileName = '{}States{}s-{}-{}-{}'.format(self.protocol, pc.nStates, run, phiInd, vInd)
                         #RhO.plotStates(pc.t, pc.states, pc.pulses, RhO.stateLabels, phi, pc._idx_peaks_, fileName)
-                        pc.plotStates(name=fileName)
                         logger.info('Plotting states to: {}'.format(fileName))
+                        pc.plotStates(name=fileName)
 
         plt.figure(self.Ifig.number)
         plt.sca(self.axI)
@@ -245,11 +245,12 @@ class Protocol(PyRhOobject):  # , metaclass=ABCMeta
             # figTitle = self.genTitle()
             # plt.title(figTitle) #'Photocurrent through time'
 
-        #plt.show()
+        #self.Ifig.tight_layout()
         plt.tight_layout()
         plt.show()
 
         figName = os.path.join(config.fDir, self.protocol+self.dataTag+"."+config.saveFigFormat)
+        logger.info("Saving figure for {} protocol to {} as {}".format(self.protocol, figName, config.saveFigFormat))
         #externalLegend = False
         #if externalLegend:
         #    self.Ifig.savefig(figName, bbox_extra_artists=(lgd,), bbox_inches='tight', format=config.saveFigFormat) # Use this to save figures when legend is beside the plot
@@ -347,11 +348,11 @@ class Protocol(PyRhOobject):  # , metaclass=ABCMeta
 
 
 class protCustom(Protocol):
-    """Present a time-varying stimulus defined by a spline function. """
+    """Present a time-varying stimulus defined by a spline function."""
     # Class attributes
     protocol = 'custom'
     squarePulse = False
-    #custPulseGenerator = None
+    # custPulseGenerator = None
     phi_ft = None
 
     def extraPrep(self):
@@ -373,7 +374,8 @@ class protCustom(Protocol):
         self.addStimulus = config.addStimulus
 
         if self.addStimulus:
-            phi_ts = self.genPlottingStimuli(self.phi_ft)  # self.genPlottingStimuli(self.custPulseGenerator)
+            # self.genPlottingStimuli(self.custPulseGenerator)
+            phi_ts = self.genPlottingStimuli(self.phi_ft)
             gsStim = plt.GridSpec(4, 1)
             self.axS = Ifig.add_subplot(gsStim[0, :])  # Stimulus axes
             self.axI = Ifig.add_subplot(gsStim[1:, :], sharex=self.axS)  # Photocurrent axes
@@ -383,7 +385,9 @@ class protCustom(Protocol):
                 for phiInd in range(self.nPhis):
                     pc = self.PD.trials[run][phiInd][vInd]
                     col, style = self.getLineProps(run, vInd, phiInd)
-                    self.plotStimulus(phi_ts[run][phiInd], pc.t_start, self.pulses, pc.t_end, self.axS, light=None, col=col, style=style) #light='spectral'
+                    self.plotStimulus(phi_ts[run][phiInd], pc.t_start,
+                                      self.pulses, pc.t_end, self.axS,
+                                      light=None, col=col, style=style) #light='spectral'
             plt.setp(self.axS.get_xticklabels(), visible=False)
             self.axS.set_xlabel('')
         else:
@@ -394,13 +398,15 @@ class protCustom(Protocol):
 
 
 class protStep(Protocol):
-    """Present a step (Heaviside) Pulse."""
+    """Present a step (Heaviside) pulse."""
     protocol = 'step'
     squarePulse = True
     nRuns = 1
 
     def extraPrep(self):
-        """Function to set-up additional variables and make parameters consistent after any changes"""
+        """Function to set-up additional variables and make parameters
+        consistent after any changes.
+        """
         self.nRuns = 1
         self.phi_ts = self.genPulseSet()
 
