@@ -92,10 +92,15 @@ class Simulator(PyRhOobject):  # object
         if verbose > 0:
             #print("\n================================================================================")
             print("\n"+_DOUB_DASH_LINE)
-            print("Running '{}' protocol with {} for the {} model... ".format(Prot, self, RhO))
+            prot_info = "Running '{}' protocol with {} " \
+                        "for the {} model... ".format(Prot, self, RhO)
+            print(prot_info)
+            logger.info(prot_info)
             #print("================================================================================\n")
             print(_DOUB_DASH_LINE+"\n")
-            print("{{nRuns={}, nPhis={}, nVs={}}}".format(Prot.nRuns, Prot.nPhis, Prot.nVs))
+            prot_details = "{{nRuns={}, nPhis={}, nVs={}}}".format(Prot.nRuns, Prot.nPhis, Prot.nVs)
+            print(prot_details)
+            logger.info(prot_details)
 
         Prot.PD = ProtocolData(Prot.protocol, Prot.nRuns, Prot.phis, Prot.Vs)
         Prot.PD.I_peak_ = [[[None for v in range(Prot.nVs)] for p in range(Prot.nPhis)] for r in range(Prot.nRuns)]
@@ -144,7 +149,9 @@ class Simulator(PyRhOobject):  # object
                     self.saveExtras(run, phiInd, vInd)
 
                     if verbose > 1:
-                        print('Run=#{}/{}; phiInd=#{}/{}; vInd=#{}/{}; Irange=[{:.3g},{:.3g}]'.format(run, Prot.nRuns, phiInd, Prot.nPhis, vInd, Prot.nVs, PC.I_range_[0], PC.I_range_[1]))
+                        prot_details = 'Run=#{}/{}; phiInd=#{}/{}; vInd=#{}/{}; Irange=[{:.3g},{:.3g}]'.format(run, Prot.nRuns, phiInd, Prot.nPhis, vInd, Prot.nVs, PC.I_range_[0], PC.I_range_[1])
+                        print(prot_details)
+                        logger.debug(prot_details)
 
         Prot.finish(PC, RhO)
         # self.finish() # Reset dt and Vclamp
@@ -164,10 +171,12 @@ class Simulator(PyRhOobject):  # object
 
         self.runTime = wallTime() - t0
         if verbose > 0:
-            print("\nFinished '{}' protocol with {} for the {} model in "
-                  "{:.3g}s".format(Prot, self, RhO, self.runTime))
+            prot_info = "\nFinished '{}' protocol with {} for the {} model in"\
+                        " {:.3g}s".format(Prot, self, RhO, self.runTime)
+            print(prot_info)
             #print("--------------------------------------------------------------------------------\n")
             print(_DASH_LINE+"\n")
+            logger.info(prot_info)
 
         return Prot.PD
 
@@ -195,17 +204,20 @@ class simPython(Simulator):
     def runSoln(self, RhO, t):
 
         if RhO.useAnalyticSoln:  # Leave the ability to manually override
+            logger.debug('Calculating solution analytically.')
             try:
                 soln = RhO.calcSoln(t, RhO.states[-1, :])
             except:  # Any exception e.g. NotImplementedError or ValueError
+                logger.debug('Falling back to numerical integration.')
                 soln = odeint(RhO.solveStates, RhO.states[-1, :], t,
                               args=(None,), Dfun=RhO.jacobian)
         else:
+            logger.debug('Calculating solution numerically.')
             soln = odeint(RhO.solveStates, RhO.states[-1, :], t,
                           args=(None,), Dfun=RhO.jacobian)
 
         if np.isnan(np.sum(soln)):  # np.any(np.isnan(soln)):
-            warnings.warn('The state solution is undefined')
+            warnings.warn('The state solution is undefined!')
 
         return soln
 
