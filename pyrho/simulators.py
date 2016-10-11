@@ -24,12 +24,13 @@ from pyrho.utilities import *  # cycles2times, plotLight
 from pyrho.expdata import *
 from pyrho.models import *
 from pyrho.config import *  # verbose
-from pyrho.config import wallTime
+from pyrho.config import wallTime, _DASH_LINE, _DOUB_DASH_LINE
 from pyrho import config
 
 __all__ = ['simulators']
 
 logger = logging.getLogger(__name__)
+
 
 class Simulator(PyRhOobject):  # object
     """Common base class for all simulators."""
@@ -68,7 +69,7 @@ class Simulator(PyRhOobject):  # object
         return self.dt
 
     def prepare(self, Prot):
-        """Function to prepare the simulator according to the protocol and rhodopsin."""
+        """Prepare the simulator according to the protocol and opsin."""
         Prot.prepare()
         dt = Prot.getShortestPeriod()
         Prot.dt = self.checkDt(dt)
@@ -89,9 +90,11 @@ class Simulator(PyRhOobject):  # object
         self.prepare(Prot)
 
         if verbose > 0:
-            print("\n================================================================================")
+            #print("\n================================================================================")
+            print("\n"+_DOUB_DASH_LINE)
             print("Running '{}' protocol with {} for the {} model... ".format(Prot, self, RhO))
-            print("================================================================================\n")
+            #print("================================================================================\n")
+            print(_DOUB_DASH_LINE+"\n")
             print("{{nRuns={}, nPhis={}, nVs={}}}".format(Prot.nRuns, Prot.nPhis, Prot.nVs))
 
         Prot.PD = ProtocolData(Prot.protocol, Prot.nRuns, Prot.phis, Prot.Vs)
@@ -102,7 +105,7 @@ class Simulator(PyRhOobject):  # object
 
         if verbose > 1:
             Prot.printParams()
-        Prot.logParams()
+            Prot.logParams()
 
         for run in range(Prot.nRuns):
 
@@ -127,7 +130,7 @@ class Simulator(PyRhOobject):  # object
                         phi_ts = Prot.phi_ts[run][phiInd][:]
                         I_RhO, t, soln = self.runTrialPhi_t(RhO, phi_ts, V, Dt_delay, cycles, self.dt, verbose)
 
-                    stim = Prot.getStimArray(run, phiInd, self.dt)  # phi_ts, Dt_delay, cycles,
+                    stim = Prot.getStimArray(run, phiInd, self.dt)
                     PC = PhotoCurrent(I_RhO, t, pulses, phiOn, V, stimuli=stim,
                                       states=soln, stateLabels=RhO.stateLabels,
                                       label=Prot.protocol)
@@ -153,14 +156,18 @@ class Simulator(PyRhOobject):  # object
         # Reset any variables overridden by the protocol
         if hasattr(self, 'dt_prev') and self.dt_prev is not None:
             self.dt, self.dt_prev = self.dt_prev, None
+
+        # TODO: Move Vclamp reset to NEURON simulator in self.finish()
         if hasattr(self, 'Vclamp_prev') and self.Vclamp_prev is not None:
             self.Vclamp, self.Vclamp_prev = self.Vclamp_prev, None
             self.h.Vcl.rs = 1e9  # TODO; Find a way to fully remove SEClamp
 
         self.runTime = wallTime() - t0
         if verbose > 0:
-            print("\nFinished '{}' protocol with {} for the {} model in {:.3g}s".format(Prot, self, RhO, self.runTime))
-            print("--------------------------------------------------------------------------------\n")
+            print("\nFinished '{}' protocol with {} for the {} model in "
+                  "{:.3g}s".format(Prot, self, RhO, self.runTime))
+            #print("--------------------------------------------------------------------------------\n")
+            print(_DASH_LINE+"\n")
 
         return Prot.PD
 
@@ -657,7 +664,8 @@ class simNEURON(Simulator):
                 Dt_on, Dt_off = cycles[p]
                 #prevOffD = Dt_off
                 for pCheck in range(p+1, nPulses):
-                    if (cycles[pCheck, 0] == Dt_on) and (cycles[pCheck, 1] == Dt_off):
+                    #if (cycles[pCheck, 0] == Dt_on) and (cycles[pCheck, 1] == Dt_off):
+                    if np.isclose(cycles[pCheck, 0], Dt_on) and np.isclose(cycles[pCheck, 1], Dt_off):
                         identPulses += 1
                         p += 1
                     else:
@@ -694,7 +702,7 @@ class simNEURON(Simulator):
         for sInd, s in enumerate(RhO.stateVars):
             self.h('objref tmpVec')
             self.h('tmpVec = {}Vec'.format(s))
-            soln[:,sInd] = np.array(self.h.tmpVec.to_python(), copy=True)
+            soln[:, sInd] = np.array(self.h.tmpVec.to_python(), copy=True)
             self.h('{}Vec.clear()'.format(s))
             self.h('{}Vec.resize(0)'.format(s))
 
@@ -760,7 +768,6 @@ class simNEURON(Simulator):
         # For the local variable timestep method, CVode.use_local_dt() and/or multiple threads, ParallelContext.nthread() , it is often helpful to provide specific information about which cell the var pointer is associated with by inserting as the first arg some POINT_PROCESS object which is located on the cell. This is necessary if the pointer is not a RANGE variable and is much more efficient if it is. The fixed step and global variable time step method do not need or use this information for the local step method but will use it for multiple threads. It is therefore a good idea to supply it if possible.
 
         # vec.x[i] to access values
-
 
         if self.Vclamp is True:
             self.setVclamp(V)
@@ -943,6 +950,7 @@ class simNEURON(Simulator):
         #figName = '{}Vm{}s-{}-{}-{}'.format(Prot.protocol, RhO.nStates, run, phiInd, vInd)
         figName = '{}Vm{}s'.format(Prot.protocol, RhO.nStates)
         fileName = os.path.join(config.fDir, figName+"."+config.saveFigFormat)
+        logger.info('Saving Membrane potential figure to: {}'.format(fileName))
         Vfig.savefig(fileName, format=config.saveFigFormat)
         self.axV = axV
 
@@ -1346,6 +1354,7 @@ class simBrian(Simulator):
         if figName is None:
             figName = '{}Vm{}s'.format(Prot.protocol, RhO.nStates)
         fileName = os.path.join(config.fDir, figName+'.'+config.saveFigFormat)
+        logger.info('Saving Membrane potential figure to: {}'.format(fileName))
         Vfig.savefig(fileName, format=config.saveFigFormat)
 
     def plotRasters(self, spikeSets, times=None, Dt_total=None, offset=0, figName=None):
@@ -1383,6 +1392,7 @@ class simBrian(Simulator):
         if figName is None:
             figName = '{}Spikes{}s'.format(self.Prot.protocol, self.RhO.nStates)
         fileName = os.path.join(config.fDir, figName+'.'+config.saveFigFormat)
+        logger.info('Saving Raster plot figure to: {}'.format(fileName))
         Rfig.savefig(fileName, format=config.saveFigFormat)
 
 
