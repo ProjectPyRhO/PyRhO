@@ -10,6 +10,7 @@ import os.path
 import os
 import ast
 import copy
+import logging
 
 import numpy as np
 import ipywidgets as widgets
@@ -41,6 +42,7 @@ from pyrho.config import verbose
 
 __all__ = ['loadGUI']
 
+logger = logging.getLogger(__name__)
 #%precision %.6g
 #import numpy as np
 #np.set_printoptions(precision=6)
