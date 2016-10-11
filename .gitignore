@@ -17,8 +17,12 @@ Thumbs.db
 .DS_Store
 
 
+# PyRhO generated files
 # Logs
 *.log
+# Directories
+data/
+figs/
 
 # C extensions
 *.so
