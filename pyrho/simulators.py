@@ -65,7 +65,9 @@ class Simulator(PyRhOobject):  # object
         if dt < self.dt:
             self.dt_prev, self.dt = self.dt, dt  # min(self.h.dt, dt)
             if config.verbose > 0:
-                print('Time step reduced to {}ms by protocol!'.format(self.dt))
+                info = 'Time step reduced to {}ms by protocol!'.format(self.dt)
+                print(info)
+                logger.info(info)
         return self.dt
 
     def prepare(self, Prot):
