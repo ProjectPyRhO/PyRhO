@@ -1007,7 +1007,7 @@ class PhotoCurrent(object):
         # plt.show()
         return  # ax
 
-    def plotStates(self, plotPies=True, pulse=None, name=None, with_pc=False):
+    def plotStates(self, plotPies=True, pulse=None, name=None, with_pc=False, features=True):
         """Plot the model state variables (if present).
         """
         #phi = self.phi # Use the value at t_off if the stimulus if a function of time
@@ -1028,16 +1028,22 @@ class PhotoCurrent(object):
             else:
                 piePulses = [pulse]
 
+        nPulses = self.nPulses
+        nPiePulses = len(piePulses)
+
+        #plotPeaks = bool(addFeatures and peakInds is not None)  # Plot independently of pies
+        plotPeaks = bool(peakInds is not None)  # Plot independently of pies
+
         if plotPies:
-            plotInit = bool(len(piePulses) > 1)
-            plotPeaks = bool(peakInds is not None)
+            plotInit = bool(nPiePulses > 1)
             plotSS = True
             plotSSinf = hasattr(self, 'ssInf')  # not plotInit #
             count = sum([plotInit, plotPeaks, plotSS, plotSSinf])
         else:
             count = 1
-            piePulses = []
-        nPulses = len(piePulses)
+            # piePulses = []
+
+
 
 
         # TODO: See below
@@ -1048,8 +1054,8 @@ class PhotoCurrent(object):
         #fig = plt.gcf()
 
         figWidth, figHeight = mpl.rcParams['figure.figsize']
-        fig = plt.figure(figsize=(figWidth, (1+nPulses/2)*figHeight))  # 1.5*
-        gs = plt.GridSpec(2+nPulses, count)
+        fig = plt.figure(figsize=(figWidth, (1+nPiePulses/2)*figHeight))  # 1.5*
+        gs = plt.GridSpec(2+nPiePulses, count)
 
         # TODO: Finish this - plot either the photocurrent or states as lines
         axLine = fig.add_subplot(gs[0, :])
@@ -1074,7 +1080,7 @@ class PhotoCurrent(object):
             axLine.spines['left'].set_smart_bounds(True)
             axLine.spines['bottom'].set_smart_bounds(True)
         else:
-            self.plot(ax=axLine, light=None, addFeatures=True)
+            self.plot(ax=axLine, light=None, addFeatures=features)
             setCrossAxes(axLine, zeroX=True, zeroY=False)
 
         plotLight(pulses, axLine)
@@ -1098,8 +1104,8 @@ class PhotoCurrent(object):
 
         if plotPeaks:
             # TODO: Generalise this - see if plotPies below
-            for p in piePulses:
-                pInd = peakInds[p] # Plot the first peak
+            for p in range(nPulses):  # piePulses:
+                pInd = peakInds[p]  # Plot the first peak
                 axLine.axvline(x=t[pInd], linestyle=':', color='k')
                 axStack.axvline(x=t[pInd], linestyle=':', color='k')
 
@@ -1135,7 +1141,7 @@ class PhotoCurrent(object):
                         axS0.annotate('$pulse={}$'.format(p), xycoords='axes fraction', xy=(0, 0), fontsize=mpl.rcParams['axes.labelsize'])
                     pieInd += 1
 
-                if plotPeaks:  # peakInds is not None: ### Plot peak state proportions
+                if plotPeaks:  # Plot peak state proportions
                     pInd = peakInds[p]  # Plot the first peak
                     #axLine.axvline(x=t[pInd], linestyle=':', color='k')
                     #axStack.axvline(x=t[pInd], linestyle=':', color='k')
@@ -1144,7 +1150,7 @@ class PhotoCurrent(object):
                     #sizes = [s*100 for s in sizes]
                     #explode = (0,0,0.1,0.1,0,0)
                     if config.verbose > 1:
-                        pct = {l: s for l, s in zip(labels,sizes)}
+                        pct = {l: s for l, s in zip(labels, sizes)}
                         print('Peak state occupancies (%):',
                               sorted(pct.items(), key=lambda x: labels.index(x[0])))
                     patches, texts, autotexts = plt.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90, shadow=False, colors=cp)#, explode=explode)
@@ -1163,7 +1169,7 @@ class PhotoCurrent(object):
                                         xy=(0, 0), fontsize=mpl.rcParams['axes.labelsize'])
                     pieInd += 1
 
-                if plotSS:  # not plotInit: # Plot steady-state proportions
+                if plotSS:  # Plot steady-state proportions
                     axSS = fig.add_subplot(gs[p+2, pieInd])
                     offInd = self._idx_pulses_[p, 1]  # TODO: Revise
                     ss = states[offInd, :] * 100
@@ -1210,6 +1216,7 @@ class PhotoCurrent(object):
         if name is not None:
             from os import path
             figName = path.join(config.fDir, name+'.'+config.saveFigFormat)
+            logger.info('Saving states figure to: {}'.format(figName))
             plt.savefig(figName, format=config.saveFigFormat)
 
         return
