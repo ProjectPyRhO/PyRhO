@@ -944,8 +944,9 @@ class simNEURON(Simulator):
         axV.set_xlim((t[0], t[-1]))
         plt.xlabel('$\mathrm{Time\ [ms]}$', position=(config.xLabelPos, 0), ha='right')
 
-        setCrossAxes(axV, zeroX=False)  # Zeroing x-axis caused the plot to become too big!
+        #setCrossAxes(axV, zeroX=False)  # Zeroing x-axis caused the plot to become too big!
         # #axV.spines['bottom'].set_position('zero') # x-axis # Caused the plot to be too big!
+        setCrossAxes(axV, zeroX=False, zeroY=True)
         axV.get_xaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
         axV.get_yaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
         axV.grid(b=True, which='minor', axis='both', linewidth=.2)
@@ -1341,14 +1342,15 @@ class simBrian(Simulator):
         plotLight(times - offset, axV)
         axV.set_xlim((-offset, Dt_total - offset))
 
-        plt.ylabel(r'$\mathrm{Membrane\ Potential\ [mV]}$')  #axV.set_ylabel('Voltage [mV]')
+        plt.ylabel(r'$\mathrm{Membrane\ Potential\ [mV]}$')
         if Dt_total is None:
             Dt_total = Prot.Dt_total
 
         plt.xlabel(r'$\mathrm{Time\ [ms]}$', position=(config.xLabelPos, 0), ha='right')
 
-        setCrossAxes(axV, zeroX=False)  # Zeroing x-axis caused the plot to become too big!
+        #setCrossAxes(axV, zeroX=False)  # Zeroing x-axis caused the plot to become too big!
         # #axV.spines['bottom'].set_position('zero') # x-axis # Caused the plot to be too big!
+        setCrossAxes(axV, zeroX=False, zeroY=True)
         axV.get_xaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
         axV.get_yaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
         axV.grid(b=True, which='minor', axis='both', linewidth=.2)
@@ -1358,7 +1360,7 @@ class simBrian(Simulator):
             plt.legend(Prot.PD.legLabels)
 
         # axV.set_ylim(axV.get_ylim())
-        ymin, ymax = axV.get_ylim()
+        # ymin, ymax = axV.get_ylim()
 
         plt.tight_layout()
         plt.show()
