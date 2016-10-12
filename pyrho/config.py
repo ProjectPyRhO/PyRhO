@@ -370,7 +370,7 @@ if latexInstalled:
 xLabelPos = 0.98
 
 
-def setFigOutput(figDisplay='screen', width=None):
+def setFigOutput(figDisplay='screen', width=None, height=None):
 
     """
     Set figure plotting options.
@@ -383,7 +383,6 @@ def setFigOutput(figDisplay='screen', width=None):
         Figure width in inches. Default depends on figDisplay.
     """
 
-    golden_ratio = (1.0 + np.sqrt(5)) / 2.0
     global saveFigFormat
     global addTitles
     global addStimulus
@@ -396,8 +395,6 @@ def setFigOutput(figDisplay='screen', width=None):
         saveFigFormat = 'png'
         if width is None:
             width = 12
-        figWidth = width
-        figHeight = figWidth / golden_ratio
         tickSize = 14
         labelSize = 16
         legendSize = 12
@@ -409,13 +406,11 @@ def setFigOutput(figDisplay='screen', width=None):
         addStimulus = True
 
     elif figDisplay == 'nb' or figDisplay == 'notebook':
-        mpl.use('nbagg') # Switch backend - TODO: Move this to __init__ before import matplotlib.pyplot
+        mpl.use('nbagg')  # Switch backend - TODO: Move this to __init__ before import matplotlib.pyplot
         dpi = 80
         saveFigFormat = 'png'
         if width is None:
             width = 12
-        figWidth = width
-        figHeight = figWidth / golden_ratio
         tickSize = 14
         labelSize = 12
         legendSize = 8
@@ -432,12 +427,10 @@ def setFigOutput(figDisplay='screen', width=None):
         #http://www.ploscompbiol.org/static/figureSpecifications
         #http://www.frontiersin.org/about/AuthorGuidelines#_FigureandTableGuidelines
         dpi = 300 #1200 # Set DPI 300 - 600
-        saveFigFormat = 'png' #'eps'             # Supported formats: eps, pdf, pgf, png, ps, raw, rgba, svg, svgz.
+        saveFigFormat = 'eps'  # Supported formats: eps, pdf, pgf, png, ps, raw, rgba, svg, svgz.
         #figFormat = 'eps'
         if width is None:
             width = 18/2.54
-        figWidth = width
-        figHeight = figWidth / golden_ratio
         tickSize = 8
         labelSize = 10
         legendSize = 10
@@ -453,10 +446,15 @@ def setFigOutput(figDisplay='screen', width=None):
                                                 # https://github.com/matplotlib/matplotlib/issues/5945
 
     else:
-        warnings.warn('Warning: Unknown display type selected - using matplotlib defaults!')
+        warnings.warn('Warning: Unknown display type selected'
+                      ' - using matplotlib defaults!')
+
+    if height is None:
+        golden_ratio = (1.0 + np.sqrt(5)) / 2.0
+        height = width / golden_ratio
 
     # http://matplotlib.org/users/customizing.html
-    mpl.rcParams['figure.figsize'] = (figWidth, figHeight)  # pylab.rcParams
+    mpl.rcParams['figure.figsize'] = (width, height)  # pylab.rcParams
     mpl.rcParams['figure.dpi'] = dpi
     #mpl.rcParams['savefig.dpi'] = dpi           # http://nbviewer.ipython.org/gist/minrk/3301035
     mpl.rcParams['axes.labelsize'] = labelSize
