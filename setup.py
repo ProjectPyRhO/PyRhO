@@ -95,6 +95,7 @@ setup(
         'Topic :: Scientific/Engineering :: Bio-Informatics',
         'Topic :: Scientific/Engineering :: Artificial Life',
         'Topic :: Scientific/Engineering :: Human Machine Interfaces',
+        'Topic :: Scientific/Engineering :: Medical Science Apps.',
 
         # The license should match "license" above
         'License :: OSI Approved :: BSD License',
@@ -123,8 +124,8 @@ setup(
     # simple. Or you can use find_packages().
     packages=find_packages(exclude=['contrib', 'docs', 'tests*']),  # + ['NEURON'],
 
-    #package_dir = {'':'.'},
-    #package_dir = {'pyrho': 'pyrho'}, # Relative to this script
+    # package_dir = {'':'.'},
+    # package_dir = {'pyrho': 'pyrho'}, # Relative to this script
 
     # List run-time dependencies here.  These will be installed by pip when your
     # project is installed. For an analysis of "install_requires" vs pip's
