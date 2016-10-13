@@ -122,7 +122,7 @@ setup(
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
-    packages=find_packages(exclude=['contrib', 'docs', 'tests*']),  # + ['NEURON'],
+    packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
 
     # package_dir = {'':'.'},
     # package_dir = {'pyrho': 'pyrho'}, # Relative to this script
@@ -144,8 +144,10 @@ setup(
     #    'brian' : ['brian2'],
         'extras': ['seaborn>=0.7', 'cython>=0.23', 'pandas>=0.17'],
     # traitlets is a dependency of ipywidgets and can be removed if 4.1 entails traitlets>=4.1
-        'GUI' : ['jupyter>=1.0', 'notebook>=4.1', 'ipywidgets>=4.1,<5', 'seaborn>=0.7'],  # , 'traitlets>=4.1,<5'
-        'full': ['jupyter>=1.0', 'notebook>=4.1', 'ipywidgets>=4.1,<5', 'seaborn>=0.7', 'cython>=0.23', 'pandas>=0.17'],
+        'GUI' : ['jupyter>=1.0', 'notebook>=4.1', 'ipywidgets>=4.1,<5',
+                 'seaborn>=0.7'],  # , 'traitlets>=4.1,<5'
+        'full': ['jupyter>=1.0', 'notebook>=4.1', 'ipywidgets>=4.1,<5',
+                 'seaborn>=0.7', 'cython>=0.23', 'pandas>=0.17'],
     },
 
     include_package_data=True,
