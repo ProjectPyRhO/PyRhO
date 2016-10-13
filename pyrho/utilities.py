@@ -1,4 +1,4 @@
-"""General utility functions used throughout PyRhO"""
+"""General utility functions used throughout PyRhO."""
 
 from __future__ import print_function, division
 
@@ -14,12 +14,10 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 from pyrho import config
-#from pyrho.utilities import wallTime
 
 __all__ = ['Timer', 'saveData', 'loadData', 'getExt', 'getIndex', 'calcV1',
            'lam2rgb', 'irrad2flux', 'flux2irrad', 'times2cycles', 'cycles2times',
            'plotLight', 'plot_light_bar', 'setCrossAxes', 'round_sig']
-# 'printParams', 'compareParams', 'texIt', 'expDecay', 'biExpDecay', 'biExpSum', 'calcgbar'
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +82,7 @@ def compareParams(origParams, newParams):
     """
     ovd = origParams.valuesdict()
     nvd = newParams.valuesdict()
-    report  = '--------------------------------------------\n'
+    report = '--------------------------------------------\n'
     report += '          Original        New    Change     \n'
     report += '--------------------------------------------\n'
     for k, nv in nvd.items():
@@ -103,6 +101,7 @@ def compareParams(origParams, newParams):
     print(report)
 
 
+# TODO: Fix this
 # $$ is an escape; it is replaced with a single $.
 texTemplate = Template('$${content}$$')
 
@@ -123,7 +122,8 @@ def saveData(data, pkl, path=None):
     pkl : str
         Filename to save (without extension).
     path : str, optional
-        Optionally specify a path for where to save the file (default=``config.dDir``).
+        Optionally specify a path for where to save the file
+        (default=``config.dDir``).
 
     Returns
     -------
@@ -571,35 +571,52 @@ def plotLight(times, ax=None, light='shade', dark=None, lam=470, alpha=0.2):
         pass
     else:
         ax.set_axis_bgcolor(str(dark))
-        for p in range(nPulses):
-            ax.axvspan(times[p][0], times[p][1], facecolor='w')
+        #for p in range(nPulses):
+        #    ax.axvspan(times[p][0], times[p][1], facecolor='w')
+        for t_on, t_off in times:
+            ax.axvspan(t_on, t_off, facecolor='w')
 
     if light == 'shade':
-        for p in range(nPulses):
-            ax.axvspan(times[p][0], times[p][1], facecolor='y', alpha=alpha)
+        #for p in range(nPulses):
+        #    ax.axvspan(times[p][0], times[p][1], facecolor='y', alpha=alpha)
+        for t_on, t_off in times:
+            ax.axvspan(t_on, t_off, facecolor='y', alpha=alpha)
     elif light == 'borders':
-        for p in range(0, nPulses):
-            ax.axvline(x=times[p][0], linestyle='--', color='k')
-            ax.axvline(x=times[p][1], linestyle='--', color='k')
+        #for p in range(0, nPulses):
+        #    ax.axvline(x=times[p][0], linestyle='--', color='k')
+        #    ax.axvline(x=times[p][1], linestyle='--', color='k')
+        for t_on, t_off in times:
+            ax.axvline(x=t_on, linestyle='--', color='k')
+            ax.axvline(x=t_off, linestyle='--', color='k')
     elif light == 'greyscale':
         # Set background to grey and illumination to white
         ax.set_axis_bgcolor('0.6')  # '0.3'
-        for p in range(nPulses):
-            ax.axvspan(times[p][0], times[p][1], facecolor='w')
+        #for p in range(nPulses):
+        #    ax.axvspan(times[p][0], times[p][1], facecolor='w')
+        for t_on, t_off in times:
+            ax.axvspan(t_on, t_off, facecolor='w')
     elif light == 'hatch':
-        for p in range(nPulses):
-            ax.axvspan(times[p][0], times[p][1], hatch='/')  # '*'
+        #for p in range(nPulses):
+        #    ax.axvspan(times[p][0], times[p][1], hatch='/')  # '*'
+        for t_on, t_off in times:
+            ax.axvspan(t_on, t_off, hatch='/')
     elif light == 'spectral':
         # Plot the colour corresponding to the wavelength
         if 380 <= lam <= 750:
             rgb = lam2rgb(lam)
-            for p in range(0, nPulses):
-                ax.axvspan(times[p][0], times[p][1], facecolor=rgb, alpha=alpha)
+            #for p in range(0, nPulses):
+            #    ax.axvspan(times[p][0], times[p][1], facecolor=rgb, alpha=alpha)
+            for t_on, t_off in times:
+                ax.axvspan(t_on, t_off, facecolor=rgb, alpha=alpha)
         else:  # Light is not in the visible spectrum - plot borders instead
-            for p in range(0, nPulses):
-                ax.axvline(x=times[p][0], linestyle='--', color='k')
-                ax.axvline(x=times[p][1], linestyle='--', color='k')
-                ax.axvspan(times[p][0], times[p][1], hatch='/')  # '*'
+            #for p in range(0, nPulses):
+            #    ax.axvline(x=times[p][0], linestyle='--', color='k')
+            #    ax.axvline(x=times[p][1], linestyle='--', color='k')
+            #    ax.axvspan(times[p][0], times[p][1], hatch='/')  # '*'
+            for t_on, t_off in times:
+                ax.axvline(x=t_on, linestyle='--', color='k')
+                ax.axvline(x=t_off, linestyle='--', color='k')
+                ax.axvspan(t_on, t_off, hatch='/')
     elif light == 'None' or light is None:
         pass
     else:
@@ -611,7 +628,8 @@ def plot_light_bar(ax, times, y, colour):
     lightBarWidth = 2 * mpl.rcParams['lines.linewidth']
     for pulse in times:
         t_on, t_off = pulse
-        light_bar = ax.hlines(y=y, xmin=t_on, xmax=t_off, lw=lightBarWidth, color=colour)
+        light_bar = ax.hlines(y=y, xmin=t_on, xmax=t_off,
+                              lw=lightBarWidth, color=colour)
         ax.axvline(x=t_on, linestyle=':', c='k', label='_nolegend_')
         ax.axvline(x=t_off, linestyle=':', c=colour, label='_nolegend_')
     return
@@ -628,6 +646,7 @@ def setCrossAxes(ax, zeroX=True, zeroY=False):
     zeroY : bool
         Set the y-axis to run through x=0 (default=False).
     """
+
     ax.spines['right'].set_color('none')
     ax.spines['top'].set_color('none')
     if zeroY:
