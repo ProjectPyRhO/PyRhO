@@ -356,28 +356,28 @@ def lam2rgb(wav, gamma=0.8, output='norm'):
     #             Peak frequency response shifts to 498 nm.
 
     wav = float(wav)
-    if wav >= 380 and wav < 440:
+    if 380 <= wav < 440:
         attenuation = 0.3 + 0.7 * (wav - 380) / (440 - 380)
         R = ((-(wav - 440) / (440 - 380)) * attenuation) ** gamma
         G = 0.0
         B = (1.0 * attenuation) ** gamma
-    elif wav >= 440 and wav < 490:
+    elif 440 <= wav < 490:
         R = 0.0
         G = ((wav - 440) / (490 - 440)) ** gamma
         B = 1.0
-    elif wav >= 490 and wav < 510:
+    elif 490 <= wav < 510:
         R = 0.0
         G = 1.0
         B = (-(wav - 510) / (510 - 490)) ** gamma
-    elif wav >= 510 and wav < 580:
+    elif 510 <= wav < 580:
         R = ((wav - 510) / (580 - 510)) ** gamma
         G = 1.0
         B = 0.0
-    elif wav >= 580 and wav < 645:
+    elif 580 <= wav < 645:
         R = 1.0
         G = (-(wav - 645) / (645 - 580)) ** gamma
         B = 0.0
-    elif wav >= 645 and wav <= 750:
+    elif 645 <= wav <= 750:
         attenuation = 0.3 + 0.7 * (750 - wav) / (750 - 645)
         R = (1.0 * attenuation) ** gamma
         G = 0.0
@@ -474,16 +474,18 @@ def times2cycles(times, t_end):
     Parameters
     ----------
     times : list or array
-        List of pulse times aligned at t0 = 0
-        i.e. :math:`[[t_{on,0}, t_{off,0}], ..., [t_{on,N-1}, t_{off,N-1}]]`.
+        List of pulse times aligned at t0 = 0 i.e.:
+        :math:`[[t_{on,0}, t_{off,0}], ..., [t_{on,N-1}, t_{off,N-1}]]`.
     t_end : float
         Ending time of the protocol, :math:`t_{end}`
 
     Returns
     -------
     tuple
-        Array of cycles and delay duration
-        i.e. :math:`[[\Delta t_{on,0}, \Delta t_{off,0}], ..., [\Delta t_{on,N-1}, \Delta t_{off,N-1}]], \Delta t_{delay}`.
+        Array of cycles and delay duration i.e.:
+        :math:`([[\Delta t_{on,0}, \Delta t_{off,0}],
+                ...,
+                [\Delta t_{on,N-1}, \Delta t_{off,N-1}]], \Delta t_{delay})`.
     """
     # Total protocol time, :math:`\Delta t_{total}`
 
@@ -508,16 +510,18 @@ def cycles2times(cycles, Dt_delay):
     Parameters
     ----------
     cycles : list or array
-        Array of cycles and delay duration
-        i.e. :math:`[[\Delta t_{on,0}, \Delta t_{off,0}], ..., [\Delta t_{on,N-1}, \Delta t_{off,N-1}]], \Delta t_{delay}`.
+        Array of cycles and delay duration i.e.:
+        :math:`[[\Delta t_{on,0}, \Delta t_{off,0}],
+                ...,
+                [\Delta t_{on,N-1}, \Delta t_{off,N-1}]]`.
     Dt_delay : float
         Delay duration, :math:`\Delta t_{delay}`
 
     Returns
     -------
     tuple
-        List of pulse times and total protocol time aligned at t0 = 0
-        i.e. :math:`[[t_{on,0}, t_{off,0}], ..., [t_{on,N-1}, t_{off,N-1}]], \Delta t_{total}`.
+        List of pulse times and total protocol time aligned at t0 = 0 i.e.:
+        :math:`([[t_{on,0}, t_{off,0}], ..., [t_{on,N-1}, t_{off,N-1}]], \Delta t_{total})`.
     """
 
     # TODO: Generalise to Dt_delays c.f. recovery
