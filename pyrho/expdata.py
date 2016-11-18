@@ -666,12 +666,13 @@ class PhotoCurrent(object):
                 self.p0 = self.pulses[pulse, 1]
             else:
                 raise NotImplementedError
-            self.t -= self.p0           # Time array
-            self.pulses -= self.p0      # Pulse times
-            self.t_start = self.t[0]    # Beginning Time of Trial
-            self.t_end = self.t[-1]     # End Time of Trial
-            self.t_peak_ = self.t[self._idx_peak_]
-            self.t_peaks_ = self.t[self._idx_peaks_]
+            self.alignToTime(self.p0)
+            #self.t -= self.p0           # Time array
+            #self.pulses -= self.p0      # Pulse times
+            #self.t_start = self.t[0]    # Beginning Time of Trial
+            #self.t_end = self.t[-1]     # End Time of Trial
+            #self.t_peak_ = self.t[self._idx_peak_]
+            #self.t_peaks_ = self.t[self._idx_peaks_]
             self.pulseAligned = True
             self.alignPoint = alignPoint
 
@@ -687,10 +688,10 @@ class PhotoCurrent(object):
 
         #if self.pulseAligned: # and abs(self.pulses[0,0]) < 1e-12:
         #    self.p0 = self.t[0]
-        self.t -= self.p0           # Time array
-        self.pulses -= self.p0      # Pulse times
-        self.t_start = self.t[0]       # Beginning Time of Trial
-        self.t_end = self.t[-1]      # End Time of Trial
+        self.t -= self.p0               # Time array
+        self.pulses -= self.p0          # Pulse times
+        self.t_start = self.t[0]        # Beginning Time of Trial
+        self.t_end = self.t[-1]         # End Time of Trial
         self.t_peak_ = self.t[self._idx_peak_]
         self.t_peaks_ = self.t[self._idx_peaks_]
         self.pulseAligned = False
