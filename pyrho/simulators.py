@@ -1415,3 +1415,7 @@ class simBrian(Simulator):
 simulators = OrderedDict([('Python', simPython),
                           ('NEURON', simNEURON),
                           ('Brian', simBrian)])
+
+# TODO: Use this for loading components of the GUI
+# TODO: Check on initialising sim objects and raise an error if unavailable
+simAvailable = OrderedDict([(sim, simAvailable(sim)) for sim in simulators])
