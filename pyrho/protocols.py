@@ -16,7 +16,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl  # for tick locators
 from scipy.interpolate import InterpolatedUnivariateSpline as spline
-#from scipy.optimize import curve_fit
+# from scipy.optimize import curve_fit
 from lmfit import Parameters
 
 from pyrho.parameters import *
@@ -33,6 +33,7 @@ from pyrho import config
 __all__ = ['protocols', 'selectProtocol', 'characterise']
 
 logger = logging.getLogger(__name__)
+
 
 class Protocol(PyRhOobject):  # , metaclass=ABCMeta
     """Common base class for all protocols."""
@@ -98,10 +99,10 @@ class Protocol(PyRhOobject):  # , metaclass=ABCMeta
                 Dt_off = 0
             self.cycles = np.asarray([[Dt_on, Dt_off]])
         elif isinstance(self.cycles, (list, tuple, np.ndarray)):
-            if np.isscalar(self.cycles[0]):  # not isinstance(self.cycles[0], (list, tuple, np.ndarray):
+            if np.isscalar(self.cycles[0]):
                 self.cycles = [self.cycles]  # Assume only one pulse
         else:
-            raise TypeError('Unexpected type for cycles - please use a list or array!')
+            raise TypeError('Unexpected type for cycles - expected a list or array!')
 
         self.cycles = np.asarray(self.cycles)
         self.nPulses = self.cycles.shape[0]
@@ -127,7 +128,9 @@ class Protocol(PyRhOobject):  # , metaclass=ABCMeta
         pass
 
     def genContainer(self):
-        return [[[None for v in range(self.nVs)] for p in range(self.nPhis)] for r in range(self.nRuns)]
+        return [[[None for v in range(self.nVs)]
+                 for p in range(self.nPhis)]
+                for r in range(self.nRuns)]
 
     def getShortestPeriod(self):
         # min(self.Dt_delay, min(min(self.cycles)))
