@@ -73,7 +73,7 @@ setup(
     # The project's main homepage.
     url='https://github.com/ProjectPyRhO/PyRhO/',
     # download_url='https://github.com/ProjectPyRhO/PyRhO/archive/master.zip',
-    # download_url='https://github.com/ProjectPyRhO/PyRhO/tarball/0.9.4',
+    # download_url='https://github.com/ProjectPyRhO/PyRhO/tarball/' + version,
 
     # Author details
     author='Benjamin D. Evans',
@@ -118,7 +118,9 @@ setup(
         'Operating System :: OS Independent',
     ],
 
-    keywords='optogenetics rhodopsin opsin brain neuroscience neuron brian jupyter',
+    #keywords='optogenetics rhodopsin opsin brain neuroscience neuron brian jupyter',
+    keywords=['optogenetics', 'rhodopsin', 'opsin', 'brain', 'neuroscience',
+              'neuron', 'brian', 'jupyter'],
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
