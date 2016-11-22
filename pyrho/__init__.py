@@ -19,14 +19,6 @@ import numpy as np
 import scipy as sp
 import lmfit
 
-
-#IPY = False
-#try:
-#    import IPython
-#    IPY = True
-#except ImportError:
-#    IPY = False
-
 # Place all submodule functions and variables into namespace
 from pyrho import config
 from pyrho.config import *
@@ -38,9 +30,9 @@ from pyrho.models import *
 from pyrho.simulators import *
 from pyrho.protocols import *
 from pyrho.fitting import *
-from pyrho.jupytergui import *
+# from pyrho.jupytergui import *
 
-#TODO
+# TODO
 #__all__ = ['config', 'utilities', 'parameters', 'expdata',
 #           'models', 'protocols', 'simulators', 'fitting', 'jupytergui']
 
@@ -59,7 +51,31 @@ except pkg_resources.DistributionNotFound:
 else:
     __version__ = _dist.version
 
-IPY = check_package('IPython')
+# TODO: Refactor environment checks.
+# In notebooks, __IPYTHON__ and get_ipython() are defined.
+#IPY = False
+#try:
+#    import IPython
+#    IPY = True
+#except ImportError:
+#    IPY = False
+
+# IPY = check_package('IPython')
+try:
+    __IPYTHON__
+    IPY = True
+except NameError:
+    IPY = False
+# https://github.com/ipython/ipython/issues/9791
+#try:
+#    from IPython import get_ipython
+#    ip = get_ipython()
+#    IPY = True
+#except ImportError, NameError:
+#    IPY = False
+
+if IPY:
+    from pyrho.jupytergui import *
 
 if __name__ == '__main__':
     try:
