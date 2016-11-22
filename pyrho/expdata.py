@@ -95,9 +95,9 @@ class PhotoCurrent(object):
     Dt_total        # t[-1] - t[0]
     Dt_delay        # Delay duration before the first pulse
     Dt_delays       # Total delay before each pulse
-    Dt_ons        # On-phase durations
+    Dt_ons_        # On-phase durations
     Dt_IPIs        # Inter-pulse-intervals t_off <-> t_on
-    Dt_offs       # Off-phase durations
+    Dt_offs_       # Off-phase durations
     Dt_lag_        # Lag of first pulse      REMOVE
     Dt_lags_       # t_lag = Dt_act := t_peak - t_on
     nPulses     # Number of pulses
@@ -360,7 +360,7 @@ class PhotoCurrent(object):
             import pandas as pd
         df = pd.DataFrame({'t': self.t,
                            'I': self.I
-                          })
+                           })
         if self.synthetic:
             #for si, st in enumerate(self.stateLabels):
             #    df[st] = self.states[si, :]
