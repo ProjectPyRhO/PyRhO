@@ -710,9 +710,8 @@ class simNEURON(Simulator):
             RhO.pulseInd = np.vstack((RhO.pulseInd, pInds))
             RhO.ssInf.append(RhO.calcSteadyState(phiOn))
 
-
-        ### Get solution variables
-        soln = np.zeros((len(t), RhO.nStates))  # HACK!!!!!
+        # Get solution variables
+        soln = np.zeros((len(t), RhO.nStates))
         for sInd, s in enumerate(RhO.stateVars):
             self.h('objref tmpVec')
             self.h('tmpVec = {}Vec'.format(s))
@@ -721,7 +720,7 @@ class simNEURON(Simulator):
             self.h('{}Vec.resize(0)'.format(s))
 
         # Reset vectors
-        self.h.tvec.clear() # Necessary?
+        self.h.tvec.clear()  # Necessary?
         self.h.tvec.resize(0)
         self.h.Iphi.clear()
         self.h.Iphi.resize(0)
@@ -850,13 +849,13 @@ class simNEURON(Simulator):
         self.h.init()
         self.h.run()
 
-        ### Collect data
+        # Collect data
         I_RhO = np.array(self.h.Iphi.to_python(), copy=True)
         t = np.array(self.h.tvec.to_python(), copy=True)
         self.Vm = np.array(self.h.Vm.to_python(), copy=True)
         self.t = t
 
-        ### Get solution variables N.B. NEURON changes the sampling rate
+        # Get solution variables N.B. NEURON changes the sampling rate
         soln = np.zeros((len(t), RhO.nStates))
         for sInd, s in enumerate(RhO.stateVars):
             self.h('objref tmpVec')
@@ -887,7 +886,7 @@ class simNEURON(Simulator):
         return I_RhO, t, soln
 
     def saveExtras(self, run, phiInd, vInd):
-        # TODO: Clean up this HACK!!!
+        # TODO: Clean this up
         self.Vms[run][phiInd][vInd] = copy.copy(self.Vm)
         return
 
@@ -942,7 +941,6 @@ class simNEURON(Simulator):
         #        pass # This applies to shortPulse only at present - do not shade!
 
         plt.ylabel('$\mathrm{Membrane\ Potential\ [mV]}$')  # axV.set_ylabel('Voltage [mV]')
-        #axV.set_xlim((-Dt_delay, self.h.tstop - Dt_delay)) ### HACK
         axV.set_xlim((t[0], t[-1]))
         plt.xlabel('$\mathrm{Time\ [ms]}$', position=(config.xLabelPos, 0), ha='right')
 
@@ -970,13 +968,14 @@ class simNEURON(Simulator):
         self.axV = axV
 
 
-
 class simBrian(Simulator):
     """Class for network level simulations with Brian."""
 
     simulator = 'Brian'
 
-    def __init__(self, Prot, RhO, params=simParams['Brian'], network=None, netParams=None, monitors=None, G_RhO='Inputs', varIrho='I', varV='v'):
+    def __init__(self, Prot, RhO, params=simParams['Brian'],
+                 network=None, netParams=None, monitors=None,
+                 G_RhO='Inputs', varIrho='I', varV='v'):
 
         #from brian2 import *
         # from brian2.only import * # Do not import pylab etc
@@ -1002,12 +1001,8 @@ class simBrian(Simulator):
         # Refractory
         # self.refractory = params['refractory'].value #'(1 + 2*rand())*ms'
 
-
-        # Prepend S_ to state variables to avoid nameclash with MSVC under Windows
+        # Avoid state variables nameclash with MSVC under Windows
         self.stateVars = RhO.brianStateVars  # ['S_'+s for s in RhO.stateVars]
-
-        #if not Prot.squarePulse: ### HACK!!!
-        #    modelUnits['phi_m'] = 1
 
         self.namespace = self.setParams(RhO)
         self.namespace.update(netParams)
@@ -1052,48 +1047,6 @@ class simBrian(Simulator):
     def initialise(self):
         self.net.restore()
 
-    '''
-    def buildNetwork(self, network, namespace, G_RhO='G0', varIrho='I_RhO', varV='v'):
-
-        self.G_RhO = G_RhO
-        #G_RhO = br.NeuronGroup(N, eqs+RhO.eqs, threshold='V>V_th', reset='V=V_r', refractory=self.t_r*ms)
-
-        #self.syns = []
-        #S1 = br.Synapses(G_RhO, G1, pre='V_post += 1.75*mV')
-        #S1.connect(True, p=0.2)
-        #S1.delay = 0.5*ms
-        self.namespace = namespace
-        self.varIrho = varIrho
-        self.varV = varV
-
-        # photoNeurons = neuronModel + Equations(RhO.brian, I=varIrho, g=vargrho, V=varV)
-        self.net = network
-        self.setRecords(self.G_RhO, 0)
-
-
-    def setRecords(self, GroupRec=None, IndRec=None): #StateRec=('I'),
-        #if GroupRec == None:
-        #    pass
-            #Record all groups...
-        #else:
-        #    M = br.SpikeMonitor(GroupRec)
-        #    R = br.PopulationRateMonitor(GroupRec) # Redundant with SpikeMonitor?
-
-        #States = br.StateMonitor(GroupRec, StateRec, record=IndRec)
-        #States = StateMonitor(GroupRec, ('I', 'V'), record=True)
-        #States = StateMonitor(GroupRec, ('I', 'V'), record=[0, 10, 20])
-
-        ### http://brian2.readthedocs.org/en/latest/user/running.html
-        # If placing monitors in a list...
-        self.monitors = [self.br.StateMonitor(self.net[GroupRec], self.stateVars, record=IndRec),   # States
-                         self.br.StateMonitor(self.net[GroupRec], self.varIrho, record=IndRec),     # I
-                         self.br.StateMonitor(self.net[GroupRec], self.varV, record=IndRec),        # V
-                         self.br.SpikeMonitor(self.net[GroupRec])]                                  # Spikes
-        # Make this a dictionary... 'states', 'spikes', 'rates'
-        self.net = self.br.Network(collect())  # automatically include G and S
-        self.net.add(self.monitors)  # manually add the monitors
-    '''
-
     def runTrial(self, RhO, phiOn, V, Dt_delay, cycles, dt, verbose=config.verbose):
         """Main routine for simulating a square pulse train."""
 
@@ -1115,7 +1068,7 @@ class simBrian(Simulator):
         else:
             report = None
 
-        ### Delay phase (to allow the system to settle)
+        # Delay phase (to allow the system to settle)
         phi = 0
         RhO.initStates(phi)  # Reset state and time arrays from previous runs
 
@@ -1165,8 +1118,7 @@ class simBrian(Simulator):
 
             RhO.pulseInd = np.vstack((RhO.pulseInd, [onInd, offInd]))
 
-        ### Calculate photocurrent
-
+        # Calculate photocurrent
         '''
         There are two subtly different ways to get the values for specific neurons:
         you can either index the 2D array stored in the attribute with the variable name (as in the example above)
@@ -1187,7 +1139,6 @@ class simBrian(Simulator):
                           for s in self.stateVars])
         t = self.monitors['states'].t/ms
         RhO.storeStates(soln[1:], t[1:])
-
         states, t = RhO.getStates()
 
         if V is not None:  # and 'I' in self.monitors:
@@ -1197,12 +1148,7 @@ class simBrian(Simulator):
             I_RhO = self.monitors['I'].variables[self.varIrho].get_value() * 1e9  # / nA
             I_RhO = np.squeeze(I_RhO)  # Replace with record indexing?
         self.monitors['V'].record_single_timestep()
-
-        #times, Dt_total = cycles2times(cycles, Dt_delay)
-        #self.plotRasters(times, Dt_total)
-
         return I_RhO, t, states
-
 
     def runTrialPhi_t(self, RhO, phi_ts, V, Dt_delay, cycles, dt, verbose=config.verbose):
         """Main routine for simulating a pulse train."""
@@ -1246,7 +1192,6 @@ class simBrian(Simulator):
         phi_tV = np.zeros_like(t)
 
         for p in range(nPulses):
-
             start = end
             Dt_on, Dt_off = cycles[p, 0], cycles[p, 1]
             end = start + Dt_on + Dt_off
@@ -1265,7 +1210,6 @@ class simBrian(Simulator):
 
             RhO.ssInf.append(RhO.calcSteadyState(phi_t(end-Dt_off)))
 
-
         phi_tV[np.ma.where(phi_tV < 0)] = 0  # Safeguard for negative phi values # np.clip(phi_tV, 0, phiMax)?
         phi = self.br.TimedArray(phi_tV * modelUnits['phi_m'], dt=dt*ms, name='phi')  # 'phi_t'
         self.namespace.update({'phi': phi})
@@ -1279,7 +1223,6 @@ class simBrian(Simulator):
         soln = np.hstack([self.monitors['states'].variables[s].get_value()
                           for s in self.stateVars])
         t = self.monitors['states'].t/ms
-
         RhO.storeStates(soln[1:], t[1:])
         states, t = RhO.getStates()
 
@@ -1293,9 +1236,6 @@ class simBrian(Simulator):
 
         #for mon in self.monitors:
         #    mon.record_single_timestep()
-
-        #self.plotRasters(times, Dt_total)
-
         return I_RhO, t, states
 
     def saveExtras(self, run, phiInd, vInd):
@@ -1339,7 +1279,7 @@ class simBrian(Simulator):
         axV = Vfig.add_subplot(111)
         Vm = Vmonitor.variables[self.varV].get_value() * 1000  # Convert to mV # HACK #self.monitors['V']
         t = Vmonitor.t/ms - offset
-        #times -= offset # Do not edit in place or it causes errors in subsequent functions!
+        # times -= offset # Do not edit in place or it causes errors in subsequent functions!
         plt.plot(t, Vm, 'g')
         plotLight(times - offset, axV)
         axV.set_xlim((-offset, Dt_total - offset))
