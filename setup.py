@@ -135,7 +135,7 @@ setup(
     # https://packaging.python.org/en/latest/requirements.html
     # ipython is used for latex repr - remove from requirements and have a fallback repr?
     install_requires=['numpy>=1.8', 'scipy>=0.15', 'matplotlib>=1.3',
-                      'lmfit>=0.9.3', 'ipython>=4.1', 'brian2>=2.0'],  # 'sphinx>=1.3',
+                      'lmfit>=0.9.3', 'brian2>=2.0'],  # 'ipython>=4.1'
 
     # List additional groups of dependencies here (e.g. development dependencies).
     # You can install these using the following syntax, for example:
@@ -144,12 +144,13 @@ setup(
     #    'dev': ['check-manifest'],
     #    'test': ['coverage'],
     #    'brian' : ['brian2'],
-        'extras': ['seaborn>=0.7', 'cython>=0.23', 'pandas>=0.17'],
+    #    'docs' : ['sphinx>=1.3'],
+        'extras': ['seaborn>=0.7', 'pandas>=0.17'],  # 'cython>=0.23'
     # traitlets is a dependency of ipywidgets and can be removed if 4.1 entails traitlets>=4.1
         'GUI' : ['jupyter>=1.0', 'notebook>=4.1', 'ipywidgets>=4.1,<5',
                  'seaborn>=0.7'],  # , 'traitlets>=4.1,<5'
         'full': ['jupyter>=1.0', 'notebook>=4.1', 'ipywidgets>=4.1,<5',
-                 'seaborn>=0.7', 'cython>=0.23', 'pandas>=0.17'],
+                 'seaborn>=0.7', 'pandas>=0.17'],  # 'cython>=0.23'
     },
 
     include_package_data=True,
