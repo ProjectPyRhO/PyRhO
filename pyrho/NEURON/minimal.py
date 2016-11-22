@@ -2,7 +2,7 @@
 from neuron import h
 
 cell = h.SectionList()
-soma = h.Section(name='soma') #create soma
+soma = h.Section(name='soma')  # create soma
 soma.push()
 #h.topology()
 
@@ -16,7 +16,7 @@ for sec in h.allsec():
     sec.Ra = 100
     sec.cm = 1
     sec.insert('pas')
-    #sec.insert('hh') #    insert hh
+    # sec.insert('hh') #    insert hh
     cell.append(sec)
 
 #h('objref rho')
@@ -30,11 +30,7 @@ for sec in h.allsec():
 #h.rho.num = Prot.nPulses
 #h.rho.gbar = RhO.g/20000
 
-# Pick a rhodopsin to record from
+# Pick an opsin to record from
 #rhoRec = h.ChR_apic.o(7)
 
 h.pop_section()
-
-
-
-#return cell
