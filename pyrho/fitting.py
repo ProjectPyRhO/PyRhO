@@ -887,21 +887,21 @@ def fit6states(fluxSet, quickSet, run, vInd, params, method=defMethod):  # , ver
         #tpeaks = np.asarray([PD.trials[p][0][0].tpeak for p in range(PD.nRuns)]) # - PD.trials[p][0][0].t[0]
         #tpulses = np.asarray([PD.trials[p][0][0].Dt_ons[0] for p in range(PD.nRuns)])
         tpeaks = np.asarray([pc.t_peak_ for pc in PCs])
-        tpulses = np.asarray([pc.Dt_ons[0] for pc in PCs])
+        tpulses = np.asarray([pc.Dt_ons_[0] for pc in PCs])
 
         devFunc = lambda tpulses, t0, k: tpulses + t0 * np.exp(-k*tpulses)
-        p0 = (0,1)
+        p0 = (0, 1)
         popt, pcov = curve_fit(devFunc, tpulses, tpeaks, p0=p0)
         if plotResult:
             fig = plt.figure()
             ax = fig.add_subplot(111, aspect='equal')
-            nPoints = 10*int(round(max(tpulses))+1) # 101
+            nPoints = 10*int(round(max(tpulses))+1)  # 101
             tsmooth = np.linspace(0, max(tpulses), nPoints)
             ax.plot(tpulses, tpeaks, 'x')
             ax.plot(tsmooth, devFunc(tsmooth, *popt))
-            ax.plot(tsmooth, tsmooth,'--')
-            ax.set_ylim([0, max(tpulses)]) #+5
-            ax.set_xlim([0, max(tpulses)]) #+5
+            ax.plot(tsmooth, tsmooth, '--')
+            ax.set_ylim([0, max(tpulses)])  #+5
+            ax.set_xlim([0, max(tpulses)])  #+5
             #plt.tight_layout()
             #plt.axis('equal')
             plt.show()
@@ -1954,23 +1954,24 @@ def fitModel(dataSet, nStates=3, params=None, postFitOpt=True, relaxFact=2, meth
     params['Gr0'].vary = False
     print('Gr0 = {} ms**-1'.format(params['Gr0'].value))
 
-
+    # Process data for six-state model fitting
     if 'shortPulse' in dataSet:
-        quickSet = dataSet['shortPulse'] # Override delta
+        quickSet = dataSet['shortPulse']  # Override delta
     elif 'delta' in dataSet:
         quickSet = dataSet['delta']
-    else: # Consider just fixing Go1 and Go2
+    else:  # Consider just fixing Go1 and Go2
         q = 0
-        Dt_on = dataSet[fluxKey].trials[q][0][0].Dt_ons[0]
+        Dt_on = dataSet[fluxKey].trials[q][0][0].Dt_ons_[0]
         qI = dataSet[fluxKey].trials[q][0][0]
         for run in range(1, setPC.nRuns): # Skip the first run
-            if setPC.trials[q][0][0].Dt_ons[0] < Dt_on:
+            if setPC.trials[q][0][0].Dt_ons_[0] < Dt_on:
                 q = run
                 qI = setPC.trials[q][0][0]
-        quickSet = ProtocolData(setPC.trials[q][0][0], nRuns=1, phis=[qI.phi], Vs=[qI.V])
+        quickSet = ProtocolData(setPC.trials[q][0][0], nRuns=1,
+                                phis=[qI.phi], Vs=[qI.V])
 
 
-    fitParams = params ###################################### Revise  ### Change units handling!!!
+    fitParams = params  ################### TODO:  ### Change units handling!!!
 
     for p in nonOptParams:
         params[p].vary = False
