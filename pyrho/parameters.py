@@ -446,6 +446,7 @@ class PyRhOparameter(object):
     def __str__(self):
         return self.__repr__()
 
+    # TODO: Revise latex representation to fallback gracefully if not IPY
     def _repr_latex_(self):
         if self.latex is not None:
             s = self.latex
@@ -468,8 +469,11 @@ class PyRhOparameter(object):
         return "$" + s + "$"  # texIt(s)
 
     def latex(self):
-        from IPython.display import Math
-        return Math(self._repr_latex_())
+        if IPY:
+            from IPython.display import Math
+            return Math(self._repr_latex_())
+        else:
+            return self._repr_latex_()
 # Params['g0'] = PyRhOparameter('g0', 2.5e4, psiemens, 'pS', 'g_0',
 # 'Biological scaling factor for rhodopsin conductance')
 
