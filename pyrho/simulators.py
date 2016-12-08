@@ -61,7 +61,7 @@ class Simulator(PyRhOobject):  # object
         return "<PyRhO {} Simulator object>".format(self.simulator)
 
     def checkDt(self, dt):
-        """Function to compare simulator's timestep to the timestep required by the protocol."""
+        """Compare simulator's timestep to the timestep required by the protocol."""
         if dt < self.dt:
             self.dt_prev, self.dt = self.dt, dt  # min(self.h.dt, dt)
             if config.verbose > 0:
@@ -84,6 +84,7 @@ class Simulator(PyRhOobject):  # object
 
     def run(self, verbose=config.verbose):
         """Main routine to run the simulation protocol."""
+        # TODO: Use joblib to cache results https://pythonhosted.org/joblib/
 
         t0 = wallTime()
         RhO = self.RhO

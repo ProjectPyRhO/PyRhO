@@ -354,6 +354,8 @@ def setupBrian():
 
 
 ##### Plot settings #####
+# TODO: Simplify style/colour cycling with axess.prop_cycle
+# http://matplotlib.org/users/whats_new.html#added-axes-prop-cycle-key-to-rcparams
 
 figDisplay = 'screen'  # 'paper'
 
