@@ -157,17 +157,17 @@ class PhotoCurrent(object):
         self.I = np.copy(I)                     # Array of photocurrent values np.copy(I) == np.array(I, copy=True) == np.array(I)
         self.nSamples = len(self.I)             # Number of samples
 
-        if len(t) == len(I):
+        if isinstance(t, (list, np.ndarray)) and len(t) == len(I):
             assert(len(t) > 1)
             self.t = np.copy(t)                 # Corresponding array of time points [ms] #np.array copies by default
             tdiff = self.t[1:] - self.t[:-1]
             self.dt = tdiff.sum()/len(tdiff)    # (Average) step size
             self.sr = 1000/(self.dt)            # Sampling rate [samples/s]
-        elif len(t) == 1:                       # Assume time step is passed rather than time array
+        elif not isinstance(t, (list, np.ndarray)) or len(t) == 1:                       # Assume time step is passed rather than time array
             assert(t > 0)
-            self.t = np.array(t*range(len(I)))
             self.dt = t                         # Step size
-            self.sr = 1000/t                    # Sampling rate [samples/s]
+            self.t = np.arange(self.nSamples) * self.dt
+            self.sr = 1000 / self.dt            # Sampling rate [samples/s]
         else:
             raise ValueError("Dimension mismatch: |t|={}; |I|={}. t must be either an array of the same length as I or a scalar defining the timestep!".format(len(t), len(I)))
 
