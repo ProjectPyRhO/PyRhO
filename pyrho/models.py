@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 # Model class definitions #
 
+
 class RhodopsinModel(PyRhOobject):
     """Common base class for all models."""
     # This an abstract base class since it is never directly instantiated
@@ -90,7 +91,7 @@ class RhodopsinModel(PyRhOobject):
         if s0 is None:
             s0 = self.s_0
         assert(len(s0) == self.nStates)
-        self.states = np.vstack((np.empty([0, self.nStates]), s0))  # np.empty([0, self.nStates])
+        self.states = np.vstack((np.empty([0, self.nStates]), s0))
         self.t = [0]
         self.pulseInd = np.empty([0, 2], dtype=int)  # Light on and off indexes for each pulse
         self.ssInf = []
@@ -121,6 +122,11 @@ class RhodopsinModel(PyRhOobject):
         #with np.errstate(divide='ignore', invalid='ignore'):
         #    fV = (self.v1/(V-self.E))*(1-np.exp(-(V-self.E)/self.v0))
         #    fV[~ np.isfinite(fV)] = self.v1/self.v0  # -inf inf NaN
+
+        #with np.errstate(divide='ignore', invalid='ignore'):
+        #    c = np.true_divide(a,b)
+        #    c[c == np.inf] = 0
+        #    c = np.nan_to_num(c)
 
         if self.v0 == 0:
             raise ZeroDivisionError("f(V) undefined for v0 = 0")
