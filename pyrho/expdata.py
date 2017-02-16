@@ -387,26 +387,16 @@ class PhotoCurrent(object):
             Specify which pulse to use (default=0) ``0 <= p < nPulses``.
         method : str
             Optimisation method (default=defMethod).
+
+        Returns
+        -------
+        dict
+            Dictionary of 'on', 'off1exp' and 'off2exp' Parameters objects.
         """
 
-        def calcOn(p, t):
-            """Fit a biexponential curve to the on-phase to find lambdas."""
-            v = p.valuesdict()
-            return v['a0'] + v['a_act']*(1-np.exp(-t/v['tau_act'])) + v['a_deact']*np.exp(-t/v['tau_deact'])
+        # TODO: Allow initial parameters to be passed
+        # TODO: Try fitting a tripple exponential for the on-phase
 
-        #def jacOn(p,t):
-        #    v = p.valuesdict()
-        #    return [(v['a1']/v['tau_act'])*np.exp(-t/v['tau_act']) - (v['a2']/v['tau_deact'])*np.exp(-t/v['tau_deact'])]
-
-        def residOn(p, I, t):
-            return I - calcOn(p, t)
-
-        def calcOff(p, t):
-            v = p.valuesdict()
-            return v['a0'] + v['a1']*np.exp(-v['Gd1']*t) + v['a2']*np.exp(-v['Gd2']*t)
-
-        def residOff(p, I, t):
-            return I - calcOff(p, t)
 
         plt.figure()
         self.plot()
@@ -417,29 +407,51 @@ class PhotoCurrent(object):
         #from pyrho.fitting import methods, defMethod
         from pyrho.fitting import reportFit
 
+        kinetics = {}
+
         ### On phase ###
 
         # t=0 :         I = a0 + a_deact = 0    ==> a0 = -a_deact
+        # N.B. The following assumes t --> oo
         # t=t_off :     I = a0 + a_act = Iss    ==> a_act = Iss - a0
         #                                           a_act = Iss + a_deact
-        # Iss = a_act - a_deact
+        #                                           Iss = a_act - a_deact
 
-        Ion, ton = self.getOnPhase(p)
+        def calcOn(p, t):
+            r"""
+            Fit a biexponential curve to the on-phase to find lambdas.
 
-        pOn = Parameters()
+            .. math::
+
+            `I_{on} = a_0 &+ a_{act} \cdot (1-e^{-t/\tau_{act}}) \\
+                          &+ a_{deact} \cdot e^{-t/\tau_{deact}}`
+            """
+            v = p.valuesdict()
+            return v['a0'] + v['a_act'] * (1-np.exp(-t/v['tau_act']))
+            + v['a_deact'] * np.exp(-t/v['tau_deact'])
+
+        #def jacOn(p,t):
+        #    v = p.valuesdict()
+        #    return [(v['a1']/v['tau_act'])*np.exp(-t/v['tau_act']) - (v['a2']/v['tau_deact'])*np.exp(-t/v['tau_deact'])]
+
+        def residOn(p, I, t):
+            return I - calcOn(p, t)
+
 
         Iss = self.I_ss_
         #Ipeak = self.I_peak_
+        Ion, ton = self.getOnPhase(p)
+        pOn = Parameters()
 
         if Iss < 0:  # Excitatory
-            pOn.add('a_act', value=Iss, min=-1e3, max=1e-9) #1
-            pOn.add('a_deact', value=Iss*0.1, min=-1e3, max=1e-9, expr='a_act - {}'.format(Iss)) #0.1
+            pOn.add('a_act', value=Iss, min=-1e4, max=1e-9) #1
+            pOn.add('a_deact', value=Iss*0.1, min=-1e4, max=1e-9)#, expr='a_act - {}'.format(Iss)) #0.1
         else:  # Inhibitory
-            pOn.add('a_act', value=Iss, min=1e-9, max=1e3) # peak_?
-            pOn.add('a_deact', value=Iss*0.1, min=1e-9, max=1e3, expr='a_act - {}'.format(Iss))
-        pOn.add('a0', value=0, min=-1e3, max=1e3, expr='-a_deact') # redundant
-        pOn.add('tau_act', value=5, min=1e-9, max=1e3)
-        pOn.add('tau_deact', value=50, min=1e-9, max=1e3)
+            pOn.add('a_act', value=Iss, min=1e-9, max=1e4) # peak_?
+            pOn.add('a_deact', value=Iss*0.1, min=1e-9, max=1e4)#, expr='a_act - {}'.format(Iss))
+        pOn.add('a0', value=0, min=-1e4, max=1e4, expr='-a_deact') # redundant
+        pOn.add('tau_act', value=5, min=1e-9, max=1e4)
+        pOn.add('tau_deact', value=50, min=1e-9, max=1e4)
 
         # Dictionary unpacking also works if preferred
         # from pyrho.utilities import biExpSum
@@ -451,6 +463,7 @@ class PhotoCurrent(object):
         minRes = minimize(residOn, pOn, args=(Ion, ton), method=method)
 
         fpOn = minRes.params
+        kinetics['on'] = fpOn
         v = fpOn.valuesdict()
         print('tau_{{act}} = {:.3g}, tau_{{deact}} = {:.3g}'.format(v['tau_act'], v['tau_deact']))
         print('a_{{act}} = {:.3g}, a_{{deact}} = {:.3g}, a_0 = {:.3g}'.format(v['a_act'], v['a_deact'], v['a0']))
@@ -468,6 +481,15 @@ class PhotoCurrent(object):
 
         # t0 = t_off
         # t=0 :     I = a0 + a1 + a2 = Iss
+
+        def calcOff(p, t):
+            v = p.valuesdict()
+            return v['a0'] + v['a1'] * np.exp(-v['Gd1']*t)
+            + v['a2'] * np.exp(-v['Gd2']*t)
+
+        def residOff(p, I, t):
+            return I - calcOff(p, t)
+
 
         Iss = self.I_ss_  # fpOn['a0'].value + fpOn['a1'].value
         Ioff, toff = self.getOffPhase(p)
@@ -489,6 +511,7 @@ class PhotoCurrent(object):
 
         minRes = minimize(residOff, pOffs, args=(Ioff, toff-toff[0]), method=method)
         fpOffs = minRes.params #pOff
+        kinetics['off1exp'] = fpOffs
         print('tau_{{off}} = {:.3g}'.format(1/fpOffs['Gd1'].value))
         if config.verbose > 1:
             #print(fit_report(minRes))
@@ -511,6 +534,7 @@ class PhotoCurrent(object):
 
         minRes = minimize(residOff, pOffd, args=(Ioff, toff-toff[0]), method=method)
         fpOffd = minRes.params #pOff
+        kinetics['off2exp'] = fpOffd
         print('tau_{{off1}} = {:.3g}, tau_{{off2}} = {:.3g}'.format(1/fpOffd['Gd1'].value, 1/fpOffd['Gd2'].value))
         if config.verbose > 1:
             #print(fit_report(minRes))
@@ -532,7 +556,7 @@ class PhotoCurrent(object):
                     #print(Go, Go_m1)
                 return Go
 
-            E = 0  #TODO: Find this from fitting fV first!!!
+            E = 0  # TODO: Find this from fitting fV first!!!
 
             GoA = solveGo(self.Dt_lag_, Gd=1/fpOn['tau_deact'].value)
             GoB = solveGo(self.Dt_lag_, Gd=max(fpOffd['Gd1'].value, fpOffd['Gd2'].value))
@@ -639,20 +663,20 @@ class PhotoCurrent(object):
 
         plt.show()
 
-        return
+        return kinetics
 
     def align_to(self, t0):
         '''
         e.g. align_to(t[0])
              align_to(t_ons[p])
         '''
-        self.t -= t0           # Time array
-        self.pulses -= t0      # Pulse times
-        self.t_start = self.t[0]       # Beginning Time of Trial
-        self.t_end = self.t[-1]      # End Time of Trial
-        self.t_peak_ = self.t[self._idx_peak_]
-        self.t_peaks_ = self.t[self._idx_peaks_]
-        self._t0 = t0
+        self.t -= t0                                # Time array
+        self.pulses -= t0                           # Pulse times
+        self.t_start = self.t[0]                    # Beginning Time of Trial
+        self.t_end = self.t[-1]                     # End Time of Trial
+        self.t_peak_ = self.t[self._idx_peak_]      # Time of first peak
+        self.t_peaks_ = self.t[self._idx_peaks_]    # Array of peak times
+        self._t0 = t0                               # Time shift
 
     def alignToPulse(self, pulse=0, alignPoint=0):
         """Set time array so that the first pulse occurs at t=0 (with negative
