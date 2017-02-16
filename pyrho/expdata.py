@@ -432,8 +432,8 @@ class PhotoCurrent(object):
                           &+ a_{deact} \cdot e^{-t/\tau_{deact}}`
             """
             v = p.valuesdict()
-            return v['a0'] + v['a_act'] * (1-np.exp(-t/v['tau_act']))
-            + v['a_deact'] * np.exp(-t/v['tau_deact'])
+            return v['a0'] + v['a_act'] * (1-np.exp(-t/v['tau_act'])) \
+                           + v['a_deact'] * np.exp(-t/v['tau_deact'])
 
         #def jacOn(p,t):
         #    v = p.valuesdict()
@@ -452,8 +452,8 @@ class PhotoCurrent(object):
         else:
             pOn = Parameters()
             if Iss < 0:  # Excitatory
-                pOn.add('a_act', value=Iss, min=-1e4, max=1e-9) #1
-                pOn.add('a_deact', value=Iss*0.1, min=-1e4, max=1e-9)#, expr='a_act - {}'.format(Iss)) #0.1
+                pOn.add('a_act', value=Iss, min=-1e4, max=-1e-9) #1
+                pOn.add('a_deact', value=Iss*0.1, min=-1e4, max=-1e-9)#, expr='a_act - {}'.format(Iss)) #0.1
             else:  # Inhibitory
                 pOn.add('a_act', value=Iss, min=1e-9, max=1e4) # peak_?
                 pOn.add('a_deact', value=Iss*0.1, min=1e-9, max=1e4)#, expr='a_act - {}'.format(Iss))
@@ -492,8 +492,8 @@ class PhotoCurrent(object):
 
         def calcOff(p, t):
             v = p.valuesdict()
-            return v['a0'] + v['a1'] * np.exp(-v['Gd1']*t)
-            + v['a2'] * np.exp(-v['Gd2']*t)
+            return v['a0'] + v['a1'] * np.exp(-v['Gd1']*t) \
+                           + v['a2'] * np.exp(-v['Gd2']*t)
 
         def residOff(p, I, t):
             return I - calcOff(p, t)
