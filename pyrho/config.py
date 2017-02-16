@@ -57,8 +57,9 @@ elif pyVer[0] == 2:
         """Test if 'pkg' is available"""
         return pkgutil.find_loader(pkg) is not None
 
-_DASH_LINE = '-' * 80
-_DOUB_DASH_LINE = '=' * 80
+_LINE_LENGTH = 80
+_DASH_LINE = '-' * _LINE_LENGTH
+_DOUB_DASH_LINE = '=' * _LINE_LENGTH
 
 
 # Output level settings #
