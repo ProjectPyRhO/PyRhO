@@ -372,7 +372,7 @@ class PhotoCurrent(object):
         return df
 
     # TODO: Finish this - avoid circular imports or move to fitting.py!
-    def fitKinetics(self, p=0, method='powell'):  # trim=0.1, # defMethod
+    def fitKinetics(self, p=0, method='powell', params=None):  # trim=0.1, # defMethod
         r"""
         Fit exponentials to a photocurrent to find time constants of kinetics.
 
@@ -387,6 +387,9 @@ class PhotoCurrent(object):
             Specify which pulse to use (default=0) ``0 <= p < nPulses``.
         method : str
             Optimisation method (default=defMethod).
+        params : dict of lmfit.Parameters
+            Set initial values, bounds and algebraic constraints for kinetics.
+            May contain 'on', 'off1exp' and 'off2exp'. 
 
         Returns
         -------
@@ -413,6 +416,7 @@ class PhotoCurrent(object):
 
         # t=0 :         I = a0 + a_deact = 0    ==> a0 = -a_deact
         # N.B. The following assumes t --> oo
+        # t should be >= 5*tau so that the exponent < 0.01
         # t=t_off :     I = a0 + a_act = Iss    ==> a_act = Iss - a0
         #                                           a_act = Iss + a_deact
         #                                           Iss = a_act - a_deact
@@ -441,17 +445,20 @@ class PhotoCurrent(object):
         Iss = self.I_ss_
         #Ipeak = self.I_peak_
         Ion, ton = self.getOnPhase(p)
-        pOn = Parameters()
 
-        if Iss < 0:  # Excitatory
-            pOn.add('a_act', value=Iss, min=-1e4, max=1e-9) #1
-            pOn.add('a_deact', value=Iss*0.1, min=-1e4, max=1e-9)#, expr='a_act - {}'.format(Iss)) #0.1
-        else:  # Inhibitory
-            pOn.add('a_act', value=Iss, min=1e-9, max=1e4) # peak_?
-            pOn.add('a_deact', value=Iss*0.1, min=1e-9, max=1e4)#, expr='a_act - {}'.format(Iss))
-        pOn.add('a0', value=0, min=-1e4, max=1e4, expr='-a_deact') # redundant
-        pOn.add('tau_act', value=5, min=1e-9, max=1e4)
-        pOn.add('tau_deact', value=50, min=1e-9, max=1e4)
+        if params is not None and 'on' in params:
+            pOn = params['on']
+        else:
+            pOn = Parameters()
+            if Iss < 0:  # Excitatory
+                pOn.add('a_act', value=Iss, min=-1e4, max=1e-9) #1
+                pOn.add('a_deact', value=Iss*0.1, min=-1e4, max=1e-9)#, expr='a_act - {}'.format(Iss)) #0.1
+            else:  # Inhibitory
+                pOn.add('a_act', value=Iss, min=1e-9, max=1e4) # peak_?
+                pOn.add('a_deact', value=Iss*0.1, min=1e-9, max=1e4)#, expr='a_act - {}'.format(Iss))
+            pOn.add('a0', value=0, min=-1e4, max=1e4, expr='-a_deact') # redundant
+            pOn.add('tau_act', value=5, min=1e-9, max=1e4)
+            pOn.add('tau_deact', value=50, min=1e-9, max=1e4)
 
         # Dictionary unpacking also works if preferred
         # from pyrho.utilities import biExpSum
@@ -461,9 +468,9 @@ class PhotoCurrent(object):
         # minRes = minimize(residBiExpSum, pOn, args=(Ion,ton), method=method)
 
         minRes = minimize(residOn, pOn, args=(Ion, ton), method=method)
-
         fpOn = minRes.params
         kinetics['on'] = fpOn
+
         v = fpOn.valuesdict()
         print('tau_{{act}} = {:.3g}, tau_{{deact}} = {:.3g}'.format(v['tau_act'], v['tau_deact']))
         print('a_{{act}} = {:.3g}, a_{{deact}} = {:.3g}, a_0 = {:.3g}'.format(v['a_act'], v['a_deact'], v['a0']))
@@ -495,23 +502,26 @@ class PhotoCurrent(object):
         Ioff, toff = self.getOffPhase(p)
 
         # Single exponential
-        pOffs = Parameters()
-        if Iss < 0:  # Excitatory
-            pOffs.add('a0', value=0, min=Iss*.001, max=-Iss*.001, vary=True) # Add some tolerance # expr='{}-a1-a2'.format(Iss))
-            pOffs.add('a1', value=0, min=-1e3, max=-1e-9, vary=True, expr='{}-a0'.format(Iss))
-            #pOffs.add('a2', value=0, min=-1e3, max=0, vary=False)
-        else:  # Inhibitory
-            pOffs.add('a0', value=0, min=-Iss*.001, max=Iss*.001, vary=True) # expr='{}-a1-a2'.format(Iss))
-            pOffs.add('a1', value=0, min=1e-9, max=1e3, vary=True, expr='{}-a0'.format(Iss))
-            #pOffs.add('a2', value=0, min=0, max=1e3, vary=False)
-
-        pOffs.add('Gd1', value=10, min=1e-3, max=1e3)
-        pOffs.add('Gd2', value=0, min=0, max=1e3, vary=False) #, expr='Gd1')#, min=1e-9)
-        pOffs.add('a2', value=0, min=-1e-9, max=1e-9, vary=False)
+        if params is not None and 'off1exp' in params:
+            pOffs = params['off1exp']
+        else:
+            pOffs = Parameters()
+            if Iss < 0:  # Excitatory
+                pOffs.add('a0', value=0, min=Iss*.001, max=-Iss*.001, vary=True) # Add some tolerance # expr='{}-a1-a2'.format(Iss))
+                pOffs.add('a1', value=0, min=-1e3, max=-1e-9, vary=True, expr='{}-a0'.format(Iss))
+                #pOffs.add('a2', value=0, min=-1e3, max=0, vary=False)
+            else:  # Inhibitory
+                pOffs.add('a0', value=0, min=-Iss*.001, max=Iss*.001, vary=True) # expr='{}-a1-a2'.format(Iss))
+                pOffs.add('a1', value=0, min=1e-9, max=1e3, vary=True, expr='{}-a0'.format(Iss))
+                #pOffs.add('a2', value=0, min=0, max=1e3, vary=False)
+            pOffs.add('a2', value=0, min=-1e-9, max=1e-9, vary=False)
+            pOffs.add('Gd1', value=10, min=1e-3, max=1e3)
+            pOffs.add('Gd2', value=0, min=0, max=1e3, vary=False) #, expr='Gd1')#, min=1e-9)
 
         minRes = minimize(residOff, pOffs, args=(Ioff, toff-toff[0]), method=method)
         fpOffs = minRes.params #pOff
         kinetics['off1exp'] = fpOffs
+
         print('tau_{{off}} = {:.3g}'.format(1/fpOffs['Gd1'].value))
         if config.verbose > 1:
             #print(fit_report(minRes))
@@ -520,21 +530,25 @@ class PhotoCurrent(object):
         plt.plot(toff, calcOff(fpOffs, toff-toff[0]), label=r'Off-Fit (Mono-Exp) $\tau_{{off}}={:.3g}$'.format(1/fpOffs['Gd1'].value))
 
         # Double exponential
-        pOffd = Parameters()
-        if Iss < 0:  # Excitatory
-            pOffd.add('a0', value=0, min=-1e3, max=1e3, vary=False)
-            pOffd.add('a1', value=0.8*Iss, min=-1e3, max=-1e-9)
-            pOffd.add('a2', value=0.2*Iss, min=-1e3, max=-1e-9, expr='{}-a0-a1'.format(Iss))
-        else:  # Inhibitory
-            pOffd.add('a0', value=0, min=-1e3, max=1e3, vary=False)
-            pOffd.add('a1', value=0.8*Iss, min=1e-9, max=1e3)
-            pOffd.add('a2', value=0.2*Iss, min=-1e3, max=-1e-9, expr='{}-a0-a1'.format(Iss))
-        pOffd.add('Gd1', value=0.1, min=1e-9, max=1e3)
-        pOffd.add('Gd2', value=0.01, min=1e-9, max=1e3)#, vary=True) #, expr='Gd1')#, min=1e-9)
+        if params is not None and 'off2exp' in params:
+            pOffs = params['off2exp']
+        else:
+            pOffd = Parameters()
+            if Iss < 0:  # Excitatory
+                pOffd.add('a0', value=0, min=-1e3, max=1e3, vary=False)
+                pOffd.add('a1', value=0.8*Iss, min=-1e3, max=-1e-9)
+                pOffd.add('a2', value=0.2*Iss, min=-1e3, max=-1e-9, expr='{}-a0-a1'.format(Iss))
+            else:  # Inhibitory
+                pOffd.add('a0', value=0, min=-1e3, max=1e3, vary=False)
+                pOffd.add('a1', value=0.8*Iss, min=1e-9, max=1e3)
+                pOffd.add('a2', value=0.2*Iss, min=-1e3, max=-1e-9, expr='{}-a0-a1'.format(Iss))
+            pOffd.add('Gd1', value=0.1, min=1e-9, max=1e3)
+            pOffd.add('Gd2', value=0.01, min=1e-9, max=1e3)#, vary=True) #, expr='Gd1')#, min=1e-9)
 
         minRes = minimize(residOff, pOffd, args=(Ioff, toff-toff[0]), method=method)
         fpOffd = minRes.params #pOff
         kinetics['off2exp'] = fpOffd
+
         print('tau_{{off1}} = {:.3g}, tau_{{off2}} = {:.3g}'.format(1/fpOffd['Gd1'].value, 1/fpOffd['Gd2'].value))
         if config.verbose > 1:
             #print(fit_report(minRes))
