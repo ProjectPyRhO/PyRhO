@@ -387,9 +387,10 @@ class PhotoCurrent(object):
             Specify which pulse to use (default=0) ``0 <= p < nPulses``.
         method : str
             Optimisation method (default=defMethod).
+            See https://lmfit.github.io/lmfit-py/fitting.html#fit-methods-table
         params : dict of lmfit.Parameters
             Set initial values, bounds and algebraic constraints for kinetics.
-            May contain 'on', 'off1exp' and 'off2exp'. 
+            May contain 'on', 'off1exp' and 'off2exp'.
 
         Returns
         -------
@@ -531,7 +532,7 @@ class PhotoCurrent(object):
 
         # Double exponential
         if params is not None and 'off2exp' in params:
-            pOffs = params['off2exp']
+            pOffd = params['off2exp']
         else:
             pOffd = Parameters()
             if Iss < 0:  # Excitatory
