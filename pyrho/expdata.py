@@ -372,7 +372,7 @@ class PhotoCurrent(object):
         return df
 
     # TODO: Finish this - avoid circular imports or move to fitting.py!
-    def fitKinetics(self, p=0, method='powell', params=None):  # trim=0.1, # defMethod
+    def fitKinetics(self, pulse=0, method='powell', params=None):  # trim=0.1, # defMethod
         r"""
         Fit exponentials to a photocurrent to find time constants of kinetics.
 
@@ -383,8 +383,8 @@ class PhotoCurrent(object):
 
         Parameters
         ----------
-        p : int
-            Specify which pulse to use (default=0) ``0 <= p < nPulses``.
+        pulse : int
+            Specify which pulse to use (default=0) ``0 <= pulse < nPulses``.
         method : str
             Optimisation method (default=defMethod).
             See https://lmfit.github.io/lmfit-py/fitting.html#fit-methods-table
@@ -422,7 +422,7 @@ class PhotoCurrent(object):
         #                                           a_act = Iss + a_deact
         #                                           Iss = a_act - a_deact
 
-        def calcOn(p, t):
+        def calcOn(params, t):
             r"""
             Fit a biexponential curve to the on-phase to find lambdas.
 
@@ -431,29 +431,28 @@ class PhotoCurrent(object):
             `I_{on} = a_0 &+ a_{act} \cdot (1-e^{-t/\tau_{act}}) \\
                           &+ a_{deact} \cdot e^{-t/\tau_{deact}}`
             """
-            v = p.valuesdict()
+            v = params.valuesdict()
             return v['a0'] + v['a_act'] * (1-np.exp(-t/v['tau_act'])) \
                            + v['a_deact'] * np.exp(-t/v['tau_deact'])
 
-        #def jacOn(p,t):
-        #    v = p.valuesdict()
+        #def jacOn(params, t):
+        #    v = params.valuesdict()
         #    return [(v['a1']/v['tau_act'])*np.exp(-t/v['tau_act']) - (v['a2']/v['tau_deact'])*np.exp(-t/v['tau_deact'])]
 
-        def residOn(p, I, t):
-            return I - calcOn(p, t)
+        def residOn(params, I, t):
+            return I - calcOn(params, t)
 
 
         Iss = self.I_ss_
-        #Ipeak = self.I_peak_
-        Ion, ton = self.getOnPhase(p)
+        Ion, ton = self.getOnPhase(pulse)
 
         if params is not None and 'on' in params:
             pOn = params['on']
         else:
             pOn = Parameters()
             if Iss < 0:  # Excitatory
-                pOn.add('a_act', value=Iss, min=-1e4, max=-1e-9) #1
-                pOn.add('a_deact', value=Iss*0.1, min=-1e4, max=-1e-9, expr='a_act - {}'.format(Iss)) #0.1
+                pOn.add('a_act', value=Iss, min=-1e4, max=-1e-9)
+                pOn.add('a_deact', value=Iss*0.1, min=-1e4, max=-1e-9, expr='a_act - {}'.format(Iss))
             else:  # Inhibitory
                 pOn.add('a_act', value=Iss, min=1e-9, max=1e4) # peak_?
                 pOn.add('a_deact', value=Iss*0.1, min=1e-9, max=1e4, expr='a_act - {}'.format(Iss))
@@ -463,9 +462,9 @@ class PhotoCurrent(object):
 
         # Dictionary unpacking also works if preferred
         # from pyrho.utilities import biExpSum
-        # def residBiExpSum(p, I, t):
-             #v = p.valuesdict()
-            # return I - biExpSum(t, **p.valuesdict())#v['a_act'], v['tau_act'], v['a_deact'], v['tau_deact'], v['a0'])
+        # def residBiExpSum(params, I, t):
+             #v = params.valuesdict()
+            # return I - biExpSum(t, **params.valuesdict())#v['a_act'], v['tau_act'], v['a_deact'], v['tau_deact'], v['a0'])
         # minRes = minimize(residBiExpSum, pOn, args=(Ion,ton), method=method)
 
         minRes = minimize(residOn, pOn, args=(Ion, ton), method=method)
@@ -482,8 +481,13 @@ class PhotoCurrent(object):
         plt.plot(ton, calcOn(fpOn, ton), label=r'On-Fit $\tau_{{act}}={:.3g}, \tau_{{deact}}={:.3g}$'.format(v['tau_act'], v['tau_deact']))
         #plt.plot(ton, biExpSum(ton, **fpOn.valuesdict()), label=r'On-Fit $\tau_{{act}}={:.3g}, \tau_{{deact}}={:.3g}$'.format(v['tau_act'], v['tau_deact']))
 
+        # Check for steady-state before fitting the off-curve
+        if self.Dt_ons_[pulse] < 5 * v['tau_deact']:  # ton[-1]
+            warnings.warn('Duration Warning: The on-phase may be too short '
+                          'for steady-state convergence! Try relaxing the '
+                          'constraint on a_deact and re-fitting. ')
 
-        # TODO: Add a check for steady-state before fitting the off-curve
+
         # TODO: Make the notation consistent i.e. use taus not Gds
 
         ### Off phase ###
@@ -491,17 +495,17 @@ class PhotoCurrent(object):
         # t0 = t_off
         # t=0 :     I = a0 + a1 + a2 = Iss
 
-        def calcOff(p, t):
-            v = p.valuesdict()
+        def calcOff(params, t):
+            v = params.valuesdict()
             return v['a0'] + v['a1'] * np.exp(-v['Gd1']*t) \
                            + v['a2'] * np.exp(-v['Gd2']*t)
 
-        def residOff(p, I, t):
-            return I - calcOff(p, t)
+        def residOff(params, I, t):
+            return I - calcOff(params, t)
 
 
         Iss = self.I_ss_  # fpOn['a0'].value + fpOn['a1'].value
-        Ioff, toff = self.getOffPhase(p)
+        Ioff, toff = self.getOffPhase(pulse)
 
         # Single exponential
         if params is not None and 'off1exp' in params:
@@ -509,19 +513,19 @@ class PhotoCurrent(object):
         else:
             pOffs = Parameters()
             if Iss < 0:  # Excitatory
-                pOffs.add('a0', value=0, min=Iss*.001, max=-Iss*.001, vary=True) # Add some tolerance # expr='{}-a1-a2'.format(Iss))
+                pOffs.add('a0', value=0, min=Iss*.001, max=-Iss*.001, vary=True) # expr='{}-a1-a2'.format(Iss))
                 pOffs.add('a1', value=0, min=-1e3, max=-1e-9, vary=True, expr='{}-a0'.format(Iss))
                 #pOffs.add('a2', value=0, min=-1e3, max=0, vary=False)
             else:  # Inhibitory
                 pOffs.add('a0', value=0, min=-Iss*.001, max=Iss*.001, vary=True) # expr='{}-a1-a2'.format(Iss))
                 pOffs.add('a1', value=0, min=1e-9, max=1e3, vary=True, expr='{}-a0'.format(Iss))
                 #pOffs.add('a2', value=0, min=0, max=1e3, vary=False)
-            pOffs.add('a2', value=0, min=-1e-9, max=1e-9, vary=False)
+            pOffs.add('a2', value=0, vary=False)  # min=-1e-9, max=1e-9,
             pOffs.add('Gd1', value=10, min=1e-3, max=1e3)
-            pOffs.add('Gd2', value=0, min=0, max=1e3, vary=False) #, expr='Gd1')#, min=1e-9)
+            pOffs.add('Gd2', value=0, vary=False) #, expr='Gd1')#, min=1e-9) min=0, max=1e3,
 
         minRes = minimize(residOff, pOffs, args=(Ioff, toff-toff[0]), method=method)
-        fpOffs = minRes.params #pOff
+        fpOffs = minRes.params
         kinetics['off1exp'] = fpOffs
 
         print('tau_{{off}} = {:.3g}'.format(1/fpOffs['Gd1'].value))
@@ -536,19 +540,18 @@ class PhotoCurrent(object):
             pOffd = params['off2exp']
         else:
             pOffd = Parameters()
+            pOffd.add('a0', value=0, min=-1e3, max=1e3, vary=False)
             if Iss < 0:  # Excitatory
-                pOffd.add('a0', value=0, min=-1e3, max=1e3, vary=False)
                 pOffd.add('a1', value=0.8*Iss, min=-1e3, max=-1e-9)
                 pOffd.add('a2', value=0.2*Iss, min=-1e3, max=-1e-9, expr='{}-a0-a1'.format(Iss))
             else:  # Inhibitory
-                pOffd.add('a0', value=0, min=-1e3, max=1e3, vary=False)
                 pOffd.add('a1', value=0.8*Iss, min=1e-9, max=1e3)
                 pOffd.add('a2', value=0.2*Iss, min=-1e3, max=-1e-9, expr='{}-a0-a1'.format(Iss))
             pOffd.add('Gd1', value=0.1, min=1e-9, max=1e3)
-            pOffd.add('Gd2', value=0.01, min=1e-9, max=1e3)#, vary=True) #, expr='Gd1')#, min=1e-9)
+            pOffd.add('Gd2', value=0.01, min=1e-9, max=1e3)#, vary=True) #, expr='Gd1')
 
         minRes = minimize(residOff, pOffd, args=(Ioff, toff-toff[0]), method=method)
-        fpOffd = minRes.params #pOff
+        fpOffd = minRes.params
         kinetics['off2exp'] = fpOffd
 
         print('tau_{{off1}} = {:.3g}, tau_{{off2}} = {:.3g}'.format(1/fpOffd['Gd1'].value, 1/fpOffd['Gd2'].value))

@@ -707,5 +707,12 @@ def biExpDecay(t, a1, tau1, a2, tau2, I_ss):
 
 
 def biExpSum(t, a_act, tau_act, a_deact, tau_deact, a0):
-    """Calculate the sum of two opposite exponential functions."""
+    r"""
+    Calculate the sum of two opposite exponential functions.
+
+    .. math::
+
+    `I_{on} = a_0 &+ a_{act} \cdot (1-e^{-t/\tau_{act}}) \\
+                  &+ a_{deact} \cdot e^{-t/\tau_{deact}}`
+    """
     return a0 + a_act*(1-np.exp(-t/tau_act)) + a_deact*np.exp(-t/tau_deact)
