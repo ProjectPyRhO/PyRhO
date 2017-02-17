@@ -453,10 +453,10 @@ class PhotoCurrent(object):
             pOn = Parameters()
             if Iss < 0:  # Excitatory
                 pOn.add('a_act', value=Iss, min=-1e4, max=-1e-9) #1
-                pOn.add('a_deact', value=Iss*0.1, min=-1e4, max=-1e-9)#, expr='a_act - {}'.format(Iss)) #0.1
+                pOn.add('a_deact', value=Iss*0.1, min=-1e4, max=-1e-9, expr='a_act - {}'.format(Iss)) #0.1
             else:  # Inhibitory
                 pOn.add('a_act', value=Iss, min=1e-9, max=1e4) # peak_?
-                pOn.add('a_deact', value=Iss*0.1, min=1e-9, max=1e4)#, expr='a_act - {}'.format(Iss))
+                pOn.add('a_deact', value=Iss*0.1, min=1e-9, max=1e4, expr='a_act - {}'.format(Iss))
             pOn.add('a0', value=0, min=-1e4, max=1e4, expr='-a_deact') # redundant
             pOn.add('tau_act', value=5, min=1e-9, max=1e4)
             pOn.add('tau_deact', value=50, min=1e-9, max=1e4)
@@ -483,7 +483,8 @@ class PhotoCurrent(object):
         #plt.plot(ton, biExpSum(ton, **fpOn.valuesdict()), label=r'On-Fit $\tau_{{act}}={:.3g}, \tau_{{deact}}={:.3g}$'.format(v['tau_act'], v['tau_deact']))
 
 
-        ### Add a check for steady-state before fitting the off-curve
+        # TODO: Add a check for steady-state before fitting the off-curve
+        # TODO: Make the notation consistent i.e. use taus not Gds
 
         ### Off phase ###
 
