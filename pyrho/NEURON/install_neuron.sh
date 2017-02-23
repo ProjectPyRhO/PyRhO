@@ -48,7 +48,7 @@ fi
 # http://compneuro.umb.no/LFPy/information.html
 
 # General installation notes
-# http://www.davison.webfactional.com/notes/installation-neuron-python/
+# http://andrewdavison.info/notes/installation-neuron-python/
 # http://journal.frontiersin.org/Journal/10.3389/neuro.11.001.2009/full#h9
 
 OS=$(uname)		# Get OS type. 				Alternative: echo $OSTYPE
