@@ -150,7 +150,7 @@ class RhodopsinModel(PyRhOobject):
         return self.calcI(V, states=self.calcSteadyState())
 
     '''
-    @proterty
+    @property
     def T(self):
         return self._T
     @T.setter
