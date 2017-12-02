@@ -335,4 +335,4 @@ Package: ``models`` API
 =======================
 
 .. automodule:: pyrho.models
-	:members:
+    :members:
