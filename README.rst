@@ -1,9 +1,12 @@
-PyRhO - A Virtual Optogenetics Laboratory
-=========================================
+PyRhO
+=====
 
-A Python module to fit and characterise rhodopsin photocurrents.
 
-.. image:: https://travis-ci.org/ProjectPyRhO/PyRhO.svg?branch=dev
+*A Virtual Optogenetics Laboratory*
+
+PyRhO is a Python module to fit, characterise and simulate (rhod)opsin photocurrents. 
+
+.. image:: https://travis-ci.org/ProjectPyRhO/PyRhO.svg?branch=master
     :target: https://travis-ci.org/ProjectPyRhO/PyRhO
 
 Background
@@ -17,7 +20,7 @@ PyRhO enables users to:
 (ii) simulate these models at the channel, neuron & network levels and
 (iii) gain functional insights through model selection and virtual experiments *in silico*.
 
-The module is written in Python with an additional IPython/Jupyter notebook based GUI, allowing models to be fit, simulations to be run and results to be shared through simply interacting with a webpage. The seamless integration of model fitting algorithms with simulation environments for these virtual opsins will enable (neuro)scientists to gain a comprehensive understanding of their behaviour and rapidly identify the most suitable variant for application in a particular biological system. This process may thereby guide not only experimental design and opsin choice but also alterations of the rhodopsin genetic code in a neuro-engineering feed-back loop. In this way, we hope PyRhO will help to significantly improve optogenetics as a tool for transforming biological sciences.
+The module is written in Python with an additional IPython/Jupyter notebook based GUI, allowing models to be fit, simulations to be run and results to be shared through simply interacting with a webpage. The seamless integration of model fitting algorithms with simulation environments for these virtual opsins (including `NEURON <http://www.neuron.yale.edu/neuron/>`_ and `Brian2 <http://briansimulator.org/>`_) will enable (neuro)scientists to gain a comprehensive understanding of their behaviour and rapidly identify the most suitable variant for application in a particular biological system. This process may thereby guide not only experimental design and opsin choice but also alterations of the rhodopsin genetic code in a neuro-engineering feed-back loop. In this way, we hope PyRhO will help to significantly improve optogenetics as a tool for transforming biological sciences. 
 
 Prometheus
 ----------
@@ -28,7 +31,8 @@ Docker
 ------
 
 If you wish to use PyRhO in a Docker container, a Dockerfile is provided in the accompanying Prometheus repository: https://github.com/ProjectPyRhO/Prometheus
-The Docerfile will build a full installation including the NEURON and Brian2 simulators and the Jupyter notebook GUI. See the repository's README file for instructions.
+
+The Dockerfile will build a full installation including the NEURON and Brian2 simulators and the Jupyter notebook GUI. See the repository's README file for instructions. 
 
 Installation
 ------------
@@ -60,6 +64,19 @@ Further Information
 If you use PyRhO please cite our paper:
 
 Evans, B. D., Jarvis, S., Schultz, S. R. & Nikolic K. (2016) "PyRhO: A Multiscale Optogenetics Simulation Platform", *Frontiers in Neuroinformatics, 10* (8). `doi:10.3389/fninf.2016.00008 <https://dx.doi.org/10.3389/fninf.2016.00008>`_
+
+::
+
+    @ARTICLE{pyrho,
+        AUTHOR={Evans, Benjamin D. and Jarvis, Sarah and Schultz, Simon R. and Nikolic, Konstantin},   
+        TITLE={PyRhO: A Multiscale Optogenetics Simulation Platform},
+        JOURNAL={Frontiers in Neuroinformatics},
+        VOLUME={10},
+        YEAR={2016},
+        NUMBER={8},
+        URL={http://journal.frontiersin.org/article/10.3389/fninf.2016.00008/full},
+        DOI={10.3389/fninf.2016.00008}
+    }
 
 The PyRhO project website with additional documentation may be found here: `www.imperial.ac.uk/bio-modelling/pyrho <http://www.imperial.ac.uk/a-z-research/bio-modelling/pyrho>`_
 
