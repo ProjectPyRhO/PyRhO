@@ -533,21 +533,25 @@ class RhO_3states(RhodopsinModel):
         return np.array([dCdt, dOdt, dDdt])
 
     def jacobian(self, s_0, t, phi_t=None):  # jacobianPhi_t
-        '''
+        """
         Jacobian matrix used to improve precision / speed up ODE solver
         jac[i,j] = df[i]/dy[j]; where y'(t) = f(t,y)
-        '''
+        """
         #self.setLight(phi_t(t))
         return np.array([[-self.Ga, 0, self.Gr],  # [dCdt/dC, dCdt/dO, dCdt/dD]
                          [self.Ga, -self.Gd, 0],  # [dOdt/dC, dOdt/dO, dOdt/dD]
                          [0, self.Gd, -self.Gr]]) # [dDdt/dC, dDdt/dO, dDdt/dD]
 
-    # def hessian(self, s_0, t):
-        # Hessian matrix for scipy.optimize.minimize (Only for Newton-CG, dogleg, trust-ncg.)
-        # H(f)_ij(X) = D_iD_jf(X)
+    def hessian(self, s_0, t):
+        """
+        Hessian matrix for scipy.optimize.minimize.
+        (Only for Newton-CG, dogleg, trust-ncg.)
+        H(f)_ij(X) = D_iD_jf(X)
+        """
         # return np.array([[0, 0, 0],
-        #                 [0, 0, 0],
-        #                 [0, 0, 0]])
+        #                  [0, 0, 0],
+        #                  [0, 0, 0]])
+        return np.zeros((3, 3))
 
     def calcfphi(self, states=None):
         if states is None:
@@ -752,13 +756,21 @@ class RhO_4states(RhodopsinModel):
 
     def jacobian(self, s_0, t, phi_t=None):
         """
-        Jacobian matrix used to improve precision / speed up ODE solver
+        Jacobian matrix used to improve precision / speed up ODE solver.
         jac[i,j] = df[i]/dy[j]; where y'(t) = f(t,y)
         """
         return np.array([[-self.Ga1, self.Gd1, 0, self.Gr0],
                          [self.Ga1, -(self.Gd1+self.Gf), self.Gb, 0],
                          [0, self.Gf, -(self.Gd2+self.Gb), self.Ga2],
                          [0, 0, self.Gd2, -(self.Ga2+self.Gr0)]])
+
+    def hessian(self, s_0, t):
+        """
+        Hessian matrix for scipy.optimize.minimize.
+        (Only for Newton-CG, dogleg, trust-ncg.)
+        H(f)_ij(X) = D_iD_jf(X)
+        """
+        return np.zeros((4, 4))
 
     def calcfphi(self, states=None):
         if states is None:
@@ -930,6 +942,14 @@ class RhO_6states(RhodopsinModel):
                          [0, 0, self.Gf, -(self.Gb+self.Gd2), self.Go2, 0],
                          [0, 0, 0, 0, -self.Go2, self.Ga2],
                          [0, 0, 0, self.Gd2, 0, -(self.Ga2+self.Gr0)]])
+
+    def hessian(self, s_0, t):
+        """
+        Hessian matrix for scipy.optimize.minimize.
+        (Only for Newton-CG, dogleg, trust-ncg.)
+        H(f)_ij(X) = D_iD_jf(X)
+        """
+        return np.zeros((6, 6))
 
     def calcSteadyState(self, phi):
         self.setLight(phi)
