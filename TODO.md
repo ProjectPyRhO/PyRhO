@@ -11,8 +11,8 @@ Priority
 - [ ] Testing
   - [ ] Add more asserts, warnings and write unit tests with [`py.test`](http://pytest.org/latest/) or [`nose`](http://nose.readthedocs.org/en/latest/)
   - [ ] Standardise testing different versions with [`tox`](http://tox.readthedocs.org/en/latest/)
-  - [ ] Add Continuous Integration with [Travis](https://travis-ci.org/)
-- [ ] Update GUI to work with `ipywidgets` 5.x
+  - [x] Add Continuous Integration with [Travis](https://travis-ci.org/)
+- [ ] Update GUI to work with `ipywidgets` >= 5.x
 
 Mid-Term
 --------
@@ -37,4 +37,4 @@ Ideas
 * Suffix all parameters to avoid clashes with Brian
 * Use [`Neo`](http://pythonhosted.org//neo/index.html) or [`Stimfit`](https://github.com/neurodroid/stimfit) for handling photocurrents
 * Use [`pandas`](http://pandas.pydata.org) for organising metadata
-* Use [`NeuroTools/parameters`](https://pythonhosted.org/NeuroTools/parameters.html) for importing and exporting models 
+* Use [`NeuroTools/parameters`](https://pythonhosted.org/NeuroTools/parameters.html) for importing and exporting models

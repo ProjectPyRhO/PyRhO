@@ -494,7 +494,7 @@ def loadGUI(IPythonWorkspace=None):
         #@interact(nStates={'Three-state':3,'Four-state':4,'Six-state':6}, protocol=('custom', 'step', 'sinusoid', 'ramp', 'delta', 'rectifier', 'shortPulse', 'recovery'), saveData=True, verbose=1)
 
     def runModel(model, protocol, simulator='Python', saveData=True, verbose=config.verbose): #verboseSlide.value
-        """Main GUI function to create protocol, simulator and rhdopsin objects, set parameters, run and plot"""
+        """Main GUI function to create protocol, simulator and opsin objects, set parameters, run and plot"""
 
         #verbose = verbose
         #nStates = int(model)
