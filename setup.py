@@ -95,7 +95,6 @@ setup(
         'Topic :: Scientific/Engineering :: Bio-Informatics',
         'Topic :: Scientific/Engineering :: Artificial Life',
         'Topic :: Scientific/Engineering :: Human Machine Interfaces',
-        'Topic :: Scientific/Engineering :: Medical Science Apps.',
 
         # The license should match "license" above
         'License :: OSI Approved :: BSD License',
@@ -104,12 +103,9 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
         # 2.6 barriers: OrderedDict, dictionary comprehension, importlib
-        # 'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         # Technically 3.1 and 3.2 should work but are unsupported by Travis
-        # 'Programming Language :: Python :: 3.1',
-        # 'Programming Language :: Python :: 3.2',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
@@ -158,7 +154,6 @@ setup(
     # installed, specify them here. If using Python 2.6 or less, then these
     # have to be included in MANIFEST.in as well.
     package_data={
-        #'pyrho': ['NEURON/*.mod', 'NEURON/*.hoc', 'NEURON/*.sh', 'gui/*.png', 'datasets/*.pkl'],
         # TODO: Try this without MANIFEST
         'NEURON'  : ['*.mod', '*.hoc', '*.sh'],
         'gui'     : ['*.png'],
