@@ -1,0 +1,26 @@
+
+name: pyrho-env
+channels:
+  - brian-team
+  - conda-forge
+dependencies:
+  - python
+  - pip
+  - numpy
+  - matplotlib #=1.5*
+  - seaborn
+  - bokeh
+  - pandas
+  #- ipywidgets=4.1*
+  - numexpr
+  - scipy
+  - sympy
+  - cython
+  - h5py #=2.6*
+  - nose
+  - brian2
+  - brian2tools
+  - pip:
+      - git+https://github.com/ProjectPyRhO/PyRhO.git#egg=PyRhO[full]
+      #- git+https://github.com/ProjectPyRhO/PyRhO.git
+      #- pyrho
