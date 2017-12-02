@@ -25,5 +25,5 @@ install:
 script: py.test
 branches:
   only:
-    #- master
+    - master
     - dev
