@@ -103,7 +103,7 @@ def compareParams(origParams, newParams):
 
 # TODO: Fix this
 # $$ is an escape; it is replaced with a single $.
-texTemplate = Template('$${content}$$')
+texTemplate = Template('$$$content$$')
 
 
 def texIt(texString):

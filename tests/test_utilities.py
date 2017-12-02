@@ -6,10 +6,9 @@ from pyrho.utilities import *
 from pyrho.utilities import texIt
 
 
-#print(texIt('\phi_\lambda'))
-#def test_tex_it():
-    #assert texIt('\phi_\lambda') == '$\phi_\lambda$'
-    #assert texIt('\phi_0') == '$\phi_0$'
+def test_tex_it():
+    assert texIt('\phi_\lambda') == '$\phi_\lambda$'
+    assert texIt('\phi_0') == '$\phi_0$'
 
 
 def test_calc_v1():
