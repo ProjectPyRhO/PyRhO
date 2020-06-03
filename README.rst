@@ -1,8 +1,11 @@
-PyRhO
-=====
-
+.. image:: https://raw.githubusercontent.com/ProjectPyRhO/PyRhO/master/pyrho/gui/PyRhO_logo.png
+    :width: 400px
+    :align: left
+    :alt: PyRhO
 
 *A Virtual Optogenetics Laboratory*
+
+----------
 
 PyRhO is a Python module to fit, characterise and simulate (rhod)opsin photocurrents.
 
