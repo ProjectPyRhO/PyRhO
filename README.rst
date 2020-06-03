@@ -32,6 +32,19 @@ PyRhO enables users to:
 
 The module is written in Python with an additional IPython/Jupyter notebook based GUI, allowing models to be fit, simulations to be run and results to be shared through simply interacting with a webpage. The seamless integration of model fitting algorithms with simulation environments for these virtual opsins (including `NEURON <http://www.neuron.yale.edu/neuron/>`_ and `Brian2 <http://briansimulator.org/>`_) will enable (neuro)scientists to gain a comprehensive understanding of their behaviour and rapidly identify the most suitable variant for application in a particular biological system. This process may thereby guide not only experimental design and opsin choice but also alterations of the rhodopsin genetic code in a neuro-engineering feed-back loop. In this way, we hope PyRhO will help to significantly improve optogenetics as a tool for transforming biological sciences.
 
+Architecture
+------------
+
+PyRhO is composed of several abstraction layers, including the Model layer, Protocol layer and Simulator layer (shown in the architectural schematic below). Choices in each layer are independent or one another, giving a large number of possible combinations to suit many needs for in silico experiments. Additionally, parameters may be fit to each type of kinetic model from experimental data or loaded from the default options of popular opsins. 
+
+.. figure:: https://raw.githubusercontent.com/ProjectPyRhO/PyRhO/master/docs/figs/architecture.png
+    :width: 400px
+    :align: center
+    :alt: PyRhO architecture
+    :figclass: align-center
+    
+    PyRhO architecture.
+
 Prometheus
 ----------
 
