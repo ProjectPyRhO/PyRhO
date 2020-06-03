@@ -13,6 +13,7 @@ Priority
   - [ ] Standardise testing different versions with [`tox`](http://tox.readthedocs.org/en/latest/)
   - [x] Add Continuous Integration with [Travis](https://travis-ci.org/)
 - [ ] Update GUI to work with `ipywidgets` >= 5.x
+- [ ] Store parameters (and data) as JSON/plain text where possible
 
 Mid-Term
 --------
