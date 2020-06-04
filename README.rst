@@ -1,5 +1,5 @@
-.. image:: https://raw.githubusercontent.com/ProjectPyRhO/PyRhO/master/pyrho/gui/PyRhO_logo.png
-    :width: 400px
+.. image:: https://raw.githubusercontent.com/ProjectPyRhO/PyRhO/master/docs/figs/PyRhO_logo_H_300px.png
+    :width: 300px
     :align: left
     :alt: PyRhO
 
