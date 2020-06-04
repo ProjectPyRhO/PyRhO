@@ -26,7 +26,7 @@ PyRhO enables users to:
 2. Simulate these models at the channel, neuron & network levels and
 3. Gain functional insights through model selection and virtual experiments *in silico*.
 
-The module is written in Python with an additional IPython/Jupyter
+The module is written in Python with an additional IPython/[Jupyter](https://jupyter.org/)
 notebook based GUI, allowing models to be fit, simulations to be run and
 results to be shared through simply interacting with a webpage. The
 seamless integration of model fitting algorithms with simulation
@@ -65,7 +65,7 @@ configured Jupyter notebook in your browser.
 Docker
 ======
 
-If you wish to use PyRhO in a Docker container, a Dockerfile is provided
+If you wish to use PyRhO in a [Docker](https://www.docker.com/) container, a Dockerfile is provided
 in the accompanying Prometheus repository:
 <https://github.com/ProjectPyRhO/Prometheus>
 
