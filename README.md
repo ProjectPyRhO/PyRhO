@@ -1,5 +1,4 @@
-![PyRhO](https://raw.githubusercontent.com/ProjectPyRhO/PyRhO/master/docs/figs/PyRhO_logo_H_300px.png){.align-left
-width="300px"}
+![PyRhO](https://raw.githubusercontent.com/ProjectPyRhO/PyRhO/master/docs/figs/PyRhO_logo_H_300px.png)
 
 *A Virtual Optogenetics Laboratory*
 
@@ -8,13 +7,7 @@ width="300px"}
 PyRhO is a Python module to fit, characterise and simulate (rhod)opsin
 photocurrents.
 
-Master Branch:
-
-[![image](https://travis-ci.org/ProjectPyRhO/PyRhO.svg?branch=master)](https://travis-ci.org/ProjectPyRhO/PyRhO)
-
-Dev Branch:
-
-[![image](https://travis-ci.org/ProjectPyRhO/PyRhO.svg?branch=dev)](https://travis-ci.org/ProjectPyRhO/PyRhO)
+Master Branch: [![image](https://travis-ci.org/ProjectPyRhO/PyRhO.svg?branch=master)](https://travis-ci.org/ProjectPyRhO/PyRhO) | Dev Branch: [![image](https://travis-ci.org/ProjectPyRhO/PyRhO.svg?branch=dev)](https://travis-ci.org/ProjectPyRhO/PyRhO)
 
 Background
 ==========
@@ -29,12 +22,9 @@ called PyRhO.
 
 PyRhO enables users to:
 
-(i) characterize new (and existing) rhodopsins by automatically fitting
-    a minimal set of experimental data to three, four or six-state
-    kinetic models,
-(ii) simulate these models at the channel, neuron & network levels and
-(iii) gain functional insights through model selection and virtual
-      experiments *in silico*.
+1. Characterize new (and existing) rhodopsins by automatically fitting a minimal set of experimental data to three, four or six-state kinetic models,
+2. Simulate these models at the channel, neuron & network levels and
+3. Gain functional insights through model selection and virtual experiments *in silico*.
 
 The module is written in Python with an additional IPython/Jupyter
 notebook based GUI, allowing models to be fit, simulations to be run and
@@ -63,8 +53,7 @@ kinetic model from experimental data or loaded from the default options
 of popular opsins.
 
 ![PyRhO
-architecture.](https://raw.githubusercontent.com/ProjectPyRhO/PyRhO/master/docs/figs/architecture.png){.align-centeralign-center
-width="400px"}
+architecture.](https://raw.githubusercontent.com/ProjectPyRhO/PyRhO/master/docs/figs/architecture.png)
 
 Prometheus
 ==========
