@@ -7,7 +7,7 @@
 PyRhO is a Python module to fit, characterise and simulate (rhod)opsin
 photocurrents.
 
-Master Branch: [![image](https://travis-ci.org/ProjectPyRhO/PyRhO.svg?branch=master)](https://travis-ci.org/ProjectPyRhO/PyRhO) | Dev Branch: [![image](https://travis-ci.org/ProjectPyRhO/PyRhO.svg?branch=dev)](https://travis-ci.org/ProjectPyRhO/PyRhO)
+[![image](https://travis-ci.org/ProjectPyRhO/PyRhO.svg?branch=master)](https://travis-ci.org/ProjectPyRhO/PyRhO) ![GitHub stars](https://img.shields.io/github/stars/ProjectPyRhO/PyRhO) ![PyPI](https://img.shields.io/pypi/v/PyRhO)
 
 Background
 ==========
