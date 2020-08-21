@@ -1,6 +1,6 @@
 """The PyRhO package setup script"""
 
-from __future__ import print_function        # Added for Python 2.x support
+#from __future__ import print_function        # Added for Python 2.x support
 from setuptools import setup, find_packages  # Prefer setuptools over distutils
 from codecs import open                      # To use a consistent encoding
 import os
@@ -101,16 +101,11 @@ setup(
 
         # Supported Python versions
         'Programming Language :: Python',
-        # 'Programming Language :: Python :: 2',
-        # 2.6 barriers: OrderedDict, dictionary comprehension, importlib
-        # 'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        # Technically 3.1 and 3.2 should work but are unsupported by Travis
-        # 'Programming Language :: Python :: 3.3',
-        # 'Programming Language :: Python :: 3.4',
+        # 3.5 EOL: 13/09/20
         'Programming Language :: Python :: 3.5',
+        # 3.6 EOL: 23/12/21
         'Programming Language :: Python :: 3.6',
-        # TODO: test >= 3.7
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Framework :: IPython',
