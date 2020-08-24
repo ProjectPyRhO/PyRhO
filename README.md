@@ -44,6 +44,9 @@ transforming biological sciences.
 Architecture
 ============
 
+<img alt="PyRhO
+architecture" src="https://raw.githubusercontent.com/ProjectPyRhO/PyRhO/master/docs/figs/architecture.png" width="50%" align="right">
+
 PyRhO is composed of several abstraction layers, including the Model
 layer, Protocol layer and Simulator layer (shown in the architectural
 schematic below). Choices in each layer are independent or one another,
@@ -51,9 +54,6 @@ giving a large number of possible combinations to suit many needs for in
 silico experiments. Additionally, parameters may be fit to each type of
 kinetic model from experimental data or loaded from the default options
 of popular opsins.
-
-![PyRhO
-architecture.](https://raw.githubusercontent.com/ProjectPyRhO/PyRhO/master/docs/figs/architecture.png)
 
 Prometheus
 ==========
