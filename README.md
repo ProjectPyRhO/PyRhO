@@ -50,8 +50,8 @@ architecture" src="https://raw.githubusercontent.com/ProjectPyRhO/PyRhO/master/d
 PyRhO is composed of several abstraction layers, including the Model
 layer, Protocol layer and Simulator layer (shown in the architectural
 schematic below). Choices in each layer are independent or one another,
-giving a large number of possible combinations to suit many needs for in
-silico experiments. Additionally, parameters may be fit to each type of
+giving a large number of possible combinations to suit many needs for _in
+silico_ experiments. Additionally, parameters may be fit to each type of
 kinetic model from experimental data or loaded from the default options
 of popular opsins.
 
