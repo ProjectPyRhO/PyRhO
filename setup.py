@@ -102,8 +102,6 @@ setup(
         # Supported Python versions
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        # 3.5 EOL: 13/09/20
-        'Programming Language :: Python :: 3.5',
         # 3.6 EOL: 23/12/21
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
@@ -130,7 +128,7 @@ setup(
     # https://packaging.python.org/en/latest/requirements.html
     # ipython is used for latex repr - remove from requirements and have a fallback repr?
     install_requires=['numpy>=1.8', 'scipy>=0.15', 'matplotlib>=1.3',
-                      'lmfit>=0.9.3', 'brian2>=2.0'],  # 'ipython>=4.1'
+                      'lmfit>=0.9.3,<1.0.3', 'brian2>=2.0'],  # 'ipython>=4.1'
 
     # List additional groups of dependencies here (e.g. development dependencies).
     # You can install these using the following syntax, for example:
