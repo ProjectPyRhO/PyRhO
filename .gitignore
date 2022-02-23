@@ -60,6 +60,9 @@ coverage.xml
 # Sphinx documentation
 docs/_build/
 
+# Frozen requirements
+.devcontainer/frozen-requirements.txt
+
 # Spyder configuration
 .spyderproject
 
