@@ -127,7 +127,7 @@ def runAll(listOfModels=[6], simList=['Python']):
                 print(_DOUB_DASH_LINE, '\n\n')
 
 
-def printVersions():
+def print_versions():
     """Display version information for PyRhO and its dependencies."""
     # import platform
     print("Python version:        ", platform.python_version())
