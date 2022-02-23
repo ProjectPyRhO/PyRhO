@@ -9,8 +9,8 @@ from __future__ import print_function, division  # a/b -> float
 import platform
 import os
 #from pkg_resources import get_distribution, DistributionNotFound
-import pkg_resources
 import logging
+import pkg_resources
 
 # Necessary?
 import matplotlib as mpl
