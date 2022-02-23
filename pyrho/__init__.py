@@ -116,7 +116,7 @@ def runAll(listOfModels=[6], simList=['Python']):
             Prot = protocols[prot]()
             for sim in simList:  # ['Python']:#simulators:
                 Sim = simulators[sim](Prot, RhO)
-                print("\nUsing {} to run Protocol '{}' on the {}-state model...".format(sim, prot, model))
+                print(f"\nUsing {sim} to run Protocol '{prot}' on the {model}-state model...")
                 print(_DASH_LINE, '\n')
                 Sim.run()
                 Sim.plot()
