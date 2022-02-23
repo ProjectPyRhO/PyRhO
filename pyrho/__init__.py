@@ -2,9 +2,6 @@
 #__doc__ =
 # Main module file for PyRhO
 
-#if sys.version_info < (3,0) #IPython.__version__ < "3":
-from __future__ import print_function, division  # a/b -> float
-#from __future__ import absolute_import, unicode_literals
 
 import platform
 import os
