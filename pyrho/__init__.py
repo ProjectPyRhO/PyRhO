@@ -168,17 +168,22 @@ def print_versions():
 
 def get_versions_table():
     """Display version information for PyRhO and its dependencies."""
-    # import platform
+
     table = ["     Module | Version    "]
     table.append("============|============")
-    table.append("{:>11} | {}".format("Python", platform.python_version()))
+    table.append(f"{'Python':>11} | {platform.python_version()}")
     if IPY:
         try:
             import IPython
             # __IPYTHON__
-            table.append("{:>11} | {}".format("IPython", IPython.__version__))
+            table.append(f"{'IPython':>11} | {IPython.__version__}")
         except ImportError:  # IPython not found
             pass
+    table.append(f"{'NumPy':>11} | {np.__version__}")
+    table.append(f"{'SciPy':>11} | {sp.__version__}")
+    table.append(f"{'Matplotlib':>11} | {mpl.__version__}")
+    table.append(f"{'Lmfit':>11} | {lmfit.__version__}")
+    table.append(f"{'PyRhO':>11} | {__version__}")
     try:
         import neuron
         table.append(f"{'NEURON':>11} | {neuron.__version__}")
