@@ -1,0 +1,17 @@
+numpy
+scipy
+matplotlib-base
+# lmfit
+neuron
+brian2
+brian2tools
+nose
+pytest
+seaborn
+cython
+pandas
+sympy
+jupyterlab
+ipympl
+# h5py
+# numexpr
