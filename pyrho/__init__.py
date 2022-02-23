@@ -153,6 +153,18 @@ def print_versions():
 
     print("PyRhO version:         ", __version__)
 
+    try:
+        import neuron
+        print(f"NEURON version:         {neuron.__version__}")
+    except ImportError:
+        pass
+
+    try:
+        import brian2
+        print(f"Brian version:          {brian2.__version__}")
+    except ImportError:
+        pass
+
 
 def get_versions_table():
     """Display version information for PyRhO and its dependencies."""
@@ -167,12 +179,16 @@ def get_versions_table():
             table.append("{:>11} | {}".format("IPython", IPython.__version__))
         except ImportError:  # IPython not found
             pass
-
-    table.append("{:>11} | {}".format("NumPy", np.__version__))
-    table.append("{:>11} | {}".format("SciPy", sp.__version__))
-    table.append("{:>11} | {}".format("Matplotlib", mpl.__version__))
-    table.append("{:>11} | {}".format("Lmfit", lmfit.__version__))
-    table.append("{:>11} | {}".format("PyRhO", __version__))
+    try:
+        import neuron
+        table.append(f"{'NEURON':>11} | {neuron.__version__}")
+    except ImportError:
+        pass
+    try:
+        import brian2
+        table.append(f"{'Brian':>11} | {brian2.__version__}")
+    except ImportError:
+        pass
     table.append("-------------------------\n")
 
     return "\n".join(table)
