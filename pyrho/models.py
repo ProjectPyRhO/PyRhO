@@ -1172,7 +1172,8 @@ class RhO_6Kstates(RhodopsinModel):
 
 models = OrderedDict([('3', RhO_3states), (3, RhO_3states),
                       ('4', RhO_4states), (4, RhO_4states),
-                      ('6', RhO_6states), (6, RhO_6states)])
+                      ('6', RhO_6states), (6, RhO_6states),
+                      ('6K', RhO_6Kstates)])
 
 
 def selectModel(nStates):
@@ -1183,6 +1184,8 @@ def selectModel(nStates):
         return RhO_4states()
     elif int(nStates) == 6 or nStates == 'six':
         return RhO_6states()
+    elif nStates == '6K':
+        return RhO_6Kstates()
     else:
         print("Error in selecting model - please choose from 3, 4 or 6 states")
         raise NotImplementedError(nStates)
