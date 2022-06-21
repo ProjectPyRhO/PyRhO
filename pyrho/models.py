@@ -93,8 +93,12 @@ class RhodopsinModel(PyRhOobject):
         """Clear state arrays and set transition rates."""
         if s0 is None:
             s0 = self.s_0
-        assert(len(s0) == self.nStates)
-        self.states = np.vstack((np.empty([0, self.nStates]), s0))
+        #assert(len(s0) == self.nStates)
+        if self.nStates=='6K':
+            self.states = np.vstack((np.empty([0, 6]), s0))
+        
+        else:
+            self.states = np.vstack((np.empty([0, self.nStates]), s0))
         self.t = [0]
         self.pulseInd = np.empty([0, 2], dtype=int)  # Light on and off indexes for each pulse
         self.ssInf = []
