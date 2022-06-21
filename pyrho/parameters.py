@@ -242,6 +242,7 @@ rhoType = defaultOpsinType  # Set this when selecting
 modelParams['3'] = modelFits['3'][defaultOpsinType]
 modelParams['4'] = modelFits['4'][defaultOpsinType]
 modelParams['6'] = modelFits['6'][defaultOpsinType]
+modelParams['6K'] = modelFits['6K'][defaultOpsinType]
 
 unitPrefixes = {}  # Use a units library to convert between different prefixes
 
