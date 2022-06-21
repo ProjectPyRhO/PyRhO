@@ -1206,6 +1206,7 @@ def fit6Kstates(fluxSet, quickSet, run, vInd, params, method=defMethod):  # , ve
 
 
 
+
 #TODO: Tidy up and refactor getRecoveryPeaks and fitRecovery
 def getRecoveryPeaks(recData, phiInd=None, vInd=None, usePeakTime=False):
     """Aggregate the times and currents of the photocurrent peaks for fitting Gr0
@@ -2007,12 +2008,14 @@ def fitModel(dataSet, nStates=3, params=None, postFitOpt=True, relaxFact=2, meth
 
 
     ### Define non-optimised parameters to exclude in post-fit optimisation
-    nonOptParams = ['Gr0', 'E', 'v0', 'v1']
-
-    if isinstance(nStates, str):
-        nStates = int(nStates) # .lower()
-    if nStates == 3 or nStates == 4 or nStates == 6:
+    try:
+        nStates = int(nStates)
+    except:
         pass
+    if nStates == 3 or nStates == 4 or nStates == 6:
+        nonOptParams = ['Gr0', 'E', 'v0', 'v1']
+    elif nStates == '6K':
+        nonOptParams = ['E', 'v0', 'v1', 'Ga3']
     else:
         print("Error in selecting model - please choose from 3, 4 or 6 states")
         raise NotImplementedError(nStates)
