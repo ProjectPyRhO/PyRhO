@@ -77,17 +77,19 @@ pOffDoub.add('Gd2', value=0.01)  # , vary=True) #, expr='Gd1')#, min=1e-9)
 
 # Default model parameters
 
-modelParams = OrderedDict([('3', Parameters()), ('4', Parameters()), ('6', Parameters())])
+modelParams = OrderedDict([('3', Parameters()), ('4', Parameters()), ('6', Parameters()), ('6K', Parameters())])
 modelList = list(modelParams)  # List of keys: list(modelParams.keys()) #This could be removed
 stateLabs = {3: 'Three', '3': 'Three',
              4: 'Four', '4': 'Four',
-             6: 'Six', '6': 'Six'}
+             6: 'Six', '6': 'Six',
+             '6K': 'SixK'}
 
 modelFits = OrderedDict([('3', OrderedDict([('ChR2', Parameters()),
                                             ('NpHR', Parameters()),
                                             ('ArchT', Parameters())])),
                          ('4', OrderedDict([('ChR2', Parameters())])),
-                         ('6', OrderedDict([('ChR2', Parameters())]))])
+                         ('6', OrderedDict([('ChR2', Parameters())])),
+                         ('6K', OrderedDict([('ChR2', Parameters())]))])
 
 # Replace with defaultdict with default=key
 modelLabels = OrderedDict([('E', 'E'), ('g0', 'g_0'), ('p', 'p'),
