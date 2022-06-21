@@ -990,6 +990,185 @@ class RhO_6states(RhodopsinModel):
     def calcSoln(self, t, s0=None):
         raise NotImplementedError(self.nStates)
 
+class RhO_6Kstates(RhodopsinModel):
+    """Class definition for the 6K-state model"""
+
+    # Class attributes
+    nStates = '6K'
+    useAnalyticSoln = False
+    s_0 = np.array([1, 0, 0, 0, 0, 0])  # [s1_0=1, s2_0=0, s3_0=0, s4_0=0, s5_0=0, s6_0=0] # array not necessary
+    phi_0 = 0.0                         # Default initial flux
+    stateVars = ['C1', 'I1', 'O1', 'O2', 'I2', 'C2']  # stateVars[0] is the 'ground' state
+    stateLabels = ['$C_1$', '$I_1$', '$O_1$', '$O_2$', '$I_2$', '$C_2$']
+    photoFuncs = ['_calcGa1', '_calcGa2', '_calcGf']
+    photoRates = ['Ga1', 'Ga2', 'Gf']
+    photoLabels = ['$G_{a1}$', '$G_{a2}$', '$G_{f}$']
+    constRates = ['Go1', 'Go2', 'Ga3', 'Gd1', 'Gd2', 'Gb']
+    constLabels = ['$G_{o1}$', '$G_{o2}$', '$G_{a3}$', '$G_{d1}$', '$G_{d2}$', '$G_{b}$']
+
+    paramsList = ['g0', 'gam', 'phi_m', 'k1', 'k2', 'k3', 'p',
+                  'Gf0', 'k_f', 'Gb0', 'k_b', 'q', 'Go1', 'Go2',
+                  'Ga3', 'Gd1', 'Gd2', 'Gb', 'E', 'v0', 'v1']  # List of model constants
+
+    connect = [[0, 0, 1, 1, 0, 1],  # s_1 --> s_i=1...6
+               [1, 0, 1, 0, 0, 0],  # s_2 -->
+               [0, 1, 0, 0, 0, 0],
+               [0, 0, 0, 0, 1, 0],
+               [0, 0, 0, 0, 0, 1],
+               [1, 0, 0, 1, 0, 0]]
+
+    equations = r"""
+                $$ \dot{C_1} = G_{d1}O_1 + G_{b}C_2 + G_{a3}O_2 - (G_{a1} + G_{f})(\phi)C_1 $$
+                $$ \dot{I_1} = G_{a1}(\phi)C_1 - G_{o1}I_1 $$
+                $$ \dot{O_1} = G_{o1}I_1 - G_{d1}O_1 $$
+                $$ \dot{O_2} = G_{o2}I_2 - (G_{d2} + G_{a3})O_2 $$
+                $$ \dot{I_2} = G_{a2}(\phi)C_2 - G_{o2}I_2 $$
+                $$ \dot{C_2} = G_{d2}O_2 + G_{f}(\phi)C1 - (G_{b} + G_{a2}(\phi))C_2 $$
+                $$ C_1 + I_1 + O_1 + O_2 + I_2 + C_2 = 1 $$
+                $$$$
+                $$ G_{a1}(\phi) = k_{1} \frac{\phi^p}{\phi^p + \phi_m^p} $$
+                $$ G_{a2}(\phi) = k_{2} \frac{\phi^p}{\phi^p + \phi_m^p} $$
+                $$ G_{a3}(\phi) = k_{3} \frac{\phi^p}{\phi^p + \phi_m^p} $$
+                $$ G_{f}(\phi)  = k_{f} \frac{\phi^q}{\phi^q + \phi_m^q} + G_{f0} $$
+                $$ G_{b}(\phi)  = k_{b} \frac{\phi^q}{\phi^q + \phi_m^q} + G_{b0} $$
+                $$$$
+                $$ f_{\phi}(\phi) = O_1+\gamma O_2 $$
+                $$ f_v(v) = v_1\frac{1-e^{-(v-E)/v_0}}{(v-E)} $$
+                $$ I_{\phi} = g_0 \cdot f_{\phi}(\phi) \cdot f_v(v) \cdot (v-E) $$
+                """
+
+    brianStateVars = ['C_1', 'I_1', 'O_1', 'O_2', 'I_2', 'C_2']
+
+    brian = '''
+            dC_1/dt = Gd1*O_1 + Gb*C_2 + Ga3*O_2 - (Ga1+Gf)*C_1 : 1
+            dI_1/dt = Ga1*C_1 - Go1*I_1                         : 1
+            dO_1/dt = Go1*I_1 - Gd1*O_1                         : 1
+            dO_2/dt = Go2*I_2 - (Gd2+Ga3)*O_2                   : 1
+            dI_2/dt = Ga2*C_2 - Go2*I_2                         : 1
+            C_2 = 1 - C_1 - I_1 - O_1 - O_2 - I_2               : 1
+            H_p = Theta*((phi**p)/(phi**p+phi_m**p))            : 1
+            H_q = Theta*((phi**q)/(phi**q+phi_m**q))            : 1
+            Ga1 = k1*H_p                                        : second**-1
+            Ga2 = k2*H_p                                        : second**-1
+            Ga3 = k3*H_p                                        : second**-1
+            Gf = k_f*H_q + Gf0                                  : second**-1
+            Gb = k_b*H_q + Gb0                                  : second**-1
+            f_v = (1-exp(-(v-E)/v0))/((v-E)/v1)                 : 1
+            f_phi = O_1+gam*O_2                                 : 1
+            I = g0*f_phi*f_v*(v-E)                              : amp
+            phi                                                 : metre**-2*second**-1 (shared)
+            Theta = int(phi > 0*phi)                            : 1 (shared)
+            '''
+
+    brian_phi_t = '''
+            dC_1/dt = Gd1*O_1 + Gb*C_2 + Ga3*O_2 - (Ga1+Gf)*C_1 : 1
+            dI_1/dt = Ga1*C_1 - Go1*I_1                         : 1
+            dO_1/dt = Go1*I_1 - Gd1*O_1                         : 1
+            dO_2/dt = Go2*I_2 - (Gd2+Ga3)*O_2                   : 1
+            dI_2/dt = Ga2*C_2 - Go2*I_2                         : 1        
+            C_2 = 1 - C_1 - I_1 - O_1 - O_2 - I_2               : 1
+            Theta = int(phi(t) > 0*phi(t))                      : 1 (shared)
+            H_p   = Theta*((phi(t)**p)/(phi(t)**p+phi_m**p))    : 1
+            H_q   = Theta*((phi(t)**q)/(phi(t)**q+phi_m**q))    : 1
+            Ga1   = k1*H_p                                      : second**-1
+            Ga2   = k2*H_p                                      : second**-1
+            Ga3   = k3*H_p                                      : second**-1
+            Gf    = k_f*H_q + Gf0                               : second**-1
+            Gb    = k_b*H_q + Gb0                               : second**-1
+            f_v   = (1-exp(-(v-E)/v0))/((v-E)/v1)               : 1
+            f_phi = O_1+gam*O_2                                 : 1
+            I     = g0*f_phi*f_v*(v-E)                          : amp
+            '''
+
+    def _calcGa1(self, phi):
+        #return self.a10*(phi/self.phi0)
+        return self.k1 * phi**self.p/(phi**self.p + self.phi_m**self.p)
+
+    def _calcGa2(self, phi):
+        #return self.b40*(phi/self.phi0)
+        return self.k2 * phi**self.p/(phi**self.p + self.phi_m**self.p)
+
+    def _calcGf(self, phi):
+        #return self.a30 + self.a31*np.log(1+(phi/self.phi0))
+        return self.Gf0 + self.k_f * phi**self.q/(phi**self.q + self.phi_m**self.q)
+
+    def setLight(self, phi):
+        if phi < 0:
+            phi = 0
+        self.phi = phi
+        self.Ga1 = self._calcGa1(phi)
+        self.Ga2 = self._calcGa2(phi)
+        self.Gf = self._calcGf(phi)
+        if config.verbose > 1:
+            self.dispRates()
+
+    def dispRates(self): # This needs rechecking
+        """Print photosensitive transition rates"""
+        print("Transition rates (phi={:.3g}): C1 --[Ga1={:.3g}]--> O1 --[Gf={:.3g}]--> O2".format(self.phi, self.Ga1, self.Gf))
+        #print("Transition rates (phi={:.3g}): O1 <--[Gb={:.3g}]-- O2 <--[Ga2={:.3g}]-- C2".format(self.phi, self.Gb, self.Ga2))
+
+    def solveStates(self, s_0, t, phi_t=None):
+        """Differential equations of the 6-state model to be solved by odeint"""
+        if phi_t is not None:
+            self.setLight(float(phi_t(t)))
+        C1, I1, O1, O2, I2, C2 = s_0  # Unpack state vector
+        dC1dt = -(self.Ga1+self.Gf)*C1 + self.Gd1*O1 + self.Ga3*O2 + self.Gb*C2
+        dI1dt =  self.Ga1*C1 - self.Go1*I1
+        dO1dt =  self.Go1*I1 - self.Gd1*O1
+        dO2dt = -(self.Ga3+self.Gd2)*O2 + self.Go2*I2
+        dI2dt = -self.Go2*I2 + self.Ga2*C2
+        dC2dt = self.Gf*C1 + self.Gd2*O2 - (self.Ga2+self.Gb)*C2
+        return np.array([dC1dt, dI1dt, dO1dt, dO2dt, dI2dt, dC2dt])
+
+    def jacobian(self, s_0, t, phi_t=None):
+        return np.array([[-(self.Ga1+self.Gf),  0,          self.Gd1,   self.Ga3,               0,          self.Gb],
+                         [self.Ga1,             -self.Go1,  0,          0,                      0,          0],
+                         [0,                    self.Go1,   -self.Gd1,  0,                      0,          0],
+                         [0,                    0,          0,          -(self.Ga3+self.Gd2),   self.Go2,   0],
+                         [0,                    0,          0,          0,                      -self.Go2,  self.Ga2],
+                         [self.Gf,              0,          0,          self.Gd2,               0,          -(self.Ga2+self.Gb)]])
+
+    def hessian(self, s_0, t):
+        """
+        Hessian matrix for scipy.optimize.minimize.
+        (Only for Newton-CG, dogleg, trust-ncg.)
+        H(f)_ij(X) = D_iD_jf(X)
+        """
+        return np.zeros((6, 6))
+
+    def calcSteadyState(self, phi):
+        self.setLight(phi)
+        Ga1 = self.Ga1
+        Go1 = self.Go1
+        Gf = self.Gf
+        Gd2 = self.Gd2
+        Gd1 = self.Gd1
+        Gb = self.Gb
+        Go2 = self.Go2
+        Ga2 = self.Ga2
+        Ga3 = self.Ga3
+        
+        denom = (Ga1*Ga2*Ga3*Gd1*Go2 + Ga1*Ga2*Ga3*Go1*Go2 + Ga1*Ga3*Gb*Gd1*Go2 + Ga1*Ga3*Gb*Go1*Go2 + Ga1*Gb*Gd1*Gd2*Go2 + Ga1*Gb*Gd2*Go1*Go2 + Ga2*Ga3*Gd1*Gf*Go1 + Ga2*Ga3*Gd1*Go1*Go2 + Ga2*Gd1*Gd2*Gf*Go1 + Ga2*Gd1*Gf*Go1*Go2 + Ga3*Gb*Gd1*Go1*Go2 + Ga3*Gd1*Gf*Go1*Go2 + Gb*Gd1*Gd2*Go1*Go2 + Gd1*Gd2*Gf*Go1*Go2)
+        C1ss = (Ga2*Ga3*Gd1*Go1*Go2 + Ga3*Gb*Gd1*Go1*Go2 + Gb*Gd1*Gd2*Go1*Go2)
+        I1ss = (Ga1*Ga2*Ga3*Gd1*Go2 + Ga1*Ga3*Gb*Gd1*Go2 + Ga1*Gb*Gd1*Gd2*Go2)
+        O1ss = (Ga1*Ga2*Ga3*Go1*Go2 + Ga1*Ga3*Gb*Go1*Go2 + Ga1*Gb*Gd2*Go1*Go2)
+        O2ss = (Ga2*Gd1*Gf*Go1*Go2)
+        I2ss = (Ga2*Ga3*Gd1*Gf*Go1 + Ga2*Gd1*Gd2*Gf*Go1)
+        C2ss = (Ga3*Gd1*Gf*Go1*Go2 + Gd1*Gd2*Gf*Go1*Go2)
+        self.steadyStates = np.array([C1ss, I1ss, O1ss, O2ss, I2ss, C2ss]) / denom
+        return self.steadyStates
+
+    def calcfphi(self, states=None):
+        """Calculate the conductance scalar from the photocycle"""
+        if states is None:
+            states = self.states
+        C1, I1, O1, O2, I2, C2 = states.T
+        gam = self.gam
+        return O1 + gam * O2
+
+    def calcSoln(self, t, s0=None):
+        raise NotImplementedError(self.nStates)
+
 
 models = OrderedDict([('3', RhO_3states), (3, RhO_3states),
                       ('4', RhO_4states), (4, RhO_4states),
