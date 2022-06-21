@@ -38,7 +38,10 @@ class RhodopsinModel(PyRhOobject):
     def __init__(self, params=None, rhoType=rhoType):
 
         if params is None:
-            params = modelParams[str(self.nStates)]
+            try:
+                params = modelParams[str(self.nStates)]
+            except:
+                pass
         self.rhoType = rhoType  # E.g. 'ChR2' or 'ArchT'
 
         self.setParams(params)
