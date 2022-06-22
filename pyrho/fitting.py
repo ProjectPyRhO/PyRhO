@@ -2242,6 +2242,11 @@ def fitModel(dataSet, nStates=3, params=None, postFitOpt=True, relaxFact=2, meth
         constrainedParams = ['Gd1', 'Gd2', 'Gf0', 'Gb0', 'Go1', 'Go2']
         #constrainedParams = ['Go1', 'Go2', 'Gf0', 'Gb0']
         #nonOptParams.append(['Gd1', 'Gd2'])
+    elif nStates == '6K':
+        fittedParams, miniObj = fit6Kstates(setPC, quickSet, runInd, vIndm70, fitParams, method)  # , verbose)
+        constrainedParams = ['Gd1', 'Gd2', 'Gf0', 'Go1', 'Go2', 'Gb']
+        #constrainedParams = ['Go1', 'Go2', 'Gf0', 'Gb0']
+        #nonOptParams.append(['Gd1', 'Gd2'])
     else:
         raise Exception('Invalid choice for nStates: {}!'.format(nStates))
 
