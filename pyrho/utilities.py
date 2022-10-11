@@ -655,8 +655,8 @@ def setCrossAxes(ax, zeroX=True, zeroY=False):
         ax.spines['bottom'].set_position('zero')  # x-axis
     # 'center' -> ('axes', 0.5)
     # 'zero'   -> ('data', 0.0)
-    ax.spines['left'].set_smart_bounds(True)
-    ax.spines['bottom'].set_smart_bounds(True)
+    #ax.spines['left'].set_smart_bounds(True)
+    #ax.spines['bottom'].set_smart_bounds(True)
     ax.xaxis.set_ticks_position('bottom')
     ax.yaxis.set_ticks_position('left')
     #ax.yaxis.set_major_formatter(mpl.ticker.ScalarFormatter(useMathText=True))
