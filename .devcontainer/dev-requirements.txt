@@ -2,6 +2,11 @@ numpy
 scipy
 # matplotlib-base  # conda-forge only
 matplotlib
+# for latex labels
+cm-super
+dvipng
+# for matplotlib anim
+ffmpeg
 # lmfit
 neuron
 brian2
