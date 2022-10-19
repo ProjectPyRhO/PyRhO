@@ -1,6 +1,7 @@
 numpy
 scipy
-matplotlib-base
+# matplotlib-base  # conda-forge only
+matplotlib
 # lmfit
 neuron
 brian2
