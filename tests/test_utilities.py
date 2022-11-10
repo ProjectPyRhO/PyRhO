@@ -7,8 +7,8 @@ from pyrho.utilities import texIt
 
 
 def test_tex_it():
-    assert texIt('\phi_\lambda') == '$\phi_\lambda$'
-    assert texIt('\phi_0') == '$\phi_0$'
+    assert texIt(r'\phi_\lambda') == r'$\phi_\lambda$'
+    assert texIt(r'\phi_0') == r'$\phi_0$'
 
 
 def test_calc_v1():
