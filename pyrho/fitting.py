@@ -1759,6 +1759,7 @@ def fitModels(dataSet, nStates=3, params=None, postFitOpt=True, relaxFact=2, met
 
         print("================================================================================\n")
 
+    return fitParams, miniObjs
 
 def fitModel(dataSet, nStates=3, params=None, postFitOpt=True, relaxFact=2, method=defMethod, postFitOptMethod=None):  # , verbose=config.verbose):
     """Fit a model (with initial parameters) to a dataset of optogenetic photocurrents"""
