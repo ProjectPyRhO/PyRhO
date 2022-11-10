@@ -240,7 +240,7 @@ class PhotoCurrent(object):
         #   self._idx_pulses_[p,0] = np.searchsorted(self.t, pulses[p,0], side="left")  # CHECK: last index where value <= t_on
         #   self._idx_pulses_[p,1] = np.searchsorted(self.t, pulses[p,1], side="left")  # CHECK: last index where value <= t_off
         #self._idx_pulses_ = np.array([[np.searchsorted(self.t, pulses[p,time]) for time in range(2)] for p in range(self.nPulses)])
-        self._idx_pulses_ = np.array([np.searchsorted(self.t, self.pulses[p, :]) for p in range(self.nPulses)], dtype=np.int)
+        self._idx_pulses_ = np.array([np.searchsorted(self.t, self.pulses[p, :]) for p in range(self.nPulses)], dtype=int)
 
         ### Record Experimental constants
         self.V = copy.copy(V)           # Clamp Voltage [mV]: None if no clamp was used
@@ -750,7 +750,7 @@ class PhotoCurrent(object):
         """
 
         offsetInd = len(self.getDelayPhase()[0]) - int(self.overlap)
-        peakInds = np.zeros((self.nPulses,), dtype=np.int)
+        peakInds = np.zeros((self.nPulses,), dtype=int)
         for p in range(self.nPulses):
             peakInds[p] = np.argmax(abs(self.getCycle(p)[0])) + offsetInd
             offsetInd += len(self.getCycle(p)[0]) - int(self.overlap)
