@@ -1,9 +1,9 @@
-import pytest
+# import pytest
 import numpy as np
 #from .. import pyrho
 #from pyrho import utilities
-from pyrho.utilities import *
-from pyrho.utilities import texIt
+from pyrho.utilities import (texIt, calcV1, getIndex, flux2irrad, irrad2flux,
+                            times2cycles, cycles2times, round_sig)
 
 
 def test_tex_it():
