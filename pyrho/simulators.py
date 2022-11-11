@@ -429,10 +429,12 @@ class simNEURON(Simulator):
         # self.h.cvode.atol(0.000001)
         # self.h.cvode.rtol(0.000001)
         if config.verbose > 0:
-            print('Integrator tolerances: absolute=', self.h.cvode.atol(),
-                                        ' relative=', self.h.cvode.rtol())
+            self.cvode = h.CVode()
+            print('Integrator tolerances: absolute=', self.cvode.atol(),
+                                        ' relative=', self.cvode.rtol())
 
-        self.h.v_init = params['v_init'].value
+        # self.h.v_init = params['v_init'].value
+        self.h.finitialize(params['v_init'].value)
 
         ### TODO: Move into prepare() in order to insert the correct type of mechanism (continuous or discrete) according to the protocol
         #for states, mod in self.mechanisms.items():
@@ -441,13 +443,16 @@ class simNEURON(Simulator):
         #if not Prot.squarePulse:
         #self.mod += 'c'
 
-        self.buildCell(params['cell'].value)
+        # self.buildCell(params['cell'].value)
+        self.build_cell()
         if config.verbose > 0:
             self.h.topology()  # Print topology
         self.transduce(self.RhO, expProb=params['expProb'].value)
         self.rhoParams = copy.deepcopy(modelParams[str(self.RhO.nStates)])
         self.RhO.exportParams(self.rhoParams)
         self.setOpsinParams(self.rhoList, self.rhoParams)  # self.RhO, modelParams[str(self.RhO.nStates)])
+        print(recInd)
+        print(self.rhoList)
         self.rhoRec = self.rhoList[recInd]  # Choose a rhodopsin to record
         self.setRecords(self.rhoRec, params['Vcomp'].value, self.RhO)
         self.Vclamp = params['Vclamp'].value
@@ -497,6 +502,13 @@ class simNEURON(Simulator):
         self.Vms = Prot.genContainer()
         return  # self.h.dt
 
+    def build_cell(self):
+        self.cell = [self.h.Section(name='soma')]
+        self.nSecs = len(self.cell)
+        if config.verbose > 0:
+            print(self.h.topology())
+            print(f'Total sections: {self.nSecs}')
+
     def buildCell(self, scriptList=[]):
         """Pass a list of hoc or python files in the order in which they are to
         be processed."""
@@ -508,12 +520,13 @@ class simNEURON(Simulator):
             #name, ext = os.path.splitext(script)
             ext = script.split('.')[-1]
             if not os.path.isfile(os.path.join(cwd, script)):
-                script = os.path.join(os.environ['NRN_NMODL_PATH'], script)
+                # script = os.path.join(os.environ['NRN_NMODL_PATH'], script)
+                script = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'NEURON', script)
 
             if config.verbose > 0:
                 print('Loading ', script)
 
-            if ext == 'hoc' or ext == 'HOC':
+            if ext.lower() == 'hoc':
                 self.h.load_file(script)
                 '''
                 elif ext == 'py':
