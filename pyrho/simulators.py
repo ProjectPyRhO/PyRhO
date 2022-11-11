@@ -963,8 +963,8 @@ class simNEURON(Simulator):
         setCrossAxes(axV, zeroX=False, zeroY=True)
         axV.get_xaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
         axV.get_yaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
-        axV.grid(b=True, which='minor', axis='both', linewidth=.2)
-        axV.grid(b=True, which='major', axis='both', linewidth=1)
+        axV.grid(visible=True, which='minor', axis='both', linewidth=.2)
+        axV.grid(visible=True, which='major', axis='both', linewidth=1)
 
         if len(Prot.PD.legLabels) > 0 and Prot.PD.legLabels[0] is not '':
             plt.legend(Prot.PD.legLabels)
@@ -1309,8 +1309,8 @@ class simBrian(Simulator):
         setCrossAxes(axV, zeroX=False, zeroY=True)
         axV.get_xaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
         axV.get_yaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
-        axV.grid(b=True, which='minor', axis='both', linewidth=.2)
-        axV.grid(b=True, which='major', axis='both', linewidth=1)
+        axV.grid(visible=True, which='minor', axis='both', linewidth=.2)
+        axV.grid(visible=True, which='major', axis='both', linewidth=1)
 
         if len(Prot.PD.legLabels) > 0 and Prot.PD.legLabels[0] is not '':
             plt.legend(Prot.PD.legLabels)

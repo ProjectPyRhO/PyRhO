@@ -212,8 +212,8 @@ class RhodopsinModel(PyRhOobject):
         # Tick locators take too long with log scales
         #axR.get_xaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
         #axR.get_yaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
-        axR.grid(b=True, which='minor', axis='both', linewidth=.2)
-        axR.grid(b=True, which='major', axis='both', linewidth=1)
+        axR.grid(visible=True, which='minor', axis='both', linewidth=.2)
+        axR.grid(visible=True, which='major', axis='both', linewidth=1)
 
         plt.tight_layout()
         plt.show()

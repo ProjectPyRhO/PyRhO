@@ -416,8 +416,8 @@ class protStep(Protocol):
     def addAnnotations(self):
         self.axI.get_xaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
         self.axI.get_yaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
-        self.axI.grid(b=True, which='minor', axis='both', linewidth=.2)
-        self.axI.grid(b=True, which='major', axis='both', linewidth=1)
+        self.axI.grid(visible=True, which='minor', axis='both', linewidth=.2)
+        self.axI.grid(visible=True, which='major', axis='both', linewidth=1)
 
 
 class protSinusoid(Protocol):
@@ -1170,8 +1170,8 @@ class protRectifier(Protocol):
                       position=(config.xLabelPos, 0), ha='right')
         # plt.xlim((min(Vs), max(Vs)))
 
-        self.axI.grid(b=True, which='minor', axis='both', linewidth=.2)
-        self.axI.grid(b=True, which='major', axis='both', linewidth=1)
+        self.axI.grid(visible=True, which='minor', axis='both', linewidth=.2)
+        self.axI.grid(visible=True, which='major', axis='both', linewidth=1)
 
         plt.tight_layout()
 
