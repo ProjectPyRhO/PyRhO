@@ -3,6 +3,7 @@ import numpy as np
 from pyrho import Parameters, fitModels
 from pyrho.datasets import loadChR2
 
+
 def test_fit_3_state_model():
     init_params = Parameters()
     init_params.add_many(
