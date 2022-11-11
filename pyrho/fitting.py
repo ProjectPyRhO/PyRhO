@@ -48,16 +48,16 @@ defMethod = methods[3]
 
 ##### Development ideas #####
 
-def run(RhO, t):
-    # Ga = RhO.Ga; Gd = RhO.Gd; Gr = RhO.Gr
-    # if not RhO.useAnalyticSoln or 2*(Ga*Gd + Ga*Gr + Gd*Gr) > (Ga**2 + Gd**2 + Gr**2):
-        # soln = odeint(RhO.solveStates, RhO.states[-1,:], t, Dfun=RhO.jacobian)
+def solve(rho, t):
+    # Ga = rho.Ga; Gd = rho.Gd; Gr = rho.Gr
+    # if not rho.useAnalyticSoln or 2*(Ga*Gd + Ga*Gr + Gd*Gr) > (Ga**2 + Gd**2 + Gr**2):
+        # soln = odeint(rho.solveStates, rho.states[-1,:], t, Dfun=rho.jacobian)
     # else:
-        # soln = RhO.calcSoln(t, RhO.states[-1,:])
+        # soln = rho.calcSoln(t, rho.states[-1,:])
     try:
-        soln = RhO.calcSoln(t, RhO.states[-1, :])
+        soln = rho.calcSoln(t, rho.states[-1, :])
     except:  # Any exception e.g. NotImplementedError or ValueError
-        soln = odeint(RhO.solveStates, RhO.states[-1, :], t, Dfun=RhO.jacobian)
+        soln = odeint(rho.solveStates, rho.states[-1, :], t, Dfun=rho.jacobian)
     return soln
 
 
