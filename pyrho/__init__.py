@@ -85,41 +85,50 @@ if __name__ == '__main__':
 
 # TODO Move everything except imports elsewhere
 
+# TODO: Rename global models, protocols and simulators dictionaries
 
-def runAll(listOfModels=[6], simList=['Python']):
+def run(mods=6, prots='step', sims='Python'):
     """
     Run all protocols on a list of models with default parameters.
 
     Parameters
     ----------
-    listOfModels : int, str, list
+    mods : int, str, list
         Individual or list of integers or strings specifying the models to run
-        e.g. [3, 4, 6], 3, '4', ['4', '6'], modelList
+        e.g. [3, 4, 6], 3, '4', ['4', '6'].
 
-    simList : str, list
-        List of strings of the names of simulatrs to use (default: 'Python').
-        e.g. ['Python', 'NEURON']
+    prots : str, list
+        String or list of strings of the names of protocols to run (default: 'step').
+        e.g. 'ramp', ['chirp', 'sinusoid'].
+
+    sims : str, list
+        List of strings of the names of simulators to use (default: 'Python').
+        e.g. 'Brian', ['Python', 'NEURON'].
     """
 
-    if not isinstance(listOfModels, (list, tuple)):
-        listOfModels = [listOfModels]  # ints or strs
-    listOfModels = [str(m) for m in listOfModels]
+    if not isinstance(mods, (list, tuple)):
+        assert isinstance(mods, (int, str))
+        mods = [mods]  # ints or strs
+    mods = [str(m) for m in mods]
 
-    if not isinstance(simList, (list, tuple)):
-        simList = [simList]
+    if not isinstance(prots, (list, tuple)):
+        assert isinstance(prots, str)  # TODO: or Protocol class
+        prots = [prots]
 
-    for model in listOfModels:
-        # Select generative model
-        RhO = models[model]()
-        for prot in protocols:
-            # Select simulation protocol
-            Prot = protocols[prot]()
-            for sim in simList:  # ['Python']:#simulators:
-                Sim = simulators[sim](Prot, RhO)
-                print(f"\nUsing {sim} to run Protocol '{prot}' on the {model}-state model...")
+    if not isinstance(sims, (list, tuple)):
+        assert isinstance(sims, str)
+        sims = [sims]
+
+    for model in mods:
+        rho = models[model]()  # Select generative model
+        for protocol in prots:
+            prot = protocols[protocol]()  # Select simulation protocol
+            for simulator in sims:
+                sim = simulators[simulator](prot, rho)
+                print(f"\nUsing {simulator} to run Protocol '{protocol}' on the {model}-state model...")
                 print(_DASH_LINE, '\n')
-                Sim.run()
-                Sim.plot()
+                sim.run()
+                sim.plot()
                 print("\nFinished!")
                 print(_DOUB_DASH_LINE, '\n\n')
 
