@@ -87,7 +87,7 @@ if __name__ == '__main__':
 
 # TODO: Rename global models, protocols and simulators dictionaries
 
-def run(mods=6, prots='step', sims='Python'):
+def run(mods=6, prots='step', sims='Python', plot=True):
     """
     Run all protocols on a list of models with default parameters.
 
@@ -119,6 +119,7 @@ def run(mods=6, prots='step', sims='Python'):
         assert isinstance(sims, str)
         sims = [sims]
 
+    results = {simulator: {protocol: {} for protocol in prots} for simulator in sims}
     for model in mods:
         rho = models[model]()  # Select generative model
         for protocol in prots:
@@ -127,10 +128,12 @@ def run(mods=6, prots='step', sims='Python'):
                 sim = simulators[simulator](prot, rho)
                 print(f"\nUsing {simulator} to run Protocol '{protocol}' on the {model}-state model...")
                 print(_DASH_LINE, '\n')
-                sim.run()
-                sim.plot()
+                results[simulator][protocol][model] = sim.run()
+                if plot:
+                    sim.plot()
                 print("\nFinished!")
                 print(_DOUB_DASH_LINE, '\n\n')
+    return results
 
 
 def print_versions():
