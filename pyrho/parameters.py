@@ -91,15 +91,15 @@ modelFits = OrderedDict([('3', OrderedDict([('ChR2', Parameters()),
 
 # Replace with defaultdict with default=key
 modelLabels = OrderedDict([('E', 'E'), ('g0', 'g_0'), ('p', 'p'),
-                           ('k_a', 'k_a'), ('k_r', 'k_r'), ('phi_m', '\phi_m'),
-                           ('Gd', 'G_d'), ('Gr0', 'G_{r0}'),
+                           ('k_a', 'k_a'), ('k_r', 'k_r'), ('phi_m', r'\phi_m'),
+                           ('Gd', 'G_d'), ('Gr0', r'G_{r0}'),
                            ('v0', 'v_0'), ('v1', 'v_1'),
-                           ('gam', '\gamma'), ('k1', 'k_1'), ('k2', 'k_2'),
-                           ('Gf0', 'G_{f0}'), ('Gb0', 'G_{b0}'),
+                           ('gam', r'\gamma'), ('k1', 'k_1'), ('k2', 'k_2'),
+                           ('Gf0', r'G_{f0}'), ('Gb0', r'G_{b0}'),
                            ('k_f', 'k_f'), ('k_b', 'k_b'), ('q', 'q'),
-                           ('Gd1', 'G_{d1}'), ('Gd2', 'G_{d2}'),
-                           ('Go1', 'G_{o1}'), ('Go2', 'G_{o2}'),
-                           ('phi', '\phi'), ('v', 'v')])
+                           ('Gd1', r'G_{d1}'), ('Gd2', r'G_{d2}'),
+                           ('Go1', r'G_{o1}'), ('Go2', r'G_{o2}'),
+                           ('phi', r'\phi'), ('v', 'v')])
 
 
 modelUnits = OrderedDict([('g0', pS), ('gam', 1),
@@ -520,22 +520,22 @@ protParams = OrderedDict([('step', PyRhOparameters()),
 
 protList = list(protParams)  # List of keys #This could be removed
 
-protParamLabels = OrderedDict([('phis', '\mathbf{\phi}'),
-                               ('Vs', '\mathbf{\mathrm{V}}'),
-                               ('Dt_delay', '\Delta t_{delay}'),
-                               ('Dt_on', '\Delta t_{on}'),
-                               ('Dt_total', 'T_{total}'),
+protParamLabels = OrderedDict([('phis', r'\mathbf{\phi}'),
+                               ('Vs', r'\mathbf{\mathrm{V}}'),
+                               ('Dt_delay', r'\Delta t_{delay}'),
+                               ('Dt_on', r'\Delta t_{on}'),
+                               ('Dt_total', r'T_{total}'),
                                ('cycles', 'cycles'),
-                               ('phi0', '\phi_0'),
-                               ('fs', '\mathbf{f}'),
+                               ('phi0', r'\phi_0'),
+                               ('fs', r'\mathbf{f}'),
                                ('f0', 'f_0'),
                                ('fT', 'f_T'),
                                ('linear', 'linear'),
-                               ('startOn', '\phi_{t=0}>0'),
-                               #('phi_ton', '\phi_{t=0}'),
-                               ('pDs', '\mathbf{\Delta t_{on}}'),
-                               ('Dt_IPIs', '\mathbf{\Delta t_{off}}'),
-                               ('phi_ft', '\phi(t)')])
+                               ('startOn', r'\phi_{t=0}>0'),
+                               #('phi_ton', r'\phi_{t=0}'),
+                               ('pDs', r'\mathbf{\Delta t_{on}}'),
+                               ('Dt_IPIs', r'\mathbf{\Delta t_{off}}'),
+                               ('phi_ft', r'\phi(t)')])
 
 protUnitLabels = defaultdict(lambda: '')
 protUnitLabels['phis'] = 'ph./mm^2/s'
@@ -589,64 +589,64 @@ protParamNotes['recovery']['Dt_total'] = 'Total simulation duration'
 
 smallSignalAnalysis = ['delta', 'step', 'sinusoid']
 
-protParams['custom'].add_many(('phis',  [1e16,1e17],        0,      None,   mole*mm**-2*second**-1, '\mathbf{\phi}', 'List of flux values'), #'photons/s/mm^2'
-                            ('Vs',      [-70,-20,10],       None,   None,   mV, '\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'), #'mV'
-                            ('Dt_delay',25,                 0,      1e9,    ms, '\Delta t_{delay}', 'Delay duration before the first pulse'), #'ms'
+protParams['custom'].add_many(('phis',  [1e16,1e17],        0,      None,   mole*mm**-2*second**-1, r'\mathbf{\phi}', 'List of flux values'), #'photons/s/mm^2'
+                            ('Vs',      [-70,-20,10],       None,   None,   mV, r'\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'), #'mV'
+                            ('Dt_delay',25,                 0,      1e9,    ms, r'\Delta t_{delay}', 'Delay duration before the first pulse'), #'ms'
                             ('cycles',  [[150.,50.]],       0,      None,   ms, 'cycles',           'List of [on, off] durations for each pulse'))#, #'ms'#,
 
-protParams['step'].add_many(('phis',    [1e16,1e17],        0,      None,   mole*mm**-2*second**-1, '\mathbf{\phi}', 'List of flux values'), #'photons/s/mm^2'
-                            ('Vs',      [-70,-40,-10,10,40,70], None,   None,   mV, '\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'), #'mV'
-                            ('Dt_delay',25,                 0,      1e9,    ms, '\Delta t_{delay}', 'Delay duration before the first pulse'), #'ms'
+protParams['step'].add_many(('phis',    [1e16,1e17],        0,      None,   mole*mm**-2*second**-1, r'\mathbf{\phi}', 'List of flux values'), #'photons/s/mm^2'
+                            ('Vs',      [-70,-40,-10,10,40,70], None,   None,   mV, r'\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'), #'mV'
+                            ('Dt_delay',25,                 0,      1e9,    ms, r'\Delta t_{delay}', 'Delay duration before the first pulse'), #'ms'
                             ('cycles',  [[150.,100.]],      0,      None,   ms, 'cycles',           'List of [on, off] durations for each pulse')) #'ms'
 
-protParams['sinusoid'].add_many(('phis',[1e12],             0,      None,   mole*mm**-2*second**-1, '\mathbf{\phi}', 'List of flux values'), #'photons/s/mm^2'
-                            ('phi0',    [0],                None,   None,   mole*mm**-2*second**-1, '\phi_0',        'Constant offset for flux'), #'photons/s/mm^2'
-                            ('startOn', True,               False,  True,   1,  '\phi_{t=0}>0',         'Start at maximum flux (else minimum)'),
-                            ('Vs',      [-70],              None,   None,   mV, '\mathbf{\mathrm{V}}',  'List of voltage clamp values (if applied)'), #'mV'
-                            ('fs',      [0.1,0.5,1,5,10],   0,      None,   Hz, '\mathbf{f}',           'List of modulation frequencies'), #'Hz' #50, 100, 500, 1000
-                            ('Dt_delay',25,                 0,      1e9,    ms, '\Delta t_{delay}',     'Delay duration before the first pulse'), #'ms'
+protParams['sinusoid'].add_many(('phis',[1e12],             0,      None,   mole*mm**-2*second**-1, r'\mathbf{\phi}', 'List of flux values'), #'photons/s/mm^2'
+                            ('phi0',    [0],                None,   None,   mole*mm**-2*second**-1, r'\phi_0',        'Constant offset for flux'), #'photons/s/mm^2'
+                            ('startOn', True,               False,  True,   1,  r'\phi_{t=0}>0',         'Start at maximum flux (else minimum)'),
+                            ('Vs',      [-70],              None,   None,   mV, r'\mathbf{\mathrm{V}}',  'List of voltage clamp values (if applied)'), #'mV'
+                            ('fs',      [0.1,0.5,1,5,10],   0,      None,   Hz, r'\mathbf{f}',           'List of modulation frequencies'), #'Hz' #50, 100, 500, 1000
+                            ('Dt_delay',25,                 0,      1e9,    ms, r'\Delta t_{delay}',     'Delay duration before the first pulse'), #'ms'
                             ('cycles',  [[10000.,50.]],     0,      None,   ms, 'cycles',               'List of [on, off] durations for each pulse')) #'ms'
 
-protParams['chirp'].add_many(('phis',   [1e12],             None,   None,   mole*mm**-2*second**-1, '\mathbf{\phi}', 'List of flux values'), # 'photons/s/mm^2'
-                            ('phi0',    [0],                None,   None,   mole*mm**-2*second**-1, '\phi_0',        'Constant offset for flux'), # 'photons/s/mm^2'
+protParams['chirp'].add_many(('phis',   [1e12],             None,   None,   mole*mm**-2*second**-1, r'\mathbf{\phi}', 'List of flux values'), # 'photons/s/mm^2'
+                            ('phi0',    [0],                None,   None,   mole*mm**-2*second**-1, r'\phi_0',        'Constant offset for flux'), # 'photons/s/mm^2'
                             ('linear',  True,               False,  True,   1,  'linear',           'Linear frequency sweep (else exponential)'), # False := exponential
-                            ('startOn', False,              False,  True,   1,  '\phi_{t=0}>0',     'Start at maximum flux (else minimum)'),
-                            ('Vs',      [-70],              None,   None,   mV, '\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'), # 'mV'
-                            ('Dt_delay',100,                0,      1e9,    ms, '\Delta t_{delay}', 'Delay duration before the first pulse'), # 'ms'
+                            ('startOn', False,              False,  True,   1,  r'\phi_{t=0}>0',     'Start at maximum flux (else minimum)'),
+                            ('Vs',      [-70],              None,   None,   mV, r'\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'), # 'mV'
+                            ('Dt_delay',100,                0,      1e9,    ms, r'\Delta t_{delay}', 'Delay duration before the first pulse'), # 'ms'
                             ('cycles',  [[10000.,100.]],    0,      None,   ms, 'cycles',           'List of [on, off] durations for each pulse'), # 'ms'
                             ('f0',      0.1,                0,      None,   Hz, 'f_0',              'Starting frequency'), # 'Hz'
                             ('fT',      1000,               0,      None,   Hz, 'f_T',              'Ending frequency')) # 'Hz'
 
-protParams['ramp'].add_many(('phis',    [1e16,1e17,1e18],   None,   None,   mole*mm**-2*second**-1, '\mathbf{\phi}', 'List of flux values'), # 'photons/s/mm^2' #1e12,1e13,1e14,1e15,
-                            ('phi0',    0,                  None,   None,   mole*mm**-2*second**-1, '\phi_0',        'Constant offset for flux'), # 'photons/s/mm^2'
-                            ('Vs',      [-70],              None,   None,   mV, '\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'), # 'mV'
-                            ('Dt_delay',25,                 0,      1e9,    ms, '\Delta t_{delay}', 'Delay duration before the first pulse'), # 'ms'
+protParams['ramp'].add_many(('phis',    [1e16,1e17,1e18],   None,   None,   mole*mm**-2*second**-1, r'\mathbf{\phi}', 'List of flux values'), # 'photons/s/mm^2' #1e12,1e13,1e14,1e15,
+                            ('phi0',    0,                  None,   None,   mole*mm**-2*second**-1, r'\phi_0',        'Constant offset for flux'), # 'photons/s/mm^2'
+                            ('Vs',      [-70],              None,   None,   mV, r'\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'), # 'mV'
+                            ('Dt_delay',25,                 0,      1e9,    ms, r'\Delta t_{delay}', 'Delay duration before the first pulse'), # 'ms'
                             ('cycles',  [[250.,25.]],       0,      None,   ms, 'cycles',           'List of [on, off] durations for each pulse')) # 'ms'#,
 
-protParams['delta'].add_many(('phis',   [1e20],             None,   None,   mole*mm**-2*second**-1, '\mathbf{\phi}', 'List of flux values'), # 'photons/s/mm^2'
-                            ('Vs',      [-70],              None,   None,   mV, '\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'), # 'mV'
-                            ('Dt_delay',5,                  0,      1e9,    ms, '\Delta t_{delay}', 'Delay duration before the first pulse'), # 'ms'
-                            ('Dt_on',   1e-3,               0,      1e9,    ms, '\Delta t_{on}',    'On-phase duration'), # 'ms'
-                            ('Dt_total',25.,                0,      None,   ms, 'T_{total}',        'Total simulation duration')) # 'ms'
+protParams['delta'].add_many(('phis',   [1e20],             None,   None,   mole*mm**-2*second**-1, r'\mathbf{\phi}', 'List of flux values'), # 'photons/s/mm^2'
+                            ('Vs',      [-70],              None,   None,   mV, r'\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'), # 'mV'
+                            ('Dt_delay',5,                  0,      1e9,    ms, r'\Delta t_{delay}', 'Delay duration before the first pulse'), # 'ms'
+                            ('Dt_on',   1e-3,               0,      1e9,    ms, r'\Delta t_{on}',    'On-phase duration'), # 'ms'
+                            ('Dt_total',25.,                0,      None,   ms, r'T_{total}',        'Total simulation duration')) # 'ms'
 
-protParams['rectifier'].add_many(('phis',[1e16],            None,   None,   mole*mm**-2*second**-1, '\mathbf{\phi}', 'List of flux values'), # 'photons/s/mm^2' # Change to 1e17?
-                            ('Vs',      [-100,-70,-40,-10,20,50,80],None,None,   mV, '\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'), # 'mV' #[-100,-80,-60,-40,-20,0,20,40,60,80]
-                            ('Dt_delay',50,                 0,      1e9,    ms, '\Delta t_{delay}', 'Delay duration before the first pulse'), # 'ms'
+protParams['rectifier'].add_many(('phis',[1e16],            None,   None,   mole*mm**-2*second**-1, r'\mathbf{\phi}', 'List of flux values'), # 'photons/s/mm^2' # Change to 1e17?
+                            ('Vs',      [-100,-70,-40,-10,20,50,80],None,None,   mV, r'\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'), # 'mV' #[-100,-80,-60,-40,-20,0,20,40,60,80]
+                            ('Dt_delay',50,                 0,      1e9,    ms, r'\Delta t_{delay}', 'Delay duration before the first pulse'), # 'ms'
                             ('cycles',  [[250.,100.]],      None,   None,   ms, 'cycles',           'List of [on, off] durations for each pulse')) # 'ms' #,
 
-protParams['shortPulse'].add_many(('phis',[1.5e15],         None,   None,   mole*mm**-2*second**-1, '\mathbf{\phi}', 'List of flux values'), # 'photons/s/mm^2' #1e12
-                            ('Vs',      [-70],              None,   None,   mV, '\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'), # 'mV'
-                            ('Dt_delay',25,                 0,      None,   ms, '\Delta t_{delay}', 'Delay duration before the first pulse'), # 'ms'
-                            ('pDs',     [1,2,3,5,8,10,20],  0,      None,   ms, '\mathbf{\Delta t_{on}}',   'List of pulse on-phase durations'), # 'ms' # [0.1, 0.2, 0.5, 1, 2, 5, 10]
-                            ('Dt_total',100.,               0,      None,   ms, 'T_{total}',        'Total simulation duration')) # 'ms'
+protParams['shortPulse'].add_many(('phis',[1.5e15],         None,   None,   mole*mm**-2*second**-1, r'\mathbf{\phi}', 'List of flux values'), # 'photons/s/mm^2' #1e12
+                            ('Vs',      [-70],              None,   None,   mV, r'\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'), # 'mV'
+                            ('Dt_delay',25,                 0,      None,   ms, r'\Delta t_{delay}', 'Delay duration before the first pulse'), # 'ms'
+                            ('pDs',     [1,2,3,5,8,10,20],  0,      None,   ms, r'\mathbf{\Delta t_{on}}',   'List of pulse on-phase durations'), # 'ms' # [0.1, 0.2, 0.5, 1, 2, 5, 10]
+                            ('Dt_total',100.,               0,      None,   ms, r'T_{total}',        'Total simulation duration')) # 'ms'
 
-protParams['recovery'].add_many(('phis',[1e17],             None,   None,   mole*mm**-2*second**-1, '\mathbf{\phi}', 'List of flux values'), # 'photons/s/mm^2'
-                            ('Vs',      [-70],              None,   None,   mV, '\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'), # 'mV'
-                            ('Dt_delay',100,                0,      None,   ms, '\Delta t_{delay}', 'Delay duration before the first pulse'), # 'ms'
-                            ('Dt_on',   100,                0,      None,   ms, '\Delta t_{on}',    'On-phase duration'), # 'ms'
-                            ('Dt_IPIs',[500,1000,1500,2500,5000,7500,10000],None,None,ms,  '\mathbf{\Delta t_{off}}', 'List of pulse off-phase durations'), # 'ms'
+protParams['recovery'].add_many(('phis',[1e17],             None,   None,   mole*mm**-2*second**-1, r'\mathbf{\phi}', 'List of flux values'), # 'photons/s/mm^2'
+                            ('Vs',      [-70],              None,   None,   mV, r'\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'), # 'mV'
+                            ('Dt_delay',100,                0,      None,   ms, r'\Delta t_{delay}', 'Delay duration before the first pulse'), # 'ms'
+                            ('Dt_on',   100,                0,      None,   ms, r'\Delta t_{on}',    'On-phase duration'), # 'ms'
+                            ('Dt_IPIs',[500,1000,1500,2500,5000,7500,10000],None,None,ms,  r'\mathbf{\Delta t_{off}}', 'List of pulse off-phase durations'), # 'ms'
                             #('Dt_IPIs',[0.5,1,1.5,2.5,5,7.5,10],None,None,seconds), # 'ms'
-                            ('Dt_total',12000,              0,      None,   ms, 'T_{total}',        'Total simulation duration')) # 'ms'
+                            ('Dt_total',12000,              0,      None,   ms, r'T_{total}',        'Total simulation duration')) # 'ms'
 
 
 simUnitLabels = defaultdict(lambda: '')
