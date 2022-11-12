@@ -327,7 +327,7 @@ class PyRhOparameters(Parameters):
     #     return OrderedDict(((p.name, p.value) for p in self.values()))
 
 
-class PyRhOparameter(object):
+class PyRhOparameter(Parameter):
 
     def __init__(self, name=None, value=None, min=-np.inf, max=np.inf,
                  units=None, latex=None, descr=None):  # , unitsLabel=None
