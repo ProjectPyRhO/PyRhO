@@ -102,10 +102,12 @@ setup(
         # Supported Python versions
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        # 3.6 EOL: 23/12/21
-        'Programming Language :: Python :: 3.6',
+        # 3.7 EOL: 27/6/23
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
         'Framework :: IPython',
         'Natural Language :: English',
         'Operating System :: OS Independent',
