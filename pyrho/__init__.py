@@ -124,9 +124,9 @@ def run(mods=6, prots='step', sims='Python', plot=True):
     for model in mods:
         rho = models[model]()  # Select generative model
         for protocol in prots:
-            prot = protocols[protocol]()  # Select simulation protocol
+            pro = protocols[protocol]()  # Select simulation protocol
             for simulator in sims:
-                sim = simulators[simulator](prot, rho)
+                sim = simulators[simulator](pro, rho)
                 print(f"\nUsing {simulator} to run Protocol '{protocol}' on the {model}-state model...")
                 print(_DASH_LINE, '\n')
                 results[simulator][protocol][model] = sim.run()
