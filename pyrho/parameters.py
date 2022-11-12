@@ -231,80 +231,100 @@ unitPrefixes = {}  # Use a units library to convert between different prefixes
 #class Parameters(OrderedDict):
 class PyRhOparameters(Parameters):
     '''These classes are adapted from LMFIT since changes between
-    0.8.0 and 0.9.2 stopped to ability to set lists as values'''
-    def __deepcopy__(self, memo):
-        _pars = PyRhOparameters()
+    0.8.0 and 0.9.2 removeded the ability to set lists as values.
 
-        # we're just about to add a lot of Parameter objects to the newly
-        parameter_list = []
-        for key, par in self.items():
-            if isinstance(par, PyRhOparameter):
-                param = PyRhOparameter(name=par.name,
-                                       value=par.value,
-                                       min=par.min,
-                                       max=par.max)
-                #param.vary = par.vary
-                #param.stderr = par.stderr
-                #param.correl = par.correl
-                #param.init_value = par.init_value
-                #param.expr = par.expr
-                parameter_list.append(param)
+    Further changes made to work with 1.0.3 - subclassing PyRhOParameter from 
+    Parameter with a fix to add_many and removing overriden methods. 
 
-        _pars.add_many(*parameter_list)
+    NOTE: Extra symbols e.g. latex labels may need special overridden methods
+    for un/pickling.
+    '''
 
-        return _pars
+    # def __deepcopy__(self, memo):
+    #     # _pars = PyRhOparameters()
+    #     _pars = self.__class__()
 
-    def __setitem__(self, key, par):
-        #if key not in self:
-        #    if not valid_symbol_name(key):
-        #        raise KeyError("'%s' is not a valid Parameters name" % key)
-        if par is not None and not isinstance(par, (Parameter, PyRhOparameter)):
-            raise ValueError("'%s' is not a Parameter" % par)
-        OrderedDict.__setitem__(self, key, par)
-        par.name = key
-        #par._expr_eval = self._asteval
-        #self._asteval.symtable[key] = par.value
+    #     # we're just about to add a lot of Parameter objects to the newly
+    #     parameter_list = []
+    #     for key, par in self.items():
+    #         if isinstance(par, PyRhOparameter):
+    #             param = PyRhOparameter(name=par.name,
+    #                                    value=par.value,
+    #                                    min=par.min,
+    #                                    max=par.max)
+    #             #param.vary = par.vary
+    #             #param.stderr = par.stderr
+    #             #param.correl = par.correl
+    #             #param.init_value = par.init_value
+    #             #param.expr = par.expr
+    #             parameter_list.append(param)
+
+    #     _pars.add_many(*parameter_list)
+
+    #     return _pars
+
+    # def __setitem__(self, key, par):
+    #     #if key not in self:
+    #     #    if not valid_symbol_name(key):
+    #     #        raise KeyError("'%s' is not a valid Parameters name" % key)
+    #     if par is not None and not isinstance(par, (Parameter, PyRhOparameter)):
+    #         raise ValueError("'%s' is not a Parameter" % par)
+    #     OrderedDict.__setitem__(self, key, par)
+    #     par.name = key
+    #     #par._expr_eval = self._asteval
+    #     #self._asteval.symtable[key] = par.value
 
     def add_many(self, *parlist):
-        """
-        Convenience function for adding a list of Parameters.
+        """Add many parameters, using a sequence of tuples.
         Parameters
         ----------
-        parlist : sequence
-            A sequence of tuples, or a sequence of `Parameter` instances. If it
-            is a sequence of tuples, then each tuple must contain at least the
-            name. The order in each tuple is the following:
-                name, value, vary, min, max, expr
-        Example
-        -------
-        p = Parameters()
-        # add a sequence of tuples
-        p.add_many( (name1, val1, True, None, None, None),
-                    (name2, val2, True,  0.0, None, None),
-                    (name3, val3, False, None, None, None),
-                    (name4, val4))
-        # add a sequence of Parameter
-        f = Parameter('name5', val5)
-        g = Parameter('name6', val6)
-        p.add_many(f, g)
-        """
-        for para in parlist:
-            if isinstance(para, PyRhOparameter):
-                self.__setitem__(para.name, para)
-            else:
-                param = PyRhOparameter(*para)
-                self.__setitem__(param.name, param)
-
-    def valuesdict(self):
-        """
-        Returns
-        -------
-        An ordered dictionary of name:value pairs for each Parameter.
-        This is distinct from the Parameters itself, as it has values of
-        the Parameter values, not the full Parameter object.
+        *parlist : :obj:`sequence` of :obj:`tuple` or Parameter
+            A sequence of tuples, or a sequence of `Parameter` instances.
+            If it is a sequence of tuples, then each tuple must contain at
+            least a `name`. The order in each tuple must be
+            ``(name, value, vary, min, max, expr, brute_step)``.
+        Examples
+        --------
+        >>>  params = Parameters()
+        # add with tuples: (NAME VALUE VARY MIN  MAX  EXPR  BRUTE_STEP)
+        >>> params.add_many(('amp', 10, True, None, None, None, None),
+        ...                 ('cen', 4, True, 0.0, None, None, None),
+        ...                 ('wid', 1, False, None, None, None, None),
+        ...                 ('frac', 0.5))
+        # add a sequence of Parameters
+        >>> f = Parameter('par_f', 100)
+        >>> g = Parameter('par_g', 2.)
+        >>> params.add_many(f, g)
         """
 
-        return OrderedDict(((p.name, p.value) for p in self.values()))
+        __params = []
+        for par in parlist:
+            if not isinstance(par, PyRhOparameter):
+                par = PyRhOparameter(*par)
+            __params.append(par)
+            par._delay_asteval = True
+            self.__setitem__(par.name, par)
+
+        for para in __params:
+            para._delay_asteval = False
+        
+        # for para in parlist:
+        #     if isinstance(para, PyRhOparameter):
+        #         self.__setitem__(para.name, para)
+        #     else:
+        #         param = PyRhOparameter(*para)
+        #         self.__setitem__(param.name, param)
+
+    # def valuesdict(self):
+    #     """
+    #     Returns
+    #     -------
+    #     An ordered dictionary of name:value pairs for each Parameter.
+    #     This is distinct from the Parameters itself, as it has values of
+    #     the Parameter values, not the full Parameter object.
+    #     """
+
+    #     return OrderedDict(((p.name, p.value) for p in self.values()))
 
 
 class PyRhOparameter(object):
