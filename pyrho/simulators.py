@@ -132,7 +132,7 @@ class Simulator(PyRhOobject):  # object
                     self.initialise()
 
                     # TODO: Deprecate special square pulse fucntions
-                    if Prot.squarePulse and self.simulator is 'Python':
+                    if Prot.squarePulse and self.simulator == 'Python':
                         I_RhO, t, soln = self.runTrial(RhO, phiOn, V, Dt_delay, cycles, self.dt, verbose)
                     else:  # Arbitrary functions of time: phi(t)
                         phi_ts = Prot.phi_ts[run][phiInd][:]
@@ -924,7 +924,7 @@ class simNEURON(Simulator):
                     pulses = pc.pulses
                     axV.plot(t, Vm, color=colour, ls=style)
 
-                    if Prot.protocol is 'shortPulse':
+                    if Prot.protocol == 'shortPulse':
                         if run == 0 and phiInd == 0 and vInd == 0:
                             ymin, ymax = axV.get_ylim()
                             pos = 0.02 * abs(ymax-ymin)
@@ -966,7 +966,7 @@ class simNEURON(Simulator):
         axV.grid(visible=True, which='minor', axis='both', linewidth=.2)
         axV.grid(visible=True, which='major', axis='both', linewidth=1)
 
-        if len(Prot.PD.legLabels) > 0 and Prot.PD.legLabels[0] is not '':
+        if len(Prot.PD.legLabels) > 0 and Prot.PD.legLabels[0] != '':
             plt.legend(Prot.PD.legLabels)
 
         #axV.set_ylim(axV.get_ylim())
@@ -1312,7 +1312,7 @@ class simBrian(Simulator):
         axV.grid(visible=True, which='minor', axis='both', linewidth=.2)
         axV.grid(visible=True, which='major', axis='both', linewidth=1)
 
-        if len(Prot.PD.legLabels) > 0 and Prot.PD.legLabels[0] is not '':
+        if len(Prot.PD.legLabels) > 0 and Prot.PD.legLabels[0] != '':
             plt.legend(Prot.PD.legLabels)
 
         # axV.set_ylim(axV.get_ylim())

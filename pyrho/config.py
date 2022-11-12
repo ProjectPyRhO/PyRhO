@@ -79,25 +79,27 @@ HOCfiles = [h for h in os.listdir(pyrhoNEURONpath) if h.endswith('.hoc')]
 NEURONinstallScript = 'install_neuron.sh'
 
 
-def createDir(path):
-    """Create directory"""
-    if os.path.isdir(path):
-        return
-    try:
-        os.makedirs(path)
-    except OSError as exception:
-        if exception.errno != errno.EEXIST:
-            raise
+# def createDir(path):
+#     """Create directory"""
+#     if os.path.isdir(path):
+#         return
+#     try:
+#         os.makedirs(path)
+#     except OSError as exception:
+#         if exception.errno != errno.EEXIST:
+#             raise
 
 
 # Set data and figure directories to defaults
-if 'dDir' not in vars() or 'dDir' not in globals() or dDir is None:
+if 'dDir' not in vars() or 'dDir' not in globals():  # or dDir is None:
     dDir = 'data' + os.sep
-    createDir(dDir)
+    # createDir(dDir)
+    os.makedirs(dDir, exist_ok=True)
 
-if 'fDir' not in vars() or 'fDir' not in globals() or fDir is None:
+if 'fDir' not in vars() or 'fDir' not in globals():  # or fDir is None:
     fDir = 'figs' + os.sep
-    createDir(fDir)
+    # createDir(fDir)
+    os.makedirs(fDir, exist_ok=True)
 
 GUIdir = 'gui'
 
@@ -118,7 +120,8 @@ def setupGUI(path=None):
     if path is None:  # Copy image folders to home directory
         path = os.path.join(os.getcwd(), GUIdir)
 
-    createDir(path)
+    # createDir(path)
+    os.makedirs(path, exist_ok=True)
     pyrhoGUIpath = os.path.join(pyrhoPath, GUIdir)
     pngFiles = [f for f in os.listdir(pyrhoGUIpath) if f.endswith('.png')]
     for f in pngFiles:
@@ -146,11 +149,11 @@ def simAvailable(simName, test=False):
     """
 
     simName = simName.lower()
-    if simName is 'python':
+    if simName == 'python':
         return True
-    elif simName is 'neuron':
+    elif simName == 'neuron':
         return checkNEURON(test)
-    elif simName is 'brian' or simName is 'brian2':
+    elif simName == 'brian' or simName == 'brian2':
         return checkBrian(test)
     else:
         return False
@@ -242,13 +245,15 @@ def setupNEURON(path=None):  # , NEURONpath=None):
                     NEURONscriptIncPath = os.path.join(pyrhoNEURONpath, NEURONinstallScript)
                     exitcode = subprocess.call([NEURONscriptIncPath, path], shell=True)  # NEURONpath # .check_call
                 except:
-                    createDir(path)
+                    # createDir(path)
+                    os.makedirs(path, exist_ok=True)
                     shutil.copy2(os.path.join(pyrhoNEURONpath, NEURONinstallScript), path)
                     print('Unable to install NEURON - please install manually with the script copied to {}.'.format(path)) #cwd
         else:
             if path is None:
                 path = cwd
-            createDir(path)
+            # createDir(path)
+            os.makedirs(path, exist_ok=True)
             shutil.copy2(os.path.join(pyrhoNEURONpath, NEURONinstallScript), path) #cwd
             print('NEURON must be compiled from source to work with Python 3. ')
             print('Please use the script `{}` in `{}` and then rerun setupNEURON.'.format(NEURONinstallScript, path)) #cwd
@@ -501,10 +506,14 @@ def setFigStyle():  # fancyPlots=False): # TODO: Merge this with setFigOutput
 
 
 def resetPlot():
-    """Reset figure style"""
+    """Reset figure style."""
     global fancyPlots
     if 'seaborn' in sys.modules and fancyPlots:
-        sns.reset_orig()
+        try:
+            import seaborn as sns
+            sns.reset_orig()
+        except ImportError:
+            sns = None
         fancyPlots = False
     setFigOutput(figDisplay)
 
