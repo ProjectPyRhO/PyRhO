@@ -3,30 +3,31 @@
 # Main module file for PyRhO
 
 
-import platform
-import os
 #from pkg_resources import get_distribution, DistributionNotFound
 import logging
-import pkg_resources
+import os
+import platform
 
+import lmfit
 # Necessary?
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+import pkg_resources
 import scipy as sp
-import lmfit
 
 # Place all submodule functions and variables into namespace
 from pyrho import config
 from pyrho.config import *
 from pyrho.config import _DASH_LINE, _DOUB_DASH_LINE
-from pyrho.parameters import *
-from pyrho.utilities import *
 from pyrho.expdata import *
-from pyrho.models import *
-from pyrho.simulators import *
-from pyrho.protocols import *
 from pyrho.fitting import *
+from pyrho.models import *
+from pyrho.parameters import *
+from pyrho.protocols import *
+from pyrho.simulators import *
+from pyrho.utilities import *
+
 # from pyrho.jupytergui import *
 
 # TODO
@@ -143,6 +144,7 @@ def print_versions():
     if IPY:
         try:
             import IPython
+
             # __IPYTHON__
             print("IPython version:       ", IPython.__version__)
         except ImportError:  # IPython not found
@@ -184,6 +186,7 @@ def get_versions_table():
     if IPY:
         try:
             import IPython
+
             # __IPYTHON__
             table.append(f"{'IPython':>11} | {IPython.__version__}")
         except ImportError:  # IPython not found
