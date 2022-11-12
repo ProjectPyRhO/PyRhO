@@ -1,4 +1,4 @@
-"""
+r"""
 Rhodopsin model class and functions
     * Three-state model :math:`\{C, O, D\}`
     * Four-state model :math:`\{C_1, O_1, O_2, C_2\}`
@@ -388,7 +388,7 @@ class RhodopsinModel(PyRhOobject):
 
 
 class RhO_3states(RhodopsinModel):
-    """Class definition for the 3-state model"""
+    """Class definition for the 3-state model."""
 
     # Class attributes
     nStates = 3
@@ -619,7 +619,7 @@ class RhO_3states(RhodopsinModel):
 
 
 class RhO_4states(RhodopsinModel):
-    """Class definition for the 4-state model"""
+    """Class definition for the 4-state model."""
 
     # Class attributes
     nStates = 4
@@ -802,7 +802,7 @@ class RhO_4states(RhodopsinModel):
 
 
 class RhO_6states(RhodopsinModel):
-    """Class definition for the 6-state model"""
+    """Class definition for the 6-state model."""
 
     # Class attributes
     nStates = 6
