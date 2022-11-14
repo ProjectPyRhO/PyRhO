@@ -9,7 +9,7 @@
 # ...
 
 from __future__ import print_function, division
-from collections import OrderedDict, defaultdict
+from collections import defaultdict
 import logging
 import abc
 
@@ -76,141 +76,147 @@ pOffDoub.add('Gd2', value=0.01)  # , vary=True) #, expr='Gd1')#, min=1e-9)
 
 
 # Default model parameters
-
-modelParams = OrderedDict([('3', Parameters()), ('4', Parameters()), ('6', Parameters())])
+modelParams = {'3': Parameters(), '4': Parameters(), '6': Parameters()}
 modelList = list(modelParams)  # List of keys: list(modelParams.keys()) #This could be removed
 stateLabs = {3: 'Three', '3': 'Three',
              4: 'Four', '4': 'Four',
              6: 'Six', '6': 'Six'}
 
-modelFits = OrderedDict([('3', OrderedDict([('ChR2', Parameters()),
-                                            ('NpHR', Parameters()),
-                                            ('ArchT', Parameters())])),
-                         ('4', OrderedDict([('ChR2', Parameters())])),
-                         ('6', OrderedDict([('ChR2', Parameters())]))])
+modelFits = {
+    '3': {'ChR2': Parameters(),
+          'NpHR': Parameters(),
+          'ArchT': Parameters()},
+    '4': {'ChR2': Parameters()},
+    '6': {'ChR2': Parameters()}
+}
 
 # Replace with defaultdict with default=key
-modelLabels = OrderedDict([('E', 'E'), ('g0', 'g_0'), ('p', 'p'),
-                           ('k_a', 'k_a'), ('k_r', 'k_r'), ('phi_m', r'\phi_m'),
-                           ('Gd', 'G_d'), ('Gr0', r'G_{r0}'),
-                           ('v0', 'v_0'), ('v1', 'v_1'),
-                           ('gam', r'\gamma'), ('k1', 'k_1'), ('k2', 'k_2'),
-                           ('Gf0', r'G_{f0}'), ('Gb0', r'G_{b0}'),
-                           ('k_f', 'k_f'), ('k_b', 'k_b'), ('q', 'q'),
-                           ('Gd1', r'G_{d1}'), ('Gd2', r'G_{d2}'),
-                           ('Go1', r'G_{o1}'), ('Go2', r'G_{o2}'),
-                           ('phi', r'\phi'), ('v', 'v')])
+modelLabels = {
+    'E': 'E', 'g0': 'g_0', 'p': 'p',
+    'k_a': 'k_a', 'k_r': 'k_r', 'phi_m': r'\phi_m',
+    'Gd': 'G_d', 'Gr0': r'G_{r0}',
+    'v0': 'v_0', 'v1': 'v_1',
+    'gam': r'\gamma', 'k1': 'k_1', 'k2': 'k_2',
+    'Gf0': r'G_{f0}', 'Gb0': r'G_{b0}',
+    'k_f': 'k_f', 'k_b': 'k_b', 'q': 'q',
+    'Gd1': r'G_{d1}', 'Gd2': r'G_{d2}',
+    'Go1': r'G_{o1}', 'Go2': r'G_{o2}',
+    'phi': r'\phi', 'v': 'v'
+}
 
-
-modelUnits = OrderedDict([('g0', pS), ('gam', 1),
-                          ('k_a', ms**-1), ('k_r', ms**-1),
-                          ('phi_m', mm**-2*second**-1), ('p', 1),
-                          ('Gd', ms**-1), ('Gr0', ms**-1),
-                          ('k1', ms**-1), ('k2', ms**-1),
-                          ('Gf0', ms**-1), ('Gb0', ms**-1),
-                          ('k_f', ms**-1), ('k_b', ms**-1), ('q', 1),
-                          ('Gd1', ms**-1), ('Gd2', ms**-1),
-                          ('Go1', ms**-1), ('Go2', ms**-1),
-                          ('E', mV), ('v0', mV), ('v1', mV),
-                          ('phi', mm**-2*second**-1), ('v', mV)])
+modelUnits = {
+    'g0': pS, 'gam': 1,
+    'k_a': ms**-1, 'k_r': ms**-1,
+    'phi_m': mm**-2*second**-1, 'p': 1,
+    'Gd': ms**-1, 'Gr0': ms**-1,
+    'k1': ms**-1, 'k2': ms**-1,
+    'Gf0': ms**-1, 'Gb0': ms**-1,
+    'k_f': ms**-1, 'k_b': ms**-1, 'q': 1,
+    'Gd1': ms**-1, 'Gd2': ms**-1,
+    'Go1': ms**-1, 'Go2': ms**-1,
+    'E': mV, 'v0': mV, 'v1': mV,
+    'phi': mm**-2*second**-1, 'v': mV
+}
 
 #paramUnits
-unitLabels = OrderedDict([('g0', 'pS'), ('gam', ''),
-                          ('k_a', 'ms^-1'), ('k_r', 'ms^-1'),
-                          ('phi_m', 'ph./mm^2/s'), ('p', ''),
-                          ('Gd', 'ms^-1'), ('Gr0', 'ms^-1'),
-                          ('k1', 'ms^-1'), ('k2', 'ms^-1'),
-                          ('Gf0', 'ms^-1'), ('Gb0', 'ms^-1'),
-                          ('k_f', 'ms^-1'), ('k_b', 'ms^-1'), ('q', ''),
-                          ('Gd1', 'ms^-1'), ('Gd2', 'ms^-1'),
-                          ('Go1', 'ms^-1'), ('Go2', 'ms^-1'),
-                          ('E', 'mV'), ('v0', 'mV'), ('v1', 'mV'),
-                          ('phi', 'ph./mm^2/s'), ('v', 'mV')])
+unitLabels = {
+    'g0': 'pS', 'gam': '',
+    'k_a': 'ms^-1', 'k_r': 'ms^-1',
+    'phi_m': 'ph./mm^2/s', 'p': '',
+    'Gd': 'ms^-1', 'Gr0': 'ms^-1',
+    'k1': 'ms^-1', 'k2': 'ms^-1',
+    'Gf0': 'ms^-1', 'Gb0': 'ms^-1',
+    'k_f': 'ms^-1', 'k_b': 'ms^-1', 'q': '',
+    'Gd1': 'ms^-1', 'Gd2': 'ms^-1',
+    'Go1': 'ms^-1', 'Go2': 'ms^-1',
+    'E': 'mV', 'v0': 'mV', 'v1': 'mV',
+    'phi': 'ph./mm^2/s', 'v': 'mV'
+}
 
 
 ####|###10####|###20####|###30####|###40####|###50####|###60####|###70####|###80
 
-#               (Name,    Value,  Vary, Min,    Max,  Expr=Units)
+#   (Name,    Value,  Vary, Min,    Max,  Expr=Units)
 modelFits['3']['ChR2'].add_many(  # Depolarising: passively transports Na+, H+, K+ and Ca2+ down their electrochemical gradients
-                ('g0',    1.57e5, True, 0.001,  1e6,  None),
-                ('phi_m', 5e17,   True, 1e15,   1e19, None),
-                ('k_a',   5,      True, 0.001,  1000, None),
-                ('k_r',   0.1,    True, 0.001,  1000, None),
-                ('p',     0.8,    True, 0.1,    5,    None),
-                ('q',     0.25,   True, 0.1,    5,    None),
-                ('Gd',    0.104,  True, 0.0001, 1,    None),
-                ('Gr0',   0.0002, True, 0.0001, 0.1,  None),
-                ('E',     0,      True, -1000,  1000, None),
-                ('v0',    43,     True, -1e15,  1e15, None),
-                ('v1',    17.1,   True, -1e15,  1e15, None))
+    ('g0',    1.57e5, True, 0.001,  1e6,  None),
+    ('phi_m', 5e17,   True, 1e15,   1e19, None),
+    ('k_a',   5,      True, 0.001,  1000, None),
+    ('k_r',   0.1,    True, 0.001,  1000, None),
+    ('p',     0.8,    True, 0.1,    5,    None),
+    ('q',     0.25,   True, 0.1,    5,    None),
+    ('Gd',    0.104,  True, 0.0001, 1,    None),
+    ('Gr0',   0.0002, True, 0.0001, 0.1,  None),
+    ('E',     0,      True, -1000,  1000, None),
+    ('v0',    43,     True, -1e15,  1e15, None),
+    ('v1',    17.1,   True, -1e15,  1e15, None))
 
 modelFits['3']['NpHR'].add_many(  # Hyperpolarising: pumps chloride ions into the cell
-                ('g0',    1.57e5, True, 0.001,  1e6,  None),
-                ('phi_m', 1.32e18,True, 1e15,   1e19, None),
-                ('k_a',   0.01,   True, 0.001,  1000, None),
-                ('k_r',   0.01,   True, 0.001,  1000, None),
-                ('p',     0.793,  True, 0.1,    5,    None),
-                ('q',     0.793,  True, 0.1,    5,    None),
-                ('Gd',    0.1,    True, 0.0001, 1,    None),
-                ('Gr0',   0.0002, True, 0.0001, 0.1,  None),
-                ('E',     -400,   True, -1000,  1000, None),
-                ('v0',    43,     True, -1e15,  1e15, None),
-                ('v1',    17.1,   True, -1e15,  1e15, None))
+    ('g0',    1.57e5, True, 0.001,  1e6,  None),
+    ('phi_m', 1.32e18,True, 1e15,   1e19, None),
+    ('k_a',   0.01,   True, 0.001,  1000, None),
+    ('k_r',   0.01,   True, 0.001,  1000, None),
+    ('p',     0.793,  True, 0.1,    5,    None),
+    ('q',     0.793,  True, 0.1,    5,    None),
+    ('Gd',    0.1,    True, 0.0001, 1,    None),
+    ('Gr0',   0.0002, True, 0.0001, 0.1,  None),
+    ('E',     -400,   True, -1000,  1000, None),
+    ('v0',    43,     True, -1e15,  1e15, None),
+    ('v1',    17.1,   True, -1e15,  1e15, None))
 
 modelFits['3']['ArchT'].add_many(  # Hyperpolarising: actively extrudes Hydrogen ions
-                ('g0',    1.57e5, True, 0.001,  1e6,  None),
-                ('phi_m', 1.32e18,True, 1e15,   1e19, None),
-                ('k_a',   0.01,   True, 0.001,  1000, None),
-                ('k_r',   0.01,   True, 0.001,  1000, None),
-                ('p',     0.793,  True, 0.1,    5,    None),
-                ('q',     0.793,  True, 0.1,    5,    None),
-                ('Gd',    0.1,    True, 0.0001, 1,    None),
-                ('Gr0',   0.001,  True, 0.0001, 0.1,  None),
-                ('E',     0,      True, -1000,  1000, None),
-                ('v0',    43,     True, -1e15,  1e15, None),
-                ('v1',    17.1,   True, -1e15,  1e15, None))
+    ('g0',    1.57e5, True, 0.001,  1e6,  None),
+    ('phi_m', 1.32e18,True, 1e15,   1e19, None),
+    ('k_a',   0.01,   True, 0.001,  1000, None),
+    ('k_r',   0.01,   True, 0.001,  1000, None),
+    ('p',     0.793,  True, 0.1,    5,    None),
+    ('q',     0.793,  True, 0.1,    5,    None),
+    ('Gd',    0.1,    True, 0.0001, 1,    None),
+    ('Gr0',   0.001,  True, 0.0001, 0.1,  None),
+    ('E',     0,      True, -1000,  1000, None),
+    ('v0',    43,     True, -1e15,  1e15, None),
+    ('v1',    17.1,   True, -1e15,  1e15, None))
 
 
 modelFits['4']['ChR2'].add_many(
-                ('g0',      1.14e5, True, 0.001,1e15,   None),
-                ('gam',     0.00742,True, 0.0,  1,      None),
-                ('phi_m',   2.33e17,True, 1e15, 1e19,   None),
-                ('k1',      4.15,   True, 0.001,1e5,    None), #3
-                ('k2',      0.868,  True, 0.001,1e5,    None), #1.5
-                ('p',       0.833,  True, 0.1,  5,      None),
-                ('Gf0',     0.0373, True, 0,    1e3,    None), #e12d
-                ('k_f',     0.0581, True, 0.001,1e3,    None), #c1
-                ('Gb0',     0.0161, True, 0,    1e3,    None), #e21d
-                ('k_b',     0.063,  True, 0.001,1e3,    None), #c2
-                ('q',       1.94,   True, 0.1,  5,      None),
-                ('Gd1',     0.105,  True, 0.01, 1,      None),
-                ('Gd2',     0.0138, True, 0.01, 1,      None),
-                ('Gr0',     0.00033,True, 1e-6, 1,      None), #Gr #0.0004
-                ('E',       0,      True, -1000,1000,   None),
-                ('v0',      43,     True, -1e15,1e15,   None),
-                ('v1',      17.1,   True, -1e15,1e15,   None))
+    ('g0',      1.14e5, True, 0.001,1e15,   None),
+    ('gam',     0.00742,True, 0.0,  1,      None),
+    ('phi_m',   2.33e17,True, 1e15, 1e19,   None),
+    ('k1',      4.15,   True, 0.001,1e5,    None), #3
+    ('k2',      0.868,  True, 0.001,1e5,    None), #1.5
+    ('p',       0.833,  True, 0.1,  5,      None),
+    ('Gf0',     0.0373, True, 0,    1e3,    None), #e12d
+    ('k_f',     0.0581, True, 0.001,1e3,    None), #c1
+    ('Gb0',     0.0161, True, 0,    1e3,    None), #e21d
+    ('k_b',     0.063,  True, 0.001,1e3,    None), #c2
+    ('q',       1.94,   True, 0.1,  5,      None),
+    ('Gd1',     0.105,  True, 0.01, 1,      None),
+    ('Gd2',     0.0138, True, 0.01, 1,      None),
+    ('Gr0',     0.00033,True, 1e-6, 1,      None), #Gr #0.0004
+    ('E',       0,      True, -1000,1000,   None),
+    ('v0',      43,     True, -1e15,1e15,   None),
+    ('v1',      17.1,   True, -1e15,1e15,   None))
 
 
 modelFits['6']['ChR2'].add_many(
-                ('g0',      2.52e4, True, 0.0,  1e15, None),
-                ('gam',     0.0161, True, 0.0,  1,    None),  # Max=1 if gO1 >= gO2
-                ('phi_m',   3.54e17,True, 1e15, 1e19, None),
-                ('k1',      13.4,   True, 0.0,  1000, None),
-                ('k2',      2.71,   True, 0.0,  1000, None),
-                ('p',       0.985,  True, 0.1,  5,    None),
-                ('Gf0',     0.0389, True, 0.0,  1000, None),
-                ('k_f',     0.103,  True, 0.0,  1000, None),
-                ('Gb0',     0.0198, True, 0.0,  1000, None),
-                ('k_b',     0.139,  True, 0.0,  1000, None),
-                ('q',       1.58,   True, 0.1,  5,    None),
-                ('Go1',     2,      True, 0.0,  1000, None),
-                ('Go2',     0.0567, True, 0.0,  1000, None),
-                ('Gd1',     0.112,  True, 0.0,  1000, None),
-                ('Gd2',     0.0185, True, 0.0,  1000, None),
-                ('Gr0',     0.00033,True, 0.0,  1000, None), #0.00163
-                ('E',       0,      True, -1000,1000, None),
-                ('v0',      43,     True, -1e15, 1e15,None),
-                ('v1',      17.1,   True, -1e15, 1e15,None))
+    ('g0',      2.52e4, True, 0.0,  1e15, None),
+    ('gam',     0.0161, True, 0.0,  1,    None),  # Max=1 if gO1 >= gO2
+    ('phi_m',   3.54e17,True, 1e15, 1e19, None),
+    ('k1',      13.4,   True, 0.0,  1000, None),
+    ('k2',      2.71,   True, 0.0,  1000, None),
+    ('p',       0.985,  True, 0.1,  5,    None),
+    ('Gf0',     0.0389, True, 0.0,  1000, None),
+    ('k_f',     0.103,  True, 0.0,  1000, None),
+    ('Gb0',     0.0198, True, 0.0,  1000, None),
+    ('k_b',     0.139,  True, 0.0,  1000, None),
+    ('q',       1.58,   True, 0.1,  5,    None),
+    ('Go1',     2,      True, 0.0,  1000, None),
+    ('Go2',     0.0567, True, 0.0,  1000, None),
+    ('Gd1',     0.112,  True, 0.0,  1000, None),
+    ('Gd2',     0.0185, True, 0.0,  1000, None),
+    ('Gr0',     0.00033,True, 0.0,  1000, None), #0.00163
+    ('E',       0,      True, -1000,1000, None),
+    ('v0',      43,     True, -1e15, 1e15,None),
+    ('v1',      17.1,   True, -1e15, 1e15,None))
 
 
 defaultOpsinType = 'ChR2'
@@ -222,7 +228,7 @@ modelParams['6'] = modelFits['6'][defaultOpsinType]
 unitPrefixes = {}  # Use a units library to convert between different prefixes
 
 
-#Params = OrderedDict([('model', OrderedDict()), ('protocol', OrderedDict()), ('simulator', OrderedDict())])
+# Params = {'model': {}, 'protocol': {}, 'simulator': {}}
 # p, q: Hill coefficients
 # phi_m: Hill constant
 
@@ -506,36 +512,39 @@ class PyRhOparameter(Parameter):
 ### - pH (intracellular and extracellular)
 ### - Wavelength (lambda)
 
-#protParams = OrderedDict([('step',Parameters()), ('delta',Parameters()), ('sinusoid',Parameters()), ('chirp',Parameters()), ('ramp',Parameters()), ('rectifier',Parameters()), ('shortPulse',Parameters()), ('recovery',Parameters()), ('custom',Parameters())])
-
-protParams = OrderedDict([('step', PyRhOparameters()),
-                          ('delta', PyRhOparameters()),
-                          ('sinusoid', PyRhOparameters()),
-                          ('chirp', PyRhOparameters()),
-                          ('ramp', PyRhOparameters()),
-                          ('rectifier', PyRhOparameters()),
-                          ('shortPulse', PyRhOparameters()),
-                          ('recovery', PyRhOparameters()),
-                          ('custom', PyRhOparameters())])
+protParams = {
+    'step': PyRhOparameters(),
+    'delta': PyRhOparameters(),
+    'sinusoid': PyRhOparameters(),
+    'chirp': PyRhOparameters(),
+    'ramp': PyRhOparameters(),
+    'rectifier': PyRhOparameters(),
+    'shortPulse': PyRhOparameters(),
+    'recovery': PyRhOparameters(),
+    'custom': PyRhOparameters()
+}
 
 protList = list(protParams)  # List of keys #This could be removed
 
-protParamLabels = OrderedDict([('phis', r'\mathbf{\phi}'),
-                               ('Vs', r'\mathbf{\mathrm{V}}'),
-                               ('Dt_delay', r'\Delta t_{delay}'),
-                               ('Dt_on', r'\Delta t_{on}'),
-                               ('Dt_total', r'T_{total}'),
-                               ('cycles', 'cycles'),
-                               ('phi0', r'\phi_0'),
-                               ('fs', r'\mathbf{f}'),
-                               ('f0', 'f_0'),
-                               ('fT', 'f_T'),
-                               ('linear', 'linear'),
-                               ('startOn', r'\phi_{t=0}>0'),
-                               #('phi_ton', r'\phi_{t=0}'),
-                               ('pDs', r'\mathbf{\Delta t_{on}}'),
-                               ('Dt_IPIs', r'\mathbf{\Delta t_{off}}'),
-                               ('phi_ft', r'\phi(t)')])
+
+protParamLabels = {
+    'phis': r'\mathbf{\phi}',
+    'Vs': r'\mathbf{\mathrm{V}}',
+    'Dt_delay': r'\Delta t_{delay}',
+    'Dt_on': r'\Delta t_{on}',
+    'Dt_total': r'T_{total}',
+    'cycles': 'cycles',
+    'phi0': r'\phi_0',
+    'fs': r'\mathbf{f}',
+    'f0': 'f_0',
+    'fT': 'f_T',
+    'linear': 'linear',
+    'startOn': r'\phi_{t=0}>0',
+    #'phi_ton': r'\phi_{t=0}',
+    'pDs': r'\mathbf{\Delta t_{on}}',
+    'Dt_IPIs': r'\mathbf{\Delta t_{off}}',
+    'phi_ft': r'\phi(t)'
+}
 
 protUnitLabels = defaultdict(lambda: '')
 protUnitLabels['phis'] = 'ph./mm^2/s'
@@ -552,7 +561,8 @@ protUnitLabels['fs'] = 'Hz'
 protUnitLabels['f0'] = 'Hz'
 protUnitLabels['fT'] = 'Hz'
 
-protParamNotes = OrderedDict([(prot, defaultdict(lambda: '')) for prot in protList])
+# protParamNotes = OrderedDict([(prot, defaultdict(lambda: '')) for prot in protList])
+protParamNotes = {prot: defaultdict(lambda: '') for prot in protList}
 for prot in protList:
     protParamNotes[prot]['phis'] = 'List of flux values'
     protParamNotes[prot]['Vs'] = 'List of voltage clamp values (if applied)'
@@ -680,10 +690,11 @@ simParamNotes['v_init'] = 'Initialisation voltage'
 simParamNotes['CVode'] = 'Use variable timestep integrator'
 simParamNotes['dt'] = 'Numerical integration timestep'
 
-#simParams = OrderedDict([('Python',Parameters()), ('NEURON',Parameters()), ('Brian',Parameters())])
-simParams = OrderedDict([('Python', PyRhOparameters()),
-                         ('NEURON', PyRhOparameters()),
-                         ('Brian', PyRhOparameters())])
+simParams = {
+    'Python': PyRhOparameters(),
+    'NEURON': PyRhOparameters(),
+    'Brian': PyRhOparameters()
+}
 simList = list(simParams)
 
 
