@@ -602,14 +602,14 @@ smallSignalAnalysis = ['delta', 'step', 'sinusoid']
 protParams['custom'].add_many(
     ('phis',    [1e16,1e17],        0,      None,   mole*mm**-2*second**-1, r'\mathbf{\phi}',       'List of flux values'),  #'photons/s/mm^2'
     ('Vs',      [-70,-20,10],       None,   None,   mV,                     r'\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'),  #'mV'
-    ('Dt_delay',25,                 0,      1e9,    ms,                     r'\Delta t_{delay}',    'Delay duration before the first pulse'),  #'ms'
+    ('Dt_delay', 25,                0,      1e9,    ms,                     r'\Delta t_{delay}',    'Delay duration before the first pulse'),  #'ms'
     ('cycles',  [[150., 50.]],      0,      None,   ms,                     'cycles',               'List of [on, off] durations for each pulse')  # 'ms'#,
 )
 
 protParams['step'].add_many(
     ('phis',    [1e16,1e17],        0,      None,   mole*mm**-2*second**-1, r'\mathbf{\phi}',       'List of flux values'),  # 'photons/s/mm^2'
     ('Vs',      [-70,-40,-10,10,40,70], None, None, mV,                     r'\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'),  # 'mV'
-    ('Dt_delay',25,                 0,      1e9,    ms,                     r'\Delta t_{delay}',    'Delay duration before the first pulse'),  # 'ms'
+    ('Dt_delay', 25,                0,      1e9,    ms,                     r'\Delta t_{delay}',    'Delay duration before the first pulse'),  # 'ms'
     ('cycles',  [[150.,100.]],      0,      None,   ms,                     'cycles',               'List of [on, off] durations for each pulse')  # 'ms'
 )
 
@@ -639,7 +639,7 @@ protParams['ramp'].add_many(
     ('phis',    [1e16,1e17,1e18],   None,   None,   mole*mm**-2*second**-1, r'\mathbf{\phi}',       'List of flux values'),  # 'photons/s/mm^2' #1e12,1e13,1e14,1e15,
     ('phi0',    0,                  None,   None,   mole*mm**-2*second**-1, r'\phi_0',              'Constant offset for flux'),  # 'photons/s/mm^2'
     ('Vs',      [-70],              None,   None,   mV,                     r'\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'),  # 'mV'
-    ('Dt_delay',25,                 0,      1e9,    ms,                     r'\Delta t_{delay}',    'Delay duration before the first pulse'),  # 'ms'
+    ('Dt_delay', 25,                0,      1e9,    ms,                     r'\Delta t_{delay}',    'Delay duration before the first pulse'),  # 'ms'
     ('cycles',  [[250.,25.]],       0,      None,   ms,                     'cycles',               'List of [on, off] durations for each pulse')  # 'ms'#,
 )
 
@@ -648,13 +648,13 @@ protParams['delta'].add_many(
     ('Vs',      [-70],              None,   None,   mV,                     r'\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'),  # 'mV'
     ('Dt_delay', 5,                 0,      1e9,    ms,                     r'\Delta t_{delay}',    'Delay duration before the first pulse'),  # 'ms'
     ('Dt_on',   1e-3,               0,      1e9,    ms,                     r'\Delta t_{on}',       'On-phase duration'),  # 'ms'
-    ('Dt_total',25.,                0,      None,   ms,                     r'T_{total}',           'Total simulation duration')  # 'ms'
+    ('Dt_total', 25.,               0,      None,   ms,                     r'T_{total}',           'Total simulation duration')  # 'ms'
 )
 
 protParams['rectifier'].add_many(
     ('phis',    [1e16],             None,   None,   mole*mm**-2*second**-1, r'\mathbf{\phi}',       'List of flux values'),  # 'photons/s/mm^2' # Change to 1e17?
     ('Vs',      [-100,-70,-40,-10,20,50,80], None, None, mV,                r'\mathbf{\mathrm{V}}', 'List of voltage clamp values (if applied)'),  # 'mV' #[-100,-80,-60,-40,-20,0,20,40,60,80]
-    ('Dt_delay', 50,                0,      1e9,    ms,                     r'\Delta t_{delay}',    'Delay duration before the first pulse'), # 'ms'
+    ('Dt_delay', 50,                0,      1e9,    ms,                     r'\Delta t_{delay}',    'Delay duration before the first pulse'),  # 'ms'
     ('cycles',  [[250.,100.]],      None,   None,   ms,                     'cycles',               'List of [on, off] durations for each pulse')  # 'ms'
 )
 
