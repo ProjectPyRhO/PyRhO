@@ -215,7 +215,7 @@ logLevels = [logging.CRITICAL, logging.ERROR, logging.WARNING,
              logging.INFO, logging.DEBUG, logging.NOTSET]
 
 
-def setOutput(logger, level):
+def set_output(logger, level):
     verbose = level
     logger.setLevel(level)
 
@@ -224,7 +224,7 @@ logging.basicConfig(filename='PyRhO.log', level=logLevels[config.verbose],
                     datefmt='%y-%m-%d %H:%M:%S', filemode='w')
 
 logger = logging.getLogger(__name__)
-setOutput(logger, config.verbose)
+set_output(logger, config.verbose)
 
 logger.info('Starting PyRhO')
 logger.debug('Initialised Logger')
