@@ -1,22 +1,23 @@
 """General configuration variables and functions"""
 
-import warnings
+import importlib
 import logging
 import os
+import pkgutil
 #import glob
 import platform
 import shutil
 import subprocess
 import sys
 import time
-import importlib
-import pkgutil
+import warnings
 
 import matplotlib as mpl
-import numpy as np
 #import matplotlib.pyplot as plt
+import numpy as np
 #import scipy as sp
 #import lmfit
+
 #from pyrho.__init__ import printVersions
 
 __all__ = ['setupGUI', 'simAvailable', 'setupNEURON', 'setupBrian', 'check_package',
@@ -30,31 +31,11 @@ pyVer = sys.version_info
 if pyVer < (2, 7):
     raise RuntimeError('Only Python versions >= 2.7 are supported')
 
-# Set timing function
-if pyVer < (3, 3):
-    if sys.platform == 'win32':
-        # On Windows, the best timer is time.clock
-        wallTime = time.clock
-    else:  # sys.platform.startswith('linux') 'cygwin' 'darwin'
-        # On most other platforms the best timer is time.time
-        wallTime = time.time
-else:
-    wallTime = time.perf_counter
+wallTime = time.perf_counter
 
-
-if pyVer[0] == 3:
-    if pyVer >= (3, 4):
-        def check_package(pkg):
-            """Test if 'pkg' is available"""
-            return importlib.util.find_spec(pkg) is not None
-    else:  # pyVer <= (3, 3):
-        def check_package(pkg):
-            """Test if 'pkg' is available"""
-            return importlib.find_loader(pkg) is not None
-elif pyVer[0] == 2:
-    def check_package(pkg):
-        """Test if 'pkg' is available"""
-        return pkgutil.find_loader(pkg) is not None
+def check_package(pkg):
+    """Test if 'pkg' is available"""
+    return importlib.util.find_spec(pkg) is not None
 
 _LINE_LENGTH = 80
 _DASH_LINE = '-' * _LINE_LENGTH
@@ -489,6 +470,7 @@ def setFigStyle():  # fancyPlots=False): # TODO: Merge this with setFigOutput
     if fancyPlots:
         try:
             import seaborn as sns
+
             #cp = sns.color_palette()
             colours = sns.color_palette()
         except ImportError:
@@ -519,6 +501,7 @@ def resetPlot():
 try:
     __IPYTHON__
     import IPython
+
     #from IPython import display
 except NameError:
     pass
