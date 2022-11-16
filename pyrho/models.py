@@ -31,7 +31,7 @@ class RhodopsinModel(PyRhOobject):
     """Common base class for all models."""
     # This an abstract base class since it is never directly instantiated
     __metaclass__ = abc.ABCMeta
-    # TODO: Revise to be stateless and store date in PhotoCurrent objects
+    # TODO: Revise to be stateless and store data in PhotoCurrent objects
     phi = 0.0  # Instantaneous Light flux [photons * mm^-2 * s^-1]
 
     def __init__(self, params=None, rhoType=rhoType):
@@ -757,7 +757,7 @@ class RhO_6states(RhodopsinModel):
             f"O1 <--[Gb={self.Gb:.3g}]-- O2 <--[Ga2={self.Ga2:.3g}]-- C2")
 
     def solveStates(self, s_0, t, phi_t=None):
-        """Differential equations of the 6-state model to be solved by odeint"""
+        """Differential equations of the 6-state model to be solved by odeint."""
         if phi_t is not None:
             self.setLight(float(phi_t(t)))
         C1, I1, O1, O2, I2, C2 = s_0  # Unpack state vector
@@ -809,7 +809,7 @@ class RhO_6states(RhodopsinModel):
         return self.steadyStates
 
     def calcfphi(self, states=None):
-        """Calculate the conductance scalar from the photocycle"""
+        """Calculate the conductance scalar from the photocycle."""
         if states is None:
             states = self.states
         C1, I1, O1, O2, I2, C2 = states.T
@@ -826,7 +826,7 @@ models = OrderedDict([('3', RhO_3states), (3, RhO_3states),
 
 
 def selectModel(nStates):
-    """Model selection function"""
+    """Model selection function."""
     if int(nStates) == 3 or nStates == 'three':
         return RhO_3states()
     elif int(nStates) == 4 or nStates == 'four':
