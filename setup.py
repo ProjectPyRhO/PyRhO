@@ -145,6 +145,7 @@ setup(
     extras_require={
     #    'dev': ['check-manifest'],
     #    'test': ['coverage'],
+        'test': ['pytest'],
     #    'brian' : ['brian2'],
     #    'docs' : ['sphinx>=1.3'],
         'extras': ['seaborn>=0.7', 'pandas>=0.17'],  # 'cython>=0.23'
@@ -152,8 +153,10 @@ setup(
         'GUI' : ['jupyter>=1.0', 'notebook>=4.1', 'ipywidgets>=4.1,<5',
                  'seaborn>=0.7'],  # , 'traitlets>=4.1,<5'
         'full': ['jupyter>=1.0', 'notebook>=4.1', 'ipywidgets>=4.1,<5',
-                 'seaborn>=0.7', 'pandas>=0.17'],  # 'cython>=0.23'
+                 'seaborn>=0.7', 'pandas>=0.17', 'pytest'],  # 'cython>=0.23'
     },
+
+    tests_require=['pytest'],
 
     include_package_data=True,
     # If there are data files included in your packages that need to be
