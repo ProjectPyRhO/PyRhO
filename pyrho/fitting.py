@@ -32,7 +32,7 @@ methods = ('leastsq', 'nelder', 'lbfgsb', 'powell', 'cg', 'cobyla', 'tnc',
            'slsqp', 'differential_evolution')
 defMethod = methods[3]
 
-#methods=('leastsq', 'nelder', 'lbfgsb', 'powell', 'cg', 'newton', 'cobyla', 'tnc', 'trust-ncg', 'dogleg', 'slsqp', 'differential_evolution')
+# methods=('leastsq', 'nelder', 'lbfgsb', 'powell', 'cg', 'newton', 'cobyla', 'tnc', 'trust-ncg', 'dogleg', 'slsqp', 'differential_evolution')
 #'newton', 'trust-ncg', 'dogleg' : Require Jacobian
 
 # Notes
@@ -215,8 +215,8 @@ def plotOffPhaseFits(toffs, Ioffs, pOffs, phis, nStates, fitFunc, Exp1, Exp2, Gd
     colours = config.colours
 
     nTrials = len(Ioffs)
-    assert(len(toffs) == nTrials)
-    assert(len(phis) == nTrials)
+    assert len(toffs) == nTrials
+    assert len(phis) == nTrials
 
     for trial in range(nTrials):
         Islow = pOffs['Islow_'+str(trial)].value
@@ -404,9 +404,9 @@ def fit3states(fluxSet, run, vInd, params, method=defMethod):  # , verbose=confi
     nPhis = fluxSet.nPhis
     nVs = fluxSet.nVs
 
-    assert(0 < nPhis)
-    assert(0 <= run < nRuns)
-    assert(0 <= vInd < nVs)
+    assert 0 < nPhis
+    assert 0 <= run < nRuns
+    assert 0 <= vInd < nVs
 
     Ions = [None for phiInd in range(nPhis)]
     Ioffs = [None for phiInd in range(nPhis)]
@@ -580,9 +580,9 @@ def fit4states(fluxSet, run, vInd, params, method=defMethod):  #, verbose=config
     nPhis = fluxSet.nPhis
     nVs = fluxSet.nVs
 
-    assert(0 < nPhis)
-    assert(0 <= run < nRuns)
-    assert(0 <= vInd < nVs)
+    assert 0 < nPhis
+    assert 0 <= run < nRuns
+    assert 0 <= vInd < nVs
 
     Ions = [None for phiInd in range(nPhis)]
     Ioffs = [None for phiInd in range(nPhis)]
@@ -742,9 +742,9 @@ def fit6states(fluxSet, quickSet, run, vInd, params, method=defMethod):  # , ver
     nPhis = fluxSet.nPhis
     nVs = fluxSet.nVs
 
-    assert(0 < nPhis)
-    assert(0 <= run < nRuns)
-    assert(0 <= vInd < nVs)
+    assert 0 < nPhis
+    assert 0 <= run < nRuns
+    assert 0 <= vInd < nVs
 
     Ions = [None for phiInd in range(nPhis)]
     Ioffs = [None for phiInd in range(nPhis)]

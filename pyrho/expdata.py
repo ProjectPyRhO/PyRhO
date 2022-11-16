@@ -157,13 +157,13 @@ class PhotoCurrent(object):
         self.nSamples = len(self.I)             # Number of samples
 
         if isinstance(t, (list, np.ndarray)) and len(t) == len(I):
-            assert(len(t) > 1)
+            assert len(t) > 1
             self.t = np.copy(t)                 # Corresponding array of time points [ms] #np.array copies by default
             tdiff = self.t[1:] - self.t[:-1]
             self.dt = tdiff.sum()/len(tdiff)    # (Average) step size
             self.sr = 1000/(self.dt)            # Sampling rate [samples/s]
         elif not isinstance(t, (list, np.ndarray)) or len(t) == 1:                       # Assume time step is passed rather than time array
-            assert(t > 0)
+            assert t > 0
             self.dt = t                         # Step size
             self.t = np.arange(self.nSamples) * self.dt
             self.sr = 1000 / self.dt            # Sampling rate [samples/s]
@@ -182,10 +182,10 @@ class PhotoCurrent(object):
             shape = self.stimuli.shape
             if ndim == 1:
                 self.nStimuli = 1
-                assert(shape[0] == self.nSamples)
+                assert shape[0] == self.nSamples
             elif ndim == 2:
                 self.nStimuli = shape[0]
-                assert(shape[1] == self.nSamples)
+                assert shape[1] == self.nSamples
             else:
                 raise ValueError('Dimension mismatch with stimuli: {}; shape: {}!'.format(ndim, shape))
         else:
@@ -195,9 +195,9 @@ class PhotoCurrent(object):
             self.states = np.copy(states)
             self.nStates = self.states.shape[1] # len(stateLabels)
             self.stateLabels = copy.copy(stateLabels)
-            assert(len(self.stateLabels) == self.nStates)
+            assert len(self.stateLabels) == self.nStates
             self.synthetic = True
-            assert(self.states.shape[0] == self.nSamples)
+            assert self.states.shape[0] == self.nSamples
         else:
             self.synthetic = False
 

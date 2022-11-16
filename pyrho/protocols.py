@@ -189,7 +189,7 @@ class Protocol(PyRhOobject):  # , metaclass=ABCMeta
         phi_ts = self.phi_ts[run][phiInd][:]
 
         nPulses = cycles.shape[0]
-        assert(len(phi_ts) == nPulses)
+        assert len(phi_ts) == nPulses
 
         #start, end = RhO.t[0], RhO.t[0]+Dt_delay #start, end = 0.00, Dt_delay
         start, end = 0, Dt_delay
@@ -317,7 +317,7 @@ class Protocol(PyRhOobject):  # , metaclass=ABCMeta
 
     def plotStimulus(self, phi_ts, t_start, pulses, t_end, ax=None, light='shade', col=None, style=None):
         nPulses = pulses.shape[0]
-        assert(nPulses == len(phi_ts))
+        assert nPulses == len(phi_ts)
         nPoints = 10 * int(round(t_end-t_start / self.dt)) + 1
         t = np.linspace(t_start, t_end, nPoints)
 
@@ -450,7 +450,7 @@ class protSinusoid(Protocol):
         else:
             warnings.warn('Unexpected data type for phi0: ', type(self.phi0))
 
-        assert(len(self.phi0) == self.nRuns)
+        assert len(self.phi0) == self.nRuns
 
         self.t_start, self.t_end = 0, self.Dt_total
         self.phi_ts = self.genPulseSet()
@@ -711,7 +711,7 @@ class protChirp(Protocol):
         else:
             warnings.warn('Unexpected data type for phi0: ', type(self.phi0))
 
-        assert(len(self.phi0) == self.nRuns)
+        assert len(self.phi0) == self.nRuns
 
         self.phi_ts = self.genPulseSet()
 
@@ -843,7 +843,7 @@ class protDelta(Protocol):
         """Function to set-up additional variables and make parameters
         consistent after any changes.
         """
-        assert(self.Dt_total >= self.Dt_delay + self.Dt_on)  # ==> Dt_off >= 0
+        assert self.Dt_total >= self.Dt_delay + self.Dt_on  # ==> Dt_off >= 0
         self.cycles = np.asarray([[self.Dt_on, self.Dt_total-self.Dt_delay-self.Dt_on]])
         self.nPulses = self.cycles.shape[0]
         self.pulses, self.Dt_total = cycles2times(self.cycles, self.Dt_delay)

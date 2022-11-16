@@ -74,8 +74,8 @@ class Simulator(PyRhOobject):  # object
         Prot.prepare()
         dt = Prot.getShortestPeriod()
         Prot.dt = self.checkDt(dt)
-        assert(self.dt > 0)
-        assert(Prot.dt > 0)
+        assert self.dt > 0
+        assert Prot.dt > 0
         return  # self.dt
 
     def initialise(self):
@@ -321,7 +321,7 @@ class simPython(Simulator):
         """Main routine for simulating a pulse train."""
 
         nPulses = cycles.shape[0]
-        assert(len(phi_ts) == nPulses)
+        assert len(phi_ts) == nPulses
 
         # Delay phase (to allow the system to settle)
         phi = 0
@@ -799,7 +799,7 @@ class simNEURON(Simulator):
             self.setVclamp(V)
 
         nPulses = cycles.shape[0]
-        assert(len(phi_ts) == nPulses)
+        assert len(phi_ts) == nPulses
 
         times, Dt_total = cycles2times(cycles, Dt_delay)
 
