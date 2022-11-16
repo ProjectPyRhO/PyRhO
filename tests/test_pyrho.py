@@ -5,7 +5,7 @@ import pyrho as pyr
 
 def test_run():
 
-    results = pyr.run(mods=6, prots='step', sims='Python')
+    results = pyr.run(mods='6', prots='step', sims='Python', plot=False)
 
     assert results['Python']['step']['6'].protocol == 'step'
     assert results['Python']['step']['6'].nRuns == 1

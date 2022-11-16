@@ -20,7 +20,7 @@ def test_fit_3_state_model():
         ('v0',   43,     True,   -1e15,  1e15,   None),
         ('v1',   17.1,   True,   -1e15,  1e15,   None))
     data = loadChR2()
-    fit_params, mini_objs = fitModels(data, nStates=3, params=init_params, postFitOpt=True, relaxFact=2)
+    fit_params, mini_objs = fitModels(data, nStates='3', params=init_params, postFitOpt=True, relaxFact=2, plot=False)
     values = fit_params[0].valuesdict()
     # print(values, flush=True)
     # OrderedDict([('g0', 28551.460430437444), ('phi_m', 7.45862659417406e+17), ('k_a', 6.622531560387775), ('k_r', 0.08504416795822778),
