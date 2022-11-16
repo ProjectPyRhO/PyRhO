@@ -310,7 +310,7 @@ def plotFit(PC, nStates, params, fitRates=False, index=None):
         if fitRates: # Override light-sensitive transition rates
             RhO.updateParams(params)
 
-        RhO.s_on = soln[-1,:]
+        RhO.s_on = soln[-1, :]
         if RhO.useAnalyticSoln:
             soln = RhO.calcSoln(ton, RhO.s_on)
         else:
@@ -338,7 +338,7 @@ def plotFit(PC, nStates, params, fitRates=False, index=None):
         #if fitRates: # Override light-sensitive transition rates
         #    RhO.updateParams(params)
 
-        RhO.s_off = soln[-1,:]
+        RhO.s_off = soln[-1, :]
         if RhO.useAnalyticSoln:
             soln = RhO.calcSoln(toff, RhO.s_off)
         else:
@@ -352,7 +352,7 @@ def plotFit(PC, nStates, params, fitRates=False, index=None):
     axFit.legend(loc='best')
 
     ### Plot Residuals
-    axRes = Ifig.add_subplot(gsPL[-1,:], sharex=axFit)
+    axRes = Ifig.add_subplot(gsPL[-1, :], sharex=axFit)
     plotLight(PC.pulses, axRes) #plotLight(np.asarray([[t[onInd],t[offInd]]]), axRes) #plt.axvspan(t[onInd],t[offInd],facecolor='y',alpha=0.2)
 
     # axLag.set_aspect('auto')
@@ -494,16 +494,16 @@ def fit3states(fluxSet, run, vInd, params, method=defMethod, plot=False):  # , v
     iOffPs.add('Gd1', value=params['Gd'].value/5, min=params['Gd'].min, max=params['Gd'].max)
     iOffPs.add('Gd2', value=params['Gd'].value*5, min=params['Gd'].min, max=params['Gd'].max)
 
-    def fit3off(p,t,trial):
+    def fit3off(p, t, trial):
         Islow = p['Islow_'+str(trial)].value
         Ifast = p['Ifast_'+str(trial)].value
         Gd1 = p['Gd1'].value
         Gd2 = p['Gd2'].value
-        return Islow * np.exp(-Gd1*t) + Ifast * np.exp(-Gd2*t)
+        return Islow * np.exp(-Gd1 * t) + Ifast * np.exp(-Gd2 * t)
 
     #err3off = lambda p,I,t: I - fit3off(p,t)
-    def err3off(p,Ioffs,toffs):
-        return np.r_[ [(Ioffs[i] - fit3off(p,toffs[i],i))/Ioffs[i][0] for i in range(len(Ioffs))] ]
+    def err3off(p, Ioffs, toffs):
+        return np.r_[ [(Ioffs[i] - fit3off(p, toffs[i], i)) / Ioffs[i][0] for i in range(len(Ioffs))] ]
 
     offPmin = minimize(err3off, iOffPs, args=(Ioffs,toffs), method=method)
     pOffs = offPmin.params
@@ -522,11 +522,11 @@ def fit3states(fluxSet, run, vInd, params, method=defMethod, plot=False):  # , v
         v = pOffs.valuesdict()
         Islow = v['Islow_'+str(phiInd)]
         Ifast = v['Ifast_'+str(phiInd)]
-        Gds[phiInd] = (Islow*v['Gd1'] + Ifast*v['Gd2'])/(Islow + Ifast)
+        Gds[phiInd] = (Islow * v['Gd1'] + Ifast * v['Gd2']) / (Islow + Ifast)
 
     Gd = np.mean(Gds)
 
-    if plotResult:
+    if plot:
         plotOffPhaseFits(toffs, Ioffs, pOffs, phis, nStates, fit3off, v['Gd1'], v['Gd2'], Gd=Gd)
 
     reportFit(offPmin, "Off-phase fit report for the 3-state model", method)
@@ -542,15 +542,15 @@ def fit3states(fluxSet, run, vInd, params, method=defMethod, plot=False):  # , v
 
     RhO = models['3']()
 
-    def fit3on(p,t,RhO,phi,V):
+    def fit3on(p, t, RhO, phi, V):
         RhO.updateParams(p)
         RhO.setLight(phi)
-        states = RhO.calcSoln(t, s0=[1,0,0]) # t starts at 0
+        states = RhO.calcSoln(t, s0=[1, 0, 0])  # t starts at 0
         #states = odeint(RhO.solveStates, RhO.s_0, t, Dfun=RhO.jacobian)
         return RhO.calcI(V, states)
 
-    def err3on(p,Ions,tons,RhO,phis,Vs):
-        return np.r_[ [(Ions[i] - fit3on(p,tons[i],RhO,phis[i],Vs[i]))/Ions[i][-1] for i in range(len(Ions))] ]
+    def err3on(p, Ions, tons, RhO, phis, Vs):
+        return np.r_[ [(Ions[i] - fit3on(p, tons[i], RhO, phis[i], Vs[i])) / Ions[i][-1] for i in range(len(Ions))] ]
 
     onPmin = minimize(err3on, iOnPs, args=(Ions,tons,RhO,phis,Vs), method=method)
     pOns = onPmin.params
@@ -666,7 +666,7 @@ def fit4states(fluxSet, run, vInd, params, method=defMethod, plot=False):  #, ve
         c = calcC(b, Gd1, Gd2, Gf0, Gb0)
         return (b-c, b+c)
 
-    def fit4off(p,t,trial):
+    def fit4off(p, t, trial):
         Islow = p['Islow_'+str(trial)].value
         Ifast = p['Ifast_'+str(trial)].value
         lam1, lam2 = lams(p)
@@ -848,7 +848,7 @@ def fit6states(fluxSet, quickSet, run, vInd, params, method=defMethod, plot=Fals
     ##fitfunc = lambda p, t: -(p['a0'].value + p['a1'].value*np.exp(-p['lam1'].value*t) + p['a2'].value*np.exp(-p['lam2'].value*t))
     #errfunc = lambda p, Ioff, toff: Ioff - fitfunc(p,toff)
 
-    offPmin = minimize(err6off, iOffPs, args=(Ioffs,toffs), method=method)#, fit_kws={'maxfun':100000})
+    offPmin = minimize(err6off, iOffPs, args=(Ioffs,toffs), method=method)  # , fit_kws={'maxfun':100000})
     pOffs = offPmin.params
 
     reportFit(offPmin, "Off-phase fit report for the 6-state model", method)
@@ -1064,8 +1064,8 @@ def fitRecovery(t_peaks, I_peaks, params, Ipeak0, Iss0, ax=None, method=defMetho
     ### a is now a dummy parameter
     #pRec.add('a', value=Iss0+Ipeak0, expr='{Iss0} + Ipeak0'.format(Iss0=Iss0)) # Iss = a - c
     #pRec.add('Ipeak0', value=-Ipeak0, vary=True) # Ipeak orig
-    iRecPs.add('a', value=Ipeak0-Iss0) #, expr='Ipeak0 - {Iss0}'.format(Iss0=Iss0)) # Iss = a - c
-    iRecPs.add('Ipeak0', value=Ipeak0, vary=False) # Ipeak orig
+    iRecPs.add('a', value=Ipeak0-Iss0)  # , expr='Ipeak0 - {Iss0}'.format(Iss0=Iss0)) # Iss = a - c
+    iRecPs.add('Ipeak0', value=Ipeak0, vary=False)  # Ipeak orig
     #pRec.add('Ipeak0', value=Ipeak0-Iss0, vary=False) # Ipeak orig
 
     ### Shift is now handled in getRecoveryPeaks()
@@ -1177,7 +1177,7 @@ def fitPeaks(self, t_peaks, I_peaks, curveFunc, p0, eqString, fig=None):  # , ve
 #     xfit=np.linspace(t_peaks[0]-ext-shift, t_peaks[-1]+ext-shift, xspan/dt)
         plt.plot(t_peaks, I_peaks, linestyle='', color='r', marker='*')
         #xfit=np.linspace(-shift, self.Dt_total-shift, self.Dt_total/self.dt) #Dt_total
-        nPoints = 10*int(round(self.Dt_total-shift/self.dt))+1 # 1001
+        nPoints = 10 * int(round(self.Dt_total-shift/self.dt)) + 1  # 1001
         xfit = np.linspace(-shift, self.Dt_total-shift, nPoints)
         yfit = curveFunc(xfit,*popt)
 
@@ -1335,7 +1335,7 @@ def fitfV(Vs, Iss, params, relaxFact=2, method=defMethod, plot=False):  # , verb
         #FVmod.set_param_hint('v1', value=pfV['v1'].value, min=pfV['v1'].min, max=pfV['v1'].max, vary=pfV['v1'].vary, expr=pfV['v1'].expr)
         FVmod.set_param_hint('v1', value=pseudoV1)
         modParams = FVmod.make_params()
-        result = FVmod.fit(Iss, Vs=np.asarray(Vs), method=method) # , E=pfV['E'].value, v0=pfV['v0'].value, v1=pfV['v1'].value  method=method
+        result = FVmod.fit(Iss, Vs=np.asarray(Vs), method=method)  # , E=pfV['E'].value, v0=pfV['v0'].value, v1=pfV['v1'].value  method=method
 
         pfV = Parameters()
         for p in ['E', 'v0', 'v1']:
@@ -1402,13 +1402,13 @@ def fitfV(Vs, Iss, params, relaxFact=2, method=defMethod, plot=False):  # , verb
 
     setBounds(pfV['v0'], relaxFact)
 
-    if plotResult:
-        #nPoints = 10*int(round(t_end-t_start/self.dt))+1
-        Vsmooth = np.linspace(min(Vs), max(Vs), 10*round(max(Vs)-min(Vs))+1) #1+(max(Vs)-min(Vs))/.1
+    if plot:
+        # nPoints = 10*int(round(t_end-t_start/self.dt))+1
+        Vsmooth = np.linspace(min(Vs), max(Vs), 10 * round(max(Vs)-min(Vs)) + 1)  # 1+(max(Vs)-min(Vs))/.1
         fig, ax1 = plt.subplots()
         ax1.plot(Vsmooth, errFV(pfV, Vsmooth), 'b', label='$I_{ss}$')
         ax1.scatter(Vs, Iss, c='b', marker='x')
-        ax1.set_ylabel(r'$I_{ss}$ $\mathrm{[nA]}$', color='b') #$f(V) \cdot (V-E)$
+        ax1.set_ylabel(r'$I_{ss}$ $\mathrm{[nA]}$', color='b')  # $f(V) \cdot (V-E)$
         ax1.set_xlabel(r'$V_{clamp}\ \mathrm{[mV]}$')
 
 
@@ -1684,8 +1684,8 @@ def calcCycle(p, ton, toff, RhO, V, phi): #, fitRates=False): #,fitDelay=False
     return RhO.calcI(V, RhO.states)
 
 
-def errCycle(p,Is,tons,toffs,nfs,RhO,Vs,phis):
-    return np.r_[ [(Is[i] - calcCycle(p,tons[i],toffs[i],RhO,Vs[i],phis[i]))/nfs[i] for i in range(len(Is))]]
+def errCycle(p, Is, tons, toffs, nfs, RhO, Vs, phis):
+    return np.r_[[(Is[i] - calcCycle(p, tons[i], toffs[i], RhO, Vs[i], phis[i])) / nfs[i] for i in range(len(Is))]]
 
 
 
@@ -1724,7 +1724,7 @@ def fitModels(dataSet, nStates='3', params=None, postFitOpt=True, relaxFact=2, m
 
     fitParams = [None for nSt in nStates]
     miniObjs = [None for nSt in nStates]
-    for i in range(nModels): #, nSt in enumerate(nStates):
+    for i in range(nModels):
         fitParams[i], miniObjs[i] = fitModel(dataSet, nStates=nStates[i], params=params[i],
                                 postFitOpt=postFitOpt, relaxFact=relaxFact,
                                 method=method, postFitOptMethod=postFitOptMethod,
@@ -1865,7 +1865,7 @@ def fitModel(dataSet, nStates='3', params=None, postFitOpt=True, relaxFact=2, me
         params['phi_m'].vary = False
         params['p'].vary = False
         # Fix other model specific parameters?
-        if 'q' in params: #nStates == 4 or nStates == 6:
+        if 'q' in params:  # nStates == 4 or nStates == 6:
             params['q'].vary = False
         nonOptParams.extend(['phi_m', 'p', 'q'])
         # if nStates == 4 or nStates == 6:
@@ -2028,7 +2028,7 @@ def fitModel(dataSet, nStates='3', params=None, postFitOpt=True, relaxFact=2, me
             if p not in nonOptParams:
                 fittedParams[p].vary = True
 
-        RhO = models[str(nStates)]()
+        RhO = models[nStates]()
         postPmin = minimize(errCycle, fittedParams, args=(Icycles,tons,toffs,nfs,RhO,Vs,phis), method=postFitOptMethod)
         #optParams = postPmin.params
 
@@ -2072,7 +2072,7 @@ def fitModel(dataSet, nStates='3', params=None, postFitOpt=True, relaxFact=2, me
 
 
 def plotFluxSetFits(fluxSet, nStates, params, runInd=0, vInd=0):
-    """Plot a (list of) model(s) to experimental data"""
+    """Plot a (list of) model(s) to experimental data."""
     # Currently assumes square light pulses, all of the same duration
     # TODO: Generalise to handle multiple pulses of different durations
     #from pyrho.config import colours
@@ -2109,12 +2109,12 @@ def plotFluxSetFits(fluxSet, nStates, params, runInd=0, vInd=0):
             phi = PC.phi
             V = PC.V
 
-            #TODO: Replace with calcCycle, runTrial or similar
+            # TODO: Replace with calcCycle, runTrial or similar
 
             #I_RhO, t, soln = Sim.runTrial(RhO, phi, V, Dt_delay, cycles, self.dt, verbose) #self.Dt_total,
 
             ## Delay phase
-            _, tdel = PC.getDelayPhase()#;   tdel -= tdel[0]
+            _, tdel = PC.getDelayPhase()  # ;   tdel -= tdel[0]
             RhO.setLight(RhO.phi_0)
             if RhO.useAnalyticSoln:
                 soln = RhO.calcSoln(tdel, RhO.s_0)
@@ -2124,9 +2124,9 @@ def plotFluxSetFits(fluxSet, nStates, params, runInd=0, vInd=0):
 
             for p in range(PC.nPulses):
                 ## On phase
-                _, ton = PC.getOnPhase(p)#;     ton -= ton[0]
+                _, ton = PC.getOnPhase(p)  # ;     ton -= ton[0]
                 RhO.setLight(phi) # Calculate transition rates for phi
-                RhO.s_on = soln[-1,:]
+                RhO.s_on = soln[-1, :]
                 if RhO.useAnalyticSoln:
                     soln = RhO.calcSoln(ton, RhO.s_on)
                 else:
@@ -2134,9 +2134,9 @@ def plotFluxSetFits(fluxSet, nStates, params, runInd=0, vInd=0):
                 RhO.storeStates(soln[1:], ton[1:])
 
                 ## Off phase
-                _, toff = PC.getOffPhase(p)#;    toff -= toff[0]
+                _, toff = PC.getOffPhase(p)  # ;    toff -= toff[0]
                 RhO.setLight(0)
-                RhO.s_off = soln[-1,:]
+                RhO.s_off = soln[-1, :]
                 if RhO.useAnalyticSoln:
                     soln = RhO.calcSoln(toff, RhO.s_off)
                 else:
@@ -2163,7 +2163,7 @@ def plotFluxSetFits(fluxSet, nStates, params, runInd=0, vInd=0):
                             fluxSet.nPhis, min(fluxSet.phis), max(fluxSet.phis)))
 
     plt.legend(loc='best')
-    plt.xlabel(r'$\mathrm{Time\ [ms]}$', position=(config.xLabelPos,0), ha='right') # (xpos,ypos) ypos is ignored
+    plt.xlabel(r'$\mathrm{Time\ [ms]}$', position=(config.xLabelPos, 0), ha='right') # (xpos,ypos) ypos is ignored
     plt.ylabel(r'$\mathrm{Photocurrent\ [nA]}$')
 
     # Assume square light pulses, all of the same duration
