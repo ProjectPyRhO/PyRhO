@@ -15,8 +15,6 @@ import warnings
 import matplotlib as mpl
 #import matplotlib.pyplot as plt
 import numpy as np
-#import scipy as sp
-#import lmfit
 
 #from pyrho.__init__ import printVersions
 
@@ -59,17 +57,6 @@ HOCfiles = [h for h in os.listdir(pyrhoNEURONpath) if h.endswith('.hoc')]
 NEURONinstallScript = 'install_neuron.sh'
 
 
-# def createDir(path):
-#     """Create directory"""
-#     if os.path.isdir(path):
-#         return
-#     try:
-#         os.makedirs(path)
-#     except OSError as exception:
-#         if exception.errno != errno.EEXIST:
-#             raise
-
-
 # Set data and figure directories to defaults
 if 'dDir' not in vars() or 'dDir' not in globals():  # or dDir is None:
     dDir = 'data' + os.sep
@@ -85,7 +72,6 @@ GUIdir = 'gui'
 
 
 def setupGUI(path=None):
-
     """
     Setup the Jupyter notebook GUI.
 
@@ -94,7 +80,6 @@ def setupGUI(path=None):
     path : str, optional
         Specify the path for where to set up the GUI folders.
         Defaults to the current working directory
-
     """
 
     if path is None:  # Copy image folders to home directory
@@ -111,7 +96,6 @@ def setupGUI(path=None):
 
 
 def simAvailable(simName, test=False):
-
     """
     Check if a simulator is available.
 
@@ -148,9 +132,6 @@ def checkNEURON(test=False):
             print("'NRN_NMODL_PATH' environment variable is set: {}".format(nmodlPath))
             modList = [file for file in os.listdir(nmodlPath) if file.endswith(".mod")]
             hocList = [file for file in os.listdir(nmodlPath) if file.endswith(".hoc")]
-            #for file in os.listdir(nmodlPath):
-            #    if file.endswith(".hoc"):
-            #        print(file)
             print("MOD files found: ", modList)
             print("HOC files found: ", hocList)
             if not set(NMODLfiles).issubset(set(modList)):
@@ -179,7 +160,6 @@ def checkNEURON(test=False):
 
 
 def setupNEURON(path=None):  # , NEURONpath=None):
-
     """
     Setup the NEURON simulator to work with PyRhO.
 
@@ -205,7 +185,6 @@ def setupNEURON(path=None):  # , NEURONpath=None):
     if not checkNEURON():   # Check for a working NEURON installation...
         if path is None:
             path = cwd
-        # createDir(path)
         os.makedirs(path, exist_ok=True)
         shutil.copy2(os.path.join(pyrhoNEURONpath, NEURONinstallScript), path) #cwd
         print('NEURON must be compiled from source to work with Python 3. ')
@@ -248,11 +227,7 @@ def setupNEURON(path=None):  # , NEURONpath=None):
         #for f in HOCfiles:
         #    shutil.copy2(pyrhoNEURONpath, path, f)
 
-    if pyVer >= (3, 3):
-        nrnivmodl = shutil.which('nrnivmodl')
-    else:
-        from distutils.spawn import find_executable
-        nrnivmodl = find_executable('nrnivmodl')
+    nrnivmodl = shutil.which('nrnivmodl')
 
     if nrnivmodl is None:
         arch = platform.machine()
@@ -310,25 +285,20 @@ def setupBrian():
     return
 
 
-
-
 ##### Plot settings #####
 # TODO: Simplify style/colour cycling with axess.prop_cycle
 # http://matplotlib.org/users/whats_new.html#added-axes-prop-cycle-key-to-rcparams
 
 figDisplay = 'screen'  # 'paper'
-
 colours = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 styles = ['-', '--', '-.', ':']
-
+xLabelPos = 0.98
 latexInstalled = False  # Change this!
 # http://nipunbatra.github.io/2014/08/latexify/
 # http://www.tex.ac.uk/ctan/macros/latex/contrib/pythontex/pythontex_install.py
 if latexInstalled:
     mpl.rcParams['text.usetex'] = True
 #mpl.rcParams.update(rcdef) # Set back to defaults
-
-xLabelPos = 0.98
 
 
 def setFigOutput(figDisplay='screen', width=None, height=None):
@@ -484,8 +454,6 @@ else:  # and IPython. See also get_ipython()
     #display.set_matplotlib_formats(figFormat)
     if verbose > 1:
         print("Default display figure format set: "+figFormat)
-
-
 
 
 #IPython.core.magic.Magics.basic.pprint()
