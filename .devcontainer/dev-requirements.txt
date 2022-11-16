@@ -3,8 +3,9 @@ scipy
 # matplotlib-base  # conda-forge only
 matplotlib
 # for latex labels
-cm-super
-dvipng
+# cm-super
+# underscore
+# dvipng
 # for matplotlib anim
 ffmpeg
 # lmfit
