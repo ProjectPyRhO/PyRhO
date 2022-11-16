@@ -9,12 +9,11 @@ import warnings
 import logging
 import abc
 import itertools
-from collections import OrderedDict
 
-import numpy as np
 import matplotlib.pyplot as plt
-from scipy.integrate import odeint
 #import matplotlib as mpl # For plotStates
+import numpy as np
+from scipy.integrate import odeint
 
 from pyrho.utilities import calcV1
 from pyrho.parameters import PyRhOobject, modelParams, stateLabs, rhoType
@@ -80,7 +79,8 @@ class RhodopsinModel(PyRhOobject):
 
     def getRates(self):
         """Returns an ordered dictionary of all transition rates."""
-        return OrderedDict([(r, getattr(self, r)) for r in itertools.chain(self.photoRates, self.constRates)])
+        return {r: getattr(self, r) 
+                for r in itertools.chain(self.photoRates, self.constRates)}
 
     def reportState(self):
         self.dispRates()
@@ -820,9 +820,11 @@ class RhO_6states(RhodopsinModel):
         raise NotImplementedError(self.nStates)
 
 
-models = OrderedDict([('3', RhO_3states), (3, RhO_3states),
-                      ('4', RhO_4states), (4, RhO_4states),
-                      ('6', RhO_6states), (6, RhO_6states)])
+models = {
+    '3': RhO_3states, 3: RhO_3states,
+    '4': RhO_4states, 4: RhO_4states,
+    '6': RhO_6states, 6: RhO_6states
+}
 
 
 def selectModel(nStates):
