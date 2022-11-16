@@ -22,7 +22,7 @@ import numpy as np
 
 __all__ = ['setupGUI', 'simAvailable', 'setupNEURON', 'setupBrian', 'check_package',
            'setFigOutput', 'setFigStyle', 'resetPlot']
-# 'wallTime',
+# 'wall_time',
 # TODO: Place in dict i.e. CONFIG_PARAMS['dDir'] or class with setter methods e.g. to call set_output
 #, 'colours', 'styles', 'verbose', 'dDir', 'fDir', 'DASH_LINE', 'DOUB_DASH_LINE'
 
@@ -31,7 +31,7 @@ pyVer = sys.version_info
 if pyVer < (2, 7):
     raise RuntimeError('Only Python versions >= 2.7 are supported')
 
-wallTime = time.perf_counter
+wall_time = time.perf_counter
 
 def check_package(pkg):
     """Test if 'pkg' is available"""

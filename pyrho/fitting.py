@@ -22,7 +22,7 @@ from pyrho.models import *  # for fitPeaks
 from pyrho.config import *  # verbose, saveFigFormat, addTitles, fDir, dDir, eqSize
 
 from pyrho import config
-from pyrho.config import wallTime
+from pyrho.config import wall_time
 
 __all__ = ['fitModels', 'plotFluxSetFits', 'reportFit', 'methods', 'defMethod']
 # ['fitModel', 'copyParam', 'getRecoveryPeaks', 'fitRecovery', 'fitfV']
@@ -1776,7 +1776,7 @@ def fitModel(dataSet, nStates=3, params=None, postFitOpt=True, relaxFact=2, meth
         raise NotImplementedError(nStates)
 
     if config.verbose > 0:
-        t0 = wallTime()
+        t0 = wall_time()
         print("\n================================================================================")
         print("Fitting parameters for the {}-state model with the '{}' algorithm... ".format(nStates, method))
         print("================================================================================\n")
@@ -2060,7 +2060,7 @@ def fitModel(dataSet, nStates=3, params=None, postFitOpt=True, relaxFact=2, meth
         printParams(orderedParams)
         if config.verbose > 1:
             compareParams(params, orderedParams)
-        print("\nParameters fit for the {}-state model in {:.3g}s".format(nStates, wallTime() - t0))
+        print("\nParameters fit for the {}-state model in {:.3g}s".format(nStates, wall_time() - t0))
         print("--------------------------------------------------------------------------------\n")
 
     return orderedParams, miniObj

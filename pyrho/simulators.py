@@ -23,7 +23,7 @@ from pyrho.utilities import *  # cycles2times, plotLight
 from pyrho.expdata import *
 from pyrho.models import *
 from pyrho.config import *  # verbose
-from pyrho.config import wallTime, _DASH_LINE, _DOUB_DASH_LINE
+from pyrho.config import wall_time, _DASH_LINE, _DOUB_DASH_LINE
 from pyrho import config
 
 __all__ = ['simulators']
@@ -85,7 +85,7 @@ class Simulator(PyRhOobject):  # object
         """Main routine to run the simulation protocol."""
         # TODO: Use joblib to cache results https://pythonhosted.org/joblib/
 
-        t0 = wallTime()
+        t0 = wall_time()
         RhO = self.RhO
         Prot = self.Prot
 
@@ -171,7 +171,7 @@ class Simulator(PyRhOobject):  # object
             self.Vclamp, self.Vclamp_prev = self.Vclamp_prev, None
             self.h.Vcl.rs = 1e9  # TODO; Find a way to fully remove SEClamp
 
-        self.runTime = wallTime() - t0
+        self.runTime = wall_time() - t0
         if verbose > 0:
             prot_info = "\nFinished '{}' protocol with {} for the {} model in"\
                         " {:.3g}s".format(Prot, self, RhO, self.runTime)

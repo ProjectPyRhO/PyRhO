@@ -38,11 +38,11 @@ class Timer:
         self.interval = 0
 
     def __enter__(self):
-        self.start = config.wallTime()  # time.clock()
+        self.start = config.wall_time()  # time.clock()
         return self
 
     def __exit__(self, *args):
-        self.end = config.wallTime()  # time.clock()
+        self.end = config.wall_time()  # time.clock()
         self.interval = self.end - self.start
         print('{:.3g}s'.format(self.interval))
 
