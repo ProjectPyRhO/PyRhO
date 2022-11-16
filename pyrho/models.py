@@ -268,10 +268,10 @@ class RhO_3states(RhodopsinModel):
                 r"$\dot{O} = G_{a}(\phi)C - G_{d}O$",
                 r"$\dot{D} = G_{d}O - G_{r}(\phi)D$",
                 r"$C + O + D = 1$",
-                r"$G_a(\phi) = k\\frac{\phi^p}{\phi^p + \phi_m^p}$",
+                r"$G_a(\phi) = k\frac{\phi^p}{\phi^p + \phi_m^p}$",
                 r"$G_r(\phi) = \mathcal{H}(\phi) \cdot G_{r1} + G_{r0}$",
                 r"$f_{\phi}(\phi) = O$"
-                r"$f_v(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1}$",
+                r"$f_v(v) = \frac{1-\exp({-(v-E)/v_0})}{(v-E)/v_1}$",
                 r"$I_{\phi} = g_0 \cdot f_{\phi}(\phi) \cdot f_v(v) \cdot (v-E)$"]
 
     eqIss = r"""$I_{SS} = \bar{g_0} \cdot \frac{G_a \cdot G_r}{G_d \cdot (G_r + G_a) + G_a \cdot G_r} \cdot (v-E)
