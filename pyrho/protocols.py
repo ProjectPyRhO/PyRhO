@@ -5,7 +5,6 @@ Stimulation protocols to run on the opsin models
     * The ``custom`` protocol can be used with arbitrary interpolation fuctions
 """
 
-from __future__ import print_function, division
 import warnings
 import logging
 import os

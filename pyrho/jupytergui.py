@@ -4,7 +4,6 @@
 #from IPython.html.widgets import interact
 #from IPython.html import widgets # IPython < 4
 
-from __future__ import print_function, division
 #import warnings
 #import time
 from collections import OrderedDict

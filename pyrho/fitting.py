@@ -1,6 +1,5 @@
 """Rhodopsin model fitting and optimising routines"""
 
-from __future__ import print_function, division
 import os
 import pickle
 import warnings

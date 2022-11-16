@@ -1,6 +1,5 @@
 """Classes for storing and processing experimental photocurrent data."""
 
-from __future__ import print_function, division
 import warnings
 import logging
 import copy

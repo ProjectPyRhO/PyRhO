@@ -8,7 +8,6 @@
 # Optimisation routine initial parameters
 # ...
 
-from __future__ import print_function, division
 from collections import defaultdict
 import logging
 import abc

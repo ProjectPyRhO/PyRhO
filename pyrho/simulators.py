@@ -5,7 +5,6 @@ Classes to wrap simulation engines for a uniform interface
     * ``Brian2`` for simulations at the `network` level
 """
 
-from __future__ import print_function, division
 import warnings
 import logging
 import os

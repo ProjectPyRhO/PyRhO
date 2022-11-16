@@ -1,6 +1,5 @@
 """General configuration variables and functions"""
 
-from __future__ import print_function, division
 import warnings
 import logging
 import os

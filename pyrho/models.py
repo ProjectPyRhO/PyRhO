@@ -5,7 +5,6 @@ Rhodopsin model class and functions
     * Six-state model :math:`\{C_1, I_1, O_1, O_2, I_2, C_2\}`
 """
 
-from __future__ import print_function, division
 import warnings
 import logging
 import abc
