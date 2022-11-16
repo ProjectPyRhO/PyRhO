@@ -333,16 +333,24 @@ class PyRhOparameters(Parameters):
     #     return OrderedDict(((p.name, p.value) for p in self.values()))
 
 
+# TODO: Put units, labels and extra data in user_data and remove subclasses
 class PyRhOparameter(Parameter):
 
     def __init__(self, name=None, value=None, min=-np.inf, max=np.inf,
+                #  expr=None, brute_step=None, user_data=None,
                  units=None, latex=None, descr=None):  # , unitsLabel=None
+
+        # super().__init__(self, name, None, min, max, expr, brute_step, user_data)
+
         self.name = name
         self._val = value
         self._min = -np.inf
         self._max = np.inf
         self.min = min
         self.max = max
+        # self._expr = expr
+        # self.brute_step = brute_step
+        # self.user_data = user_data
 
         self.units = units
         # self.label = label
