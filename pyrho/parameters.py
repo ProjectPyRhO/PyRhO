@@ -741,7 +741,7 @@ class PyRhOobject(object):
         return str(self.__class__)
 
     def __str__(self):
-        print("PyRhO object: ", self.__class__.__name__)
+        return f"<PyRhO object: {self.__class__.__name__}>"
 
     def __call__(self):
         return
