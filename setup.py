@@ -1,21 +1,17 @@
 """The PyRhO package setup script"""
 
-#from __future__ import print_function        # Added for Python 2.x support
-from setuptools import setup, find_packages  # Prefer setuptools over distutils
-from codecs import open                      # To use a consistent encoding
 import os
+from setuptools import setup, find_packages  # Prefer setuptools over distutils
+# from codecs import open                      # To use a consistent encoding
 
 # Download and install setuptools if not installed
 #from ez_setup import use_setuptools
 #use_setuptools()
 #python -m ensurepip --upgrade
 
-#from setuptools import setup
-#from distutils import setup
-
 here = os.path.abspath(os.path.dirname(__file__))
 home = os.path.expanduser("~")
-print(home)
+# print(home)
 prwd = os.path.join(home, 'pyrho')  # pyrho working directory
 
 # TODO: Test changes to package_data and include notebooks and license without MANIFEST
@@ -93,8 +89,6 @@ setup(
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Medical Science Apps.',
         'Topic :: Scientific/Engineering :: Bio-Informatics',
-        'Topic :: Scientific/Engineering :: Artificial Life',
-        'Topic :: Scientific/Engineering :: Human Machine Interfaces',
 
         # The license should match "license" above
         'License :: OSI Approved :: BSD License',
@@ -121,7 +115,7 @@ setup(
     # simple. Or you can use find_packages().
     packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
 
-    # package_dir = {'':'.'},
+    # package_dir = {'': '.'},
     # package_dir = {'pyrho': 'pyrho'}, # Relative to this script
 
     # List run-time dependencies here.  These will be installed by pip when your
