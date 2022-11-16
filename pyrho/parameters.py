@@ -77,9 +77,9 @@ pOffDoub.add('Gd2', value=0.01)  # , vary=True) #, expr='Gd1')#, min=1e-9)
 # Default model parameters
 modelParams = {'3': Parameters(), '4': Parameters(), '6': Parameters()}
 modelList = list(modelParams)  # List of keys: list(modelParams.keys()) #This could be removed
-stateLabs = {3: 'Three', '3': 'Three',
-             4: 'Four', '4': 'Four',
-             6: 'Six', '6': 'Six'}
+stateLabs = {'3': 'Three', 3: 'Three',
+             '4': 'Four', 4: 'Four',
+             '6': 'Six', 6: 'Six'}
 
 modelFits = {
     '3': {'ChR2': Parameters(),

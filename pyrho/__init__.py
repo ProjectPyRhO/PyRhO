@@ -88,7 +88,7 @@ if __name__ == '__main__':
 
 # TODO: Rename global models, protocols and simulators dictionaries
 
-def run(mods=6, prots='step', sims='Python', plot=True):
+def run(mods='6', prots='step', sims='Python', plot=True):
     """
     Run all protocols on a list of models with default parameters.
 

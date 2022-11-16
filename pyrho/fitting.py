@@ -319,12 +319,19 @@ def plotFit(PC, nStates, params, fitRates=False, index=None):
 
         if config.addTitles and p == 0:
             #TODO: Generate title with RhO.paramsList, RhO.photoRates, RhO.constRates
-            if nStates == 3:
-                plt.title('Three-state model fit to data (phi={:.3g}) [Ga={:.3g}; Gd={:.3g}; Gr={:.3g}] \n[k_a={:.3g}; p={:.3g}; k_r={:.3g}; q={:.3g}; phi_m={:.3g}; Gd={:.3g}; Gr0={:.3g}]'.format(phi,RhO.Ga,RhO.Gd,RhO.Gr,RhO.k_a,RhO.p,RhO.k_r,RhO.q,RhO.phi_m,RhO.Gd,RhO.Gr0))
-            elif nStates == 4:
-                plt.title('Four-state model fit to data (phi={:.3g}) \n[Ga1={:.3g}; Ga2={:.3g}; Gf={:.3g}; Gb={:.3g}; Gd1={:.3g}; Gd2={:.3g}]'.format(phi,RhO.Ga1,RhO.Ga2,RhO.Gf,RhO.Gb,RhO.Gd1,RhO.Gd2))
-            elif nStates == 6:
-                plt.title('Six-state model fit to data (phi={:.3g}) \n[Ga1={:.3g}; Ga2={:.3g}; Gf={:.3g}; Gb={:.3g}; Go1={:.3g}; Go2={:.3g}; Gd1={:.3g}; Gd2={:.3g}]'.format(phi,RhO.Ga1,RhO.Ga2,RhO.Gf,RhO.Gb,RhO.Go1,RhO.Go2,RhO.Gd1,RhO.Gd2))
+            if nStates == '3':
+                plt.title(f"Three-state model fit to data ({phi=:.3g}) "
+                          f"[Ga={RhO.Ga:.3g}; Gd={RhO.Gd:.3g}; Gr={RhO.Gr:.3g}] \n"
+                          f"[k_a={RhO.k_a:.3g}; p={RhO.p:.3g}; k_r={RhO.k_r:.3g}; "
+                          f"q={RhO.q:.3g}; phi_m={RhO.phi_m:.3g}; Gd={RhO.Gd:.3g}; Gr0={RhO.Gr0:.3g}]")
+            elif nStates == '4':
+                plt.title(f"Four-state model fit to data (phi={phi:.3g}) \n"
+                          f"[Ga1={RhO.Ga1:.3g}; Ga2={RhO.Ga2:.3g}; Gf={RhO.Gf:.3g}; Gb={RhO.Gb:.3g}; "
+                          f"Gd1={RhO.Gd1:.3g}; Gd2={RhO.Gd2:.3g}]")
+            elif nStates == '6':
+                plt.title(f"Six-state model fit to data (phi={phi:.3g}) \n"
+                          f"[Ga1={RhO.Ga1:.3g}; Ga2={RhO.Ga2:.3g}; Gf={RhO.Gf:.3g}; Gb={RhO.Gb:.3g}; "
+                          f"Go1={RhO.Go1:.3g}; Go2={RhO.Go2:.3g}; Gd1={RhO.Gd1:.3g}; Gd2={RhO.Gd2:.3g}]")
 
         ## Off phase
         RhO.setLight(0)
@@ -397,7 +404,7 @@ def fit3states(fluxSet, run, vInd, params, method=defMethod):  # , verbose=confi
 
     plotResult = bool(config.verbose > 1)
 
-    nStates = 3
+    nStates = '3'
 
     ### Prepare the data
     nRuns = fluxSet.nRuns
@@ -573,7 +580,7 @@ def fit4states(fluxSet, run, vInd, params, method=defMethod):  #, verbose=config
 
     plotResult = bool(config.verbose > 1)
 
-    nStates = 4
+    nStates = '4'
 
     ### Prepare the data
     nRuns = fluxSet.nRuns
@@ -735,7 +742,7 @@ def fit6states(fluxSet, quickSet, run, vInd, params, method=defMethod):  # , ver
 
     plotResult = bool(config.verbose > 1)
 
-    nStates = 6
+    nStates = '6'
 
     ### Prepare the data
     nRuns = fluxSet.nRuns
@@ -1767,12 +1774,8 @@ def fitModel(dataSet, nStates=3, params=None, postFitOpt=True, relaxFact=2, meth
     ### Define non-optimised parameters to exclude in post-fit optimisation
     nonOptParams = ['Gr0', 'E', 'v0', 'v1']
 
-    if isinstance(nStates, str):
-        nStates = int(nStates) # .lower()
-    if nStates == 3 or nStates == 4 or nStates == 6:
-        pass
-    else:
-        print("Error in selecting model - please choose from 3, 4 or 6 states")
+    if not isinstance(nStates, str):
+        nStates = str(nStates)  # .lower()
         raise NotImplementedError(nStates)
 
     if config.verbose > 0:
@@ -1789,7 +1792,7 @@ def fitModel(dataSet, nStates=3, params=None, postFitOpt=True, relaxFact=2, meth
     ### Could use precalculated lookup tables to find the values of steady state O1 & O2 occupancies?
 
     if params is None:
-        params = modelParams[str(nStates)]
+        params = modelParams[nStates]
 
     if isinstance(dataSet, dict):
         if 'step' in dataSet:
@@ -1984,15 +1987,15 @@ def fitModel(dataSet, nStates=3, params=None, postFitOpt=True, relaxFact=2, meth
             print("\nOnly one flux value found [{}] at {} mV - fixing parameters of light-sensitive transitions. ".format(setPC.phis[0], setPC.trials[runInd][0][vIndm70].V))
 
 
-    if nStates == 3:
+    if nStates == '3':
         #phiFits[phiInd] = fit3states(I,t,onInd,offInd,phi,V,Gr0,gmax,Ipmax,params=pOns,method=method)#,Iss)
         fittedParams, miniObj = fit3states(setPC, runInd, vIndm70, fitParams, method)  # , verbose)
         constrainedParams = ['Gd']
-    elif nStates == 4:
+    elif nStates == '4':
         #phiFits[phiInd] = fit4states(I,t,onInd,offInd,phi,V,Gr0,gmax,params=pOns,method=method)
         fittedParams, miniObj = fit4states(setPC, runInd, vIndm70, fitParams, method)  # , verbose)
         constrainedParams = ['Gd1', 'Gd2', 'Gf0', 'Gb0']
-    elif nStates == 6:
+    elif nStates == '6':
         fittedParams, miniObj = fit6states(setPC, quickSet, runInd, vIndm70, fitParams, method)  # , verbose)
         constrainedParams = ['Gd1', 'Gd2', 'Gf0', 'Gb0', 'Go1', 'Go2']
         #constrainedParams = ['Go1', 'Go2', 'Gf0', 'Gb0']
@@ -2170,7 +2173,9 @@ def plotFluxSetFits(fluxSet, nStates, params, runInd=0, vInd=0):
     plt.tight_layout()
     plt.show()
 
-    setFig.savefig(os.path.join(config.fDir, 'fluxSetFit'+'-'.join(str(s) for s in nStates)+'states'+'.'+config.saveFigFormat), format=config.saveFigFormat)
+    # setFig.savefig(os.path.join(config.fDir, 'fluxSetFit'+'-'.join(str(s) for s in nStates)+'states'+'.'+config.saveFigFormat), format=config.saveFigFormat)
+    setFig.savefig(os.path.join(config.fDir, f"fluxSetFit{'-'.join(nStates)}states.{config.saveFigFormat}"), format=config.saveFigFormat)
+    
 
     return
 
