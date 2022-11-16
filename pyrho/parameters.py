@@ -415,32 +415,32 @@ class PyRhOparameter(Parameter):
                 if self.min is not None and val < self.min:
                     values[ind] = self.min
 
-    def get_max(self):
-        return self._max
+    # def get_max(self):
+    #     return self._max
 
-    def set_max(self, val):
-        if val is None:
-            val = np.inf
-        self._max = val
-        if self.min > self.max:
-            self._min, self._max = self.max, self.min
-        if np.isclose(self.min, self.max, atol=1e-13, rtol=1e-13):
-            raise ValueError("Parameter '%s' has min == max" % self.name)
+    # def set_max(self, val):
+    #     if val is None:
+    #         val = np.inf
+    #     self._max = val
+    #     if self.min > self.max:
+    #         self._min, self._max = self.max, self.min
+    #     if np.isclose(self.min, self.max, atol=1e-13, rtol=1e-13):
+    #         raise ValueError("Parameter '%s' has min == max" % self.name)
 
-    def get_min(self):
-        return self._min
+    # def get_min(self):
+    #     return self._min
 
-    def set_min(self, val):
-        if val is None:
-            val = -np.inf
-        self._min = val
-        if self.min > self.max:
-            self._min, self._max = self.max, self.min
-        if np.isclose(self.min, self.max, atol=1e-13, rtol=1e-13):
-            raise ValueError("Parameter '%s' has min == max" % self.name)
+    # def set_min(self, val):
+    #     if val is None:
+    #         val = -np.inf
+    #     self._min = val
+    #     if self.min > self.max:
+    #         self._min, self._max = self.max, self.min
+    #     if np.isclose(self.min, self.max, atol=1e-13, rtol=1e-13):
+    #         raise ValueError("Parameter '%s' has min == max" % self.name)
 
-    min = property(get_min, set_min)
-    max = property(get_max, set_max)
+    # min = property(get_min, set_min)
+    # max = property(get_max, set_max)
 
     def _getval(self):
         return self._val
@@ -469,8 +469,8 @@ class PyRhOparameter(Parameter):
         #    s.append("expr='%s'" % self.expr)
         return "<Parameter %s>" % ', '.join(s)
 
-    def __str__(self):
-        return self.__repr__()
+    # def __str__(self):
+    #     return self.__repr__()
 
     # TODO: Revise latex representation to fallback gracefully if not IPY
     def _repr_latex_(self):
