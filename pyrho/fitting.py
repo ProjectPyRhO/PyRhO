@@ -65,7 +65,7 @@ def plotData(Is, ts, t_on, t_off, phis):
     # Plot the photocurrents
     plt.figure()
     for i, phi in enumerate(phis):
-        plt.plot(ts[i], Is[i], label=r'$\phi={:.3g}$'.format(phi))
+        plt.plot(ts[i], Is[i], label=rf'$\phi={phi:.3g}$')
     plt.legend(loc='best')
     plt.xlabel('Time [ms]')
     plt.ylabel('Photocurrent [nA]')
@@ -163,7 +163,7 @@ def reportFit(minResult, description, method):
 
     # Fitting parameters for the {}-state model
     print("\n--------------------------------------------------------------------------------")
-    print("{} with the '{}' algorithm... ".format(description, method))
+    print(f"{description} with the '{method}' algorithm... ")
     print("--------------------------------------------------------------------------------\n")
     if hasattr(minResult, 'message'):
         print(minResult.message)
@@ -181,9 +181,9 @@ def reportFit(minResult, description, method):
                 print(minResult.lmdif_message)
     else:
         # TODO: Restructure to make it consistent with fitModels
-        print("Fit for {} variables over {} points ({} d.f.) with {} function evaluations".format(minResult.nvarys, minResult.ndata, minResult.nfree, minResult.nfev))
-        print("Chi^2 (reduced): {}, ({})".format(minResult.chisqr, minResult.redchi))
-        print("Akaike Info.:   {} \nBayesian Info.: {}".format(minResult.aic, minResult.bic))
+        print(f"Fit for {minResult.nvarys} variables over {minResult.ndata} points ({minResult.nfree} d.f.) with {minResult.nfev} function evaluations")
+        print(f"Chi^2 (reduced): {minResult.chisqr}, ({minResult.redchi})")
+        print(f"Akaike Info.:   {minResult.aic} \nBayesian Info.: {minResult.bic}")
         # print("Chi^2 \t rChi^2 \t AIC \t BIC")
         # print("{} \t {} \t {} \t {}".format(minResult.chisqr, minResult.redchi, minResult.aic, minResult.bic))
 
@@ -225,17 +225,17 @@ def plotOffPhaseFits(toffs, Ioffs, pOffs, phis, nStates, fitFunc, Exp1, Exp2, Gd
 
         ax.plot(toffs[trial], Ioffs[trial], color=colours[trial%len(colours)],
                 linewidth=lw, markeredgecolor='None',
-                label='Data: phi={phi:.3g}'.format(phi=phis[trial]))
+                label=f'Data: phi={phis[trial]:.3g}')
         # ax.plot(toffs[trial], Ioffs[trial], 'g', linewidth=mpl.rcParams['lines.linewidth']*3, label='Data: phi={phi:.3g}'.format(phi=phis[trial])) # Experimental data
 
-        eq = 'I(t)={Islow:.3g}*exp(-{Exp1:.3g}*t) + {Ifast:.3g}*exp(-{Exp2:.3g}*t)'.format(Islow=Islow, Ifast=Ifast, Exp1=Exp1, Exp2=Exp2)
+        eq = f'I(t)={Islow:.3g}*exp(-{Exp1:.3g}*t) + {Ifast:.3g}*exp(-{Exp2:.3g}*t)'
         ax.plot(toffs[trial], fitFunc(pOffs,toffs[trial],trial), color='k', linestyle='--', label=eq) # Fits
         # ax.plot(toffs[trial], fit3off(pOffs,toffs[trial],trial), 'b', label=eq) # Fits
 
         if Gd is not None: # Plot single exponential decay too
             ax.plot(toffs[trial], (Islow+Ifast)*np.exp(-Gd*toffs[trial]),
                     color=colours[trial%len(colours)], linestyle=':',
-                    label='I(t)={I0:.3g}*exp(-{Gd:.3g}*t)'.format(I0=Islow+Ifast, Gd=Gd)) # Removed - coefficients
+                    label=f'I(t)={Islow+Ifast:.3g}*exp(-{Gd:.3g}*t)')  # Removed - coefficients
             # ax.plot(toffs[trial], (Islow+Ifast)*np.exp(-Gd*toffs[trial]), 'r', label='I(t)={I0:.3g}*exp(-{Gd:.3g}*t)'.format(I0=Islow+Ifast, Gd=Gd)) # Removed - coefficients
 
         # if trial < nTrials-1:
@@ -348,7 +348,7 @@ def plotFit(PC, nStates, params, fitRates=False, index=None):
     Ifit = RhO.calcI(V, RhO.states)
 
     # Plot model fit curve
-    axFit.plot(t, Ifit, color='b', label=r'$\mathrm{{Model\ fit\ ({}-states)}}$'.format(nStates)) #t[onInd:]
+    axFit.plot(t, Ifit, color='b', label=rf'$\mathrm{{Model\ fit\ ({nStates}-states)}}$')  # t[onInd:]
     axFit.legend(loc='best')
 
     ### Plot Residuals
@@ -384,10 +384,11 @@ def plotFit(PC, nStates, params, fitRates=False, index=None):
 
     if index is None:
         index = ''
-    Ifig.savefig(os.path.join(config.fDir, 'fit'+str(nStates)+'states'+str(index)+'.'+config.saveFigFormat), format=config.saveFigFormat)
-
+    Ifig.savefig(os.path.join(config.fDir, f"fit{nStates}states{index}.{config.saveFigFormat}"), 
+                format=config.saveFigFormat)
+    
     if config.verbose > 1:
-        print("Fit has been plotted for the {}-state model".format(nStates))# at a flux of {} [photons * s^-1 * mm^-2]".format(phi))
+        print(f"Fit has been plotted for the {nStates}-state model")  # at a flux of {} [photons * s^-1 * mm^-2]".format(phi))
 
     return
 
@@ -485,10 +486,10 @@ def fit3states(fluxSet, run, vInd, params, method=defMethod, plot=False):  # , v
         Iss = Ioffs[phiInd][0]
         if Iss < 0: # Excitatory
             iOffPs.add('Islow_'+str(phiInd), value=0.2*Iss, vary=True, max=0)
-            iOffPs.add('Ifast_'+str(phiInd), value=0.8*Iss, vary=True, max=0, expr='{} - {}'.format(Iss, 'Islow_'+str(phiInd)))
+            iOffPs.add('Ifast_'+str(phiInd), value=0.8*Iss, vary=True, max=0, expr=f"{Iss} - {'Islow_'+str(phiInd)}")
         else:
             iOffPs.add('Islow_'+str(phiInd), value=0.2*Iss, vary=True, min=0)
-            iOffPs.add('Ifast_'+str(phiInd), value=0.8*Iss, vary=True, min=0, expr='{} - {}'.format(Iss, 'Islow_'+str(phiInd)))
+            iOffPs.add('Ifast_'+str(phiInd), value=0.8*Iss, vary=True, min=0, expr=f"{Iss} - {'Islow_'+str(phiInd)}")
 
     iOffPs.add('Gd1', value=params['Gd'].value/5, min=params['Gd'].min, max=params['Gd'].max)
     iOffPs.add('Gd2', value=params['Gd'].value*5, min=params['Gd'].min, max=params['Gd'].max)
@@ -529,7 +530,7 @@ def fit3states(fluxSet, run, vInd, params, method=defMethod, plot=False):  # , v
         plotOffPhaseFits(toffs, Ioffs, pOffs, phis, nStates, fit3off, v['Gd1'], v['Gd2'], Gd=Gd)
 
     reportFit(offPmin, "Off-phase fit report for the 3-state model", method)
-    print('Gd1 = {}; Gd2 = {} ==> Gd = {}'.format(pOffs['Gd1'].value, pOffs['Gd2'].value, Gd))
+    print(f"Gd1 = {pOffs['Gd1'].value}; Gd2 = {pOffs['Gd2'].value} ==> Gd = {Gd}")
 
 
     ### Fit on curve
@@ -559,8 +560,7 @@ def fit3states(fluxSet, run, vInd, params, method=defMethod, plot=False):  # , v
 
     reportFit(onPmin, "On-phase fit report for the 3-state model", method)
     if config.verbose > 0:
-        print('k_a = {}; p = {}; k_r = {}; q = {}; phi_m = {}'.format(pOns['k_a'].value, pOns['p'].value,
-                                                pOns['k_r'].value, pOns['q'].value, pOns['phi_m'].value))
+        print(f"k_a = {pOns['k_a'].value}; p = {pOns['p'].value}; k_r = {pOns['k_r'].value}; q = {pOns['q'].value}; phi_m = {pOns['phi_m'].value}")
 
     fitParams = pOns
 
@@ -982,7 +982,7 @@ def getRecoveryPeaks(recData, phiInd=None, vInd=None, usePeakTime=False):
     if phiInd is None:
         phiMax, phiInd = getExt(recData.phis, 'max')
         if config.verbose > 2:
-            print('Highest flux found at index {}: {:.3g}'.format(phiInd, phiMax))
+            print(f'Highest flux found at index {phiInd}: {phiMax:.3g}')
 
     if vInd is None:
         if recData.nVs == 1:
@@ -1745,11 +1745,11 @@ def fitModels(dataSet, nStates='3', params=None, postFitOpt=True, relaxFact=2, m
             plotFluxSetFits(fluxSet=dataSet[fluxKey], nStates=nStates, params=fitParams)
 
         print("\n--------------------------------------------------------------------------------")
-        print("Model comparison with the '{}' algorithm".format(method), end=" ")
+        print(f"Model comparison with the '{method}' algorithm", end=" ")
         if postFitOpt:
             if postFitOptMethod is None:
                 postFitOptMethod = method
-            print("['{}', relaxFact={}]".format(postFitOptMethod, relaxFact))
+            print(f"['{postFitOptMethod}', relaxFact={relaxFact}]")
         else:
             print('')
         print("--------------------------------------------------------------------------------")
@@ -1758,12 +1758,8 @@ def fitModels(dataSet, nStates='3', params=None, postFitOpt=True, relaxFact=2, m
         for i, nSt in enumerate(nStates):
             minResult = miniObjs[i]
             #print("Fit for {} variables over {} points ({} d.f.) with {} function evaluations".format(minResult.nvarys, minResult.ndata, minResult.nfree, minResult.nfev))
-            print("{}-state \t{:8.3g} \t{:8.3g} \t{:8.3g} \t{:8.3g}".format(stateLabs[nSt], minResult.chisqr, minResult.redchi, minResult.aic, minResult.bic))
+            print(f"{stateLabs[nSt]}-state \t{minResult.chisqr:8.3g} \t{minResult.redchi:8.3g} \t{minResult.aic:8.3g} \t{minResult.bic:8.3g}")
             #print('{}-state \t', '{:8.3g}'.rjust(8), '{:8.3g}'.rjust(8), '{:8.3g}'.rjust(8), '{:8.3g}'.rjust(8).format(stateLabs[nSt], minResult.chisqr, minResult.redchi, minResult.aic, minResult.bic))
-            #print("Chi^2: {}".format(minResult.chisqr))
-            #print("Reduced Chi^2: {}".format(minResult.redchi))
-            #print("Akaike Info.:   {}".format(minResult.aic))
-            #print("Bayesian Info.: {}".format(minResult.bic))
 
         print("================================================================================\n")
 
@@ -1777,12 +1773,15 @@ def fitModel(dataSet, nStates='3', params=None, postFitOpt=True, relaxFact=2, me
 
     if not isinstance(nStates, str):
         nStates = str(nStates)  # .lower()
+
+    if nStates not in modelParams:
+        print(f"Error in selecting model {nStates} - please choose from {list(modelParams)} states")
         raise NotImplementedError(nStates)
 
     if config.verbose > 0:
         t0 = wall_time()
         print("\n================================================================================")
-        print("Fitting parameters for the {}-state model with the '{}' algorithm... ".format(nStates, method))
+        print(f"Fitting parameters for the {nStates}-state model with the '{method}' algorithm...")
         print("================================================================================\n")
 
     ### Check contents of dataSet and produce report on model features which may be fit.
@@ -1846,7 +1845,7 @@ def fitModel(dataSet, nStates='3', params=None, postFitOpt=True, relaxFact=2, me
     else:
         print(type(dataSet[fluxKey]))
         print(dataSet[fluxKey])
-        raise TypeError("dataSet[fluxKey]")
+        raise TypeError(f"dataSet[{fluxKey}]")
 
 
     if nRuns == 1:
@@ -1890,14 +1889,14 @@ def fitModel(dataSet, nStates='3', params=None, postFitOpt=True, relaxFact=2, me
         rectKey = fluxKey
     else:
         rectKey = None
-        print("Only one voltage clamp value found [{}] - fixing parameters of f(v): ".format(setPC.Vs[0]), end='')
+        print(f"Only one voltage clamp value found [{setPC.Vs[0]}] - fixing parameters of f(v): ", end='')
 
     if rectKey is not None:
         if config.verbose > 0:
             print('Rectifier protocol found: fitting E, v0 and v1 for f(v): ', end='')
         phiMax, phiIndMax = getExt(dataSet[rectKey].phis, 'max')
         if config.verbose > 2:
-            print('Highest flux found at index {}: {:.3g}'.format(phiIndMax, phiMax))
+            print(f'Highest flux found at index {phiIndMax}: {phiMax:.3g}')
         IssSet, VsSet = dataSet[rectKey].getSteadyStates(run=0, phiInd=phiIndMax)
         if params['E'].vary or params['v0'].vary or params['v1'].vary:
             params = fitfV(VsSet, IssSet, params, relaxFact=relaxFact)  # , verbose=verbose)
@@ -1906,7 +1905,7 @@ def fitModel(dataSet, nStates='3', params=None, postFitOpt=True, relaxFact=2, me
     params['v0'].vary = False
     params['v1'].vary = False
 
-    print('E = {} mV; v0 = {} mV**-1; v1 = {} mV**-1'.format(params['E'].value, params['v0'].value, params['v1'].value))
+    print(f"E={params['E'].value} mV; v0={params['v0'].value} mV**-1; v1={params['v1'].value} mV**-1")
 
 
     ### Find most extreme peak current in the fluxSet: Ipmax
@@ -1934,13 +1933,13 @@ def fitModel(dataSet, nStates='3', params=None, postFitOpt=True, relaxFact=2, me
             Vpmax = Vsat
             peakKey = 'delta'
 
-    print("Estimating g0 from '{}'; Ipmax = {:.3} nA: ".format(peakKey, Ipmax), end='')
+    print(f"Estimating g0 from '{peakKey}'; Ipmax = {Ipmax:.3} nA: ", end='')
 
     ### Maximum conductance: g0
     assert(Vpmax != params['E'].value)
     g0 = 1e6 * Ipmax / (Vpmax - params['E'].value)
     params['g0'].value = g0
-    print('g0 = {} pS'.format(round_sig(g0, n=3)))
+    print(f'g0 = {round_sig(g0, n=3)} pS')
 
 
 
@@ -1956,7 +1955,7 @@ def fitModel(dataSet, nStates='3', params=None, postFitOpt=True, relaxFact=2, me
         if config.verbose > 0:
             print('Recovery protocol not found, fixing initial value: ', end='')
     params['Gr0'].vary = False
-    print('Gr0 = {} ms**-1'.format(params['Gr0'].value))
+    print(f"Gr0 = {params['Gr0'].value} ms**-1")
 
     # Process data for six-state model fitting
     if 'shortPulse' in dataSet:
@@ -1982,10 +1981,10 @@ def fitModel(dataSet, nStates='3', params=None, postFitOpt=True, relaxFact=2, me
 
     if config.verbose > 0:
         if nPhis > 1:
-            print('\nFitting over {} flux values [{:.3g}, {:.3g}] at {} mV (run {}) '.format(nPhis, min(phis), max(phis), setPC.trials[runInd][0][vIndm70].V, runInd), end='')
-            print("{{nRuns={}, nPhis={}, nVs={}}}".format(nRuns, nPhis, nVs))
+            print(f'\nFitting over {nPhis} flux values [{min(phis):.3g}, {max(phis):.3g}] at {setPC.trials[runInd][0][vIndm70].V} mV (run {runInd}) ', end='')
+            print(f"{{{nRuns=}, {nPhis=}, {nVs=}}}")
         else:
-            print("\nOnly one flux value found [{}] at {} mV - fixing parameters of light-sensitive transitions. ".format(setPC.phis[0], setPC.trials[runInd][0][vIndm70].V))
+            print(f"\nOnly one flux value found [{setPC.phis[0]}] at {setPC.trials[runInd][0][vIndm70].V} mV - fixing parameters of light-sensitive transitions. ")
 
 
     if nStates == '3':
@@ -2002,7 +2001,7 @@ def fitModel(dataSet, nStates='3', params=None, postFitOpt=True, relaxFact=2, me
         #constrainedParams = ['Go1', 'Go2', 'Gf0', 'Gb0']
         #nonOptParams.append(['Gd1', 'Gd2'])
     else:
-        raise Exception('Invalid choice for nStates: {}!'.format(nStates))
+        raise Exception(f'Invalid choice for nStates: {nStates}!')
 
 
     if postFitOpt: # Relax all parameters (except nonOptParams) and reoptimise
@@ -2018,7 +2017,7 @@ def fitModel(dataSet, nStates='3', params=None, postFitOpt=True, relaxFact=2, me
             postFitOptMethod = method
 
         if config.verbose > 1:
-            print("\n\nPerforming post-fit optimisation with the '{}' algorithm [relaxFact={}]!".format(postFitOptMethod, relaxFact))
+            print(f"\n\nPerforming post-fit optimisation with the '{postFitOptMethod}' algorithm [{relaxFact=}]!")
 
         assert(relaxFact >= 1)
 
@@ -2034,7 +2033,7 @@ def fitModel(dataSet, nStates='3', params=None, postFitOpt=True, relaxFact=2, me
         #optParams = postPmin.params
 
         if config.verbose > 0:
-            reportFit(postPmin, "Post-fit optimisation report for the {}-state model".format(nStates), postFitOptMethod)
+            reportFit(postPmin, f"Post-fit optimisation report for the {nStates}-state model", postFitOptMethod)
 
         # Create new Parameters object to ensure the default ordering
         orderedParams = Parameters()
@@ -2053,7 +2052,7 @@ def fitModel(dataSet, nStates='3', params=None, postFitOpt=True, relaxFact=2, me
         for trial in range(len(PCs)):
             plotFit(PCs[trial], nStates, orderedParams, fitRates=False, index=trial)  # , postPmin, fitRates=False, index=trial)
 
-    exportName = 'fitted{}sParams.pkl'.format(nStates)
+    exportName = f'fitted{nStates}sParams.pkl'
     with open(os.path.join(config.dDir, exportName), "wb") as fh:
         pickle.dump(orderedParams, fh)
 
@@ -2066,7 +2065,7 @@ def fitModel(dataSet, nStates='3', params=None, postFitOpt=True, relaxFact=2, me
         printParams(orderedParams)
         if config.verbose > 1:
             compareParams(params, orderedParams)
-        print("\nParameters fit for the {}-state model in {:.3g}s".format(nStates, wall_time() - t0))
+        print(f"\nParameters fit for the {nStates}-state model in {wall_time() - t0:.3g}s")
         print("--------------------------------------------------------------------------------\n")
 
     return orderedParams, miniObj
@@ -2150,7 +2149,7 @@ def plotFluxSetFits(fluxSet, nStates, params, runInd=0, vInd=0):
             # Plot model fit curve
             if len(nStates) > 1 and phiInd == fluxSet.nPhis-1:
                 plt.plot(tfit, Ifit, color='k', ls=styles[mInd % len(styles)],
-                         label=r'$\mathrm{{Model\ fit\ ({}-states)}}$'.format(stateLabs[s]))
+                         label=rf'$\mathrm{{Model\ fit\ ({stateLabs[s]}-states)}}$')
             else:
                 plt.plot(tfit, Ifit, color='k', ls=styles[mInd % len(styles)])#c=colours[phiInd % len(colours)]) #,  label='$\phi={:.3g}$'.format(phi), label='$\mathrm{{Model\ fit\ ({}-states)}}$'.format(nStates))
 
