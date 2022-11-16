@@ -97,7 +97,7 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
         # 3.7 EOL: 27/6/23
-        'Programming Language :: Python :: 3.7',
+        # 'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
@@ -117,6 +117,8 @@ setup(
 
     # package_dir = {'': '.'},
     # package_dir = {'pyrho': 'pyrho'}, # Relative to this script
+
+    python_requires='>=3.8',
 
     # List run-time dependencies here.  These will be installed by pip when your
     # project is installed. For an analysis of "install_requires" vs pip's
