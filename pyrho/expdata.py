@@ -766,7 +766,7 @@ class PhotoCurrent(object):
         """Find the steady-state current either as the last ``tail`` proportion
         of the on-phase or by fitting a decay function.
         """
-        assert(0 <= pulse < self.nPulses)
+        assert 0 <= pulse < self.nPulses
 
         #offInd = self._idx_pulses_[pulse][1] #np.searchsorted(t,Dt_on+Dt_delay,side="left")
 
