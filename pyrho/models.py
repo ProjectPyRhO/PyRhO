@@ -45,24 +45,24 @@ class RhodopsinModel(PyRhOobject):
         # Ensure v1 is scaled correctly so that f(V=-70) = 1
         v1 = calcV1(self.E, self.v0)
         if not np.isclose(self.v1, v1, rtol=1e-3, atol=1e-5):
-            warnings.warn("Correcting v1 scaling: {} <-- {}".format(self.v1, v1))
+            warnings.warn(f"Correcting v1 scaling: {self.v1} <-- {v1}")
             self.v1 = v1
 
         self.initStates(phi=self.phi_0, s0=self.s_0)
         # self.transRates = {r: getattr(self, r) for r in itertools.chain(self.photoRates, self.constRates)}
 
         if config.verbose > 1:
-            print("PyRhO {}-state {} model initialised!".format(self.nStates, self.rhoType))
+            print(f"PyRhO {self.nStates}-state {self.rhoType} model initialised!")
 
         if config.verbose > 2:
             self.printParams()
 
     def __str__(self):
-        return "{}-state {}".format(stateLabs[self.nStates], self.rhoType)  # self.__name__+
+        return f"{stateLabs[self.nStates]}-state {self.rhoType}"  # self.__name__+
         # return self.brian_phi_t
 
     def __repr__(self):
-        return "<PyRhO {}-state {} Model object>".format(stateLabs[self.nStates], self.rhoType)
+        return f"<PyRhO {stateLabs[self.nStates]}-state {self.rhoType} Model object>"
 
     def __call__(self):
         """When a rhodopsin is called, return its internal state at that instant."""
@@ -515,7 +515,8 @@ class RhO_3states(RhodopsinModel):
             self.dispRates()
 
     def dispRates(self):
-        print("Transition rates (phi={:.3g}): C --[Ga={:.3g}]--> O --[Gd={:.3g}]--> D --[Gr={:.3g}]--> C".format(self.phi, self.Ga, self.Gd, self.Gr))
+        print(f"Transition rates (phi={self.phi:.3g}):\n"
+            f"C --[Ga={self.Ga:.3g}]--> O --[Gd={self.Gd:.3g}]--> D --[Gr={self.Gr:.3g}]--> C")
 
     def solveStates(self, s_0, t, phi_t=None):
         """Differential equations of the 3-state model to be solved by odeint"""
@@ -594,8 +595,8 @@ class RhO_3states(RhodopsinModel):
         SQ = Ga**2 + Gd**2 + Gr**2
         if 2 * SP > SQ:
             if config.verbose > 1:
-                print('Imaginary solution! SP = {}; SQ = {}'
-                      ' --> (SQ-2*SP)**(1/2) = NaN'.format(SP, SQ))
+                print(f'Imaginary solution! {SP = }; {SQ = }'
+                      ' --> (SQ-2*SP)**(1/2) = NaN')
             return odeint(self.solveStates, s0, t, Dfun=self.jacobian)
             #raise ValueError()  # Uncomment this when error catching is implemented
 
@@ -738,8 +739,9 @@ class RhO_4states(RhodopsinModel):
             self.dispRates()
 
     def dispRates(self):
-        print("Transition rates (phi={:.3g}): C1 --[Ga1={:.3g}]--> O1 --[Gf={:.3g}]--> O2".format(self.phi, self.Ga1, self.Gf))
-        print("Transition rates (phi={:.3g}): O1 <--[Gb={:.3g}]-- O2 <--[Ga2={:.3g}]-- C2".format(self.phi, self.Gb, self.Ga2))
+        print(f"Transition rates (phi={self.phi:.3g}):\n"
+            f"C1 --[Ga1={self.Ga1:.3g}]--> O1 --[Gf={self.Gf:.3g}]--> O2\n"
+            f"O1 <--[Gb={self.Gb:.3g}]-- O2 <--[Ga2={self.Ga2:.3g}]-- C2")
 
     def solveStates(self, s_0, t, phi_t=None):
         """Differential equations of the 4-state model to be solved by odeint"""
@@ -915,9 +917,10 @@ class RhO_6states(RhodopsinModel):
             self.dispRates()
 
     def dispRates(self):
-        """Print photosensitive transition rates"""
-        print("Transition rates (phi={:.3g}): C1 --[Ga1={:.3g}]--> O1 --[Gf={:.3g}]--> O2".format(self.phi, self.Ga1, self.Gf))
-        print("Transition rates (phi={:.3g}): O1 <--[Gb={:.3g}]-- O2 <--[Ga2={:.3g}]-- C2".format(self.phi, self.Gb, self.Ga2))
+        """Print photosensitive transition rates."""
+        print(f"Transition rates (phi={self.phi:.3g}):\n"
+            f"C1 --[Ga1={self.Ga1:.3g}]--> O1 --[Gf={self.Gf:.3g}]--> O2\n"
+            f"O1 <--[Gb={self.Gb:.3g}]-- O2 <--[Ga2={self.Ga2:.3g}]-- C2")
 
     def solveStates(self, s_0, t, phi_t=None):
         """Differential equations of the 6-state model to be solved by odeint"""

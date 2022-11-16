@@ -129,15 +129,15 @@ def checkNEURON(test=False):
     if 'NRN_NMODL_PATH' in os.environ:
         nmodlPath = os.environ['NRN_NMODL_PATH']
         if verbose > 1:
-            print("'NRN_NMODL_PATH' environment variable is set: {}".format(nmodlPath))
+            print(f"'NRN_NMODL_PATH' environment variable is set: {nmodlPath}")
             modList = [file for file in os.listdir(nmodlPath) if file.endswith(".mod")]
             hocList = [file for file in os.listdir(nmodlPath) if file.endswith(".hoc")]
             print("MOD files found: ", modList)
             print("HOC files found: ", hocList)
             if not set(NMODLfiles).issubset(set(modList)):
-                warnings.warn('Missing mod files in {}: {}'.format(nmodlPath, set(NMODLfiles) - set(modList)))
+                warnings.warn(f'Missing mod files in {nmodlPath}: {set(NMODLfiles) - set(modList)}')
             if not set(HOCfiles).issubset(set(hocList)):
-                warnings.warn('Missing hoc files in {}: {}'.format(nmodlPath, set(HOCfiles) - set(hocList)))
+                warnings.warn(f'Missing hoc files in {nmodlPath}: {set(HOCfiles) - set(hocList)}')
 
     else:
         warnings.warn("'NRN_NMODL_PATH' is not set - add it to environment "
@@ -188,8 +188,8 @@ def setupNEURON(path=None):  # , NEURONpath=None):
         os.makedirs(path, exist_ok=True)
         shutil.copy2(os.path.join(pyrhoNEURONpath, NEURONinstallScript), path) #cwd
         print('NEURON must be compiled from source to work with Python 3. ')
-        print('Please use the script `{}` in `{}` and then rerun setupNEURON.'.format(NEURONinstallScript, path)) #cwd
-        print("E.g.: ./{} /abs/path/to/install/NEURON/".format(NEURONinstallScript))
+        print(f'Please use the script `{NEURONinstallScript}` in `{path}` and then rerun setupNEURON.') #cwd
+        print(f"E.g.: ./{NEURONinstallScript} /abs/path/to/install/NEURON/")
         return
 
     # To load mod files:
@@ -211,7 +211,7 @@ def setupNEURON(path=None):  # , NEURONpath=None):
     # Alternatively, change os.environ['NRN_NMODL_PATH'] ?
 
     #print('NEURON module path: ', path)
-    print('Copying mod {} and hoc {} files from {}...'.format(NMODLfiles, HOCfiles, pyrhoNEURONpath))
+    print(f'Copying mod {NMODLfiles} and hoc {HOCfiles} files from {pyrhoNEURONpath}...')
     if os.path.isdir(path):  # Check path
         NMODLfilesIncPath = [os.path.join(pyrhoNEURONpath, f) for f in NMODLfiles]
         for f in NMODLfilesIncPath:

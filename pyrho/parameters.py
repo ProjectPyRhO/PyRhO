@@ -59,7 +59,7 @@ pOn.add('tau_deact', value=50, min=1e-9)
 pOffSing = Parameters()  # copy.deepcopy(pOn)
 
 # Single exponential
-pOffSing.add('a0', value=0)  # , expr='{}-a1-a2'.format(Iss))
+pOffSing.add('a0', value=0)  # , expr=f'{Iss}-a1-a2')
 pOffSing.add('a1', value=0, vary=True)
 pOffSing.add('a2', value=-0, vary=False)
 pOffSing.add('Gd1', value=0.1)  # , min=1e-9)
@@ -69,7 +69,7 @@ pOffSing.add('Gd2', value=0, vary=False)  # , expr='Gd1')#, min=1e-9)
 pOffDoub = Parameters()
 pOffDoub.add('a0', value=0, vary=False)
 pOffDoub.add('a1', value=0.1)
-pOffDoub.add('a2', value=-0.1)  # , expr='{}-a0-a1'.format(Iss))
+pOffDoub.add('a2', value=-0.1)  # , expr=f'{Iss}-a0-a1')
 pOffDoub.add('Gd1', value=0.1)  # , min=1e-9)
 pOffDoub.add('Gd2', value=0.01)  # , vary=True) #, expr='Gd1')#, min=1e-9)
 
@@ -496,7 +496,7 @@ class PyRhOparameter(Parameter):
             '''
             v = str(self._val)
         if self.units is not None:
-            #u = "[{u}]".format(u=self.units._latex())
+            # u = f"[{self.units._latex()}]"
             u = self.units._latex()
             s = "\,".join([s, '=', v, u])
         return "$" + s + "$"  # texIt(s)

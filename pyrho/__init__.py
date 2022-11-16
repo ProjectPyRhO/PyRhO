@@ -152,7 +152,7 @@ def print_versions():
     #deps = [numpy, scipy, matplotlib, lmfit, warnings, os, pickle, collections, platform]
     #depsGUI = [IPython, ast, base64]
     #for mod in dependencies:
-    #    print("{} version: {}".format(mod, mod.__version__))
+    #    print(f"{mod} version: {mod.__version__}")
     #import numpy
     print("NumPy version:         ", np.__version__)
     #import scipy
