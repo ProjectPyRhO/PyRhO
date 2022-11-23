@@ -1,21 +1,17 @@
 """The PyRhO package setup script"""
 
-#from __future__ import print_function        # Added for Python 2.x support
-from setuptools import setup, find_packages  # Prefer setuptools over distutils
-from codecs import open                      # To use a consistent encoding
 import os
+from setuptools import setup, find_packages  # Prefer setuptools over distutils
+# from codecs import open                      # To use a consistent encoding
 
 # Download and install setuptools if not installed
 #from ez_setup import use_setuptools
 #use_setuptools()
 #python -m ensurepip --upgrade
 
-#from setuptools import setup
-#from distutils import setup
-
 here = os.path.abspath(os.path.dirname(__file__))
 home = os.path.expanduser("~")
-print(home)
+# print(home)
 prwd = os.path.join(home, 'pyrho')  # pyrho working directory
 
 # TODO: Test changes to package_data and include notebooks and license without MANIFEST
@@ -93,8 +89,6 @@ setup(
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Medical Science Apps.',
         'Topic :: Scientific/Engineering :: Bio-Informatics',
-        'Topic :: Scientific/Engineering :: Artificial Life',
-        'Topic :: Scientific/Engineering :: Human Machine Interfaces',
 
         # The license should match "license" above
         'License :: OSI Approved :: BSD License',
@@ -102,10 +96,12 @@ setup(
         # Supported Python versions
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        # 3.6 EOL: 23/12/21
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
+        # 3.7 EOL: 27/6/23
+        # 'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
         'Framework :: IPython',
         'Natural Language :: English',
         'Operating System :: OS Independent',
@@ -119,16 +115,25 @@ setup(
     # simple. Or you can use find_packages().
     packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
 
-    # package_dir = {'':'.'},
+    # package_dir = {'': '.'},
     # package_dir = {'pyrho': 'pyrho'}, # Relative to this script
+
+    python_requires='>=3.8',
 
     # List run-time dependencies here.  These will be installed by pip when your
     # project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     # ipython is used for latex repr - remove from requirements and have a fallback repr?
-    install_requires=['numpy>=1.8', 'scipy>=0.15', 'matplotlib>=1.3',
-                      'lmfit>=0.9.3,<1.0.3', 'brian2>=2.0'],  # 'ipython>=4.1'
+    install_requires=[
+        'numpy>=1.8',
+        'scipy>=0.15',
+        'matplotlib>=1.3',
+        # 'lmfit>=0.9.3,<1.0.3',
+        'lmfit>=1.0.3',
+        'brian2>=2.0'
+        # 'ipython>=4.1'
+        ],
 
     # List additional groups of dependencies here (e.g. development dependencies).
     # You can install these using the following syntax, for example:
@@ -136,6 +141,7 @@ setup(
     extras_require={
     #    'dev': ['check-manifest'],
     #    'test': ['coverage'],
+        'test': ['pytest'],
     #    'brian' : ['brian2'],
     #    'docs' : ['sphinx>=1.3'],
         'extras': ['seaborn>=0.7', 'pandas>=0.17'],  # 'cython>=0.23'
@@ -143,8 +149,10 @@ setup(
         'GUI' : ['jupyter>=1.0', 'notebook>=4.1', 'ipywidgets>=4.1,<5',
                  'seaborn>=0.7'],  # , 'traitlets>=4.1,<5'
         'full': ['jupyter>=1.0', 'notebook>=4.1', 'ipywidgets>=4.1,<5',
-                 'seaborn>=0.7', 'pandas>=0.17'],  # 'cython>=0.23'
+                 'seaborn>=0.7', 'pandas>=0.17', 'pytest'],  # 'cython>=0.23'
     },
+
+    tests_require=['pytest'],
 
     include_package_data=True,
     # If there are data files included in your packages that need to be

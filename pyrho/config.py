@@ -1,29 +1,27 @@
 """General configuration variables and functions"""
 
-from __future__ import print_function, division
-import warnings
+import importlib
 import logging
 import os
+import pkgutil
 #import glob
 import platform
 import shutil
 import subprocess
 import sys
 import time
-import importlib
-import pkgutil
+import warnings
 
 import matplotlib as mpl
-import numpy as np
 #import matplotlib.pyplot as plt
-#import scipy as sp
-#import lmfit
+import numpy as np
+
 #from pyrho.__init__ import printVersions
 
 __all__ = ['setupGUI', 'simAvailable', 'setupNEURON', 'setupBrian', 'check_package',
            'setFigOutput', 'setFigStyle', 'resetPlot']
-# 'wallTime',
-# TODO: Place in dict i.e. CONFIG_PARAMS['dDir'] or class with setter methods e.g. to call setOutput
+# 'wall_time',
+# TODO: Place in dict i.e. CONFIG_PARAMS['dDir'] or class with setter methods e.g. to call set_output
 #, 'colours', 'styles', 'verbose', 'dDir', 'fDir', 'DASH_LINE', 'DOUB_DASH_LINE'
 
 pyVer = sys.version_info
@@ -31,31 +29,11 @@ pyVer = sys.version_info
 if pyVer < (2, 7):
     raise RuntimeError('Only Python versions >= 2.7 are supported')
 
-# Set timing function
-if pyVer < (3, 3):
-    if sys.platform == 'win32':
-        # On Windows, the best timer is time.clock
-        wallTime = time.clock
-    else:  # sys.platform.startswith('linux') 'cygwin' 'darwin'
-        # On most other platforms the best timer is time.time
-        wallTime = time.time
-else:
-    wallTime = time.perf_counter
+wall_time = time.perf_counter
 
-
-if pyVer[0] == 3:
-    if pyVer >= (3, 4):
-        def check_package(pkg):
-            """Test if 'pkg' is available"""
-            return importlib.util.find_spec(pkg) is not None
-    else:  # pyVer <= (3, 3):
-        def check_package(pkg):
-            """Test if 'pkg' is available"""
-            return importlib.find_loader(pkg) is not None
-elif pyVer[0] == 2:
-    def check_package(pkg):
-        """Test if 'pkg' is available"""
-        return pkgutil.find_loader(pkg) is not None
+def check_package(pkg):
+    """Test if 'pkg' is available"""
+    return importlib.util.find_spec(pkg) is not None
 
 _LINE_LENGTH = 80
 _DASH_LINE = '-' * _LINE_LENGTH
@@ -79,31 +57,21 @@ HOCfiles = [h for h in os.listdir(pyrhoNEURONpath) if h.endswith('.hoc')]
 NEURONinstallScript = 'install_neuron.sh'
 
 
-def createDir(path):
-    """Create directory"""
-    if os.path.isdir(path):
-        return
-    try:
-        os.makedirs(path)
-    except OSError as exception:
-        if exception.errno != errno.EEXIST:
-            raise
-
-
 # Set data and figure directories to defaults
-if 'dDir' not in vars() or 'dDir' not in globals() or dDir is None:
+if 'dDir' not in vars() or 'dDir' not in globals():  # or dDir is None:
     dDir = 'data' + os.sep
-    createDir(dDir)
+    # createDir(dDir)
+    os.makedirs(dDir, exist_ok=True)
 
-if 'fDir' not in vars() or 'fDir' not in globals() or fDir is None:
+if 'fDir' not in vars() or 'fDir' not in globals():  # or fDir is None:
     fDir = 'figs' + os.sep
-    createDir(fDir)
+    # createDir(fDir)
+    os.makedirs(fDir, exist_ok=True)
 
 GUIdir = 'gui'
 
 
 def setupGUI(path=None):
-
     """
     Setup the Jupyter notebook GUI.
 
@@ -112,13 +80,13 @@ def setupGUI(path=None):
     path : str, optional
         Specify the path for where to set up the GUI folders.
         Defaults to the current working directory
-
     """
 
     if path is None:  # Copy image folders to home directory
         path = os.path.join(os.getcwd(), GUIdir)
 
-    createDir(path)
+    # createDir(path)
+    os.makedirs(path, exist_ok=True)
     pyrhoGUIpath = os.path.join(pyrhoPath, GUIdir)
     pngFiles = [f for f in os.listdir(pyrhoGUIpath) if f.endswith('.png')]
     for f in pngFiles:
@@ -128,7 +96,6 @@ def setupGUI(path=None):
 
 
 def simAvailable(simName, test=False):
-
     """
     Check if a simulator is available.
 
@@ -146,11 +113,11 @@ def simAvailable(simName, test=False):
     """
 
     simName = simName.lower()
-    if simName is 'python':
+    if simName == 'python':
         return True
-    elif simName is 'neuron':
+    elif simName == 'neuron':
         return checkNEURON(test)
-    elif simName is 'brian' or simName is 'brian2':
+    elif simName == 'brian' or simName == 'brian2':
         return checkBrian(test)
     else:
         return False
@@ -162,18 +129,15 @@ def checkNEURON(test=False):
     if 'NRN_NMODL_PATH' in os.environ:
         nmodlPath = os.environ['NRN_NMODL_PATH']
         if verbose > 1:
-            print("'NRN_NMODL_PATH' environment variable is set: {}".format(nmodlPath))
+            print(f"'NRN_NMODL_PATH' environment variable is set: {nmodlPath}")
             modList = [file for file in os.listdir(nmodlPath) if file.endswith(".mod")]
             hocList = [file for file in os.listdir(nmodlPath) if file.endswith(".hoc")]
-            #for file in os.listdir(nmodlPath):
-            #    if file.endswith(".hoc"):
-            #        print(file)
             print("MOD files found: ", modList)
             print("HOC files found: ", hocList)
             if not set(NMODLfiles).issubset(set(modList)):
-                warnings.warn('Missing mod files in {}: {}'.format(nmodlPath, set(NMODLfiles) - set(modList)))
+                warnings.warn(f'Missing mod files in {nmodlPath}: {set(NMODLfiles) - set(modList)}')
             if not set(HOCfiles).issubset(set(hocList)):
-                warnings.warn('Missing hoc files in {}: {}'.format(nmodlPath, set(HOCfiles) - set(hocList)))
+                warnings.warn(f'Missing hoc files in {nmodlPath}: {set(HOCfiles) - set(hocList)}')
 
     else:
         warnings.warn("'NRN_NMODL_PATH' is not set - add it to environment "
@@ -196,7 +160,6 @@ def checkNEURON(test=False):
 
 
 def setupNEURON(path=None):  # , NEURONpath=None):
-
     """
     Setup the NEURON simulator to work with PyRhO.
 
@@ -220,40 +183,14 @@ def setupNEURON(path=None):  # , NEURONpath=None):
 
     # TODO: Add instructions to compile/install for Python 2
     if not checkNEURON():   # Check for a working NEURON installation...
-        if False:  # TODO: Make NEURONinstallScript work with subprocess
-            if sys.platform == 'win32':
-                # TODO: Create bat/cmd script for compiling on Windows
-                warnings.warn('Compilation on Windows is not yet supported - please install NEURON manually and rerun!')
-                return
-            else:
-                try:
-                    if path is None:  # NEURONpath
-                        ans = input('The `path` argument was not specified - please enter one or press `Enter` to use the current working directory ({}): '.format(cwd))
-                        if ans == '' or ans is None:
-                            path = cwd
-                        else:
-                            path = os.path.expanduser(ans)
-                        # Set NRN_NMODL_PATH environment variable to path
-                        #print('Please specify an installation path for NEURON with `NEURONpath` and run again')
-                        #return
-                    #NEURONscriptPath = os.path.join(home, 'NEURON')
-                    #NEURONscriptPath = pyrhoNEURONpath
-
-                    NEURONscriptIncPath = os.path.join(pyrhoNEURONpath, NEURONinstallScript)
-                    exitcode = subprocess.call([NEURONscriptIncPath, path], shell=True)  # NEURONpath # .check_call
-                except:
-                    createDir(path)
-                    shutil.copy2(os.path.join(pyrhoNEURONpath, NEURONinstallScript), path)
-                    print('Unable to install NEURON - please install manually with the script copied to {}.'.format(path)) #cwd
-        else:
-            if path is None:
-                path = cwd
-            createDir(path)
-            shutil.copy2(os.path.join(pyrhoNEURONpath, NEURONinstallScript), path) #cwd
-            print('NEURON must be compiled from source to work with Python 3. ')
-            print('Please use the script `{}` in `{}` and then rerun setupNEURON.'.format(NEURONinstallScript, path)) #cwd
-            print("E.g.: ./{} /abs/path/to/install/NEURON/".format(NEURONinstallScript))
-            return
+        if path is None:
+            path = cwd
+        os.makedirs(path, exist_ok=True)
+        shutil.copy2(os.path.join(pyrhoNEURONpath, NEURONinstallScript), path) #cwd
+        print('NEURON must be compiled from source to work with Python 3. ')
+        print(f'Please use the script `{NEURONinstallScript}` in `{path}` and then rerun setupNEURON.') #cwd
+        print(f"E.g.: ./{NEURONinstallScript} /abs/path/to/install/NEURON/")
+        return
 
     # To load mod files:
     # Add os.environ['NRN_NMODL_PATH'] to environment variables. See $NEURONPATH/nrn/lib/python/neuron/__init__.py
@@ -274,7 +211,7 @@ def setupNEURON(path=None):  # , NEURONpath=None):
     # Alternatively, change os.environ['NRN_NMODL_PATH'] ?
 
     #print('NEURON module path: ', path)
-    print('Copying mod {} and hoc {} files from {}...'.format(NMODLfiles, HOCfiles, pyrhoNEURONpath))
+    print(f'Copying mod {NMODLfiles} and hoc {HOCfiles} files from {pyrhoNEURONpath}...')
     if os.path.isdir(path):  # Check path
         NMODLfilesIncPath = [os.path.join(pyrhoNEURONpath, f) for f in NMODLfiles]
         for f in NMODLfilesIncPath:
@@ -290,11 +227,7 @@ def setupNEURON(path=None):  # , NEURONpath=None):
         #for f in HOCfiles:
         #    shutil.copy2(pyrhoNEURONpath, path, f)
 
-    if pyVer >= (3, 3):
-        nrnivmodl = shutil.which('nrnivmodl')
-    else:
-        from distutils.spawn import find_executable
-        nrnivmodl = find_executable('nrnivmodl')
+    nrnivmodl = shutil.which('nrnivmodl')
 
     if nrnivmodl is None:
         arch = platform.machine()
@@ -352,25 +285,20 @@ def setupBrian():
     return
 
 
-
-
 ##### Plot settings #####
 # TODO: Simplify style/colour cycling with axess.prop_cycle
 # http://matplotlib.org/users/whats_new.html#added-axes-prop-cycle-key-to-rcparams
 
 figDisplay = 'screen'  # 'paper'
-
 colours = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 styles = ['-', '--', '-.', ':']
-
+xLabelPos = 0.98
 latexInstalled = False  # Change this!
 # http://nipunbatra.github.io/2014/08/latexify/
 # http://www.tex.ac.uk/ctan/macros/latex/contrib/pythontex/pythontex_install.py
 if latexInstalled:
     mpl.rcParams['text.usetex'] = True
 #mpl.rcParams.update(rcdef) # Set back to defaults
-
-xLabelPos = 0.98
 
 
 def setFigOutput(figDisplay='screen', width=None, height=None):
@@ -485,6 +413,7 @@ def setFigStyle():  # fancyPlots=False): # TODO: Merge this with setFigOutput
     if fancyPlots:
         try:
             import seaborn as sns
+
             #cp = sns.color_palette()
             colours = sns.color_palette()
         except ImportError:
@@ -501,16 +430,21 @@ def setFigStyle():  # fancyPlots=False): # TODO: Merge this with setFigOutput
 
 
 def resetPlot():
-    """Reset figure style"""
+    """Reset figure style."""
     global fancyPlots
     if 'seaborn' in sys.modules and fancyPlots:
-        sns.reset_orig()
+        try:
+            import seaborn as sns
+            sns.reset_orig()
+        except ImportError:
+            sns = None
         fancyPlots = False
     setFigOutput(figDisplay)
 
 try:
     __IPYTHON__
     import IPython
+
     #from IPython import display
 except NameError:
     pass
@@ -520,8 +454,6 @@ else:  # and IPython. See also get_ipython()
     #display.set_matplotlib_formats(figFormat)
     if verbose > 1:
         print("Default display figure format set: "+figFormat)
-
-
 
 
 #IPython.core.magic.Magics.basic.pprint()

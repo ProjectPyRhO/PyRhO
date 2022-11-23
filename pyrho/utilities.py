@@ -1,7 +1,5 @@
 """General utility functions used throughout PyRhO."""
 
-from __future__ import print_function, division
-
 import os
 import copy
 import warnings
@@ -40,16 +38,16 @@ class Timer:
         self.interval = 0
 
     def __enter__(self):
-        self.start = config.wallTime()  # time.clock()
+        self.start = config.wall_time()  # time.clock()
         return self
 
     def __exit__(self, *args):
-        self.end = config.wallTime()  # time.clock()
+        self.end = config.wall_time()  # time.clock()
         self.interval = self.end - self.start
-        print('{:.3g}s'.format(self.interval))
+        print(f'{self.interval:.3g}s')
 
     def __str__(self):
-        return '{:.3g}s'.format(self.interval)
+        return f'{self.interval:.3g}s'
 
     def reset(self):
         """Reset timer to 0."""
@@ -69,9 +67,9 @@ def printParams(params):
     report += '------------------------\n'
     for k, v in vd.items():
         if isinstance(v, (int, float, complex)):
-            report += '{:>7} = {:8.3g}\n'.format(k, v)
+            report += f'{k:>7} = {v:8.3g}\n'
         else:  # Check for bool?
-            report += '{:>7} = {:8}\n'.format(k, str(v))
+            report += f'{k:>7} = {str(v):8}\n'
     report += '========================\n'
     print(report)
 
@@ -90,13 +88,13 @@ def compareParams(origParams, newParams):
         if origParams[k].vary:
             if isinstance(nv, (int, float, complex)):
                 if ov > 1e-4:  # ov != 0:
-                    report += '{:>7} = {:8.3g} --> {:8.3g} ({:+.3g}%)\n'.format(k, ov, nv, (nv-ov)*100/ov)
+                    report += f'{k:>7} = {ov:8.3g} --> {nv:8.3g} ({(nv-ov)*100/ov:+.3g}%)\n'
                 else:
-                    report += '{:>7} = {:8.3g} --> {:8.3g} (Abs: {:+.3g})\n'.format(k, ov, nv, nv-ov)
+                    report += f'{k:>7} = {ov:8.3g} --> {nv:8.3g} (Abs: {nv-ov:+.3g})\n'
             else:  # TODO: Check for bool?
-                report += '{:>7} = {:8}\n'.format(k, str(nv))
+                report += f'{k:>7} = {str(nv):8}\n'
         else:
-            report += '{:>7} = {:8.3g} --> {:8.3g}   ~ Fixed ~\n'.format(k, ov, nv)
+            report += f'{k:>7} = {ov:8.3g} --> {nv:8.3g}   ~ Fixed ~\n'
     report += '============================================\n'
     print(report)
 
@@ -139,7 +137,7 @@ def saveData(data, pkl, path=None):
     with open(pklFile, 'wb') as fh:
         pickle.dump(data, fh)
     if config.verbose > 0:
-        print("Data saved to disk: {}".format(pklFile))
+        print(f"Data saved to disk: {pklFile}")
     return pklFile
 
 
@@ -397,7 +395,7 @@ def lam2rgb(wav, gamma=0.8, output='norm'):
         B *= 255
         B = int(max(0, min(round(B), 255)))
         # return (int(R), int(G), int(B)) # int() truncates towards 0
-        return "#{0:02x}{1:02x}{2:02x}".format(R, G, B), (R, G, B)
+        return f"#{R:02x}{G:02x}{B:02x}", (R, G, B)
 
 
 # Model functions #
@@ -491,7 +489,7 @@ def times2cycles(times, t_end):
 
     times = np.array(times, copy=True)
     nPulses = times.shape[0]
-    assert(times.shape[1] <= 2)
+    assert times.shape[1] <= 2
     Dt_delay = times[0, 0]  # This assumes that the times have not been shifted
     cycles = np.diff(np.r_[times.ravel(), t_end]).reshape((nPulses, 2))
     # Dt_ons = [row[1]-row[0] for row in times]  # pulses[:,1] - pulses[:,0]
@@ -527,7 +525,7 @@ def cycles2times(cycles, Dt_delay):
     # TODO: Generalise to Dt_delays c.f. recovery
     cycles = np.array(cycles)
     nPulses = cycles.shape[0]
-    assert(cycles.shape[1] <= 2)
+    assert cycles.shape[1] <= 2
     times = np.cumsum(np.r_[Dt_delay, cycles.ravel()])
     Dt_total = times[-1]
     times = times[:-1].reshape((nPulses, 2))  # Trim the final Dt_off & reshape
@@ -620,7 +618,7 @@ def plotLight(times, ax=None, light='shade', dark=None, lam=470, alpha=0.2):
     elif light == 'None' or light is None:
         pass
     else:
-        warnings.warn('Warning: Unrecognised light representation: {}!'.format(light))
+        warnings.warn(f'Warning: Unrecognised light representation: {light}!')
     return
 
 
@@ -655,8 +653,8 @@ def setCrossAxes(ax, zeroX=True, zeroY=False):
         ax.spines['bottom'].set_position('zero')  # x-axis
     # 'center' -> ('axes', 0.5)
     # 'zero'   -> ('data', 0.0)
-    ax.spines['left'].set_smart_bounds(True)
-    ax.spines['bottom'].set_smart_bounds(True)
+    #ax.spines['left'].set_smart_bounds(True)
+    #ax.spines['bottom'].set_smart_bounds(True)
     ax.xaxis.set_ticks_position('bottom')
     ax.yaxis.set_ticks_position('left')
     #ax.yaxis.set_major_formatter(mpl.ticker.ScalarFormatter(useMathText=True))

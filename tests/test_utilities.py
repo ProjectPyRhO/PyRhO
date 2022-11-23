@@ -1,14 +1,14 @@
-import pytest
+# import pytest
 import numpy as np
 #from .. import pyrho
 #from pyrho import utilities
-from pyrho.utilities import *
-from pyrho.utilities import texIt
+from pyrho.utilities import (texIt, calcV1, getIndex, flux2irrad, irrad2flux,
+                            times2cycles, cycles2times, round_sig)
 
 
 def test_tex_it():
-    assert texIt('\phi_\lambda') == '$\phi_\lambda$'
-    assert texIt('\phi_0') == '$\phi_0$'
+    assert texIt(r'\phi_\lambda') == r'$\phi_\lambda$'
+    assert texIt(r'\phi_0') == r'$\phi_0$'
 
 
 def test_calc_v1():

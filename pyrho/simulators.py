@@ -5,7 +5,6 @@ Classes to wrap simulation engines for a uniform interface
     * ``Brian2`` for simulations at the `network` level
 """
 
-from __future__ import print_function, division
 import warnings
 import logging
 import os
@@ -24,7 +23,7 @@ from pyrho.utilities import *  # cycles2times, plotLight
 from pyrho.expdata import *
 from pyrho.models import *
 from pyrho.config import *  # verbose
-from pyrho.config import wallTime, _DASH_LINE, _DOUB_DASH_LINE
+from pyrho.config import wall_time, _DASH_LINE, _DOUB_DASH_LINE
 from pyrho import config
 
 __all__ = ['simulators']
@@ -75,8 +74,8 @@ class Simulator(PyRhOobject):  # object
         Prot.prepare()
         dt = Prot.getShortestPeriod()
         Prot.dt = self.checkDt(dt)
-        assert(self.dt > 0)
-        assert(Prot.dt > 0)
+        assert self.dt > 0
+        assert Prot.dt > 0
         return  # self.dt
 
     def initialise(self):
@@ -86,7 +85,7 @@ class Simulator(PyRhOobject):  # object
         """Main routine to run the simulation protocol."""
         # TODO: Use joblib to cache results https://pythonhosted.org/joblib/
 
-        t0 = wallTime()
+        t0 = wall_time()
         RhO = self.RhO
         Prot = self.Prot
 
@@ -132,7 +131,7 @@ class Simulator(PyRhOobject):  # object
                     self.initialise()
 
                     # TODO: Deprecate special square pulse fucntions
-                    if Prot.squarePulse and self.simulator is 'Python':
+                    if Prot.squarePulse and self.simulator == 'Python':
                         I_RhO, t, soln = self.runTrial(RhO, phiOn, V, Dt_delay, cycles, self.dt, verbose)
                     else:  # Arbitrary functions of time: phi(t)
                         phi_ts = Prot.phi_ts[run][phiInd][:]
@@ -172,7 +171,7 @@ class Simulator(PyRhOobject):  # object
             self.Vclamp, self.Vclamp_prev = self.Vclamp_prev, None
             self.h.Vcl.rs = 1e9  # TODO; Find a way to fully remove SEClamp
 
-        self.runTime = wallTime() - t0
+        self.runTime = wall_time() - t0
         if verbose > 0:
             prot_info = "\nFinished '{}' protocol with {} for the {} model in"\
                         " {:.3g}s".format(Prot, self, RhO, self.runTime)
@@ -322,7 +321,7 @@ class simPython(Simulator):
         """Main routine for simulating a pulse train."""
 
         nPulses = cycles.shape[0]
-        assert(len(phi_ts) == nPulses)
+        assert len(phi_ts) == nPulses
 
         # Delay phase (to allow the system to settle)
         phi = 0
@@ -429,10 +428,12 @@ class simNEURON(Simulator):
         # self.h.cvode.atol(0.000001)
         # self.h.cvode.rtol(0.000001)
         if config.verbose > 0:
-            print('Integrator tolerances: absolute=', self.h.cvode.atol(),
-                                        ' relative=', self.h.cvode.rtol())
+            self.cvode = h.CVode()
+            print('Integrator tolerances: absolute=', self.cvode.atol(),
+                                        ' relative=', self.cvode.rtol())
 
-        self.h.v_init = params['v_init'].value
+        # self.h.v_init = params['v_init'].value
+        self.h.finitialize(params['v_init'].value)
 
         ### TODO: Move into prepare() in order to insert the correct type of mechanism (continuous or discrete) according to the protocol
         #for states, mod in self.mechanisms.items():
@@ -441,13 +442,16 @@ class simNEURON(Simulator):
         #if not Prot.squarePulse:
         #self.mod += 'c'
 
-        self.buildCell(params['cell'].value)
+        # self.buildCell(params['cell'].value)
+        self.build_cell()
         if config.verbose > 0:
             self.h.topology()  # Print topology
         self.transduce(self.RhO, expProb=params['expProb'].value)
         self.rhoParams = copy.deepcopy(modelParams[str(self.RhO.nStates)])
         self.RhO.exportParams(self.rhoParams)
         self.setOpsinParams(self.rhoList, self.rhoParams)  # self.RhO, modelParams[str(self.RhO.nStates)])
+        print(recInd)
+        print(self.rhoList)
         self.rhoRec = self.rhoList[recInd]  # Choose a rhodopsin to record
         self.setRecords(self.rhoRec, params['Vcomp'].value, self.RhO)
         self.Vclamp = params['Vclamp'].value
@@ -497,6 +501,13 @@ class simNEURON(Simulator):
         self.Vms = Prot.genContainer()
         return  # self.h.dt
 
+    def build_cell(self):
+        self.cell = [self.h.Section(name='soma')]
+        self.nSecs = len(self.cell)
+        if config.verbose > 0:
+            print(self.h.topology())
+            print(f'Total sections: {self.nSecs}')
+
     def buildCell(self, scriptList=[]):
         """Pass a list of hoc or python files in the order in which they are to
         be processed."""
@@ -508,12 +519,13 @@ class simNEURON(Simulator):
             #name, ext = os.path.splitext(script)
             ext = script.split('.')[-1]
             if not os.path.isfile(os.path.join(cwd, script)):
-                script = os.path.join(os.environ['NRN_NMODL_PATH'], script)
+                # script = os.path.join(os.environ['NRN_NMODL_PATH'], script)
+                script = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'NEURON', script)
 
             if config.verbose > 0:
                 print('Loading ', script)
 
-            if ext == 'hoc' or ext == 'HOC':
+            if ext.lower() == 'hoc':
                 self.h.load_file(script)
                 '''
                 elif ext == 'py':
@@ -787,7 +799,7 @@ class simNEURON(Simulator):
             self.setVclamp(V)
 
         nPulses = cycles.shape[0]
-        assert(len(phi_ts) == nPulses)
+        assert len(phi_ts) == nPulses
 
         times, Dt_total = cycles2times(cycles, Dt_delay)
 
@@ -911,7 +923,7 @@ class simNEURON(Simulator):
                     pulses = pc.pulses
                     axV.plot(t, Vm, color=colour, ls=style)
 
-                    if Prot.protocol is 'shortPulse':
+                    if Prot.protocol == 'shortPulse':
                         if run == 0 and phiInd == 0 and vInd == 0:
                             ymin, ymax = axV.get_ylim()
                             pos = 0.02 * abs(ymax-ymin)
@@ -950,10 +962,10 @@ class simNEURON(Simulator):
         setCrossAxes(axV, zeroX=False, zeroY=True)
         axV.get_xaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
         axV.get_yaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
-        axV.grid(b=True, which='minor', axis='both', linewidth=.2)
-        axV.grid(b=True, which='major', axis='both', linewidth=1)
+        axV.grid(visible=True, which='minor', axis='both', linewidth=.2)
+        axV.grid(visible=True, which='major', axis='both', linewidth=1)
 
-        if len(Prot.PD.legLabels) > 0 and Prot.PD.legLabels[0] is not '':
+        if len(Prot.PD.legLabels) > 0 and Prot.PD.legLabels[0] != '':
             plt.legend(Prot.PD.legLabels)
 
         #axV.set_ylim(axV.get_ylim())
@@ -1296,10 +1308,10 @@ class simBrian(Simulator):
         setCrossAxes(axV, zeroX=False, zeroY=True)
         axV.get_xaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
         axV.get_yaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
-        axV.grid(b=True, which='minor', axis='both', linewidth=.2)
-        axV.grid(b=True, which='major', axis='both', linewidth=1)
+        axV.grid(visible=True, which='minor', axis='both', linewidth=.2)
+        axV.grid(visible=True, which='major', axis='both', linewidth=1)
 
-        if len(Prot.PD.legLabels) > 0 and Prot.PD.legLabels[0] is not '':
+        if len(Prot.PD.legLabels) > 0 and Prot.PD.legLabels[0] != '':
             plt.legend(Prot.PD.legLabels)
 
         # axV.set_ylim(axV.get_ylim())
