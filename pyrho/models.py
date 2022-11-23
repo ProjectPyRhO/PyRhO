@@ -1,21 +1,19 @@
-"""
+r"""
 Rhodopsin model class and functions
     * Three-state model :math:`\{C, O, D\}`
     * Four-state model :math:`\{C_1, O_1, O_2, C_2\}`
     * Six-state model :math:`\{C_1, I_1, O_1, O_2, I_2, C_2\}`
 """
 
-from __future__ import print_function, division
 import warnings
 import logging
 import abc
 import itertools
-from collections import OrderedDict
 
-import numpy as np
 import matplotlib.pyplot as plt
-from scipy.integrate import odeint
 #import matplotlib as mpl # For plotStates
+import numpy as np
+from scipy.integrate import odeint
 
 from pyrho.utilities import calcV1
 from pyrho.parameters import PyRhOobject, modelParams, stateLabs, rhoType
@@ -32,7 +30,7 @@ class RhodopsinModel(PyRhOobject):
     """Common base class for all models."""
     # This an abstract base class since it is never directly instantiated
     __metaclass__ = abc.ABCMeta
-    # TODO: Revise to be stateless and store date in PhotoCurrent objects
+    # TODO: Revise to be stateless and store data in PhotoCurrent objects
     phi = 0.0  # Instantaneous Light flux [photons * mm^-2 * s^-1]
 
     def __init__(self, params=None, rhoType=rhoType):
@@ -49,24 +47,24 @@ class RhodopsinModel(PyRhOobject):
         # Ensure v1 is scaled correctly so that f(V=-70) = 1
         v1 = calcV1(self.E, self.v0)
         if not np.isclose(self.v1, v1, rtol=1e-3, atol=1e-5):
-            warnings.warn("Correcting v1 scaling: {} <-- {}".format(self.v1, v1))
+            warnings.warn(f"Correcting v1 scaling: {self.v1} <-- {v1}")
             self.v1 = v1
 
         self.initStates(phi=self.phi_0, s0=self.s_0)
         # self.transRates = {r: getattr(self, r) for r in itertools.chain(self.photoRates, self.constRates)}
 
         if config.verbose > 1:
-            print("PyRhO {}-state {} model initialised!".format(self.nStates, self.rhoType))
+            print(f"PyRhO {self.nStates}-state {self.rhoType} model initialised!")
 
         if config.verbose > 2:
             self.printParams()
 
     def __str__(self):
-        return "{}-state {}".format(stateLabs[self.nStates], self.rhoType)  # self.__name__+
+        return f"{stateLabs[self.nStates]}-state {self.rhoType}"  # self.__name__+
         # return self.brian_phi_t
 
     def __repr__(self):
-        return "<PyRhO {}-state {} Model object>".format(stateLabs[self.nStates], self.rhoType)
+        return f"<PyRhO {stateLabs[self.nStates]}-state {self.rhoType} Model object>"
 
     def __call__(self):
         """When a rhodopsin is called, return its internal state at that instant."""
@@ -84,7 +82,8 @@ class RhodopsinModel(PyRhOobject):
 
     def getRates(self):
         """Returns an ordered dictionary of all transition rates."""
-        return OrderedDict([(r, getattr(self, r)) for r in itertools.chain(self.photoRates, self.constRates)])
+        return {r: getattr(self, r) 
+                for r in itertools.chain(self.photoRates, self.constRates)}
 
     def reportState(self):
         self.dispRates()
@@ -94,11 +93,13 @@ class RhodopsinModel(PyRhOobject):
         if s0 is None:
             s0 = self.s_0
         #assert(len(s0) == self.nStates)
-        if self.nStates=='6K':
-            self.states = np.vstack((np.empty([0, 6]), s0))
-        
-        else:
-            self.states = np.vstack((np.empty([0, self.nStates]), s0))
+        #if self.nStates=='6K':
+        #    self.states = np.vstack((np.empty([0, 6]), s0))
+        # 
+        #else:
+        #    self.states = np.vstack((np.empty([0, self.nStates]), s0))
+        assert len(s0) == self.nStates
+        self.states = np.vstack((np.empty([0, self.nStates]), s0))
         self.t = [0]
         self.pulseInd = np.empty([0, 2], dtype=int)  # Light on and off indexes for each pulse
         self.ssInf = []
@@ -219,183 +220,17 @@ class RhodopsinModel(PyRhOobject):
         # Tick locators take too long with log scales
         #axR.get_xaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
         #axR.get_yaxis().set_minor_locator(mpl.ticker.AutoMinorLocator())
-        axR.grid(b=True, which='minor', axis='both', linewidth=.2)
-        axR.grid(b=True, which='major', axis='both', linewidth=1)
+        axR.grid(visible=True, which='minor', axis='both', linewidth=.2)
+        axR.grid(visible=True, which='major', axis='both', linewidth=1)
 
         plt.tight_layout()
         plt.show()
 
         return
 
-    '''
-    def plotStates(self, t=None, states=None, pulses=None, labels=None, phiOn=0, peaks=None, name=None):
-        # Consider removing arguments t,states,pulses,labels...
-        # TODO: Move to expdata photocurrent
-        if t is None:
-            t = self.t
-
-        if states is None:
-            states = self.states
-
-        if pulses is None:
-            pulses = self.t[self.pulseInd]
-
-        if labels is None:
-            labels = self.stateLabels
-
-        #peaks = list(peaks) #np.array(peaks)
-        if peaks is not None and len(peaks) > 0: #peaks.size > 0: #
-            plotPieCharts = True
-            piePulse = 0 # Plot the first pulse. Generalise to each pulse?
-        else:
-            plotPieCharts = False
-
-        figWidth, figHeight = mpl.rcParams['figure.figsize']
-        fig = plt.figure(figsize=(figWidth, 1.5*figHeight))
-        gs = plt.GridSpec(3, 3)
-
-        t_start, t_end = t[0], t[-1]
-
-        # Plot line graph of states
-        axLine = fig.add_subplot(gs[0,:])
-        plt.plot(t, states)
-        plt.setp(axLine.get_xticklabels(), visible=False)
-        plotSum = False
-        if plotSum:
-            sig, = plt.plot(t, np.sum(states,axis=1), color='k', linestyle='--')
-            labelsIncSum = np.append(labels, '$\Sigma s_i$')
-            plt.legend(labelsIncSum, loc=6)
-        else:
-            plt.legend(labels, loc=6)
-        plt.ylabel('$\mathrm{State\ occupancy}$')
-        plt.xlim((t_start, t_end))
-        #plt.ylim((-0.1,1.1))
-        plt.ylim((0, 1))
-        if config.addTitles:
-            plt.title('$\mathrm{State\ variables\ through\ time}$')
-            #plt.title('State variables through time: $v={} \mathrm{{mV}},\ \phi={:.3g} \mathrm{{photons}} \cdot \mathrm{{s}}^{{-1}} \cdot \mathrm{{cm}}^{{-2}}$'.format(V,phiOn))
-        plotLight(pulses, axLine)
-        ### New plot format (plus change in ylims)
-        #axLine.spines['left'].set_position('zero') # y-axis
-        #axLine.spines['right'].set_color('none')
-        #axLine.spines['bottom'].set_position('zero') # x-axis
-        #axLine.spines['bottom'].set_color('none')
-        #axLine.spines['top'].set_color('none')
-        axLine.spines['left'].set_smart_bounds(True)
-        axLine.spines['bottom'].set_smart_bounds(True)
-        #axLine.xaxis.set_ticks_position('bottom')
-        #axLine.yaxis.set_ticks_position('left')
-
-
-        ### Plot stack plot of state variables
-        axStack = fig.add_subplot(gs[1,:], sharex=axLine)
-        plt.stackplot(t, states.T)
-        plt.ylim((0,1))
-        plt.xlim((t_start, t_end))
-        plotLight(pulses, axStack, 'borders')
-        if config.addTitles:
-            axStack.title.set_visible(False)
-        plt.xlabel('$\mathrm{Time\ [ms]}$')
-        plt.ylabel('$\mathrm{State\ occupancy}$')
-
-        if plotPieCharts:
-            if config.fancyPlots:
-                import seaborn as sns
-                cp = sns.color_palette()
-            else:
-                cp = config.colours
-
-            plotInitStates = False
-
-            pieInd = 0
-            if plotInitStates:
-                axS0 = fig.add_subplot(gs[2, pieInd])
-                initialStates = self.s0 * 100
-                if config.verbose > 1:
-                    pct = {l:s for l,s in zip(labels, sizes)}
-                    print('Initial state occupancies (%):', sorted(pct.items(), key=lambda x: labels.index(x[0])))
-                patches, texts, autotexts = plt.pie(initialStates, labels=labels, autopct='%1.1f%%', startangle=90, shadow=False, colors=cp)
-                for lab in range(len(labels)):
-                    texts[lab].set_fontsize(mpl.rcParams['ytick.labelsize'])
-                    autotexts[lab].set_fontsize(mpl.rcParams['axes.labelsize'])
-                plt.axis('equal')
-                if config.addTitles:
-                    plt.title('$\mathrm{Initial\ state\ occupancies}$')
-                else:
-                    #axS0.text(-1, 1, '$t_{0}$')
-                    axS0.annotate('$t_{0}$', xycoords='axes fraction', xy=(0, 1))
-                pieInd += 1
-
-            if peaks is not None: ### Plot peak state proportions
-                pInd = peaks[piePulse] # Plot the first peak
-                axLine.axvline(x=t[pInd], linestyle=':', color='k')
-                axStack.axvline(x=t[pInd], linestyle=':', color='k')
-                axPeak = fig.add_subplot(gs[2, pieInd])
-                sizes = states[pInd,:] * 100
-                #sizes = [s*100 for s in sizes]
-                #explode = (0,0,0.1,0.1,0,0)
-                if config.verbose > 1:
-                    pct = {l:s for l,s in zip(labels,sizes)}
-                    print('Peak state occupancies (%):', sorted(pct.items(), key=lambda x: labels.index(x[0])))
-                patches, texts, autotexts = plt.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90, shadow=False, colors=cp)#, explode=explode)
-                for lab in range(len(labels)):
-                    texts[lab].set_fontsize(mpl.rcParams['ytick.labelsize'])
-                    autotexts[lab].set_fontsize(mpl.rcParams['axes.labelsize'])
-                plt.axis('equal')
-                if config.addTitles:
-                    plt.title('$\mathrm{Simulated\ peak\ state\ occupancies}$')
-                else:
-                    #axPeak.text(-1, 1, '$t_{peak}$')
-                    axPeak.annotate('$t_{peak}$', xycoords='axes fraction', xy=(0, 1))
-                pieInd += 1
-
-            if not plotInitStates: # Plot steady-state proportions
-                axSS = fig.add_subplot(gs[2, pieInd])
-                offInd = self.pulseInd[piePulse, 1]
-                sizes = states[offInd,:] * 100
-                if config.verbose > 1:
-                    pct = {l:s for l,s in zip(labels, sizes)}
-                    print('Steady-state occupancies (%):', sorted(pct.items(), key=lambda x: labels.index(x[0])))
-                patches, texts, autotexts = plt.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90, shadow=False, colors=cp)
-                for lab in range(len(labels)):
-                    texts[lab].set_fontsize(mpl.rcParams['ytick.labelsize'])
-                    autotexts[lab].set_fontsize(mpl.rcParams['axes.labelsize'])
-                plt.axis('equal')
-                if config.addTitles:
-                    plt.title('$\mathrm{Simulated\ steady-state\ occupancies}$')
-                else:
-                    #axSS.text(-1, 1, '$t_{peak}$')
-                    axSS.annotate('$t_{ss}$', xycoords='axes fraction', xy=(0, 1))
-                pieInd += 1
-
-            if phiOn > 0: ### Plot steady state proportions
-                axInf = fig.add_subplot(gs[2, pieInd])
-                steadyStates = self.calcSteadyState(phiOn) * 100 # Convert array of proportions to %
-                if config.verbose > 1:
-                    pct = {l:s for l,s in zip(labels,sizes)}
-                    print('Steady state occupancies (%):', sorted(pct.items(), key=lambda x: labels.index(x[0])))
-                patches, texts, autotexts = plt.pie(steadyStates, labels=labels, autopct='%1.1f%%', startangle=90, shadow=False, colors=cp) #, explode=explode
-                for lab in range(len(labels)):
-                    texts[lab].set_fontsize(mpl.rcParams['ytick.labelsize'])
-                    autotexts[lab].set_fontsize(mpl.rcParams['axes.labelsize'])
-                plt.axis('equal')
-                if config.addTitles:
-                    plt.title('$\mathrm{Analytic\ steady-state\ occupancies}$')
-                else:
-                    #axInf.text(-1, 1, r'$t_{\inf}$')#, fontsize=mpl.rcParams['legend.fontsize'])
-                    axInf.annotate(r'$t_{\infty}$', xycoords='axes fraction', xy=(0, 1))
-
-        plt.tight_layout()
-
-        if name is not None:
-            from os import path
-            figName = path.join(config.fDir, name+'.'+config.saveFigFormat)
-            plt.savefig(figName, format=config.saveFigFormat)
-        '''
-
 
 class RhO_3states(RhodopsinModel):
-    """Class definition for the 3-state model"""
+    """Class definition for the 3-state model."""
 
     # Class attributes
     nStates = 3
@@ -442,10 +277,10 @@ class RhO_3states(RhodopsinModel):
                 r"$\dot{O} = G_{a}(\phi)C - G_{d}O$",
                 r"$\dot{D} = G_{d}O - G_{r}(\phi)D$",
                 r"$C + O + D = 1$",
-                r"$G_a(\phi) = k\\frac{\phi^p}{\phi^p + \phi_m^p}$",
+                r"$G_a(\phi) = k\frac{\phi^p}{\phi^p + \phi_m^p}$",
                 r"$G_r(\phi) = \mathcal{H}(\phi) \cdot G_{r1} + G_{r0}$",
                 r"$f_{\phi}(\phi) = O$"
-                r"$f_v(v) = \\frac{1-\\exp({-(v-E)/v_0})}{(v-E)/v_1}$",
+                r"$f_v(v) = \frac{1-\exp({-(v-E)/v_0})}{(v-E)/v_1}$",
                 r"$I_{\phi} = g_0 \cdot f_{\phi}(\phi) \cdot f_v(v) \cdot (v-E)$"]
 
     eqIss = r"""$I_{SS} = \bar{g_0} \cdot \frac{G_a \cdot G_r}{G_d \cdot (G_r + G_a) + G_a \cdot G_r} \cdot (v-E)
@@ -523,7 +358,8 @@ class RhO_3states(RhodopsinModel):
             self.dispRates()
 
     def dispRates(self):
-        print("Transition rates (phi={:.3g}): C --[Ga={:.3g}]--> O --[Gd={:.3g}]--> D --[Gr={:.3g}]--> C".format(self.phi, self.Ga, self.Gd, self.Gr))
+        print(f"Transition rates (phi={self.phi:.3g}):\n"
+            f"C --[Ga={self.Ga:.3g}]--> O --[Gd={self.Gd:.3g}]--> D --[Gr={self.Gr:.3g}]--> C")
 
     def solveStates(self, s_0, t, phi_t=None):
         """Differential equations of the 3-state model to be solved by odeint"""
@@ -602,8 +438,8 @@ class RhO_3states(RhodopsinModel):
         SQ = Ga**2 + Gd**2 + Gr**2
         if 2 * SP > SQ:
             if config.verbose > 1:
-                print('Imaginary solution! SP = {}; SQ = {}'
-                      ' --> (SQ-2*SP)**(1/2) = NaN'.format(SP, SQ))
+                print(f'Imaginary solution! {SP = }; {SQ = }'
+                      ' --> (SQ-2*SP)**(1/2) = NaN')
             return odeint(self.solveStates, s0, t, Dfun=self.jacobian)
             #raise ValueError()  # Uncomment this when error catching is implemented
 
@@ -626,7 +462,7 @@ class RhO_3states(RhodopsinModel):
 
 
 class RhO_4states(RhodopsinModel):
-    """Class definition for the 4-state model"""
+    """Class definition for the 4-state model."""
 
     # Class attributes
     nStates = 4
@@ -746,8 +582,9 @@ class RhO_4states(RhodopsinModel):
             self.dispRates()
 
     def dispRates(self):
-        print("Transition rates (phi={:.3g}): C1 --[Ga1={:.3g}]--> O1 --[Gf={:.3g}]--> O2".format(self.phi, self.Ga1, self.Gf))
-        print("Transition rates (phi={:.3g}): O1 <--[Gb={:.3g}]-- O2 <--[Ga2={:.3g}]-- C2".format(self.phi, self.Gb, self.Ga2))
+        print(f"Transition rates (phi={self.phi:.3g}):\n"
+            f"C1 --[Ga1={self.Ga1:.3g}]--> O1 --[Gf={self.Gf:.3g}]--> O2\n"
+            f"O1 <--[Gb={self.Gb:.3g}]-- O2 <--[Ga2={self.Ga2:.3g}]-- C2")
 
     def solveStates(self, s_0, t, phi_t=None):
         """Differential equations of the 4-state model to be solved by odeint"""
@@ -809,7 +646,7 @@ class RhO_4states(RhodopsinModel):
 
 
 class RhO_6states(RhodopsinModel):
-    """Class definition for the 6-state model"""
+    """Class definition for the 6-state model."""
 
     # Class attributes
     nStates = 6
@@ -923,12 +760,13 @@ class RhO_6states(RhodopsinModel):
             self.dispRates()
 
     def dispRates(self):
-        """Print photosensitive transition rates"""
-        print("Transition rates (phi={:.3g}): C1 --[Ga1={:.3g}]--> O1 --[Gf={:.3g}]--> O2".format(self.phi, self.Ga1, self.Gf))
-        print("Transition rates (phi={:.3g}): O1 <--[Gb={:.3g}]-- O2 <--[Ga2={:.3g}]-- C2".format(self.phi, self.Gb, self.Ga2))
+        """Print photosensitive transition rates."""
+        print(f"Transition rates (phi={self.phi:.3g}):\n"
+            f"C1 --[Ga1={self.Ga1:.3g}]--> O1 --[Gf={self.Gf:.3g}]--> O2\n"
+            f"O1 <--[Gb={self.Gb:.3g}]-- O2 <--[Ga2={self.Ga2:.3g}]-- C2")
 
     def solveStates(self, s_0, t, phi_t=None):
-        """Differential equations of the 6-state model to be solved by odeint"""
+        """Differential equations of the 6-state model to be solved by odeint."""
         if phi_t is not None:
             self.setLight(float(phi_t(t)))
         C1, I1, O1, O2, I2, C2 = s_0  # Unpack state vector
@@ -980,7 +818,7 @@ class RhO_6states(RhodopsinModel):
         return self.steadyStates
 
     def calcfphi(self, states=None):
-        """Calculate the conductance scalar from the photocycle"""
+        """Calculate the conductance scalar from the photocycle."""
         if states is None:
             states = self.states
         C1, I1, O1, O2, I2, C2 = states.T
@@ -994,7 +832,7 @@ class RhO_6Kstates(RhodopsinModel):
     """Class definition for the 6K-state model"""
 
     # Class attributes
-    nStates = '6K'
+    nStates = 6  # '6K'
     useAnalyticSoln = False
     s_0 = np.array([1, 0, 0, 0, 0, 0])  # [s1_0=1, s2_0=0, s3_0=0, s4_0=0, s5_0=0, s6_0=0] # array not necessary
     phi_0 = 0.0                         # Default initial flux
@@ -1170,14 +1008,16 @@ class RhO_6Kstates(RhodopsinModel):
         raise NotImplementedError(self.nStates)
 
 
-models = OrderedDict([('3', RhO_3states), (3, RhO_3states),
-                      ('4', RhO_4states), (4, RhO_4states),
-                      ('6', RhO_6states), (6, RhO_6states),
-                      ('6K', RhO_6Kstates)])
+models = {
+    '3': RhO_3states, 3: RhO_3states,
+    '4': RhO_4states, 4: RhO_4states,
+    '6': RhO_6states, 6: RhO_6states,
+    '6K': RhO_6Kstates
+}
 
 
 def selectModel(nStates):
-    """Model selection function"""
+    """Model selection function."""
     if int(nStates) == 3 or nStates == 'three':
         return RhO_3states()
     elif int(nStates) == 4 or nStates == 'four':

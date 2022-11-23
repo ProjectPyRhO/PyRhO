@@ -3,30 +3,31 @@
 # Main module file for PyRhO
 
 
-import platform
-import os
 #from pkg_resources import get_distribution, DistributionNotFound
 import logging
-import pkg_resources
+import os
+import platform
 
+import lmfit
 # Necessary?
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+import pkg_resources
 import scipy as sp
-import lmfit
 
 # Place all submodule functions and variables into namespace
 from pyrho import config
 from pyrho.config import *
 from pyrho.config import _DASH_LINE, _DOUB_DASH_LINE
-from pyrho.parameters import *
-from pyrho.utilities import *
 from pyrho.expdata import *
-from pyrho.models import *
-from pyrho.simulators import *
-from pyrho.protocols import *
 from pyrho.fitting import *
+from pyrho.models import *
+from pyrho.parameters import *
+from pyrho.protocols import *
+from pyrho.simulators import *
+from pyrho.utilities import *
+
 # from pyrho.jupytergui import *
 
 # TODO
@@ -85,43 +86,55 @@ if __name__ == '__main__':
 
 # TODO Move everything except imports elsewhere
 
+# TODO: Rename global models, protocols and simulators dictionaries
 
-def runAll(listOfModels=[6], simList=['Python']):
+def run(mods='6', prots='step', sims='Python', plot=True):
     """
     Run all protocols on a list of models with default parameters.
 
     Parameters
     ----------
-    listOfModels : int, str, list
+    mods : int, str, list
         Individual or list of integers or strings specifying the models to run
-        e.g. [3, 4, 6], 3, '4', ['4', '6'], modelList
+        e.g. [3, 4, 6], 3, '4', ['4', '6'].
 
-    simList : str, list
-        List of strings of the names of simulatrs to use (default: 'Python').
-        e.g. ['Python', 'NEURON']
+    prots : str, list
+        String or list of strings of the names of protocols to run (default: 'step').
+        e.g. 'ramp', ['chirp', 'sinusoid'].
+
+    sims : str, list
+        List of strings of the names of simulators to use (default: 'Python').
+        e.g. 'Brian', ['Python', 'NEURON'].
     """
 
-    if not isinstance(listOfModels, (list, tuple)):
-        listOfModels = [listOfModels]  # ints or strs
-    listOfModels = [str(m) for m in listOfModels]
+    if not isinstance(mods, (list, tuple)):
+        assert isinstance(mods, (int, str))
+        mods = [mods]  # ints or strs
+    mods = [str(m) for m in mods]
 
-    if not isinstance(simList, (list, tuple)):
-        simList = [simList]
+    if not isinstance(prots, (list, tuple)):
+        assert isinstance(prots, str)  # TODO: or Protocol class
+        prots = [prots]
 
-    for model in listOfModels:
-        # Select generative model
-        RhO = models[model]()
-        for prot in protocols:
-            # Select simulation protocol
-            Prot = protocols[prot]()
-            for sim in simList:  # ['Python']:#simulators:
-                Sim = simulators[sim](Prot, RhO)
-                print(f"\nUsing {sim} to run Protocol '{prot}' on the {model}-state model...")
+    if not isinstance(sims, (list, tuple)):
+        assert isinstance(sims, str)
+        sims = [sims]
+
+    results = {simulator: {protocol: {} for protocol in prots} for simulator in sims}
+    for model in mods:
+        rho = models[model]()  # Select generative model
+        for protocol in prots:
+            pro = protocols[protocol]()  # Select simulation protocol
+            for simulator in sims:
+                sim = simulators[simulator](pro, rho)
+                print(f"\nUsing {simulator} to run Protocol '{protocol}' on the {model}-state model...")
                 print(_DASH_LINE, '\n')
-                Sim.run()
-                Sim.plot()
+                results[simulator][protocol][model] = sim.run()
+                if plot:
+                    sim.plot()
                 print("\nFinished!")
                 print(_DOUB_DASH_LINE, '\n\n')
+    return results
 
 
 def print_versions():
@@ -131,6 +144,7 @@ def print_versions():
     if IPY:
         try:
             import IPython
+
             # __IPYTHON__
             print("IPython version:       ", IPython.__version__)
         except ImportError:  # IPython not found
@@ -138,7 +152,7 @@ def print_versions():
     #deps = [numpy, scipy, matplotlib, lmfit, warnings, os, pickle, collections, platform]
     #depsGUI = [IPython, ast, base64]
     #for mod in dependencies:
-    #    print("{} version: {}".format(mod, mod.__version__))
+    #    print(f"{mod} version: {mod.__version__}")
     #import numpy
     print("NumPy version:         ", np.__version__)
     #import scipy
@@ -172,6 +186,7 @@ def get_versions_table():
     if IPY:
         try:
             import IPython
+
             # __IPYTHON__
             table.append(f"{'IPython':>11} | {IPython.__version__}")
         except ImportError:  # IPython not found
@@ -200,7 +215,7 @@ logLevels = [logging.CRITICAL, logging.ERROR, logging.WARNING,
              logging.INFO, logging.DEBUG, logging.NOTSET]
 
 
-def setOutput(logger, level):
+def set_output(logger, level):
     verbose = level
     logger.setLevel(level)
 
@@ -209,7 +224,7 @@ logging.basicConfig(filename='PyRhO.log', level=logLevels[config.verbose],
                     datefmt='%y-%m-%d %H:%M:%S', filemode='w')
 
 logger = logging.getLogger(__name__)
-setOutput(logger, config.verbose)
+set_output(logger, config.verbose)
 
 logger.info('Starting PyRhO')
 logger.debug('Initialised Logger')

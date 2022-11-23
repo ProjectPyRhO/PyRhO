@@ -1,6 +1,5 @@
 """Classes for storing and processing experimental photocurrent data."""
 
-from __future__ import print_function, division
 import warnings
 import logging
 import copy
@@ -158,13 +157,13 @@ class PhotoCurrent(object):
         self.nSamples = len(self.I)             # Number of samples
 
         if isinstance(t, (list, np.ndarray)) and len(t) == len(I):
-            assert(len(t) > 1)
+            assert len(t) > 1
             self.t = np.copy(t)                 # Corresponding array of time points [ms] #np.array copies by default
             tdiff = self.t[1:] - self.t[:-1]
             self.dt = tdiff.sum()/len(tdiff)    # (Average) step size
             self.sr = 1000/(self.dt)            # Sampling rate [samples/s]
         elif not isinstance(t, (list, np.ndarray)) or len(t) == 1:                       # Assume time step is passed rather than time array
-            assert(t > 0)
+            assert t > 0
             self.dt = t                         # Step size
             self.t = np.arange(self.nSamples) * self.dt
             self.sr = 1000 / self.dt            # Sampling rate [samples/s]
@@ -183,10 +182,10 @@ class PhotoCurrent(object):
             shape = self.stimuli.shape
             if ndim == 1:
                 self.nStimuli = 1
-                assert(shape[0] == self.nSamples)
+                assert shape[0] == self.nSamples
             elif ndim == 2:
                 self.nStimuli = shape[0]
-                assert(shape[1] == self.nSamples)
+                assert shape[1] == self.nSamples
             else:
                 raise ValueError('Dimension mismatch with stimuli: {}; shape: {}!'.format(ndim, shape))
         else:
@@ -196,9 +195,9 @@ class PhotoCurrent(object):
             self.states = np.copy(states)
             self.nStates = self.states.shape[1] # len(stateLabels)
             self.stateLabels = copy.copy(stateLabels)
-            assert(len(self.stateLabels) == self.nStates)
+            assert len(self.stateLabels) == self.nStates
             self.synthetic = True
-            assert(self.states.shape[0] == self.nSamples)
+            assert self.states.shape[0] == self.nSamples
         else:
             self.synthetic = False
 
@@ -240,7 +239,7 @@ class PhotoCurrent(object):
         #   self._idx_pulses_[p,0] = np.searchsorted(self.t, pulses[p,0], side="left")  # CHECK: last index where value <= t_on
         #   self._idx_pulses_[p,1] = np.searchsorted(self.t, pulses[p,1], side="left")  # CHECK: last index where value <= t_off
         #self._idx_pulses_ = np.array([[np.searchsorted(self.t, pulses[p,time]) for time in range(2)] for p in range(self.nPulses)])
-        self._idx_pulses_ = np.array([np.searchsorted(self.t, self.pulses[p, :]) for p in range(self.nPulses)], dtype=np.int)
+        self._idx_pulses_ = np.array([np.searchsorted(self.t, self.pulses[p, :]) for p in range(self.nPulses)], dtype=int)
 
         ### Record Experimental constants
         self.V = copy.copy(V)           # Clamp Voltage [mV]: None if no clamp was used
@@ -750,7 +749,7 @@ class PhotoCurrent(object):
         """
 
         offsetInd = len(self.getDelayPhase()[0]) - int(self.overlap)
-        peakInds = np.zeros((self.nPulses,), dtype=np.int)
+        peakInds = np.zeros((self.nPulses,), dtype=int)
         for p in range(self.nPulses):
             peakInds[p] = np.argmax(abs(self.getCycle(p)[0])) + offsetInd
             offsetInd += len(self.getCycle(p)[0]) - int(self.overlap)
@@ -767,7 +766,7 @@ class PhotoCurrent(object):
         """Find the steady-state current either as the last ``tail`` proportion
         of the on-phase or by fitting a decay function.
         """
-        assert(0 <= pulse < self.nPulses)
+        assert 0 <= pulse < self.nPulses
 
         #offInd = self._idx_pulses_[pulse][1] #np.searchsorted(t,Dt_on+Dt_delay,side="left")
 

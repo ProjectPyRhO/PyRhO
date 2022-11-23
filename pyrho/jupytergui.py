@@ -4,7 +4,6 @@
 #from IPython.html.widgets import interact
 #from IPython.html import widgets # IPython < 4
 
-from __future__ import print_function, division
 #import warnings
 #import time
 from collections import OrderedDict
@@ -520,7 +519,7 @@ def loadGUI(IPythonWorkspace=None):
         userProtParams = getGUIparams(protParams[protocol], prot_pValArr[pInd][:])
         Prot = protocols[protocol](userProtParams)
 
-        if protocol is 'custom': # and custPulseGenInput.value is not None:
+        if protocol.lower() == 'custom': # and custPulseGenInput.value is not None:
             Prot.phi_ft = custPulseGenLoad(custPulseGenInput.value)
 
         ### Get Simulator Parameters
@@ -1073,7 +1072,7 @@ def loadGUI(IPythonWorkspace=None):
             #i+=1
 
         simFigHTML[sInd] = widgets.HTML()
-        if sim is 'Brian': ### HACK!
+        if sim.lower() == 'Brian':  # HACK!
             simFigHTML[sInd].value = 'Brian has not yet been implemented in the GUI - please use the interpreter to run network level simulations. '
         #exampleProt = '{}{}6s.{}'.format(fDir,prot,'png')#saveFigFormat)
         #if os.path.isfile(exampleProt):
@@ -1177,7 +1176,7 @@ def loadGUI(IPythonWorkspace=None):
 
     for pInd, prot in enumerate(protList):
         pSet = protParams[prot]
-        if prot is 'custom': ### Exception here for loading pulse generator function
+        if prot.lower() == 'custom': ### Exception here for loading pulse generator function
             custPulseGenInput = widgets.Text(placeholder='<Pulse generator function>', description='$\phi(t)$') # value=str(pSet[param].value)
             protHeaders[pInd] = widgets.HBox(children = [custPulseGenInput, widgets.HTML(value=protParamNotes[prot]['phi_ft'])])
         else:

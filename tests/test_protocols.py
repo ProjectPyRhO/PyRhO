@@ -1,15 +1,16 @@
-import pytest
+# import pytest
 import numpy as np
 
-from pyrho import *
+# from pyrho import *
+from pyrho import models, protocols, simulators
 
 
 def test_recovery():
-    RhO = models['6']()
-    Prot = protocols['recovery']()
+    rho = models['6']()
+    prot = protocols['recovery']()
     #Prot.phis = [1e16, 1e15, 1e14]
-    Sim = simulators['Python'](Prot, RhO)
+    sim = simulators['Python'](prot, rho)
     #Sim.Vclamp = True
-    Sim.run()
-    assert np.isclose(Prot.PD.params[0][0]['Gr0'].value, 0.00033)
+    sim.run()
+    assert np.isclose(prot.PD.params[0][0]['Gr0'].value, 0.00033)
     #Sim.plot()
