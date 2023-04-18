@@ -832,7 +832,7 @@ class RhO_6Kstates(RhodopsinModel):
     """Class definition for the 6K-state model"""
 
     # Class attributes
-    nStates = 6  # '6K'
+    nStates = 6
     useAnalyticSoln = False
     s_0 = np.array([1, 0, 0, 0, 0, 0])  # [s1_0=1, s2_0=0, s3_0=0, s4_0=0, s5_0=0, s6_0=0] # array not necessary
     phi_0 = 0.0                         # Default initial flux
