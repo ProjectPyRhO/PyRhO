@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the accompanying article."
+preferred-citation: 
+  type: article
+  authors:
+  - family-names: "Evans"
+    given-names: "Benjamin D."
+    orcid: "https://orcid.org/0000-0002-1734-6070"
+  - family-names: "Jarvis"
+    given-names: "Sarah"
+    orcid: "https://orcid.org/0000-0003-1818-6088"
+  - family-names: "Schultz"
+    given-names: "Simon R."
+    orcid: "https://orcid.org/0000-0002-6794-5813"
+  - family-names: "Nikolic"
+    given-names: "Konstantin"
+    orcid: "https://orcid.org/0000-0002-6551-2977"
+  doi: "10.3389/fninf.2016.00008"
+  journal: "Frontiers in Neuroinformatics"
+  month: 3
+  start: 1 # First page number
+  end: 19 # Last page number
+  title: "PyRhO: A Multiscale Optogenetics Simulation Platform"
+  issue: 8
+  volume: 10
+  year: 2016
