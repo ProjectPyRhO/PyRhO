@@ -75,18 +75,20 @@ pOffDoub.add('Gd2', value=0.01)  # , vary=True) #, expr='Gd1')#, min=1e-9)
 
 
 # Default model parameters
-modelParams = {'3': Parameters(), '4': Parameters(), '6': Parameters()}
+modelParams = {'3': Parameters(), '4': Parameters(), '6': Parameters(), '6K': Parameters()}
 modelList = list(modelParams)  # List of keys: list(modelParams.keys()) #This could be removed
 stateLabs = {'3': 'Three', 3: 'Three',
              '4': 'Four', 4: 'Four',
-             '6': 'Six', 6: 'Six'}
+             '6': 'Six', 6: 'Six',
+             '6K': 'SixK'}
 
 modelFits = {
     '3': {'ChR2': Parameters(),
           'NpHR': Parameters(),
           'ArchT': Parameters()},
     '4': {'ChR2': Parameters()},
-    '6': {'ChR2': Parameters()}
+    '6': {'ChR2': Parameters()},
+    '6K': {'ChR2': Parameters()}
 }
 
 # Replace with defaultdict with default=key
@@ -217,12 +219,35 @@ modelFits['6']['ChR2'].add_many(
     ('v0',      43,     True, -1e15, 1e15,None),
     ('v1',      17.1,   True, -1e15, 1e15,None))
 
+modelFits['6K']['ChR2'].add_many(
+                ('g0',      2.52e4, True, 0.0,  1e15, None),
+                ('gam',     0.0161, True, 0.0,  1,    None),
+                ('phi_m',   3.54e17,True, 1e15, 1e19, None),
+                ('k1',      13.4,   True, 0.0,  1000, None),
+                ('k2',      2.71,   True, 0.0,  1000, None),
+                ('k3',      2.71,   True, 0.0,  1000, None),
+                ('p',       0.985,  True, 0.1,  5,    None),
+                ('Gf0',     0.0389, True, 0.0,  1000, None),
+                ('k_f',     0.103,  True, 0.0,  1000, None),
+                ('k_b',     0.139,  True, 0.0,  1000, None),
+                ('q',       1.58,   True, 0.1,  5,    None),
+                ('Go1',     2,      True, 0.0,  1000, None),
+                ('Go2',     0.0567, True, 0.0,  1000, None),
+                ('Gd1',     0.112,  True, 0.0,  1000, None),
+                ('Gd2',     0.0185, True, 0.0,  1000, None),
+                ('Ga3',     250,    True, 0.0,  500, None),
+                ('Gb',      40000,  True, 3400.0,  45000, None),
+                ('E',       0,      True, -1000,1000, None),
+                ('v0',      43,     True, -1e15, 1e15,None),
+                ('v1',      17.1,   True, -1e15, 1e15,None))
+
 
 defaultOpsinType = 'ChR2'
 rhoType = defaultOpsinType  # Set this when selecting
 modelParams['3'] = modelFits['3'][defaultOpsinType]
 modelParams['4'] = modelFits['4'][defaultOpsinType]
 modelParams['6'] = modelFits['6'][defaultOpsinType]
+modelParams['6K'] = modelFits['6K'][defaultOpsinType]
 
 unitPrefixes = {}  # Use a units library to convert between different prefixes
 
